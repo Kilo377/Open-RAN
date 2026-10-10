@@ -17,6 +17,10 @@ class SionnaAbstraction:
         self.torch, self.device, self.target_bler = torch, device, target_bler
         if device == 'cuda' and not torch.cuda.is_available():
             raise RuntimeError('Sionna SYS GPU unavailable; CPU must be explicitly requested')
+        # Sionna validates exact available-device names ('cuda:0'), whereas
+        # PyTorch also accepts the shorthand 'cuda'.
+        device='cuda:0' if device=='cuda' else device
+        self.device=device
         self.phy = PHYAbstraction(device=device)
         self.decoder = MCSDecoderNR(device=device)
         self.transport = TransportBlockNR(device=device)

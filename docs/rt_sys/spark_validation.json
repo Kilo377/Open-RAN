@@ -1,0 +1,163 @@
+{
+  "date": "2026-10-10",
+  "scope": "Spark setup and small GPU integration validation; full 1000-slot matrix pending",
+  "ssh_host": "njupt@192.168.1.201",
+  "remote_root": "/home/njupt/oran_slot_sim_sionna",
+  "environment": {
+    "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+    "compute_capability": [
+      12,
+      1
+    ],
+    "python": "3.12.3",
+    "machine": "aarch64",
+    "system": "Linux",
+    "torch": "2.9.1+cu130",
+    "sionna": "2.2.0",
+    "sionna_rt": "2.2.0",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GB10",
+    "rt_variant": "cuda_ad_mono_polarized",
+    "rt_actual_call": true,
+    "sys_actual_call": true,
+    "sys_probe": {
+      "mcs": 3,
+      "qm": 2,
+      "rate": 0.2451171875,
+      "capacity_bytes": 10,
+      "sinr_eff": 10.0,
+      "tbler": 0.0,
+      "cbler": 0.0,
+      "ack": true,
+      "mcs_projection": "calibrated_table_projection:0->3"
+    },
+    "cache_key": "1d415bea4dcc4ef63445c0dfe0f515a12fa931f1c2fe263f2cc73d5bcbc50242"
+  },
+  "specialized_tests": {
+    "passed": 20,
+    "warnings": 1,
+    "sys_unit_test_device": "cpu"
+  },
+  "smokes": {
+    "spark_street_smoke": {
+      "completed": true,
+      "spark_verified": true,
+      "stage": "completed",
+      "cache_key": "662516fdf141faabffdf747d03812bcbd02dca36b5100505e59f985868e73236",
+      "runtime_environment": {
+        "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+        "compute_capability": [
+          12,
+          1
+        ],
+        "python": "3.12.3",
+        "machine": "aarch64",
+        "system": "Linux",
+        "torch": "2.9.1+cu130",
+        "sionna": "2.2.0",
+        "sionna_rt": "2.2.0",
+        "cuda_available": true,
+        "cuda_version": "13.0",
+        "gpu_name": "NVIDIA GB10",
+        "rt_variant": "cuda_ad_mono_polarized"
+      },
+      "elapsed_s": 8.199772919993848,
+      "peak_rss_native": 2219488,
+      "peak_rss_bytes": 2272755712,
+      "peak_cuda_bytes": 48881664,
+      "ue_rows": 160,
+      "delivered_bytes": 42885
+    },
+    "spark_munich_smoke": {
+      "completed": true,
+      "spark_verified": true,
+      "stage": "completed",
+      "cache_key": "c65ba2b54d099e5926b4c6020502d9298636110e7d479b06282094f196d9a381",
+      "runtime_environment": {
+        "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+        "compute_capability": [
+          12,
+          1
+        ],
+        "python": "3.12.3",
+        "machine": "aarch64",
+        "system": "Linux",
+        "torch": "2.9.1+cu130",
+        "sionna": "2.2.0",
+        "sionna_rt": "2.2.0",
+        "cuda_available": true,
+        "cuda_version": "13.0",
+        "gpu_name": "NVIDIA GB10",
+        "rt_variant": "cuda_ad_mono_polarized"
+      },
+      "elapsed_s": 8.726644800975919,
+      "peak_rss_native": 2267236,
+      "peak_rss_bytes": 2321649664,
+      "peak_cuda_bytes": 48828416,
+      "ue_rows": 160,
+      "delivered_bytes": 17221
+    },
+    "spark_street_replay": {
+      "completed": true,
+      "spark_verified": true,
+      "stage": "completed",
+      "cache_key": "662516fdf141faabffdf747d03812bcbd02dca36b5100505e59f985868e73236",
+      "runtime_environment": {
+        "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+        "compute_capability": [
+          12,
+          1
+        ],
+        "python": "3.12.3",
+        "machine": "aarch64",
+        "system": "Linux",
+        "torch": "2.9.1+cu130",
+        "sionna": "2.2.0",
+        "sionna_rt": "2.2.0",
+        "cuda_available": true,
+        "cuda_version": "13.0",
+        "gpu_name": "NVIDIA GB10",
+        "rt_variant": "cuda_ad_mono_polarized"
+      },
+      "elapsed_s": 4.8912935350090265,
+      "peak_rss_native": 1818036,
+      "peak_rss_bytes": 1861668864,
+      "peak_cuda_bytes": 48881664,
+      "ue_rows": 160,
+      "delivered_bytes": 42885
+    }
+  },
+  "mu": {
+    "simple_street_canyon": {
+      "actual_rt_sys": true,
+      "device": "cuda",
+      "fixture_grants": true,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 0.0,
+        "relative_l2_error": 0.0
+      },
+      "mu_resource_groups": 28,
+      "delivered_bytes": 57
+    },
+    "munich": {
+      "actual_rt_sys": true,
+      "device": "cuda",
+      "fixture_grants": true,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 0.0,
+        "relative_l2_error": 0.0
+      },
+      "mu_resource_groups": 28,
+      "delivered_bytes": 38
+    }
+  },
+  "full_matrix_completed": false,
+  "full_phy_calibrated": false,
+  "gpu_memory_accounting": "peak_cuda_bytes is Torch allocator only; excludes Dr.Jit/Mitsuba",
+  "fixed_seed_ue_csv_exact_match": true
+}

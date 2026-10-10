@@ -42,7 +42,7 @@ def check(device='cuda',require_spark=True):
     if not np.any(abs(snapshot.cfr)>0): raise RuntimeError('RT produced no connected links')
     model=SionnaAbstraction(device)
     result=model.evaluate(np.ones((14,12,1))*10,'qam64',0,1,1,'preflight')
-    if device=='cuda' and model.phy.device.type!='cuda':
+    if device=='cuda' and not str(model.phy.device).startswith('cuda:'):
         raise RuntimeError('SYS PHYAbstraction is not executing on CUDA')
     info.update(rt_actual_call=True,sys_actual_call=True,sys_probe=result,cache_key=provider.key)
     return info
@@ -56,5 +56,18 @@ if __name__=='__main__':
     if args.lock:
         if args.cpu_local: raise ValueError('Only verified Spark GPU environment may produce the Spark lock')
         lock=subprocess.check_output([sys.executable,'-m','pip','freeze'],text=True)
+        # A locally cached wheel must not make the lock depend on this user's
+        # absolute home path. Preserve its exact official artifact and hash.
+        from importlib.metadata import distribution
+        from urllib.parse import quote,unquote,urlsplit
+        raw=distribution('torch').read_text('direct_url.json')
+        if raw:
+            direct=json.loads(raw)
+            if direct['url'].startswith('file:'):
+                filename=unquote(urlsplit(direct['url']).path.rsplit('/',1)[-1])
+                sha=direct['archive_info'].get('hashes',{}).get('sha256')
+                if not sha:raise ValueError('Installed Torch wheel hash missing')
+                artifact='torch @ https://download.pytorch.org/whl/cu130/'+quote(filename)+'#sha256='+sha
+                lock='\n'.join(artifact if row.startswith('torch @ ') else row for row in lock.splitlines())+'\n'
         (ROOT/'requirements-spark.lock.txt').write_text(lock)
     print(json.dumps(result,indent=2))

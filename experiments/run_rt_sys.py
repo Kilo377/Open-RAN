@@ -83,7 +83,7 @@ def run_case(args):
         simulator.result_writer.write_final_summary(summary)
         simulator.result_writer.write_orchestration_epoch_history(simulator.controller_manager.get_orchestration_epoch_history())
         status.update(completed=True,stage='completed',runtime_environment=environment,
-            spark_verified=environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
+            spark_verified=args.device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
     except Exception as exc:
         status.update(stage='failed',error=f'{type(exc).__name__}: {exc}'); raise

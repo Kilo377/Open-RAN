@@ -34,7 +34,7 @@ export DRJIT_LIBLLVM_PATH="$PWD/.local-llvm/lib/libLLVM.20.1.dylib"
 
 ## Spark 部署与验收
 
-目前尚未连接 Spark，未执行 SSH，也没有生成 Spark 依赖锁文件。获得真实 SSH 地址、用户和认证方式后：
+Spark 的当前配置及远端实测见 `docs/rt_sys/SPARK_SETUP.md`。以下为重新部署流程：
 
 ```bash
 # 在 Mac 上先检查命令，再传输；替换为实际 SSH 目标
@@ -53,7 +53,7 @@ bash scripts/spark/bootstrap.sh
 .venv-spark/bin/python experiments/run_rt_sys_matrix.py --skip-completed
 ```
 
-bootstrap 使用独立 `.venv-spark`，允许复用主环境的适配 GPU 的 PyTorch；安装约束为 Sionna 2.2.0 / PyTorch ≥2.9。若官方 ARM64 CUDA wheel 或已有镜像不兼容，预检明确失败，届时根据 Spark 驱动和镜像配置解决。不会把 Mac 的 LLVM、venv、结果或缓存同步到 Spark。
+bootstrap 创建隔离的 `.venv-spark`，优先 Python 3.11，否则使用系统 Python ≥3.11；安装官方 PyTorch 2.9.1+cu130 ARM64 wheel（SHA256 校验）和 Sionna 2.2.0。安装进程采用 IPv4，保留 TLS 校验，不改系统网络。若官方 ARM64 CUDA wheel 或已有镜像不兼容，预检明确失败，届时根据 Spark 驱动和镜像配置解决。不会把 Mac 的 LLVM、venv、结果或缓存同步到 Spark。
 
 预检要求 ARM64 Linux、GB10 Blackwell、可用 PyTorch CUDA、RT CUDA variant，且实际执行 RT 与 SYS；记录 GPU/驱动/版本。仅 GPU 预检成功才能生成 `requirements-spark.lock.txt`。随后运行 2 小区/4 UE 冒烟测试和两地图的重叠 MU grant 实测，再跑 2 地图 × 3 小区 × 12/24 UE × 3 种子 × 1000 时隙，共 12 次接入验证。矩阵启动也执行 GPU 预检；CPU 结果不能被 CUDA 的 `--skip-completed` 当作已验收。
 
