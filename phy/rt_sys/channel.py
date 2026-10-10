@@ -108,9 +108,12 @@ class SionnaRayTracer:
 
     def fingerprint(self):
         materials = {}
-        for name,obj in sorted(self.scene.objects.items()):
+        # Unnamed Mitsuba shapes receive process-global counters (no-name-N).
+        # Bind material assignments to XML/mesh load order, whose asset bytes
+        # are hashed below, rather than transient runtime object names.
+        for index,obj in enumerate(self.scene.objects.values()):
             material = obj.radio_material
-            materials[name] = {'material':material.name,
+            materials[str(index)] = {'material':material.name,
                 'relative_permittivity':float(np.asarray(material.relative_permittivity).reshape(-1)[0]),
                 'conductivity':float(np.asarray(material.conductivity).reshape(-1)[0])}
         # Hash mesh inputs, not only scene name. Also hashes packaged XML and meshes.
