@@ -12,6 +12,8 @@ ROOT=Path(__file__).resolve().parents[1]
 def audit(path):
     status=json.loads((path/'run_status.json').read_text())
     saved=json.loads((path/'config_snapshot.json').read_text());m=saved['manifest']
+    final=json.loads((path/'final_summary.json').read_text())
+    active_re=m['num_symbols']*int(final['n_prbs_total'])*12
     assert status['completed'] and status['spark_verified'],path
     assert saved['configs']['phy']['rt_sys']['device']=='cuda'
     totals=defaultdict(int);perue=defaultdict(lambda:defaultdict(int));percell=defaultdict(lambda:defaultdict(float))
@@ -36,7 +38,8 @@ def audit(path):
                     assert error<1e-4,(path,slot,'precoder norm',norm)
             for cid,cell in t['cells'].items():
                 used=cell['average_used_w'];budget=cell['budget_w']
-                assert 0<=cell['occupied_re']<=cell['grid_re']
+                assert cell['grid_re']==m['num_symbols']*m['fft_size']
+                assert 0<=cell['occupied_re']<=active_re<=cell['grid_re']
                 assert 0<=used<=budget+1e-6
                 assert occupied[cid]==cell['occupied_re']
                 assert emitted[cid]==cell['emitted_re_streams']
@@ -46,6 +49,7 @@ def audit(path):
                 percell[cid]['power_w_slot_sum']+=used
                 percell[cid]['occupied_re_sum']+=cell['occupied_re']
                 percell[cid]['grid_re_sum']+=cell['grid_re']
+                percell[cid]['active_grid_re_sum']+=active_re
             delivered=sum(u['delivered_bytes'] for u in t['ues'])
             assert delivered==int(row['true_delivered_new_bytes_this_slot'])+int(row['true_delivered_retx_bytes_this_slot'])
             assert sum(u['tb_bytes'] for u in t['ues'])<=int(row['true_grant_bytes_budget_total'])
@@ -77,7 +81,9 @@ def audit(path):
     assert totals['slots']==m['total_slots']
     duration_s=m['total_slots']*m['slot_duration_ms']/1000
     for stats in perue.values():stats['throughput_mbps']=stats['delivered_bytes']*8/duration_s/1e6
-    for stats in percell.values():stats['throughput_mbps']=stats['delivered_bytes']*8/duration_s/1e6
+    for stats in percell.values():
+        stats['throughput_mbps']=stats['delivered_bytes']*8/duration_s/1e6
+        stats['active_resource_utilization']=stats['occupied_re_sum']/stats['active_grid_re_sum']
     return {'case':path.name,'scene':m['scene'],'ues':len(m['ues']),'seed':m['rng_seed'],
         'passed':True,'totals':dict(totals),'per_ue':{k:dict(v) for k,v in perue.items()},
         'per_cell':{k:dict(v) for k,v in percell.items()},'max_power_error_w':max_power_error,
