@@ -107,18 +107,24 @@ class SionnaRayTracer:
         self._last_path_arrays=None
 
     def fingerprint(self):
-        materials = {}
+        import hashlib
+        materials = []
         # Unnamed Mitsuba shapes receive process-global counters (no-name-N).
-        # Bind material assignments to XML/mesh load order, whose asset bytes
-        # are hashed below, rather than transient runtime object names.
-        for index,obj in enumerate(self.scene.objects.values()):
+        # Neither names nor dictionary order are stable across scene loads.
+        # Bind materials to the actual transformed mesh bytes instead.
+        for obj in self.scene.objects.values():
             material = obj.radio_material
-            materials[str(index)] = {'material':material.name,
+            parameters=self.mi.traverse(obj.mi_mesh)
+            geometry=hashlib.sha256()
+            for field,dtype in (('vertex_positions','<f4'),('faces','<u4')):
+                values=np.asarray(parameters[field],dtype=dtype)
+                geometry.update(values.tobytes())
+            materials.append({'geometry_sha256':geometry.hexdigest(),'material':material.name,
                 'relative_permittivity':float(np.asarray(material.relative_permittivity).reshape(-1)[0]),
-                'conductivity':float(np.asarray(material.conductivity).reshape(-1)[0])}
+                'conductivity':float(np.asarray(material.conductivity).reshape(-1)[0])})
+        materials.sort(key=lambda row:json.dumps(row,sort_keys=True))
         # Hash mesh inputs, not only scene name. Also hashes packaged XML and meshes.
         from pathlib import Path
-        import hashlib
         asset = Path(getattr(self.rt.scene,self.m['scene']))
         meshes = {}
         for p in sorted(asset.parent.rglob('*')):

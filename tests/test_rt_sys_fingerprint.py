@@ -10,13 +10,13 @@ def test_cache_ignores_runtime_shape_counters_but_tracks_materials(tmp_path,monk
     tracer=SionnaRayTracer.__new__(SionnaRayTracer)
     tracer.m={'scene':'test'}
     tracer.rt=SimpleNamespace(scene=SimpleNamespace(test=str(asset)))
-    tracer.mi=SimpleNamespace(variant=lambda:'fixture')
+    tracer.mi=SimpleNamespace(variant=lambda:'fixture',traverse=lambda mesh:mesh)
     def obj(conductivity):
-        return SimpleNamespace(radio_material=SimpleNamespace(name='concrete',
+        return SimpleNamespace(mi_mesh={'vertex_positions':np.array([conductivity,0,0]),'faces':np.array([0])},radio_material=SimpleNamespace(name='concrete',
             relative_permittivity=np.array([5.]),conductivity=np.array([conductivity])))
     tracer.scene=SimpleNamespace(objects={'no-name-9':obj(.2),'no-name-10':obj(.5)})
     first=tracer.fingerprint()
-    tracer.scene.objects={'no-name-101':obj(.2),'no-name-102':obj(.5)}
+    tracer.scene.objects={'no-name-102':obj(.5),'no-name-101':obj(.2)}
     assert tracer.fingerprint()==first
     tracer.scene.objects['no-name-102'].radio_material.conductivity=np.array([.6])
     assert tracer.fingerprint()!=first
