@@ -1,0 +1,5 @@
+scenario_name: "baseline_light_load_static"
+
+template_overrides: {}
+
+overrides: {}

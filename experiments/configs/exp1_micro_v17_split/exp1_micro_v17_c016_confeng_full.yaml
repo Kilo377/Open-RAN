@@ -1,0 +1,101 @@
+experiment_name: exp1_micro_v17_c016_confeng_full
+manifest_path: experiments/manifests/oran_paper_eval_manifest.csv
+base_output_dir: E:/oran_slot_sim_outputs/paper_eval
+reference_scenario_id: oran_medium_low_load_energy_saving
+intent_subset:
+- conflicting-throughput-energy
+warmup_scenario_ids:
+- oran_medium_low_load_energy_saving
+- oran_medium_nominal_mixed
+transfer_scenario_ids:
+- oran_medium_high_mobility_interference
+variants:
+- full_method
+seeds:
+- 1
+matrix_defaults:
+  default_matrix_name: oran_paper_eval_suite
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: DEEPSEEK_API_KEY
+memory_transfer:
+  enabled: true
+  cumulative_memory_enabled: true
+  cumulative_memory_dir: E:/oran_slot_sim_outputs/paper_eval/exp1_micro_v17_inherited_memory
+  shared_memory_scope: seed
+  warmup_repeats: 2
+  transfer_repeats: 4
+  persistent_variants:
+  - full_method
+  success_memory_size: 256
+  reflection_memory_size: 256
+  retrieval_top_k: 12
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: transfer
+  rationale: 'Recovery-focused Experiment 1 chunk: inherit cumulative memory from
+    earlier chunks, then test throughput-energy conflict recovery under high-mobility
+    interference. The target stresses cross-scenario negative transfer from low-load
+    energy-saving memories and rewards hard-KPI-safe recovery.'
+global_sim_overrides:
+  measurement_sinr_window_slots: 8
+  measurement_bler_window_tbs: 20
+  measurement_throughput_granularity_slots: 10
+force_sim_overrides:
+  total_slots: 36
+  scheduler_max_ues_per_slot: 8
+global_ric_overrides:
+  xapp_interval_slots: 3
+  rapp_interval_slots: 9
+  orchestration_warmup_slots: 6
+  llm_timeout_s: 5.0
+  llm_startup_timeout_s: 5.0
+  llm_request_retries: 0
+  llm_max_output_tokens: 768
+intent_suite:
+- intent_slug: conflicting-throughput-energy
+  intent_id: intent:conflicting_throughput_energy
+  intent_family: throughput_energy_conflict
+  macro_weight: 1.5
+  intent_text: 'Hard target: after low-load energy-saving experience, transfer to
+    high-mobility interference and increase aggregate throughput by 10% while keeping
+    queue backlog no worse than current and keeping BLER below 0.14. Energy-saving
+    actions are allowed only when they do not violate these hard KPI targets.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 10
+    weight: 2.2
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: 0
+    weight: 1.7
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.14
+    tolerance: 0.015
+    weight: 1.8
+    unit: ratio
+    priority: 5
+    hard: true
+xapp_pool_profiles:
+  full_portfolio:
+    allowed_xapp_categories:
+    - mobility_predictor_xapp
+    - traffic_steering_xapp
+    - power_saving_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - ran_slicing_manager_xapp
+    - urllc_guard_xapp
+    - cell_sleep_xapp

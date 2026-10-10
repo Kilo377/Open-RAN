@@ -1,0 +1,15 @@
+scenario_name: "heterogeneous_macro_mmwave_benchmark"
+
+template_overrides:
+  topology:
+    default_velocity_mps: 0.0
+  radio:
+    gnb_num_tx_ant: 16
+    gnb_panel_layout: "4x4"
+  metadata:
+    cell_profiles:
+      cell_0:
+        gnb_num_tx_ant: 16
+        gnb_panel_layout: "4x4"
+
+overrides: {}

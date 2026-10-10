@@ -1,0 +1,105 @@
+phy_type: "sionna_phy"
+
+custom_phy:
+  noise_floor_dbm: -94.0
+  base_pathloss_compensation_db: 98.0
+  bler_target: 0.1
+  # Use a 3GPP-style MCS range instead of the older 0-15 coarse cap.
+  max_mcs_index: 27
+  min_valid_sinr_db: -40.0
+  max_valid_sinr_db: 80.0
+
+sionna_phy:
+  enabled: true
+  backend: "sionna_tensorflow"
+  device: "cpu"
+  gpu_strict: true
+  gpu_memory_growth: true
+  gpu_memory_limit_mb:
+  batch_size: 64
+  phy_mode: "system_level_approx"
+
+  # LDPC decoder iterations (trade speed vs performance)
+  num_iter_decoder: 20
+  min_supported_sionna_coderate: 0.34
+  min_valid_sinr_db: -40.0
+  max_valid_sinr_db: 80.0
+
+  # Finite-sample BLER smoothing (0 disables).
+  # Jeffreys prior (0.5, 0.5) avoids exact 0/1 with small batch_size.
+  bler_smoothing_alpha: 0.5
+  bler_smoothing_beta: 0.5
+
+  # Abstract per-slot resource budget (modulation symbols available per scheduled UE).
+  # TB size budget ~= num_mod_symbols_per_slot * Qm * R / 8.
+  num_mod_symbols_per_slot: 5120
+  subcarriers_per_prb: 12
+  max_ofdm_symbols_per_slot: 14
+  enable_overlap_interference: true
+  enable_cross_frequency_interference: true
+  min_spatial_coupling: 0.05
+  same_precoder_coupling_multiplier: 1.25
+  adjacent_prb_leakage_factor: 0.15
+  inter_cell_adjacent_channel_leakage_factor: 0.05
+  inter_cell_frequency_guard_decay_scale: 1.0
+  inter_cell_far_frequency_leakage_floor: 0.0000001
+  same_group_interference_reduction: 0.7
+  mu_mimo_bonus_db_max: 2.0
+  shadow_compare_enabled: false
+  shadow_compare_adapter: "custom_phy"
+  shadow_compare_base_pathloss_compensation_db: 98.0
+  shadow_compare_noise_floor_dbm: -94.0
+  shadow_compare_bler_target: 0.1
+  # Keep the shadow comparator aligned with the main NR-style MCS range.
+  shadow_compare_max_mcs_index: 27
+
+  # Small-scale fading model used in SionnaEngine SINR computation.
+  # - gaussian: per-slot i.i.d. N(0, std^2) in dB (repeatable)
+  # - legacy: deterministic 9-phase pattern
+  small_scale_model: "gaussian"
+  small_scale_std_db: 2.0
+
+  # Noise power model used by SionnaEngine.
+  # - thermal: -174 dBm/Hz + 10log10(BW) + NF
+  # - fixed: use noise_floor_dbm
+  noise_power_mode: "thermal"
+  bandwidth_hz: 20000000.0
+  noise_figure_db: 7.0
+  interference_margin_db: 0.0
+  sinr_margin_db: 0.0
+
+  # Max LDPC information bits simulated per slot (must be multiple of 32).
+  # For the baseline, 8192 bits (1024 bytes) gives non-trivial TB size variation.
+
+  num_bits_per_block: 8192
+  default_modulation: "qpsk"
+  noise_floor_dbm: -94.0
+  code_block_size_bits: 128
+
+  awgn_channel:
+    enabled: true
+
+  link_adaptation:
+    # Thresholds tuned for the link-budget SINR scale (often around -7..+3 dB).
+    qpsk_sinr_threshold_db: 0.0
+    qam16_sinr_threshold_db: 10.0
+
+  gains:
+    tx_power_reference_dbm: 30.0
+    codebook_gain_step_db: 1.0
+    beam_profile_gain_step_db: 0.8
+
+  bler_model:
+    mode: "smooth_from_sinr"
+    center_sinr_db: 12.0
+    slope: 0.9
+
+  cdl_su_mimo:
+    waveform_backend: "cdl_su_mimo_proxy"
+    delay_penalty_scale_db: 1.5
+    k_factor_bonus_scale_db: 0.8
+    angle_spread_bonus_scale_db: 0.6
+    spatial_correlation_penalty_scale_db: 1.0
+    los_bonus_db: 0.25
+    dmrs_overhead_fraction_default: 0.0714
+    dmrs_overhead_fraction_dense: 0.1428

@@ -1,0 +1,32 @@
+total_slots: 30
+slot_duration_ms: 1.0
+scheduler_type: "simple_scheduler"
+
+# Grant-based scheduler resource budget for the denser heterogeneous benchmark.
+# The simulator now resynchronizes PRB/symbol budget from NR numerology at
+# runtime, so these values mainly act as initial fallback knobs.
+scheduler_total_prbs_per_slot: 96
+scheduler_total_symbols_per_slot: 14
+scheduler_max_ues_per_slot: 8
+scheduler_min_prbs_per_grant: 4
+scheduler_min_symbols_per_grant: 4
+scheduler_retx_weight_bonus: 1000.0
+scheduler_packing_strategy: "frequency_first"
+scheduler_enable_spatial_multiplexing: true
+scheduler_max_mu_users_per_group: 2
+scheduler_min_mu_beam_separation_deg: 45.0
+scheduler_max_total_spatial_layers: 4
+
+# Realism knobs
+obs_delay_slots: 2
+config_actuation_delay_slots: 1
+command_actuation_delay_slots: 0
+control_reject_prob: 0.0
+rng_seed: 1
+
+# Measurement pipeline knobs (controller-visible)
+measurement_queue_delay_slots: 2
+measurement_sinr_window_slots: 8
+measurement_sinr_noise_std_db: 2.0
+measurement_bler_window_tbs: 20
+measurement_throughput_granularity_slots: 10

@@ -1,0 +1,44 @@
+antenna:
+  gnb_num_tx_ant: 4
+  default_ue_num_rx_ant: 2
+  carrier_frequency_hz: 3500000000.0
+  bandwidth_hz: 20000000.0
+  subcarrier_spacing_hz: 30000.0
+  cyclic_prefix_type: "normal"
+  gnb_panel_layout: "2x2"
+  default_ue_panel_layout: "1x2"
+  polarization: "single"
+
+codebooks:
+  0:
+    name: "baseline_codebook"
+    base_gain_db: 0.0
+    beams:
+      0: 0.0
+      1: 0.2
+      2: 0.4
+
+  1:
+    name: "directional_codebook"
+    base_gain_db: 1.5
+    beams:
+      0: 0.8
+      1: 1.2
+      2: 1.6
+
+  2:
+    name: "high_gain_codebook"
+    base_gain_db: 2.5
+    beams:
+      0: 1.0
+      1: 1.8
+      2: 2.2
+
+beam_profiles:
+  0:
+    name: "wide_beam"
+    profile_gain_db: 0.0
+
+  1:
+    name: "narrow_beam"
+    profile_gain_db: 1.0

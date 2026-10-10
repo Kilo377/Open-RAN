@@ -1,0 +1,15 @@
+scenario_name: "heterogeneous_macro_mmwave_stress"
+
+template_overrides: {}
+
+overrides:
+  sim.total_slots: 60
+  sim.obs_delay_slots: 2
+  sim.config_actuation_delay_slots: 1
+  sim.measurement_sinr_window_slots: 10
+  sim.measurement_sinr_noise_std_db: 2.6
+  cell.handover_margin_db: 2.0
+  cell.handover_cost_db: 3.0
+  cell.steering_hysteresis_db: 2.0
+  cell.measurement_event_trigger: "a3_offset"
+  cell.measurement_event_offset_db: 2.0

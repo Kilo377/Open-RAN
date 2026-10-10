@@ -1,0 +1,12 @@
+phy_type: "custom_phy"
+
+sionna_phy:
+  # Use the CPU Sionna path for paper-scale runs on native Windows. The GPU
+  # override remains available via configs/phy_gpu.yaml when a Linux/WSL2
+  # TensorFlow GPU runtime is configured.
+  device: "cpu"
+  gpu_strict: false
+  gpu_memory_growth: true
+  # Lift the per-slot LDPC information-block ceiling for the intent demo.
+  # 65536 bits = 8192 bytes, which avoids the previous 1 KB hard cap.
+  num_bits_per_block: 65536

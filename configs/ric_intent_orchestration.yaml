@@ -1,0 +1,146 @@
+xapp_interval_slots: 5
+rapp_interval_slots: 10
+run_rapps_on_start: false
+orchestration_warmup_slots: 5
+run_forever: true
+memory_mode: "full"
+selection_mode: "reflective"
+repair_mode: "deterministic"
+conflict_mode: "typed_taxonomy"
+llm_pipeline_mode: "schema_bound"
+near_rt_mode: "projected_tuning"
+
+rapps:
+  - type: "intent_goal_translator_rapp"
+    name: "intent_goal_translator_rapp"
+    intent_text: ""
+    translation_embedding_backend_name: "hashed_feature_embedding_v1"
+    translation_embedding_backend_state_path: ""
+    llm_enabled: true
+    llm_provider: "deepseek"
+    llm_api_key_env_var: "DEEPSEEK_API_KEY"
+    llm_base_url: "https://api.deepseek.com"
+    llm_model: "deepseek-v4-pro"
+    llm_timeout_s: 180.0
+    llm_startup_timeout_s: 180.0
+    llm_max_output_tokens: 1024
+    llm_request_retries: 1
+    llm_temperature: 0.0
+    llm_enable_thinking: false
+    llm_reasoning_effort: ""
+
+  - type: "xapp_selection_rapp"
+    name: "xapp_selection_rapp"
+    max_selected_xapps: 4
+    success_memory_size: 12
+    reflection_memory_size: 8
+    retrieval_top_k: 3
+    memory_mode: "full"
+    max_cpu_cost: 6.0
+    max_mem_cost: 5.5
+    mutex_category_pairs:
+      - ["power_saving_xapp", "massive_mimo_beamformer_xapp"]
+    dependency_category_pairs:
+      - ["urllc_guard_xapp", "latency_scheduler_xapp"]
+    persistent_memory_enabled: false
+    memory_store_path: "outputs/orchestration_memory/xapp_selection_rapp.json"
+    selection_embedding_backend_name: "hashed_feature_embedding_v1"
+    selection_embedding_backend_state_path: ""
+    surrogate_predictor_name: "memory_calibrated_surrogate_predictor_v1"
+    surrogate_predictor_state_path: ""
+    llm_enabled: true
+    llm_provider: "deepseek"
+    llm_api_key_env_var: "DEEPSEEK_API_KEY"
+    llm_base_url: "https://api.deepseek.com"
+    llm_model: "deepseek-v4-pro"
+    llm_timeout_s: 180.0
+    llm_startup_timeout_s: 180.0
+    llm_max_output_tokens: 1536
+    llm_request_retries: 1
+    llm_temperature: 0.0
+    llm_enable_thinking: true
+    llm_reasoning_effort: "high"
+
+  - type: "reward_shaping_rapp"
+    name: "reward_shaping_rapp"
+    llm_enabled: true
+    llm_provider: "deepseek"
+    llm_api_key_env_var: "DEEPSEEK_API_KEY"
+    llm_base_url: "https://api.deepseek.com"
+    llm_model: "deepseek-v4-pro"
+    llm_timeout_s: 180.0
+    llm_startup_timeout_s: 180.0
+    llm_max_output_tokens: 1536
+    llm_request_retries: 1
+    llm_temperature: 0.0
+    llm_enable_thinking: false
+    llm_reasoning_effort: ""
+
+xapps:
+  - type: "goal_parameter_tuning_xapp"
+    name: "goal_parameter_tuning_xapp"
+    priority: 22
+
+  - type: "mobility_predictor_xapp"
+    name: "mobility_predictor_xapp"
+    priority: 18
+    risk_threshold: 0.55
+    deploy_default_variants: true
+
+  - type: "traffic_steering_xapp"
+    name: "traffic_steering_xapp"
+    priority: 19
+    load_threshold: 0.68
+    edge_sinr_threshold_db: 5.0
+    deploy_default_variants: true
+
+  - type: "power_saving_xapp"
+    name: "power_saving_xapp"
+    priority: 8
+    low_load_threshold: 0.35
+    queue_threshold_bytes: 3000
+    min_power_cap_dbm: 24.0
+    deploy_default_variants: true
+
+  - type: "spectrum_optimizer_xapp"
+    name: "spectrum_optimizer_xapp"
+    priority: 14
+    utilization_threshold: 0.65
+    interference_threshold_db: 2.5
+    deploy_default_variants: true
+
+  - type: "latency_scheduler_xapp"
+    name: "latency_scheduler_xapp"
+    priority: 16
+    queue_threshold_bytes: 4000
+    deploy_default_variants: true
+
+  - type: "massive_mimo_beamformer_xapp"
+    name: "massive_mimo_beamformer_xapp"
+    priority: 17
+    beam_risk_threshold: 0.50
+    coverage_sinr_threshold_db: 7.0
+    deploy_default_variants: true
+
+  - type: "ran_slicing_manager_xapp"
+    name: "ran_slicing_manager_xapp"
+    priority: 12
+    slice_dominance_threshold: 0.45
+    deploy_default_variants: true
+
+  - type: "urllc_guard_xapp"
+    name: "urllc_guard_xapp"
+    priority: 25
+    queue_threshold_bytes: 1200
+    bler_threshold: 0.12
+    latency_budget_threshold_ms: 20.0
+    deploy_default_variants: true
+
+  - type: "cell_sleep_xapp"
+    name: "cell_sleep_xapp"
+    priority: 9
+    micro_sleep_load_threshold: 0.28
+    light_sleep_load_threshold: 0.18
+    deep_sleep_load_threshold: 0.08
+    max_queue_bytes_for_sleep: 4000
+    deploy_default_variants: true

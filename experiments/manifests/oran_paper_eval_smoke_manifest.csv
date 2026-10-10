@@ -1,0 +1,2 @@
+scenario_id,source_type,source_matrix_name,source_case_id,split,topology_class,load_class,user_distribution_class,xapp_pool_class,notes
+oran_medium_dense_hotspot_high_mobility,matrix_case,oran_paper_eval_suite,oran_medium_dense_hotspot_high_mobility,unseen,medium_7cell,hotspot_overload,mobility_shifted_cluster,mobility_safe_portfolio,Smoke test scene for steering and mobility-conflict evaluation.

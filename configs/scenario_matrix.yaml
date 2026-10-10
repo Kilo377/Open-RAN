@@ -1,0 +1,4 @@
+matrix_name: "scenario_catalog"
+selected_case_ids: []
+max_cases:
+output_subdir: "scenario_matrix"

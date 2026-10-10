@@ -1,0 +1,24 @@
+xapp_interval_slots: 5
+rapp_interval_slots: 10
+
+xapps:
+  - type: "beam_xapp"
+    name: "beam_xapp"
+    priority: 20
+    sinr_threshold_db: 11.0
+    queue_threshold_bytes: 1500
+
+  - type: "latency_scheduler_xapp"
+    name: "latency_scheduler_xapp"
+    priority: 10
+    queue_threshold_bytes: 4000
+
+rapps:
+  - type: "codebook_rapp"
+    name: "codebook_rapp"
+    bler_threshold: 0.12
+    throughput_threshold_mbps: 7.0
+
+  - type: "slicing_rapp"
+    name: "slicing_rapp"
+    queue_threshold_bytes: 5000

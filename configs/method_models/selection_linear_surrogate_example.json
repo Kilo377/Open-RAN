@@ -1,0 +1,31 @@
+{
+  "predictor_name": "linear_stateful_surrogate_predictor_v1",
+  "outputs": {
+    "predicted_intent_loss": {
+      "intercept": 0.05,
+      "predicted_intent_loss": 0.75,
+      "predicted_failure_risk": 0.20,
+      "predicted_conflict_cost": 0.10,
+      "stability_risk": 0.08,
+      "resource_pressure": 0.12,
+      "predicted_memory_support": -0.15
+    },
+    "predicted_conflict_cost": {
+      "intercept": 0.02,
+      "predicted_conflict_cost": 0.85,
+      "predicted_failure_risk": 0.10,
+      "selected_xapp_count": 0.02
+    },
+    "stability_risk": {
+      "intercept": 0.01,
+      "stability_risk": 0.80,
+      "switching_cost": 0.10,
+      "projected_flag": 0.03
+    },
+    "resource_pressure": {
+      "intercept": 0.0,
+      "resource_pressure": 0.90,
+      "selected_xapp_count": 0.02
+    }
+  }
+}

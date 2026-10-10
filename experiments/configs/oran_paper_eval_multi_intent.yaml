@@ -1,0 +1,181 @@
+experiment_name: "oran_paper_eval_multi_intent_v1"
+manifest_path: "experiments/manifests/oran_paper_eval_manifest.csv"
+base_output_dir: "outputs/paper_eval"
+reference_scenario_id: "oran_medium_nominal_mixed"
+
+intent_suite:
+  - intent_slug: "edge-throughput-latency"
+    intent_id: "intent:edge_throughput_latency"
+    intent_family: "throughput_latency_conflict"
+    macro_weight: 1.0
+    intent_text: "Increase cell-edge throughput while protecting low-latency users."
+    notes: "Primary running example; benefits reflective failed-case memory under steering/mobility conflicts."
+
+  - intent_slug: "urllc-burst-reliability"
+    intent_id: "intent:urllc_burst_reliability"
+    intent_family: "latency_reliability_guard"
+    macro_weight: 1.0
+    intent_text: "Guarantee URLLC tail latency and packet reliability during sudden traffic bursts while preserving minimum eMBB throughput."
+    notes: "Highlights schema-bound planning, URLLC guard, QoS scheduler, repair, and Near-RT projection."
+
+  - intent_slug: "interference-edge-sinr"
+    intent_id: "intent:interference_edge_sinr"
+    intent_family: "interference_edge_users"
+    macro_weight: 1.0
+    intent_text: "Improve weak-SINR cell-edge users under inter-cell interference bursts while avoiding unsafe throughput-only resource packing."
+    notes: "Stresses interference coordination, beamforming, spectrum optimizer, and typed risk conflicts."
+
+  - intent_slug: "mobility-hotspot-stability"
+    intent_id: "intent:mobility_hotspot_stability"
+    intent_family: "mobility_robustness"
+    macro_weight: 1.0
+    intent_text: "Reduce ping-pong handovers and handover failures in dense high-mobility hotspots while maintaining cell-edge throughput."
+    notes: "Favors outcome-grounded failed memory over no-memory and success-only baselines."
+
+  - intent_slug: "energy-latency-coverage"
+    intent_id: "intent:energy_latency_coverage"
+    intent_family: "energy_safety_conflict"
+    macro_weight: 1.0
+    intent_text: "Save energy during low-load periods without violating URLLC latency, coverage, or cell-edge service constraints."
+    notes: "Creates soft and policy conflicts between energy-saving, cell sleep, and latency/coverage guardrails."
+
+  - intent_slug: "mixed-slice-sla"
+    intent_id: "intent:mixed_slice_sla"
+    intent_family: "multi_slice_sla"
+    macro_weight: 1.0
+    intent_text: "Balance eMBB video throughput, URLLC latency, and mMTC reliability across mixed slices under shifting hotspots."
+    notes: "Broad multi-objective intent that rewards multi-xApp composition over single-best baselines."
+
+  - intent_slug: "premium-tenant-urllc-energy"
+    intent_id: "intent:premium_tenant_urllc_energy"
+    intent_family: "policy_priority_conflict"
+    macro_weight: 1.0
+    intent_text: "Prioritize premium-tenant URLLC latency and reliability while opportunistically saving energy on non-critical cells."
+    notes: "Favors policy-aware conflict taxonomy over energy-only and resource-only orchestration."
+
+  - intent_slug: "handover-edge-video"
+    intent_id: "intent:handover_edge_video"
+    intent_family: "mobility_embb_tradeoff"
+    macro_weight: 1.0
+    intent_text: "Maintain smooth cell-edge video throughput for moving users while limiting handover failures and ping-pong events."
+    notes: "Highlights mobility memory, steering repair, and MIMO/traffic-steering composition."
+
+  - intent_slug: "interference-urllc-coexistence"
+    intent_id: "intent:interference_urllc_coexistence"
+    intent_family: "interference_latency_conflict"
+    macro_weight: 1.0
+    intent_text: "Protect URLLC tail latency during inter-cell interference bursts while preserving spectral efficiency for eMBB users."
+    notes: "Stresses spectrum coordination, URLLC guard, QoS scheduler, and soft/risk arbitration."
+
+  - intent_slug: "mmtc-reliability-low-load"
+    intent_id: "intent:mmtc_reliability_low_load"
+    intent_family: "mmtc_energy_reliability"
+    macro_weight: 1.0
+    intent_text: "Maximize mMTC connection reliability and periodic traffic success during low-load energy-saving periods."
+    notes: "Prevents energy-saving baselines from hiding reliability regressions."
+
+  - intent_slug: "hotspot-shift-slice-fairness"
+    intent_id: "intent:hotspot_shift_slice_fairness"
+    intent_family: "fairness_hotspot_shift"
+    macro_weight: 1.0
+    intent_text: "Preserve slice fairness and avoid starvation when a traffic hotspot shifts across cells under mixed eMBB, URLLC, and mMTC demand."
+    notes: "Rewards RAN slicing and reflective memory under distribution shift."
+
+  - intent_slug: "blockage-beam-recovery"
+    intent_id: "intent:blockage_beam_recovery"
+    intent_family: "blockage_mimo_recovery"
+    macro_weight: 1.0
+    intent_text: "Recover throughput and coverage after temporary blockage or fading by coordinating beamforming, steering, and QoS protection."
+    notes: "Emphasizes beamforming plus traffic steering and repair under radio shocks."
+
+  - intent_slug: "stale-memory-avoidance"
+    intent_id: "intent:stale_memory_avoidance"
+    intent_family: "memory_negative_transfer"
+    macro_weight: 1.0
+    intent_text: "Adapt to a shifted traffic distribution while avoiding stale memory that would repeat obsolete steering or scheduling choices."
+    notes: "Directly favors memory aging, evidence, and diagnostic/actionable reflection over raw reward memory."
+
+  - intent_slug: "conflicting-throughput-energy"
+    intent_id: "intent:conflicting_throughput_energy"
+    intent_family: "throughput_energy_soft_conflict"
+    macro_weight: 1.0
+    intent_text: "Increase aggregate throughput during moderate load while reducing energy cost whenever latency and coverage constraints remain safe."
+    notes: "Creates soft conflict where binary rejection is too conservative and no-conflict execution is unsafe."
+
+  - intent_slug: "multi-cell-load-balance"
+    intent_id: "intent:multi_cell_load_balance"
+    intent_family: "load_balance_stability"
+    macro_weight: 1.0
+    intent_text: "Balance load across neighboring cells while minimizing xApp switching and avoiding unstable oscillations."
+    notes: "Highlights plan stability and switching-cost advantages of reflective orchestration."
+
+  - intent_slug: "audit-safe-repair"
+    intent_id: "intent:audit_safe_repair"
+    intent_family: "schema_repair_audit"
+    macro_weight: 1.0
+    intent_text: "Generate an auditable multi-xApp plan for throughput, latency, mobility, interference, and energy goals without using unsupported xApps or unsafe parameters."
+    notes: "Favors schema-bound LLM planning, registry grounding, repair, and typed conflict taxonomy."
+
+variants:
+  - "fixed_plan"
+  - "no_memory_planner"
+  - "success_only_memory"
+  - "orchestran_like_resource_aware"
+  - "intent_hrl_like"
+  - "oreo_like_service_graph"
+  - "full_method"
+
+seeds:
+  - 1
+  - 2
+  - 3
+
+matrix_defaults:
+  default_matrix_name: "oran_paper_eval_suite"
+
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: "DEEPSEEK_API_KEY"
+  fail_fast_on_missing_api_key: true
+
+xapp_pool_profiles:
+  full_portfolio:
+    description: "Full Near-RT xApp portfolio used by the paper evaluation configuration."
+    allowed_xapp_categories:
+      - "mobility_predictor_xapp"
+      - "traffic_steering_xapp"
+      - "power_saving_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "ran_slicing_manager_xapp"
+      - "urllc_guard_xapp"
+      - "cell_sleep_xapp"
+  radio_guard_portfolio:
+    description: "Throughput, steering, slicing, and URLLC protection xApps for radio/QoS stress scenes."
+    allowed_xapp_categories:
+      - "traffic_steering_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "ran_slicing_manager_xapp"
+      - "urllc_guard_xapp"
+  mobility_safe_portfolio:
+    description: "Mobility-aware xApp pool for high-mobility and hotspot-shift scenes."
+    allowed_xapp_categories:
+      - "mobility_predictor_xapp"
+      - "traffic_steering_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "urllc_guard_xapp"
+
+reporting:
+  averaging:
+    primary_rule: "macro-average over intent_slug, then compare variants"
+    rationale: "Prevents one scenario or intent family from dominating the paper headline number."
+  primary_metrics:
+    - "macro_mean_intent_loss_normalized"
+    - "macro_mean_mean_observable_throughput_mbps"
+    - "macro_mean_xapp_switching_cost_mean"
+    - "macro_mean_stability_penalty_mean"

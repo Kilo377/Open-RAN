@@ -1,0 +1,98 @@
+experiment_name: "experiment1_cross_scenario_transfer_trial_v7"
+manifest_path: "experiments/manifests/oran_paper_eval_manifest.csv"
+base_output_dir: "E:/oran_slot_sim_outputs/paper_eval"
+reference_scenario_id: "oran_medium_dense_hotspot_high_mobility"
+
+warmup_scenario_ids:
+  - "oran_medium_dense_hotspot_high_mobility"
+  - "oran_medium_urllc_burst"
+
+transfer_scenario_ids:
+  - "oran_medium_hotspot_shift_blockage"
+  - "oran_medium_interference_edge"
+
+variants:
+  - "fixed_plan"
+  - "no_memory_planner"
+  - "success_only_memory"
+  - "orchestran_like_resource_aware"
+  - "intent_hrl_like"
+  - "oreo_like_service_graph"
+  - "full_method"
+
+seeds:
+  - 1
+
+matrix_defaults:
+  default_matrix_name: "oran_paper_eval_suite"
+
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: "DEEPSEEK_API_KEY"
+
+memory_transfer:
+  enabled: true
+  persistent_variants:
+    - "success_only_memory"
+    - "full_method"
+  success_memory_size: 64
+  reflection_memory_size: 64
+  retrieval_top_k: 8
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.10
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: "transfer"
+  rationale: "Small diagnostic transfer run: seed memory on high-mobility and URLLC stress scenes, then evaluate shifted unseen scenes."
+
+intent_suite:
+  - intent_slug: "edge-throughput-latency"
+    intent_id: "intent:edge_throughput_latency"
+    intent_family: "throughput_latency_conflict"
+    macro_weight: 1.0
+    intent_text: "Increase cell-edge throughput while protecting low-latency users."
+  - intent_slug: "interference-edge-sinr"
+    intent_id: "intent:interference_edge_sinr"
+    intent_family: "interference_edge_users"
+    macro_weight: 1.0
+    intent_text: "Improve weak-SINR cell-edge users under inter-cell interference bursts while avoiding unsafe throughput-only resource packing."
+  - intent_slug: "mobility-hotspot-stability"
+    intent_id: "intent:mobility_hotspot_stability"
+    intent_family: "mobility_robustness"
+    macro_weight: 1.0
+    intent_text: "Reduce ping-pong handovers and handover failures in dense high-mobility hotspots while maintaining cell-edge throughput."
+  - intent_slug: "stale-memory-avoidance"
+    intent_id: "intent:stale_memory_avoidance"
+    intent_family: "memory_negative_transfer"
+    macro_weight: 1.0
+    intent_text: "Adapt to a shifted traffic distribution while avoiding stale memory that would repeat obsolete steering or scheduling choices."
+
+xapp_pool_profiles:
+  full_portfolio:
+    allowed_xapp_categories:
+      - "mobility_predictor_xapp"
+      - "traffic_steering_xapp"
+      - "power_saving_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "ran_slicing_manager_xapp"
+      - "urllc_guard_xapp"
+      - "cell_sleep_xapp"
+  radio_guard_portfolio:
+    allowed_xapp_categories:
+      - "traffic_steering_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "ran_slicing_manager_xapp"
+      - "urllc_guard_xapp"
+  mobility_safe_portfolio:
+    allowed_xapp_categories:
+      - "mobility_predictor_xapp"
+      - "traffic_steering_xapp"
+      - "spectrum_optimizer_xapp"
+      - "latency_scheduler_xapp"
+      - "massive_mimo_beamformer_xapp"
+      - "urllc_guard_xapp"

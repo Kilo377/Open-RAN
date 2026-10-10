@@ -1,0 +1,54 @@
+ues:
+  - ue_id: "ue_0"
+    queue_bytes: 1000
+    throughput_mbps: 0.0
+    sinr_db: 10.0
+    radio_quality_db: 9.0
+    bler: 0.1
+    serving_beam_id: 0
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+
+    # Traffic arrival process (bytes arrive into queue each slot)
+    arrival_model: "on_off"
+    arrival_rate_bps: 6000000
+    burst_size_bytes: 2000
+    on_duration_slots: 50
+    off_duration_slots: 20
+    start_offset_slots: 0
+    max_queue_bytes: 200000
+
+  - ue_id: "ue_1"
+    queue_bytes: 2000
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 11.5
+    bler: 0.1
+    serving_beam_id: 0
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 10.0
+    priority: 3
+
+    arrival_model: "cbr"
+    arrival_rate_bps: 1000000
+    max_queue_bytes: 80000
+
+  - ue_id: "ue_2"
+    queue_bytes: 3000
+    throughput_mbps: 0.0
+    sinr_db: 12.0
+    radio_quality_db: 10.0
+    bler: 0.1
+    serving_beam_id: 0
+    slice_id: "mmtc"
+    traffic_type: "iot"
+    latency_budget_ms: 500.0
+    priority: 2
+
+    arrival_model: "poisson"
+    arrival_rate_bps: 500000
+    packet_size_bytes: 200
+    max_queue_bytes: 60000

@@ -1,0 +1,91 @@
+experiment_name: exp1_micro_chunk005_blockage_cumulative_fast_orch
+manifest_path: experiments/manifests/oran_paper_eval_manifest.csv
+base_output_dir: E:/oran_slot_sim_outputs/paper_eval
+reference_scenario_id: oran_medium_interference_edge
+intent_subset:
+- blockage-beam-recovery
+warmup_scenario_ids:
+- oran_medium_interference_edge
+transfer_scenario_ids:
+- oran_medium_hotspot_shift_blockage
+variants:
+- orchestran_like_resource_aware
+seeds:
+- 1
+matrix_defaults:
+  default_matrix_name: oran_paper_eval_suite
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: DEEPSEEK_API_KEY
+memory_transfer:
+  enabled: true
+  cumulative_memory_enabled: true
+  cumulative_memory_dir: E:/oran_slot_sim_outputs/paper_eval/exp1_micro_cumulative_memory_v1
+  shared_memory_scope: seed
+  warmup_repeats: 2
+  transfer_repeats: 1
+  persistent_variants: []
+  success_memory_size: 256
+  reflection_memory_size: 256
+  retrieval_top_k: 12
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: transfer
+  rationale: 'Cumulative-memory micro chunk: inherit prior reflective memory and test
+    blockage/beam recovery under shifted blockage.'
+global_sim_overrides:
+  measurement_sinr_window_slots: 8
+  measurement_bler_window_tbs: 20
+  measurement_throughput_granularity_slots: 10
+force_sim_overrides:
+  total_slots: 24
+  scheduler_max_ues_per_slot: 8
+global_ric_overrides:
+  xapp_interval_slots: 5
+  rapp_interval_slots: 10
+  orchestration_warmup_slots: 5
+intent_suite:
+- intent_slug: blockage-beam-recovery
+  intent_id: intent:blockage_beam_recovery
+  intent_family: blockage_mimo_recovery
+  macro_weight: 1.25
+  intent_text: 'Hard target: after temporary blockage or fading, improve SINR by 2
+    dB, increase throughput by 10%, and keep BLER below 0.14.'
+  hard_kpi_targets:
+  - kpi_name: sinr
+    objective: maximize
+    target_delta_absolute: 2.0
+    weight: 2.0
+    unit: dB
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 10
+    weight: 2.2
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.14
+    tolerance: 0.02
+    weight: 1.5
+    unit: ratio
+    priority: 4
+    hard: true
+xapp_pool_profiles:
+  full_portfolio:
+    allowed_xapp_categories:
+    - mobility_predictor_xapp
+    - traffic_steering_xapp
+    - power_saving_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - ran_slicing_manager_xapp
+    - urllc_guard_xapp
+    - cell_sleep_xapp

@@ -1,0 +1,103 @@
+experiment_name: "exp1_transfer_v16_hard_smoke"
+manifest_path: "experiments/manifests/oran_paper_eval_manifest.csv"
+base_output_dir: "E:/oran_slot_sim_outputs/paper_eval"
+reference_scenario_id: "oran_medium_dense_hotspot_high_mobility"
+
+intent_subset:
+  - "mobility-hotspot-stability"
+  - "interference-urllc-coexistence"
+  - "energy-latency-coverage"
+  - "stale-memory-avoidance"
+
+warmup_scenario_ids:
+  - "oran_medium_dense_hotspot_high_mobility"
+  - "oran_medium_urllc_burst"
+
+transfer_scenario_ids:
+  - "oran_medium_hotspot_shift_blockage"
+  - "oran_medium_high_mobility_interference"
+  - "oran_medium_low_load_energy_saving"
+
+variants:
+  - "fixed_plan"
+  - "no_memory_planner"
+  - "success_only_memory"
+  - "orchestran_like_resource_aware"
+  - "intent_hrl_like"
+  - "oreo_like_service_graph"
+  - "full_method"
+
+seeds:
+  - 1
+
+matrix_defaults:
+  default_matrix_name: "oran_paper_eval_suite"
+
+preflight:
+  require_api_key: false
+  llm_api_key_env_var: "DEEPSEEK_API_KEY"
+
+memory_transfer:
+  enabled: true
+  warmup_repeats: 2
+  transfer_repeats: 1
+  persistent_variants:
+    - "success_only_memory"
+    - "full_method"
+  success_memory_size: 48
+  reflection_memory_size: 48
+  retrieval_top_k: 10
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: "transfer"
+
+global_sim_overrides:
+  measurement_sinr_window_slots: 10
+  measurement_bler_window_tbs: 24
+  measurement_throughput_granularity_slots: 12
+
+global_ric_overrides:
+  xapp_interval_slots: 5
+  rapp_interval_slots: 10
+  orchestration_warmup_slots: 5
+
+intent_suite:
+  - intent_slug: "mobility-hotspot-stability"
+    intent_id: "intent:mobility_hotspot_stability"
+    intent_family: "mobility_robustness"
+    macro_weight: 1.35
+    intent_text: "Hard target: keep handover risk below 0.20, reduce queue backlog by 10%, and preserve throughput in dense high-mobility hotspots."
+    hard_kpi_targets:
+      - {kpi_name: "handover_risk", objective: "minimize", target_value: 0.20, tolerance: 0.03, weight: 2.8, unit: "risk", priority: 5, hard: true}
+      - {kpi_name: "total_queue_bytes", objective: "minimize", target_delta_percent: -10, weight: 1.5, unit: "bytes", priority: 4, hard: true}
+      - {kpi_name: "total_throughput_mbps", objective: "maximize", target_delta_percent: 0, weight: 1.0, unit: "mbps", priority: 3, hard: true}
+  - intent_slug: "interference-urllc-coexistence"
+    intent_id: "intent:interference_urllc_coexistence"
+    intent_family: "interference_latency_conflict"
+    macro_weight: 1.30
+    intent_text: "Hard target: raise SINR by 2 dB, reduce BLER by 20%, and keep throughput within 5% during interference bursts."
+    hard_kpi_targets:
+      - {kpi_name: "sinr", objective: "maximize", target_delta_absolute: 2.0, tolerance: 0.5, weight: 2.2, unit: "dB", priority: 5, hard: true}
+      - {kpi_name: "avg_bler", objective: "minimize", target_delta_percent: -20, tolerance: 0.015, weight: 2.3, unit: "ratio", priority: 5, hard: true}
+      - {kpi_name: "total_throughput_mbps", objective: "maximize", target_delta_percent: -5, weight: 1.0, unit: "mbps", priority: 3, hard: true}
+  - intent_slug: "energy-latency-coverage"
+    intent_id: "intent:energy_latency_coverage"
+    intent_family: "energy_safety_conflict"
+    macro_weight: 1.20
+    intent_text: "Hard target: reduce queue backlog by 15%, reduce power cost by 10%, and keep throughput within 5% during low-load energy saving."
+    hard_kpi_targets:
+      - {kpi_name: "total_queue_bytes", objective: "minimize", target_delta_percent: -15, weight: 2.0, unit: "bytes", priority: 5, hard: true}
+      - {kpi_name: "power_cost", objective: "minimize", target_delta_percent: -10, weight: 1.6, unit: "normalized", priority: 4, hard: true}
+      - {kpi_name: "total_throughput_mbps", objective: "maximize", target_delta_percent: -5, weight: 1.0, unit: "mbps", priority: 3, hard: true}
+  - intent_slug: "stale-memory-avoidance"
+    intent_id: "intent:stale_memory_avoidance"
+    intent_family: "memory_negative_transfer"
+    macro_weight: 1.35
+    intent_text: "Hard target: improve throughput by 8%, reduce backlog by 15%, and keep BLER below 0.12 after a shifted traffic distribution."
+    hard_kpi_targets:
+      - {kpi_name: "total_throughput_mbps", objective: "maximize", target_delta_percent: 8, weight: 2.0, unit: "mbps", priority: 5, hard: true}
+      - {kpi_name: "total_queue_bytes", objective: "minimize", target_delta_percent: -15, weight: 1.8, unit: "bytes", priority: 5, hard: true}
+      - {kpi_name: "avg_bler", objective: "minimize", target_value: 0.12, tolerance: 0.02, weight: 1.4, unit: "ratio", priority: 4, hard: true}

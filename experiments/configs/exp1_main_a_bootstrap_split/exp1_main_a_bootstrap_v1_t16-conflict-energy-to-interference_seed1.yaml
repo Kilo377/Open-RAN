@@ -1,0 +1,570 @@
+experiment_name: exp1_main_a_bootstrap_v1_t16-conflict-energy-to-interference_seed1
+manifest_path: experiments/manifests/oran_paper_eval_manifest.csv
+base_output_dir: E:/oran_slot_sim_outputs/paper_eval
+reference_scenario_id: oran_medium_nominal_mixed
+intent_subset:
+- conflicting-throughput-energy
+warmup_scenario_ids:
+- oran_medium_low_load_energy_saving
+- oran_medium_nominal_mixed
+transfer_scenario_ids:
+- oran_medium_interference_edge
+variants:
+- full_method
+- fixed_plan
+- no_memory_planner
+- success_only_memory
+- orchestran_like_resource_aware
+- oreo_like_service_graph
+- intent_hrl_like
+seeds:
+- 1
+matrix_defaults:
+  default_matrix_name: oran_paper_eval_suite
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: DEEPSEEK_API_KEY
+memory_transfer:
+  enabled: true
+  warmup_repeats: 2
+  transfer_repeats: 3
+  persistent_variants:
+  - success_only_memory
+  - full_method
+  success_memory_size: 256
+  reflection_memory_size: 256
+  retrieval_top_k: 12
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: transfer
+  rationale: Frozen small-task Exp.1-A protocol. Each task has local warm-up rollouts
+    and one held-out transfer scene; reflective methods can also continue from a frozen
+    bootstrap memory when explicitly initialized.
+  cumulative_memory_enabled: true
+  cumulative_memory_dir: E:/oran_slot_sim_outputs/paper_eval/exp1_main_a_bootstrap_memory_v1
+  shared_memory_scope: seed
+global_sim_overrides:
+  measurement_sinr_window_slots: 8
+  measurement_bler_window_tbs: 20
+  measurement_throughput_granularity_slots: 10
+global_ric_overrides:
+  xapp_interval_slots: 3
+  rapp_interval_slots: 9
+  orchestration_warmup_slots: 6
+  llm_timeout_s: 5.0
+  llm_startup_timeout_s: 5.0
+  llm_request_retries: 0
+  llm_max_output_tokens: 768
+intent_suite:
+- intent_slug: edge-throughput-latency
+  intent_id: intent:edge_throughput_latency
+  intent_family: throughput_latency_conflict
+  macro_weight: 1.0
+  intent_text: 'Hard target: increase cluster/cell-edge throughput by at least 10%
+    versus the current observed baseline while reducing queueing pressure by 10% and
+    keeping BLER below the protected reliability cap.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 10
+    weight: 2.4
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -10
+    weight: 1.5
+    unit: bytes
+    priority: 4
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.12
+    tolerance: 0.02
+    weight: 1.4
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: urllc-burst-reliability
+  intent_id: intent:urllc_burst_reliability
+  intent_family: latency_reliability_guard
+  macro_weight: 1.0
+  intent_text: 'Hard target: during sudden URLLC bursts, reduce BLER by at least 20%
+    and reduce queue backlog by at least 20% while preserving current aggregate throughput.'
+  hard_kpi_targets:
+  - kpi_name: avg_bler
+    objective: minimize
+    target_delta_percent: -20
+    tolerance: 0.015
+    weight: 2.6
+    unit: ratio
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -20
+    weight: 2.0
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 0
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: interference-edge-sinr
+  intent_id: intent:interference_edge_sinr
+  intent_family: interference_edge_users
+  macro_weight: 1.0
+  intent_text: 'Hard target: improve observed SINR by 2 dB under inter-cell interference,
+    reduce BLER by 15%, and avoid losing more than 5% aggregate throughput.'
+  hard_kpi_targets:
+  - kpi_name: sinr
+    objective: maximize
+    target_delta_absolute: 2.0
+    weight: 2.2
+    unit: dB
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_delta_percent: -15
+    tolerance: 0.02
+    weight: 1.8
+    unit: ratio
+    priority: 4
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: -5
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: mobility-hotspot-stability
+  intent_id: intent:mobility_hotspot_stability
+  intent_family: mobility_robustness
+  macro_weight: 1.0
+  intent_text: 'Hard target: in dense high-mobility hotspots, keep handover risk below
+    0.20, reduce queue backlog by 10%, and maintain at least current throughput.'
+  hard_kpi_targets:
+  - kpi_name: handover_risk
+    objective: minimize
+    target_value: 0.2
+    tolerance: 0.03
+    weight: 2.5
+    unit: score
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -10
+    weight: 1.5
+    unit: bytes
+    priority: 4
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 0
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: energy-latency-coverage
+  intent_id: intent:energy_latency_coverage
+  intent_family: energy_safety_conflict
+  macro_weight: 1.0
+  intent_text: 'Hard target: during low-load energy saving, reduce queue backlog by
+    15%, keep BLER below 0.10, and maintain at least 95% of current throughput.'
+  hard_kpi_targets:
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -15
+    weight: 2.0
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.1
+    tolerance: 0.02
+    weight: 1.8
+    unit: ratio
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: -5
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: mixed-slice-sla
+  intent_id: intent:mixed_slice_sla
+  intent_family: multi_slice_sla
+  macro_weight: 1.0
+  intent_text: 'Hard target: under mixed slices and shifting hotspots, increase aggregate
+    throughput by 8%, reduce queue backlog by 15%, and keep BLER below 0.12.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 2.0
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -15
+    weight: 1.8
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.12
+    tolerance: 0.02
+    weight: 1.5
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: premium-tenant-urllc-energy
+  intent_id: intent:premium_tenant_urllc_energy
+  intent_family: policy_priority_conflict
+  macro_weight: 1.0
+  intent_text: 'Hard target: for premium URLLC protection, reduce BLER by 20%, reduce
+    queue backlog by 20%, and maintain at least 95% of current throughput while opportunistically
+    saving energy.'
+  hard_kpi_targets:
+  - kpi_name: avg_bler
+    objective: minimize
+    target_delta_percent: -20
+    tolerance: 0.015
+    weight: 2.6
+    unit: ratio
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -20
+    weight: 2.2
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: -5
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: handover-edge-video
+  intent_id: intent:handover_edge_video
+  intent_family: mobility_embb_tradeoff
+  macro_weight: 1.0
+  intent_text: 'Hard target: for moving edge-video users, keep handover risk below
+    0.25 and increase aggregate throughput by 8% without increasing BLER above 0.14.'
+  hard_kpi_targets:
+  - kpi_name: handover_risk
+    objective: minimize
+    target_value: 0.25
+    tolerance: 0.03
+    weight: 2.0
+    unit: score
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 2.0
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.14
+    tolerance: 0.02
+    weight: 1.2
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: interference-urllc-coexistence
+  intent_id: intent:interference_urllc_coexistence
+  intent_family: interference_latency_conflict
+  macro_weight: 1.0
+  intent_text: 'Hard target: during inter-cell interference bursts, improve SINR by
+    1.5 dB, reduce BLER by 20%, and keep throughput within 95% of the current baseline.'
+  hard_kpi_targets:
+  - kpi_name: sinr
+    objective: maximize
+    target_delta_absolute: 1.5
+    weight: 2.0
+    unit: dB
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_delta_percent: -20
+    tolerance: 0.015
+    weight: 2.3
+    unit: ratio
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: -5
+    weight: 1.0
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: mmtc-reliability-low-load
+  intent_id: intent:mmtc_reliability_low_load
+  intent_family: mmtc_energy_reliability
+  macro_weight: 1.0
+  intent_text: 'Hard target: for mMTC reliability in low-load periods, keep BLER below
+    0.08 and reduce queue backlog by 15% while maintaining current throughput.'
+  hard_kpi_targets:
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.08
+    tolerance: 0.015
+    weight: 2.4
+    unit: ratio
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -15
+    weight: 1.8
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 0
+    weight: 0.8
+    unit: mbps
+    priority: 3
+    hard: true
+- intent_slug: hotspot-shift-slice-fairness
+  intent_id: intent:hotspot_shift_slice_fairness
+  intent_family: fairness_hotspot_shift
+  macro_weight: 1.0
+  intent_text: 'Hard target: after hotspot shift, reduce queue backlog by 20%, increase
+    throughput by 8%, and keep BLER below 0.12 across mixed slices.'
+  hard_kpi_targets:
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -20
+    weight: 2.2
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 1.8
+    unit: mbps
+    priority: 4
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.12
+    tolerance: 0.02
+    weight: 1.4
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: blockage-beam-recovery
+  intent_id: intent:blockage_beam_recovery
+  intent_family: blockage_mimo_recovery
+  macro_weight: 1.0
+  intent_text: 'Hard target: after temporary blockage or fading, improve SINR by 2
+    dB, increase throughput by 10%, and keep BLER below 0.14.'
+  hard_kpi_targets:
+  - kpi_name: sinr
+    objective: maximize
+    target_delta_absolute: 2.0
+    weight: 2.0
+    unit: dB
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 10
+    weight: 2.2
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.14
+    tolerance: 0.02
+    weight: 1.5
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: stale-memory-avoidance
+  intent_id: intent:stale_memory_avoidance
+  intent_family: memory_negative_transfer
+  macro_weight: 1.0
+  intent_text: 'Hard target: after traffic distribution shift, improve throughput
+    by 8%, reduce queue backlog by 15%, and avoid stale choices that raise BLER above
+    0.13.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 2.0
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -15
+    weight: 1.8
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.13
+    tolerance: 0.02
+    weight: 1.5
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: conflicting-throughput-energy
+  intent_id: intent:conflicting_throughput_energy
+  intent_family: throughput_energy_soft_conflict
+  macro_weight: 1.0
+  intent_text: 'Hard target: increase aggregate throughput by 10% during moderate
+    load while keeping queue backlog no worse than current and BLER below 0.14.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 10
+    weight: 2.4
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: 0
+    weight: 1.2
+    unit: bytes
+    priority: 4
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.14
+    tolerance: 0.02
+    weight: 1.4
+    unit: ratio
+    priority: 4
+    hard: true
+- intent_slug: multi-cell-load-balance
+  intent_id: intent:multi_cell_load_balance
+  intent_family: load_balance_stability
+  macro_weight: 1.0
+  intent_text: 'Hard target: balance load by reducing total queue backlog by 15%,
+    maintain current throughput, and keep handover risk below 0.25.'
+  hard_kpi_targets:
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -15
+    weight: 2.0
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 0
+    weight: 1.2
+    unit: mbps
+    priority: 4
+    hard: true
+  - kpi_name: handover_risk
+    objective: minimize
+    target_value: 0.25
+    tolerance: 0.03
+    weight: 1.6
+    unit: score
+    priority: 4
+    hard: true
+- intent_slug: audit-safe-repair
+  intent_id: intent:audit_safe_repair
+  intent_family: schema_repair_audit
+  macro_weight: 1.0
+  intent_text: 'Hard target: generate an auditable safe plan that improves throughput
+    by 8%, reduces queue backlog by 10%, and keeps BLER below 0.12 without unsupported
+    xApps or unsafe parameters.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 2.0
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: total_queue_bytes
+    objective: minimize
+    target_delta_percent: -10
+    weight: 1.8
+    unit: bytes
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.12
+    tolerance: 0.02
+    weight: 1.8
+    unit: ratio
+    priority: 5
+    hard: true
+xapp_pool_profiles:
+  full_portfolio:
+    allowed_xapp_categories:
+    - mobility_predictor_xapp
+    - traffic_steering_xapp
+    - power_saving_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - ran_slicing_manager_xapp
+    - urllc_guard_xapp
+    - cell_sleep_xapp
+  radio_guard_portfolio:
+    allowed_xapp_categories:
+    - traffic_steering_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - ran_slicing_manager_xapp
+    - urllc_guard_xapp
+  mobility_safe_portfolio:
+    allowed_xapp_categories:
+    - mobility_predictor_xapp
+    - traffic_steering_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - urllc_guard_xapp
+force_sim_overrides:
+  total_slots: 120
+  scheduler_max_ues_per_slot: 8
+experiment1_protocol:
+  plan_path: D:\研究生\oran_slot_sim\experiments\configs\exp1_main_a_bootstrap_task_plan.yaml
+  protocol_name: exp1_main_a_bootstrap_v1
+  task_id: t16_conflict_energy_to_interference
+  task_label: conflict/interference
+  seed: 1
+  bootstrap_memory_source: E:/oran_slot_sim_outputs/paper_eval/exp1_micro_v17_inherited_memory
+  headline_role: exp1_a_main
+  notes: Soft throughput-energy conflict under radio interference.

@@ -1,0 +1,8 @@
+# Optional override for running Sionna/TensorFlow on the first visible GPU.
+# Merge this over configs/phy.yaml when the local TensorFlow installation has
+# CUDA support and `tf.config.list_physical_devices("GPU")` returns a GPU.
+sionna_phy:
+  device: "gpu"
+  gpu_strict: true
+  gpu_memory_growth: true
+  gpu_memory_limit_mb:

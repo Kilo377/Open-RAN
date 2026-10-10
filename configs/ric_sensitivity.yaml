@@ -1,0 +1,60 @@
+xapp_interval_slots: 5
+rapp_interval_slots: 10
+
+xapps:
+  - type: "mobility_predictor_xapp"
+    name: "mobility_predictor_xapp"
+    priority: 18
+    risk_threshold: 0.55
+
+  - type: "traffic_steering_xapp"
+    name: "traffic_steering_xapp"
+    priority: 19
+    load_threshold: 0.68
+    edge_sinr_threshold_db: 5.0
+
+  - type: "power_saving_xapp"
+    name: "power_saving_xapp"
+    priority: 8
+    low_load_threshold: 0.35
+    queue_threshold_bytes: 3000
+    min_power_cap_dbm: 24.0
+
+  - type: "spectrum_optimizer_xapp"
+    name: "spectrum_optimizer_xapp"
+    priority: 14
+    utilization_threshold: 0.65
+    interference_threshold_db: 2.5
+
+  - type: "latency_scheduler_xapp"
+    name: "latency_scheduler_xapp"
+    priority: 16
+    queue_threshold_bytes: 4000
+
+  - type: "massive_mimo_beamformer_xapp"
+    name: "massive_mimo_beamformer_xapp"
+    priority: 17
+    beam_risk_threshold: 0.50
+    coverage_sinr_threshold_db: 7.0
+
+  - type: "ran_slicing_manager_xapp"
+    name: "ran_slicing_manager_xapp"
+    priority: 12
+    slice_dominance_threshold: 0.45
+
+  - type: "urllc_guard_xapp"
+    name: "urllc_guard_xapp"
+    priority: 25
+    queue_threshold_bytes: 1200
+    bler_threshold: 0.12
+    latency_budget_threshold_ms: 20.0
+
+rapps:
+  - type: "codebook_rapp"
+    name: "codebook_rapp"
+    bler_threshold: 0.12
+    throughput_threshold_mbps: 7.0
+
+  - type: "slicing_rapp"
+    name: "slicing_rapp"
+    queue_threshold_bytes: 5000

@@ -1,0 +1,8 @@
+outputs/
+channel_cache/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv*/
+.env
+.DS_Store

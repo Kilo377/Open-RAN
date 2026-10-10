@@ -1,0 +1,14 @@
+name: oran_sionna
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - llvmdev
+  - pip:
+      - pyyaml>=6.0
+      - numpy==1.26.4
+      - openai>=1.30
+      - tensorflow==2.15.1
+      - sionna==1.2.2

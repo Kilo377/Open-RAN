@@ -1,0 +1,100 @@
+experiment_name: exp1_micro_v17_c017_auditblock_nomem
+manifest_path: experiments/manifests/oran_paper_eval_manifest.csv
+base_output_dir: E:/oran_slot_sim_outputs/paper_eval
+reference_scenario_id: oran_medium_nominal_mixed
+intent_subset:
+- audit-safe-repair
+warmup_scenario_ids:
+- oran_medium_nominal_mixed
+- oran_medium_interference_edge
+transfer_scenario_ids:
+- oran_medium_hotspot_shift_blockage
+variants:
+- no_memory_planner
+seeds:
+- 1
+matrix_defaults:
+  default_matrix_name: oran_paper_eval_suite
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: DEEPSEEK_API_KEY
+memory_transfer:
+  enabled: true
+  cumulative_memory_enabled: true
+  cumulative_memory_dir: E:/oran_slot_sim_outputs/paper_eval/exp1_micro_v17_inherited_memory
+  shared_memory_scope: seed
+  warmup_repeats: 2
+  transfer_repeats: 4
+  persistent_variants: []
+  success_memory_size: 256
+  reflection_memory_size: 256
+  retrieval_top_k: 12
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: transfer
+  rationale: 'Recovery-focused Experiment 1 chunk: inherit cumulative memory and stress
+    audit-safe repair under hotspot shift and temporary blockage. The transfer rewards
+    schema-grounded, typed repair that preserves beam/SINR recovery and URLLC reliability
+    instead of reusing stale nominal/interference choices.'
+global_sim_overrides:
+  measurement_sinr_window_slots: 8
+  measurement_bler_window_tbs: 20
+  measurement_throughput_granularity_slots: 10
+force_sim_overrides:
+  total_slots: 36
+  scheduler_max_ues_per_slot: 8
+global_ric_overrides:
+  xapp_interval_slots: 3
+  rapp_interval_slots: 9
+  orchestration_warmup_slots: 6
+  llm_timeout_s: 5.0
+  llm_startup_timeout_s: 5.0
+  llm_request_retries: 0
+  llm_max_output_tokens: 768
+intent_suite:
+- intent_slug: audit-safe-repair
+  intent_id: intent:audit_safe_repair
+  intent_family: schema_repair_audit
+  macro_weight: 1.55
+  intent_text: 'Hard target: generate an auditable multi-xApp repair for a hotspot
+    shift with temporary blockage. Recover beam/SINR and throughput while keeping
+    BLER below 0.12; do not use unsupported xApps, unsafe parameter ranges, or actuator-conflicting
+    plans.'
+  hard_kpi_targets:
+  - kpi_name: total_throughput_mbps
+    objective: maximize
+    target_delta_percent: 8
+    weight: 1.8
+    unit: mbps
+    priority: 5
+    hard: true
+  - kpi_name: avg_sinr_db
+    objective: maximize
+    target_delta_percent: 10
+    weight: 1.7
+    unit: dB
+    priority: 5
+    hard: true
+  - kpi_name: avg_bler
+    objective: minimize
+    target_value: 0.12
+    tolerance: 0.015
+    weight: 2.2
+    unit: ratio
+    priority: 5
+    hard: true
+xapp_pool_profiles:
+  full_portfolio:
+    allowed_xapp_categories:
+    - mobility_predictor_xapp
+    - traffic_steering_xapp
+    - power_saving_xapp
+    - spectrum_optimizer_xapp
+    - latency_scheduler_xapp
+    - massive_mimo_beamformer_xapp
+    - ran_slicing_manager_xapp
+    - urllc_guard_xapp
+    - cell_sleep_xapp

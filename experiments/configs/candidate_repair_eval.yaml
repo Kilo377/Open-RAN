@@ -1,0 +1,22 @@
+run_name: experiment2_candidate_repair_contract_v1
+output_subdir: candidate_repair
+
+repair_modes:
+  - schema_only
+  - repair_wo_memory
+  - repair_wo_l3
+  - full_repair
+  - orchestran_like
+  - oreo_like
+  - pacifista_like
+  - conservative_fallback
+
+candidate_pool:
+  use_exp2_pool: true
+  candidates_per_context: 20
+  seed: 20260517
+
+projector:
+  max_selected_xapps: 4
+  max_cpu_cost: 4.6
+  max_mem_cost: 4.2

@@ -1,0 +1,13 @@
+run_name: conflict_taxonomy_eval_v1
+output_subdir: conflict_taxonomy
+
+conflict_modes:
+  - no_conflict_check
+  - binary_conflict_flag
+  - pacifista_like_profiler
+  - typed_taxonomy
+
+projector:
+  max_selected_xapps: 4
+  max_cpu_cost: 4.6
+  max_mem_cost: 4.2

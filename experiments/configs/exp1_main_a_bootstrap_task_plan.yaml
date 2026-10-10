@@ -1,0 +1,171 @@
+protocol_name: "exp1_main_a_bootstrap_v1"
+base_config: "experiment1_cross_scenario_transfer.yaml"
+base_output_dir: "E:/oran_slot_sim_outputs/paper_eval"
+experiment_prefix: "exp1_main_a_bootstrap_v1"
+reference_scenario_id: "oran_medium_nominal_mixed"
+bootstrap_memory_source: "E:/oran_slot_sim_outputs/paper_eval/exp1_micro_v17_inherited_memory"
+
+seeds:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+
+variants:
+  - "full_method"
+  - "fixed_plan"
+  - "no_memory_planner"
+  - "success_only_memory"
+  - "orchestran_like_resource_aware"
+  - "oreo_like_service_graph"
+  - "intent_hrl_like"
+
+memory_transfer:
+  enabled: true
+  cumulative_memory_enabled: true
+  cumulative_memory_dir: "E:/oran_slot_sim_outputs/paper_eval/exp1_main_a_bootstrap_memory_v1"
+  shared_memory_scope: "seed"
+  warmup_repeats: 2
+  transfer_repeats: 3
+  persistent_variants:
+    - "success_only_memory"
+    - "full_method"
+  success_memory_size: 256
+  reflection_memory_size: 256
+  retrieval_top_k: 12
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.08
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: "transfer"
+  rationale: "Frozen small-task Exp.1-A protocol. Each task has local warm-up rollouts and one held-out transfer scene; reflective methods can also continue from a frozen bootstrap memory when explicitly initialized."
+
+force_sim_overrides:
+  total_slots: 120
+  scheduler_max_ues_per_slot: 8
+
+global_sim_overrides:
+  measurement_sinr_window_slots: 8
+  measurement_bler_window_tbs: 20
+  measurement_throughput_granularity_slots: 10
+
+global_ric_overrides:
+  xapp_interval_slots: 3
+  rapp_interval_slots: 9
+  orchestration_warmup_slots: 6
+  llm_timeout_s: 5.0
+  llm_startup_timeout_s: 5.0
+  llm_request_retries: 0
+  llm_max_output_tokens: 768
+
+tasks:
+  - task_id: "t01_edge_to_interference"
+    label: "edge/interference"
+    intent_slug: "edge-throughput-latency"
+    warmup_scenario_ids: ["oran_medium_nominal_mixed", "oran_medium_urllc_burst"]
+    transfer_scenario_ids: ["oran_medium_interference_edge"]
+    notes: "Throughput-latency transfer into an edge interference scene."
+  - task_id: "t02_edge_to_blockage"
+    label: "edge/blockage"
+    intent_slug: "edge-throughput-latency"
+    warmup_scenario_ids: ["oran_small_debug_mixed", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Second edge-transfer task with hotspot shift and blockage."
+  - task_id: "t03_urllc_to_compound"
+    label: "urllc/compound"
+    intent_slug: "urllc-burst-reliability"
+    warmup_scenario_ids: ["oran_medium_urllc_burst", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_high_mobility_interference"]
+    notes: "Reliability transfer into compound mobility and interference."
+  - task_id: "t04_interference_to_blockage"
+    label: "sinr/blockage"
+    intent_slug: "interference-edge-sinr"
+    warmup_scenario_ids: ["oran_medium_interference_edge", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Interference-aware intent transferred across blockage."
+  - task_id: "t05_mobility_to_blockage"
+    label: "mobility/blockage"
+    intent_slug: "mobility-hotspot-stability"
+    warmup_scenario_ids: ["oran_medium_dense_hotspot_high_mobility", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Mobility stability transfer where stale steering is risky."
+  - task_id: "t06_mobility_to_scalability"
+    label: "mobility/scale"
+    intent_slug: "mobility-hotspot-stability"
+    warmup_scenario_ids: ["oran_medium_dense_hotspot_high_mobility", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_large_19cell_scalability"]
+    notes: "Mobility intent evaluated on the large cluster transfer scene."
+  - task_id: "t07_energy_to_compound"
+    label: "energy/compound"
+    intent_slug: "energy-latency-coverage"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_high_mobility_interference"]
+    notes: "Energy bias must not survive an unsafe compound shift."
+  - task_id: "t08_mixed_slice_to_interference"
+    label: "slice/interference"
+    intent_slug: "mixed-slice-sla"
+    warmup_scenario_ids: ["oran_medium_nominal_mixed", "oran_medium_urllc_burst"]
+    transfer_scenario_ids: ["oran_medium_interference_edge"]
+    notes: "Mixed-slice transfer to interference pressure."
+  - task_id: "t09_premium_to_blockage"
+    label: "premium/blockage"
+    intent_slug: "premium-tenant-urllc-energy"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_urllc_burst"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Policy-priority intent transferred to a blocked hotspot."
+  - task_id: "t10_handover_video_to_interference"
+    label: "handover/interference"
+    intent_slug: "handover-edge-video"
+    warmup_scenario_ids: ["oran_medium_dense_hotspot_high_mobility", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_interference_edge"]
+    notes: "Video mobility task with interference-driven steering risk."
+  - task_id: "t11_coexistence_to_compound"
+    label: "coexistence/compound"
+    intent_slug: "interference-urllc-coexistence"
+    warmup_scenario_ids: ["oran_medium_interference_edge", "oran_medium_urllc_burst"]
+    transfer_scenario_ids: ["oran_medium_high_mobility_interference"]
+    notes: "Coexistence intent under compound high-risk transfer."
+  - task_id: "t12_mmtc_to_scalability"
+    label: "mmtc/scale"
+    intent_slug: "mmtc-reliability-low-load"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_large_19cell_scalability"]
+    notes: "Low-load reliability transfer into large-cluster pressure."
+  - task_id: "t13_fairness_to_blockage"
+    label: "fairness/blockage"
+    intent_slug: "hotspot-shift-slice-fairness"
+    warmup_scenario_ids: ["oran_medium_nominal_mixed", "oran_medium_urllc_burst"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Hotspot fairness transfer with blockage and slice pressure."
+  - task_id: "t14_blockage_to_compound"
+    label: "beam/compound"
+    intent_slug: "blockage-beam-recovery"
+    warmup_scenario_ids: ["oran_medium_nominal_mixed", "oran_medium_interference_edge"]
+    transfer_scenario_ids: ["oran_medium_high_mobility_interference"]
+    notes: "Beam recovery intent under compound transfer risk."
+  - task_id: "t15_stale_to_blockage"
+    label: "stale/blockage"
+    intent_slug: "stale-memory-avoidance"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_hotspot_shift_blockage"]
+    notes: "Direct negative-transfer task for failed-case memory."
+  - task_id: "t16_conflict_energy_to_interference"
+    label: "conflict/interference"
+    intent_slug: "conflicting-throughput-energy"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_medium_interference_edge"]
+    notes: "Soft throughput-energy conflict under radio interference."
+  - task_id: "t17_load_balance_to_scalability"
+    label: "load-balance/scale"
+    intent_slug: "multi-cell-load-balance"
+    warmup_scenario_ids: ["oran_medium_low_load_energy_saving", "oran_medium_nominal_mixed"]
+    transfer_scenario_ids: ["oran_large_19cell_scalability"]
+    notes: "Load-balance stability at larger cluster scale."
+  - task_id: "t18_audit_to_compound"
+    label: "audit/compound"
+    intent_slug: "audit-safe-repair"
+    warmup_scenario_ids: ["oran_medium_nominal_mixed", "oran_medium_interference_edge"]
+    transfer_scenario_ids: ["oran_medium_high_mobility_interference"]
+    notes: "Audit-safe repair task under compound stress."

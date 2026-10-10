@@ -1,0 +1,403 @@
+ues:
+  # Hotspot mmWave small cell
+  - ue_id: "ue_hotspot_video_0"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 14000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.35
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    x_m: 112.0
+    y_m: 78.0
+
+  - ue_id: "ue_hotspot_video_1"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 12000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.36
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    x_m: 128.0
+    y_m: 92.0
+
+  - ue_id: "ue_hotspot_data_0"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "broadband"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 10000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.37
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 138.0
+    y_m: 98.0
+
+  - ue_id: "ue_hotspot_video_2"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 13000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.38
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    x_m: 118.0
+    y_m: 104.0
+
+  - ue_id: "ue_hotspot_phone_0"
+    queue_bytes: 380
+    throughput_mbps: 0.0
+    sinr_db: 10.5
+    radio_quality_db: 10.0
+    bler: 0.08
+    slice_id: "voice"
+    traffic_type: "phone"
+    latency_budget_ms: 50.0
+    priority: 2
+    arrival_model: "cbr"
+    arrival_rate_bps: 280000.0
+    max_queue_bytes: 80000
+    x_m: 132.0
+    y_m: 72.0
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+
+  - ue_id: "ue_hotspot_urllc_0"
+    queue_bytes: 600
+    throughput_mbps: 0.0
+    sinr_db: 12.0
+    radio_quality_db: 12.0
+    bler: 0.08
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 10.0
+    priority: 3
+    arrival_model: "cbr"
+    arrival_rate_bps: 1400000.0
+    max_queue_bytes: 100000
+    radius_fraction: 0.34
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 144.0
+    y_m: 84.0
+
+  - ue_id: "ue_hotspot_iot_0"
+    queue_bytes: 300
+    throughput_mbps: 0.0
+    sinr_db: 9.0
+    radio_quality_db: 8.5
+    bler: 0.12
+    slice_id: "mmtc"
+    traffic_type: "iot"
+    latency_budget_ms: 500.0
+    priority: 2
+    arrival_model: "poisson"
+    arrival_rate_bps: 100000.0
+    packet_size_bytes: 200
+    max_queue_bytes: 50000
+    radius_fraction: 0.39
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    num_rx_ant: 1
+    x_m: 108.0
+    y_m: 96.0
+
+  - ue_id: "ue_hotspot_video_3"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 15000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.40
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 150.0
+    y_m: 106.0
+
+  # Macro coverage region
+  - ue_id: "ue_macro_video_0"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 6000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.18
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 25.0
+    y_m: 32.0
+
+  - ue_id: "ue_macro_phone_0"
+    queue_bytes: 380
+    throughput_mbps: 0.0
+    sinr_db: 10.5
+    radio_quality_db: 10.0
+    bler: 0.08
+    slice_id: "voice"
+    traffic_type: "phone"
+    latency_budget_ms: 50.0
+    priority: 2
+    arrival_model: "cbr"
+    arrival_rate_bps: 240000.0
+    max_queue_bytes: 80000
+    x_m: -36.0
+    y_m: 44.0
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+
+  - ue_id: "ue_macro_urllc_0"
+    queue_bytes: 600
+    throughput_mbps: 0.0
+    sinr_db: 12.0
+    radio_quality_db: 12.0
+    bler: 0.08
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 10.0
+    priority: 3
+    arrival_model: "cbr"
+    arrival_rate_bps: 1100000.0
+    max_queue_bytes: 100000
+    radius_fraction: 0.22
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: -64.0
+    y_m: 24.0
+
+  - ue_id: "ue_macro_iot_0"
+    queue_bytes: 300
+    throughput_mbps: 0.0
+    sinr_db: 9.0
+    radio_quality_db: 8.5
+    bler: 0.12
+    slice_id: "mmtc"
+    traffic_type: "iot"
+    latency_budget_ms: 500.0
+    priority: 2
+    arrival_model: "poisson"
+    arrival_rate_bps: 80000.0
+    packet_size_bytes: 200
+    max_queue_bytes: 50000
+    radius_fraction: 0.24
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    num_rx_ant: 1
+    x_m: 46.0
+    y_m: -38.0
+
+  - ue_id: "ue_macro_data_0"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "data"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 5000000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.30
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: -82.0
+    y_m: -18.0
+
+  # Edge mmWave small cell
+  - ue_id: "ue_edge_video_0"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 5500000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.72
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 308.0
+    y_m: -58.0
+
+  - ue_id: "ue_edge_phone_0"
+    queue_bytes: 380
+    throughput_mbps: 0.0
+    sinr_db: 10.5
+    radio_quality_db: 10.0
+    bler: 0.08
+    slice_id: "voice"
+    traffic_type: "phone"
+    latency_budget_ms: 40.0
+    priority: 2
+    arrival_model: "cbr"
+    arrival_rate_bps: 220000.0
+    max_queue_bytes: 80000
+    x_m: 348.0
+    y_m: -12.0
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+
+  - ue_id: "ue_edge_urllc_0"
+    queue_bytes: 600
+    throughput_mbps: 0.0
+    sinr_db: 12.0
+    radio_quality_db: 12.0
+    bler: 0.08
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 10.0
+    priority: 3
+    arrival_model: "cbr"
+    arrival_rate_bps: 1000000.0
+    max_queue_bytes: 100000
+    radius_fraction: 0.78
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: false
+    x_m: 332.0
+    y_m: 8.0
+
+  - ue_id: "ue_edge_iot_0"
+    queue_bytes: 300
+    throughput_mbps: 0.0
+    sinr_db: 9.0
+    radio_quality_db: 8.5
+    bler: 0.12
+    slice_id: "mmtc"
+    traffic_type: "iot"
+    latency_budget_ms: 500.0
+    priority: 2
+    arrival_model: "poisson"
+    arrival_rate_bps: 100000.0
+    packet_size_bytes: 200
+    max_queue_bytes: 50000
+    radius_fraction: 0.82
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    num_rx_ant: 1
+    x_m: 366.0
+    y_m: -68.0
+
+  - ue_id: "ue_edge_video_1"
+    queue_bytes: 1200
+    throughput_mbps: 0.0
+    sinr_db: 11.0
+    radio_quality_db: 10.5
+    bler: 0.1
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 100.0
+    priority: 1
+    arrival_model: "on_off"
+    arrival_rate_bps: 6200000.0
+    burst_size_bytes: 2200
+    on_duration_slots: 40
+    off_duration_slots: 16
+    start_offset_slots: 0
+    max_queue_bytes: 240000
+    radius_fraction: 0.88
+    velocity_mps: 0.0
+    heading_deg: 0.0
+    is_indoor: true
+    los_state: "auto"
+    x_m: 388.0
+    y_m: -22.0

@@ -1,0 +1,48 @@
+experiment_name: "experiment1_cross_scenario_transfer_targeted_7methods_v2"
+manifest_path: "experiments/manifests/oran_paper_eval_manifest.csv"
+base_output_dir: "E:/oran_slot_sim_outputs/paper_eval"
+reference_scenario_id: "oran_medium_dense_hotspot_high_mobility"
+
+warmup_scenario_ids:
+  - "oran_medium_dense_hotspot_high_mobility"
+
+transfer_scenario_ids:
+  - "oran_medium_hotspot_shift_blockage"
+  - "oran_medium_interference_edge"
+
+variants:
+  - "full_method"
+
+seeds:
+  - 1
+
+matrix_defaults:
+  default_matrix_name: "oran_paper_eval_suite"
+
+preflight:
+  require_api_key: true
+  llm_api_key_env_var: "DEEPSEEK_API_KEY"
+
+memory_transfer:
+  enabled: true
+  persistent_variants:
+    - "success_only_memory"
+    - "full_method"
+  success_memory_size: 64
+  reflection_memory_size: 64
+  retrieval_top_k: 8
+  failure_gap_threshold: 0.08
+  convergence_gap_threshold: 0.10
+  success_gap_threshold: 0.08
+  gap_patience_rounds: 1
+  stagnation_patience_rounds: 1
+  headline_split: "transfer"
+  rationale: "Single-variant parallel shard for targeted seven-method comparison."
+
+intent_suite:
+  - intent_slug: "mobility-hotspot-stability"
+    intent_id: "intent:mobility_hotspot_stability"
+    intent_family: "mobility_robustness"
+    macro_weight: 1.0
+    intent_text: "Reduce ping-pong handovers and handover failures in dense high-mobility hotspots while maintaining cell-edge throughput."
+

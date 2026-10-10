@@ -1,0 +1,157 @@
+ues:
+  - ue_id: "ue_0"
+    queue_bytes: 3000
+    throughput_mbps: 0.0
+    sinr_db: 4.0
+    radio_quality_db: 3.5
+    bler: 0.2
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 8.0
+    priority: 5
+    radius_fraction: 0.82
+    azimuth_deg: 25.0
+    velocity_mps: 12.0
+    heading_deg: 15.0
+    arrival_model: "cbr"
+    arrival_rate_bps: 3000000
+    max_queue_bytes: 140000
+
+  - ue_id: "ue_1"
+    queue_bytes: 4500
+    throughput_mbps: 0.0
+    sinr_db: 6.0
+    radio_quality_db: 5.5
+    bler: 0.18
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 90.0
+    priority: 2
+    radius_fraction: 0.92
+    azimuth_deg: 80.0
+    velocity_mps: 8.0
+    heading_deg: 100.0
+    arrival_model: "on_off"
+    arrival_rate_bps: 14000000
+    burst_size_bytes: 4800
+    on_duration_slots: 40
+    off_duration_slots: 10
+    max_queue_bytes: 260000
+
+  - ue_id: "ue_2"
+    queue_bytes: 2200
+    throughput_mbps: 0.0
+    sinr_db: 5.0
+    radio_quality_db: 4.5
+    bler: 0.2
+    slice_id: "urllc"
+    traffic_type: "phone"
+    latency_budget_ms: 15.0
+    priority: 4
+    radius_fraction: 0.88
+    azimuth_deg: 145.0
+    velocity_mps: 10.0
+    heading_deg: 135.0
+    arrival_model: "cbr"
+    arrival_rate_bps: 2200000
+    max_queue_bytes: 120000
+
+  - ue_id: "ue_3"
+    queue_bytes: 5200
+    throughput_mbps: 0.0
+    sinr_db: 7.0
+    radio_quality_db: 6.5
+    bler: 0.16
+    slice_id: "embb"
+    traffic_type: "broadband"
+    latency_budget_ms: 120.0
+    priority: 2
+    radius_fraction: 0.72
+    azimuth_deg: 210.0
+    velocity_mps: 4.0
+    heading_deg: 190.0
+    arrival_model: "on_off"
+    arrival_rate_bps: 12000000
+    burst_size_bytes: 4200
+    on_duration_slots: 60
+    off_duration_slots: 12
+    max_queue_bytes: 260000
+
+  - ue_id: "ue_4"
+    queue_bytes: 1600
+    throughput_mbps: 0.0
+    sinr_db: 9.0
+    radio_quality_db: 8.5
+    bler: 0.12
+    slice_id: "mmtc"
+    traffic_type: "iot"
+    latency_budget_ms: 300.0
+    priority: 1
+    x_m: 118.0
+    y_m: 88.0
+    velocity_mps: 1.0
+    heading_deg: 15.0
+    arrival_model: "poisson"
+    arrival_rate_bps: 1600000
+    packet_size_bytes: 260
+    max_queue_bytes: 100000
+
+  - ue_id: "ue_5"
+    queue_bytes: 2800
+    throughput_mbps: 0.0
+    sinr_db: 6.5
+    radio_quality_db: 6.0
+    bler: 0.16
+    slice_id: "embb"
+    traffic_type: "video"
+    latency_budget_ms: 80.0
+    priority: 2
+    x_m: 148.0
+    y_m: 110.0
+    velocity_mps: 3.5
+    heading_deg: 55.0
+    arrival_model: "on_off"
+    arrival_rate_bps: 9000000
+    burst_size_bytes: 3000
+    on_duration_slots: 30
+    off_duration_slots: 8
+    max_queue_bytes: 180000
+
+  - ue_id: "ue_6"
+    queue_bytes: 1900
+    throughput_mbps: 0.0
+    sinr_db: 5.5
+    radio_quality_db: 5.0
+    bler: 0.18
+    slice_id: "urllc"
+    traffic_type: "control"
+    latency_budget_ms: 12.0
+    priority: 4
+    x_m: 320.0
+    y_m: -20.0
+    velocity_mps: 9.0
+    heading_deg: 330.0
+    arrival_model: "cbr"
+    arrival_rate_bps: 2400000
+    max_queue_bytes: 120000
+
+  - ue_id: "ue_7"
+    queue_bytes: 3400
+    throughput_mbps: 0.0
+    sinr_db: 7.5
+    radio_quality_db: 7.0
+    bler: 0.14
+    slice_id: "embb"
+    traffic_type: "broadband"
+    latency_budget_ms: 110.0
+    priority: 2
+    x_m: 360.0
+    y_m: -48.0
+    velocity_mps: 6.0
+    heading_deg: 350.0
+    arrival_model: "on_off"
+    arrival_rate_bps: 10000000
+    burst_size_bytes: 3600
+    on_duration_slots: 35
+    off_duration_slots: 10
+    max_queue_bytes: 220000
