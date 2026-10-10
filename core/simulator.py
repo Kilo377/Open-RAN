@@ -182,6 +182,15 @@ class Simulator:
         self.result_writer = ResultWriter(output_dir=output_dir)
         self.slot_records = []
         self.state = self._build_initial_state()
+        self._rt_sys_mode = bool(getattr(self.phy_adapter, "cluster_execution", False))
+        if self._rt_sys_mode:
+            from phy.rt_sys.mobility import RtMobilityManager
+            self.mobility_manager = RtMobilityManager(self.phy_adapter,
+                slot_duration_ms=config.slot_duration_ms, rng_seed=config.rng_seed,
+                delay_slots=config.measurement_queue_delay_slots,
+                noise_std_db=config.measurement_sinr_noise_std_db)
+            self.phy_adapter.bind_state(self.state)
+
 
         self._rng = random.Random(int(getattr(config, "rng_seed", 1)))
         self._obs_delay_slots = int(getattr(config, "obs_delay_slots", 0))
@@ -1388,13 +1397,19 @@ class Simulator:
         for runtime_state, scoped_state in scoped_states:
             phy_inputs_by_runtime.append((runtime_state, scoped_state, self._build_phy_input(scoped_state)))
 
-        self._annotate_phy_inputs_with_inter_cell_interference(
-            state=state,
-            phy_inputs=[item[2] for item in phy_inputs_by_runtime],
-        )
+        cluster_results = None
+        if self._rt_sys_mode:
+            self.phy_adapter.current_snapshot.metadata["sleep_modes"] = {
+                r.cell_id: str(r.cell.cell_sleep_mode) for r, _, _ in phy_inputs_by_runtime}
+            cluster_results = self.phy_adapter.run_cluster_slot(
+                [item[2] for item in phy_inputs_by_runtime], self.phy_adapter.current_snapshot)
+        else:
+            self._annotate_phy_inputs_with_inter_cell_interference(
+                state=state, phy_inputs=[item[2] for item in phy_inputs_by_runtime])
 
         for runtime_state, scoped_state, phy_input in phy_inputs_by_runtime:
-            phy_result = self.phy_adapter.run_slot(phy_input)
+            phy_result = (cluster_results[runtime_state.cell_id] if cluster_results is not None
+                          else self.phy_adapter.run_slot(phy_input))
             shadow_phy_result = (
                 self.shadow_phy_adapter.run_slot(phy_input)
                 if self.shadow_phy_adapter is not None
@@ -3022,6 +3037,8 @@ class Simulator:
 
         # Traffic arrival: bytes arrive into UE queues before control/scheduling.
         arrivals_by_ue, arrivals_by_logical_channel = self.traffic_engine.apply_arrivals(self.state)
+        if self._rt_sys_mode:
+            self.phy_adapter.bind_state(self.state)
         self.mobility_manager.update(self.state)
         self._refresh_managed_cell_runtime_views(self.state)
         self.state_updater.refresh_logical_channel_groups(self.state)
@@ -3111,6 +3128,10 @@ class Simulator:
         )
 
         # Store issued control-plane decision for this slot (debug/analysis).
+        if self._rt_sys_mode:
+            from phy.rt_sys.control import audit_action
+            self._rt_control_audit = [dict(target_cell_id=a.target_cell_id, fields=audit_action(a))
+                                     for a in control_decision.config_actions]
         self.state.control.active_config = control_decision.config_action
         self.state.control.active_config_actions = list(control_decision.config_actions)
         self.state.control.pending_commands = list(control_decision.commands)
@@ -3271,6 +3292,9 @@ class Simulator:
             f"avg_bler={(f'{post_phy_observation.avg_bler:.4f}' if post_phy_observation.avg_bler is not None else 'N/A')}."
         )
 
+        if self._rt_sys_mode and self.slot_records:
+            self.slot_records[-1]["rt_sys"] = dict(self.phy_adapter.trace)
+            self.slot_records[-1]["rt_sys"]["control_audit"] = self._rt_control_audit
         return post_phy_observation
 
     def run(self) -> None:

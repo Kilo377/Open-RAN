@@ -406,8 +406,12 @@ def build_scheduler(sim_config: dict):
     """
     scheduler_type = sim_config.get("scheduler_type", "simple_scheduler")
 
-    if scheduler_type == "simple_scheduler":
-        return SimpleScheduler(
+    if scheduler_type in ("simple_scheduler", "rt_sys_scheduler"):
+        scheduler_class = SimpleScheduler
+        if scheduler_type == "rt_sys_scheduler":
+            from phy.rt_sys.scheduler import RtSysScheduler
+            scheduler_class = RtSysScheduler
+        return scheduler_class(
             total_prbs_per_slot=int(sim_config.get("scheduler_total_prbs_per_slot", 48)),
             total_symbols_per_slot=int(sim_config.get("scheduler_total_symbols_per_slot", 14)),
             max_ues_per_slot=int(sim_config.get("scheduler_max_ues_per_slot", 2)),
@@ -438,6 +442,10 @@ def build_phy_adapter(phy_config: dict, beamforming_config: dict):
     phy_adapter = build_phy_adapter(phy_config, beamforming_config)
     """
     phy_type = phy_config.get("phy_type", "fake_phy")
+
+    if phy_type == "sionna_rt_sys":
+        from phy.rt_sys.adapter import RtSysPhyAdapter
+        return RtSysPhyAdapter(phy_config.get("rt_sys", {}))
 
     if phy_type == "fake_phy":
         return FakePhyAdapter()

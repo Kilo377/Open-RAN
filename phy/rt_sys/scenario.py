@@ -1,0 +1,70 @@
+"""Build deterministic deployment manifests and legacy simulator input configs."""
+from copy import deepcopy
+from pathlib import Path
+import json
+import math
+import numpy as np
+from core.config_loader import load_all_configs, load_yaml_file
+from phy.nr_reference import lookup_nr_max_prbs
+from scenarios.scenario_registry import deep_merge_dict
+
+ROOT=Path(__file__).resolve().parents[2]
+
+
+def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_slots=40,
+               path_update_ms=None,device='cuda',config_path=None):
+    base=json.loads((Path(config_path) if config_path else ROOT/'configs/rt_sys/default.json').read_text())
+    catalog=json.loads((ROOT/'configs/rt_sys/scene_catalog.json').read_text())
+    if scene not in catalog or not 1<=num_cells<=len(catalog[scene]['cells']) or num_ues<1 or total_slots<1:
+        raise ValueError('Invalid scene/cell/UE/slot configuration')
+    radio=deepcopy(base['radio']); dt=radio['slot_duration_ms']; duration=dt*total_slots/1000
+    nprb,_=lookup_nr_max_prbs(bandwidth_hz=radio['bandwidth_hz'],subcarrier_spacing_hz=radio['subcarrier_spacing_hz'],carrier_frequency_hz=radio['carrier_frequency_hz'])
+    fft=2**math.ceil(math.log2(math.ceil(nprb*12*1.25)))
+    ns=14*max(1,round(dt/(1000*15/radio['subcarrier_spacing_hz'])))
+    ues=[]
+    # Phase offsets select distinct locations on the same validated road segment.
+    for i in range(num_ues):
+        route=np.asarray(catalog[scene]['routes'][i%len(catalog[scene]['routes'])],float)
+        phase=((i//len(catalog[scene]['routes']))+.5)/max(1,math.ceil(num_ues/len(catalog[scene]['routes'])))
+        start=route[0]+min(.8,phase*.8)*(route[1]-route[0])
+        direction=route[1]-start
+        distance=float(np.linalg.norm(direction))
+        travel=min(float(base.get('ue_speed_mps',1.5))*duration,distance)
+        end=start+direction*(travel/max(distance,1e-12))
+        ues.append({'ue_id':f'ue_{i}','trajectory':{'times_s':[0,duration], 'positions_m':[start.tolist(),end.tolist()]}})
+    manifest={'scene':scene,'cells':deepcopy(catalog[scene]['cells'][:num_cells]),'ues':ues,
+              'rng_seed':seed,'total_slots':total_slots,'path_update_ms':path_update_ms if path_update_ms is not None else base['path_update_ms'],
+              'chunk_slots':base['chunk_slots'],'ray_solver':base['ray_solver'],
+              'num_symbols':ns,'fft_size':fft,**radio}
+    configs=load_all_configs(str(ROOT/'configs'))
+    for name in ('sim','ric','ue'):
+        override=ROOT/'configs'/f'{name}_intent_orchestration.yaml'
+        if override.exists(): configs[name]=deep_merge_dict(configs[name],load_yaml_file(str(override)))
+    configs['sim'].update(base['simulation']); configs['sim']['scheduler_type']='rt_sys_scheduler'; configs['sim'].update(total_slots=total_slots,slot_duration_ms=dt,rng_seed=seed)
+    configs['ric']['run_forever']=False
+    for rapp in configs['ric'].get('rapps',[]):
+        rapp['llm_enabled']=False
+        rapp['persistent_memory_enabled']=False
+        rapp['intent_text']=base['intent']
+    configs['cell']['managed_cell_ids']=[c['cell_id'] for c in manifest['cells']]
+    configs['cell']['cell_id']=manifest['cells'][0]['cell_id']
+    configs['cell']['neighbor_cell_positions']={c['cell_id']:dict(zip(('x_m','y_m','z_m'),c['position_m'])) for c in manifest['cells']}
+    configs['cell']['cell_radio_profiles']={c['cell_id']:{**radio,'tx_power_dbm':30,'gnb_num_tx_ant':radio['tx_rows']*radio['tx_cols']} for c in manifest['cells']}
+    originals=deepcopy(configs['ue']['ues'])
+    # Interleave slice templates so even the small smoke test includes URLLC.
+    slices=list(dict.fromkeys(item['slice_id'] for item in originals))
+    grouped=[[item for item in originals if item['slice_id']==sid] for sid in slices]
+    originals=[group[k] for k in range(max(map(len,grouped))) for group in grouped if k<len(group)]
+    configs['ue']['ues']=[]
+    configs['ric']['persistent_memory_enabled']=False
+    configs['ric']['memory_store_path']=str(ROOT/'outputs/rt_sys/model_state/xapp_selection.json')
+    for i,u in enumerate(ues):
+        item=deepcopy(originals[i%len(originals)])
+        item.update(ue_id=u['ue_id'],queue_bytes=1000,serving_beam_id=0,is_indoor=False,serving_cell_id=manifest['cells'][i%num_cells]['cell_id'],
+                    num_rx_ant=radio['num_rx_ant'],velocity_mps=0,shadowing_db=0,pathloss_db=100)
+        item.update(dict(zip(('x_m','y_m','z_m'),u['trajectory']['positions_m'][0])))
+        configs['ue']['ues'].append(item)
+    configs['beamforming']['antenna'].update({**radio,'gnb_num_tx_ant':radio['tx_rows']*radio['tx_cols'],
+        'default_ue_num_rx_ant':radio['num_rx_ant'],'gnb_panel_layout':f'{radio["tx_rows"]}x{radio["tx_cols"]}'})
+    configs['phy']={'phy_type':'sionna_rt_sys','rt_sys':{**base['rt_sys'],'device':device,'rng_seed':seed,**radio}}
+    return manifest,configs,base['intent']

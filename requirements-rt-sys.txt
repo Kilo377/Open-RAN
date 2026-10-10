@@ -1,0 +1,7 @@
+# Spark lock is generated after GPU acceptance; do not install legacy TensorFlow here.
+sionna==2.2.0
+torch>=2.9,<3
+numpy>=1.26,<3
+pyyaml>=6
+openai>=1.30
+pytest>=8

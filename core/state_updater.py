@@ -2189,6 +2189,11 @@ class StateUpdater:
             if not is_scheduled:
                 continue
 
+            if phy_mode == "rt_sys":
+                from phy.rt_sys.control import limit_logical_allocations
+                logical_channel_allocations = limit_logical_allocations(
+                    logical_channel_allocations, scheduled_bytes)
+
             self._apply_logical_channel_scheduled_bytes(
                 ue,
                 logical_channel_allocations,

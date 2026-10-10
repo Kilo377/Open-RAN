@@ -137,7 +137,7 @@ class SionnaEngine:
 
     def _normalize_phy_mode(self, phy_mode: Any) -> str:
         normalized = str(phy_mode or "system_level_approx").strip().lower()
-        if normalized in {"cdl_su_mimo", "sionna_cdl", "sionna_cdl_su"}:
+        if normalized in {"sionna_cdl_su_mimo", "cdl_su_mimo", "sionna_cdl", "sionna_cdl_su"}:
             return "sionna_cdl_su_mimo"
         return "system_level_approx"
 

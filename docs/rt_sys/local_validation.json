@@ -1,0 +1,255 @@
+{
+  "source_verification": {
+    "checked_files": 1113,
+    "changed_files": []
+  },
+  "environment": {
+    "driver_report": "",
+    "compute_capability": null,
+    "python": "3.12.14",
+    "machine": "arm64",
+    "system": "Darwin",
+    "torch": "2.14.1",
+    "sionna": "2.2.0",
+    "sionna_rt": "2.2.0",
+    "cuda_available": false,
+    "cuda_version": null,
+    "gpu_name": "",
+    "rt_variant": "llvm_ad_mono_polarized",
+    "rt_actual_call": true,
+    "sys_actual_call": true,
+    "sys_probe": {
+      "mcs": 3,
+      "qm": 2,
+      "rate": 0.2451171875,
+      "capacity_bytes": 10,
+      "sinr_eff": 10.0,
+      "tbler": 0.0,
+      "cbler": 0.0,
+      "ack": true,
+      "mcs_projection": "calibrated_table_projection:0->3"
+    },
+    "cache_key": "0ca6d7d8eb3a8fb6db427a4338f4d861084dfb754ca34f7b4a876f2753b41524"
+  },
+  "tests": {
+    "rt_sys_and_harq_passed": 20,
+    "full_suite_passed": 187,
+    "original_baseline_failures": 4,
+    "original_missing_test_module": "experiments.xapp_experiment_utils",
+    "subtests_passed": 2
+  },
+  "geometry": {
+    "scenes": [
+      "simple_street_canyon",
+      "munich"
+    ],
+    "bs_per_scene": 3,
+    "ue_counts": [
+      12,
+      24
+    ],
+    "full_trajectory_segments_validated": true
+  },
+  "rt_recompute": {
+    "simple_street_canyon": {
+      "rtol": 0.0001,
+      "atol": 1e-10,
+      "max_abs_error": 6.550887610146106e-11,
+      "relative_l2_error": 4.087857874424117e-08,
+      "cache_key": "0ca6d7d8eb3a8fb6db427a4338f4d861084dfb754ca34f7b4a876f2753b41524"
+    },
+    "munich": {
+      "rtol": 0.0001,
+      "atol": 1e-10,
+      "max_abs_error": 0.0,
+      "relative_l2_error": 0.0,
+      "cache_key": "f74be21229da483afbe2948e46c12de116101277e63199d2a2bac63cb1d76218"
+    }
+  },
+  "full_loop_cached_replay": {
+    "exact_ue_csv_match": true,
+    "rows": 160
+  },
+  "runs": {
+    "local_munich_scale": {
+      "status": {
+        "completed": true,
+        "spark_verified": false,
+        "stage": "completed",
+        "cache_key": "3472504bf3a7de0c51340ea8bdcf046fa6279d4a46d4a2c2a5501ec477c88f6e",
+        "runtime_environment": {
+          "driver_report": "",
+          "compute_capability": null,
+          "python": "3.12.14",
+          "machine": "arm64",
+          "system": "Darwin",
+          "torch": "2.14.1",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": false,
+          "cuda_version": null,
+          "gpu_name": "",
+          "rt_variant": "llvm_ad_mono_polarized"
+        },
+        "elapsed_s": 7.708815958001651,
+        "peak_rss_native": 1779974144,
+        "peak_cuda_bytes": 0
+      },
+      "ue_metric_rows": 96,
+      "delivered_bytes": 965
+    },
+    "local_munich_smoke": {
+      "status": {
+        "completed": true,
+        "spark_verified": false,
+        "stage": "completed",
+        "cache_key": "e23b51ab670cdea33e36557437f009af304e795f4dd8ddf77b17e879f15f8b9e",
+        "runtime_environment": {
+          "driver_report": "",
+          "compute_capability": null,
+          "python": "3.12.14",
+          "machine": "arm64",
+          "system": "Darwin",
+          "torch": "2.14.1",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": false,
+          "cuda_version": null,
+          "gpu_name": "",
+          "rt_variant": "llvm_ad_mono_polarized"
+        },
+        "elapsed_s": 6.509353833971545,
+        "peak_rss_native": 1262747648,
+        "peak_cuda_bytes": 0
+      },
+      "ue_metric_rows": 160,
+      "delivered_bytes": 17221
+    },
+    "local_street_1ms": {
+      "status": {
+        "completed": true,
+        "spark_verified": false,
+        "stage": "completed",
+        "cache_key": "0e84c5a1b63dda83bba0d6357a1f4e263fcb9a5eda7dc5055a90e69f8841552f",
+        "runtime_environment": {
+          "driver_report": "",
+          "compute_capability": null,
+          "python": "3.12.14",
+          "machine": "arm64",
+          "system": "Darwin",
+          "torch": "2.14.1",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": false,
+          "cuda_version": null,
+          "gpu_name": "",
+          "rt_variant": "llvm_ad_mono_polarized"
+        },
+        "elapsed_s": 8.258926958078519,
+        "peak_rss_native": 1149812736,
+        "peak_cuda_bytes": 0
+      },
+      "ue_metric_rows": 160,
+      "delivered_bytes": 42885
+    },
+    "local_street_replay": {
+      "status": {
+        "completed": true,
+        "spark_verified": false,
+        "stage": "completed",
+        "cache_key": "39822ba508f8f03184d76302ed8c9b531615acb05b858ef6736fcdf7f3c4aecd",
+        "runtime_environment": {
+          "driver_report": "",
+          "compute_capability": null,
+          "python": "3.12.14",
+          "machine": "arm64",
+          "system": "Darwin",
+          "torch": "2.14.1",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": false,
+          "cuda_version": null,
+          "gpu_name": "",
+          "rt_variant": "llvm_ad_mono_polarized"
+        },
+        "elapsed_s": 2.856344082974829,
+        "peak_rss_native": 610238464,
+        "peak_rss_bytes": 610238464,
+        "peak_cuda_bytes": 0
+      },
+      "ue_metric_rows": 160,
+      "delivered_bytes": 42885
+    },
+    "local_street_smoke": {
+      "status": {
+        "completed": true,
+        "spark_verified": false,
+        "stage": "completed",
+        "cache_key": "39822ba508f8f03184d76302ed8c9b531615acb05b858ef6736fcdf7f3c4aecd",
+        "runtime_environment": {
+          "driver_report": "",
+          "compute_capability": null,
+          "python": "3.12.14",
+          "machine": "arm64",
+          "system": "Darwin",
+          "torch": "2.14.1",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": false,
+          "cuda_version": null,
+          "gpu_name": "",
+          "rt_variant": "llvm_ad_mono_polarized"
+        },
+        "elapsed_s": 6.658216250012629,
+        "peak_rss_native": 1226080256,
+        "peak_cuda_bytes": 0
+      },
+      "ue_metric_rows": 160,
+      "delivered_bytes": 42885
+    }
+  },
+  "mu_probes": {
+    "simple_street_canyon": {
+      "actual_rt_sys": true,
+      "device": "cpu",
+      "cache_key": "0ca6d7d8eb3a8fb6db427a4338f4d861084dfb754ca34f7b4a876f2753b41524",
+      "forced_overlapping_grants": true,
+      "scheduled_ues": 4,
+      "resource_groups": 28,
+      "delivered_bytes": 57,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 6.550887610146106e-11,
+        "relative_l2_error": 4.087857874424117e-08
+      }
+    },
+    "munich": {
+      "actual_rt_sys": true,
+      "device": "cpu",
+      "cache_key": "2fdd28b6bb9d970945d57cbccc9280d9b7ca975d2d6f17a98b1bec2931256848",
+      "forced_overlapping_grants": true,
+      "scheduled_ues": 4,
+      "resource_groups": 28,
+      "delivered_bytes": 38,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 0.0,
+        "relative_l2_error": 0.0
+      }
+    }
+  },
+  "remote_acceptance": {
+    "spark_connected": false,
+    "gpu_verified": false,
+    "matrix_1000_slots_executed": false,
+    "spark_lock_generated": false
+  },
+  "path_update_comparison": {
+    "scope": "40 slots / 2 cells / 4 UE / seed 1, street",
+    "10ms_delivered_bytes": 42885,
+    "1ms_delivered_bytes": 42885,
+    "long_term_error_validated": false
+  }
+}
