@@ -15,7 +15,7 @@ def audit(path):
     assert status['completed'] and status['spark_verified'],path
     assert saved['configs']['phy']['rt_sys']['device']=='cuda'
     totals=defaultdict(int);perue=defaultdict(lambda:defaultdict(int));percell=defaultdict(lambda:defaultdict(float))
-    max_power_error=0.;max_norm_error=0.;delays=[];unsupported=defaultdict(int)
+    max_power_error=0.;max_norm_error=0.;delays=[];unsupported=defaultdict(int);last_cell={}
     with (path/'rt_sys_trace.jsonl').open() as trace,(path/'slot_metrics.csv').open() as metrics:
         metric_reader=csv.DictReader(metrics)
         for slot,line in enumerate(trace,1):
@@ -58,6 +58,10 @@ def audit(path):
                 if not u['scheduled']:assert u['delivered_bytes']==u['tb_bytes']==u['allocated_re']==0
                 if u['precoder_column_norm_mean']==0:assert u['delivered_bytes']==0
                 perue[u['ue_id']]['delivered_bytes']+=u['delivered_bytes']
+                if u['ue_id'] in last_cell and last_cell[u['ue_id']]!=u['cell_id']:
+                    totals['association_changes']+=1
+                    perue[u['ue_id']]['association_changes']+=1
+                last_cell[u['ue_id']]=u['cell_id']
                 perue[u['ue_id']]['scheduled_slots']+=int(u['scheduled'])
                 perue[u['ue_id']]['ack']+=int(u['ack'])
                 perue[u['ue_id']]['nack']+=int(u['scheduled'] and not u['ack'] and u['tb_bytes']>0)
@@ -71,6 +75,9 @@ def audit(path):
             totals['slots']+=1;totals['ue_rows']+=len(t['ues']);totals['delivered_bytes']+=delivered
         assert next(metric_reader,None) is None
     assert totals['slots']==m['total_slots']
+    duration_s=m['total_slots']*m['slot_duration_ms']/1000
+    for stats in perue.values():stats['throughput_mbps']=stats['delivered_bytes']*8/duration_s/1e6
+    for stats in percell.values():stats['throughput_mbps']=stats['delivered_bytes']*8/duration_s/1e6
     return {'case':path.name,'scene':m['scene'],'ues':len(m['ues']),'seed':m['rng_seed'],
         'passed':True,'totals':dict(totals),'per_ue':{k:dict(v) for k,v in perue.items()},
         'per_cell':{k:dict(v) for k,v in percell.items()},'max_power_error_w':max_power_error,

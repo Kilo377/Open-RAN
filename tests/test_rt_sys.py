@@ -70,6 +70,19 @@ class PhysicsTests(unittest.TestCase):
         self.assertEqual(adapter.run_cluster_slot([phy('c0',[ue('u0',False)])],snap)['c0'].ue_results[0].delivered_bytes,0)
         self.assertEqual(adapter.trace['cells']['c0']['average_used_w'],0)
 
+    def test_disconnected_scheduled_stream_emits_power_and_neighbor_interference(self):
+        h=np.zeros((2,2,1,2));h[1,:,:,:]=1e-5
+        snap=channel(h)
+        adapter=self.adapter()
+        plan=[phy('c0',[ue('u0')]),phy('c1',[ue('u1')])]
+        active=adapter.run_cluster_slot(plan,snap)
+        self.assertEqual(active['c0'].ue_results[0].delivered_bytes,0)
+        self.assertAlmostEqual(adapter.trace['ues'][0]['precoder_column_norm_mean'],1)
+        self.assertAlmostEqual(adapter.trace['cells']['c0']['average_used_w'],.001)
+        plan[0].ue_inputs[0].is_scheduled=False
+        idle=adapter.run_cluster_slot(plan,snap)
+        self.assertGreater(idle['c1'].ue_results[0].sinr_db,active['c1'].ue_results[0].sinr_db+5)
+
     def test_mu_orthogonality_and_correlation(self):
         orth=channel(np.array([[[[1e-5,0]]],[[[0,1e-5]]]]),('u0','u1'),('c0',))
         corr=channel(np.array([[[[1e-5,0]]],[[[1e-5,0]]]]),('u0','u1'),('c0',))

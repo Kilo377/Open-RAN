@@ -1,0 +1,54 @@
+{
+  "completed": true,
+  "device": "cuda",
+  "scripted_controls": true,
+  "physical_checks": {
+    "simple_street_canyon": {
+      "neighbor_power_interference_10db": true,
+      "neighbor_silence_reduces_interference": true,
+      "resource_separation_matches_silence": true,
+      "own_power_sinr_10db": true,
+      "beam_changes_physical_sinr": true,
+      "sleep_zero_power_and_delivery": true,
+      "no_path_zero_delivery": true
+    },
+    "munich": {
+      "neighbor_power_interference_10db": true,
+      "neighbor_silence_reduces_interference": true,
+      "resource_separation_matches_silence": true,
+      "own_power_sinr_10db": true,
+      "beam_changes_physical_sinr": true,
+      "sleep_zero_power_and_delivery": true,
+      "no_path_zero_delivery": true
+    }
+  },
+  "closed_loop_checks": {
+    "same_propagation_and_arrivals": true,
+    "delayed_controls": true,
+    "delayed_controller_observations": true,
+    "queue_and_harq_consistency": true,
+    "power_beam_sleep_scheduler_responses": true
+  },
+  "variants": {
+    "baseline": {
+      "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+      "delivered_bytes": 91611
+    },
+    "power": {
+      "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+      "delivered_bytes": 75546
+    },
+    "beam": {
+      "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+      "delivered_bytes": 91611
+    },
+    "sleep": {
+      "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+      "delivered_bytes": 59639
+    },
+    "scheduler": {
+      "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+      "delivered_bytes": 81351
+    }
+  }
+}

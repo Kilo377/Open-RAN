@@ -51,8 +51,15 @@ class Algebra:
         w = basis @ self.adj(effective) @ self.solve(
             effective @ self.adj(effective) + alpha * self.eye(effective.shape[-2]),
             self.eye(effective.shape[-2]))
-        norm = self.clip(self.sum(abs(w)**2, -2, True), 1e-30)**.5
-        return w / norm
+        norm_sq = self.sum(abs(w)**2, -2, True)
+        norm = self.clip(norm_sq, 1e-30)**.5
+        # A scheduled stream with no serving path still emits its allocated
+        # energy and can interfere at other receivers. Zero RZF columns need
+        # a deterministic physical beam, rather than falsely claiming power
+        # for a zero antenna vector.
+        fallback = basis[:, [j % basis.shape[-1] for j in range(w.shape[-1])]]
+        return (self.torch.where(norm_sq == 0, fallback, w / norm) if self.torch
+                else np.where(norm_sq == 0, fallback, w / norm))
 
     def lmmse(self, desired, others, noise):
         # Desired stream [frequency,RX,1], all other received streams [frequency,RX,K]
