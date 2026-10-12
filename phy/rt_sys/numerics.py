@@ -61,9 +61,15 @@ class Algebra:
         return (self.torch.where(norm_sq == 0, fallback, w / norm) if self.torch
                 else np.where(norm_sq == 0, fallback, w / norm))
 
-    def lmmse(self, desired, others, noise):
+    def lmmse(self, desired, others, noise, estimated_desired=None,estimated_others=None):
         # Desired stream [frequency,RX,1], all other received streams [frequency,RX,K]
         covariance = others @ self.adj(others) + noise * self.eye(desired.shape[-2])
+        if estimated_desired is not None:
+            estimated_covariance=estimated_others@self.adj(estimated_others)+noise*self.eye(desired.shape[-2])
+            combiner=self.solve(estimated_covariance,estimated_desired)
+            signal=abs(self.adj(combiner)@desired)[...,0,0]**2
+            denominator=(self.adj(combiner)@covariance@combiner)[...,0,0].real
+            return signal/self.clip(denominator,1e-30)
         sinr = (self.adj(desired) @ self.solve(covariance, desired))[..., 0, 0].real
         return self.clip(sinr, 0)
 

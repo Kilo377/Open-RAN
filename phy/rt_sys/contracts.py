@@ -14,6 +14,16 @@ def keyed_uniform(seed, slot, ue_id, purpose='tb_ack'):
     return (int(key[:16], 16) + .5) / 2**64
 
 
+def source_fingerprint(root):
+    """Record executed copy content, including uncommitted source/config edits."""
+    result=hashlib.sha256()
+    for name in ('core','phy','ran','ric','state','models','traffic','experiments','configs'):
+        for path in sorted((root/name).rglob('*')):
+            if path.is_file() and path.suffix in ('.py','.json','.yaml','.yml'):
+                result.update(str(path.relative_to(root)).encode());result.update(path.read_bytes())
+    return result.hexdigest()
+
+
 @dataclass
 class ChannelSnapshot:
     slot_id: int

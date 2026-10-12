@@ -27,13 +27,35 @@ def combine_complex(value):
     return np.asarray(value)
 
 
+def reconstruct_paths(arrays,manifest,elapsed_s):
+    """Unnormalized absolute CFR from baseband CIR, delays and Doppler."""
+    a=arrays['cir0']; tau=arrays['tau']; doppler=arrays['doppler']
+    if tau.ndim==3:
+        tau=tau[:,None,:,None,:]; doppler=doppler[:,None,:,None,:]
+    ns=manifest['num_symbols']; nf=manifest['fft_size']
+    if a.shape[-1]==0:
+        return np.zeros((a.shape[0],a.shape[2],a.shape[1],a.shape[3],ns,nf),np.complex64)
+    times=elapsed_s+np.arange(ns,dtype=np.float32)*manifest['slot_duration_ms']/1000/ns
+    frequencies=(np.arange(nf,dtype=np.float32)-nf//2)*manifest['subcarrier_spacing_hz']
+    at=a[...,None]*np.exp(2j*np.pi*doppler[...,None]*times)
+    frequency_phase=np.exp(-2j*np.pi*tau[...,None]*frequencies)
+    cfr=np.einsum('urctps,urctpf->urctsf',at,frequency_phase,optimize=True)
+    return np.transpose(cfr,(0,2,1,3,4,5)).astype(np.complex64)
+
+
 class RtChannelProvider:
-    def __init__(self, manifest, cache_root, *, device='cuda', backend=None):
+    def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3):
         self.manifest = json.loads(json.dumps(manifest))
         self.device = device
+        self.quota_bytes=int(quota_bytes)
+        if self.quota_bytes<=0:raise ValueError('Positive cache quota required')
         self.backend = backend or SionnaRayTracer(manifest,device)
+        self.compact=manifest.get('cache_format')=='paths_v2'
+        # Explicitly injected dense fixtures remain fixtures; production does
+        # not fall back when its requested compact RT interface is missing.
+        if backend is not None and not hasattr(backend,'generate_paths'):self.compact=False
         # Backend fingerprint includes actual material properties and scene meshes.
-        self.key = digest({'schema':1,'manifest':manifest,'backend':self.backend.fingerprint()})
+        self.key = digest({'schema':2 if self.compact else 1,'manifest':manifest,'backend':self.backend.fingerprint()})
         self.root = Path(cache_root)/self.key
         self.root.mkdir(parents=True,exist_ok=True)
         self.meta = self.root/'manifest.json'
@@ -55,23 +77,35 @@ class RtChannelProvider:
     def snapshot(self, slot_id):
         if not 0<=slot_id<=self.total:
             raise ValueError('Requested slot outside RT trace')
-        chunk = slot_id//self.chunk_slots
+        chunk = slot_id//(self.update_slots if self.compact else self.chunk_slots)
         if chunk != self.loaded_chunk:
-            path = self.root/f'chunk_{chunk:06d}.npz'
+            path = self.root/(f'paths_{chunk*self.update_slots:09d}.npz' if self.compact else f'chunk_{chunk:06d}.npz')
             if path.exists():
                 arrays = dict(np.load(path,allow_pickle=False)); self.hits+=1
             else:
-                first = chunk*self.chunk_slots
-                last = min(self.total+1,first+self.chunk_slots)
-                arrays = self.backend.generate(first,last,self.update_slots)
+                if self.compact:
+                    arrays=self.backend.generate_paths(chunk*self.update_slots)
+                else:
+                    first = chunk*self.chunk_slots
+                    last = min(self.total+1,first+self.chunk_slots)
+                    arrays = self.backend.generate(first,last,self.update_slots)
                 tmp = path.with_suffix(f'.{os.getpid()}.tmp')
                 with tmp.open('wb') as stream: np.savez_compressed(stream,**arrays)
-                os.replace(tmp,path); self.misses+=1
+                if self.compact:
+                    from phy.rt_sys.cache_storage import publish
+                    publish(tmp,path,self.quota_bytes)
+                else:os.replace(tmp,path)
+                self.misses+=1
             self.loaded_arrays, self.loaded_chunk = arrays, chunk
         i = slot_id-chunk*self.chunk_slots
+        if self.compact:
+            cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-chunk*self.update_slots)*self.dt)
+            positions=np.asarray([position_at(u['trajectory'],slot_id*self.dt)[0] for u in self.manifest['ues']])
+        else:
+            cfr=self.loaded_arrays['cfr'][i]; positions=self.loaded_arrays['positions'][i]
         snap = ChannelSnapshot(slot_id,tuple(u['ue_id'] for u in self.manifest['ues']),
-            tuple(c['cell_id'] for c in self.manifest['cells']),self.loaded_arrays['cfr'][i],
-            self.loaded_arrays['positions'][i],self.key,{
+            tuple(c['cell_id'] for c in self.manifest['cells']),cfr,
+            positions,self.key,{
                 'normalized':False,'bandwidth_hz':self.manifest['bandwidth_hz'],'source':'sionna_rt','path_update_ms':self.manifest['path_update_ms'],
                 'carrier_frequency_hz':self.manifest['carrier_frequency_hz'],
                 'subcarrier_spacing_hz':self.manifest['subcarrier_spacing_hz'],
@@ -79,7 +113,8 @@ class RtChannelProvider:
         return snap.validate()
 
     def pregenerate(self):
-        for start in range(0,self.total+1,self.chunk_slots): self.snapshot(start)
+        step=self.update_slots if self.compact else self.chunk_slots
+        for start in range(0,self.total+1,step): self.snapshot(start)
 
 
 class SionnaRayTracer:
@@ -156,6 +191,19 @@ class SionnaRayTracer:
             ray=mi.Ray3f(mi.Point3f(*cell['position_m']),mi.Vector3f(0,0,1))
             if bool(np.asarray(self.scene.mi_scene.ray_test(ray)).reshape(-1)[0]):
                 raise ValueError(f'BS {cell["cell_id"]} lies beneath scene geometry')
+
+    def generate_paths(self,block):
+        for ue in self.m['ues']:
+            pos,vel=position_at(ue['trajectory'],block*self.m['slot_duration_ms']/1000)
+            receiver=self.scene.get(ue['ue_id']); receiver.position=pos.tolist(); receiver.velocity=vel.tolist()
+        params=dict(self.m['ray_solver']); params['seed']=int(self.m['rng_seed'])+block
+        paths=self.solver(self.scene,**params)
+        cir,_=paths.cir(normalize_delays=False,out_type='numpy')
+        arrays={'cir0':combine_complex(cir)[...,0].astype(np.complex64)}
+        for attr in ('tau','theta_t','phi_t','theta_r','phi_r','doppler'):
+            arrays[attr]=np.asarray(getattr(paths,attr))
+        arrays['a']=combine_complex(paths.a)
+        return arrays
 
     def generate(self,first,last,update_slots):
         m=self.m; dt=m['slot_duration_ms']/1000; ns=m['num_symbols']; nf=m['fft_size']

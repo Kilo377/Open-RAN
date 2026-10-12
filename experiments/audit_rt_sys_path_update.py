@@ -23,28 +23,28 @@ def audit(root):
     a, b = manifests['path_dt1'].copy(), manifests['path_dt10'].copy()
     a.pop('path_update_ms'); b.pop('path_update_ms')
     assert a == b
-    chunk_slots = a['chunk_slots']; slots = a['total_slots']
+    slots = a['total_slots']
     error_energy = reference_energy = 0.; max_gain_delta_db = 0.
-    for chunk in range((slots // chunk_slots) + 1):
-        channels = []
-        for name in names[:2]:
-            key = statuses[name]['cache_key']
-            with np.load(ROOT / 'channel_cache' / key / f'chunk_{chunk:06d}.npz') as cached:
-                channels.append(cached['cfr'])
-        x, y = channels
-        # Match the actual simulated slots (1..total), excluding initial slot 0.
-        lo = 1 if chunk == 0 else 0
-        hi = min(len(x), slots - chunk * chunk_slots + 1)
-        x, y = x[lo:hi], y[lo:hi]
+    import sys
+    sys.path.insert(0,str(ROOT))
+    from phy.rt_sys.channel import reconstruct_paths
+    def cached_slot(name,slot):
+        manifest=manifests[name];folder=ROOT/'channel_cache'/statuses[name]['cache_key']
+        if manifest.get('cache_format')=='paths_v2':
+            step=round(manifest['path_update_ms']/manifest['slot_duration_ms'])
+            block=slot//step*step
+            with np.load(folder/f'paths_{block:09d}.npz') as arrays:
+                return reconstruct_paths(arrays,manifest,(slot-block)*manifest['slot_duration_ms']/1000)
+        chunk=slot//manifest['chunk_slots'];index=slot%manifest['chunk_slots']
+        with np.load(folder/f'chunk_{chunk:06d}.npz') as arrays:return arrays['cfr'][index]
+    for slot in range(1,slots+1):
+        x,y=[cached_slot(name,slot) for name in names[:2]]
         error_energy += float(np.sum(np.abs(x-y)**2, dtype=np.float64))
         reference_energy += float(np.sum(np.abs(x)**2, dtype=np.float64))
-        axes = tuple(range(3, x.ndim))
-        gx = np.mean(np.abs(x)**2, axis=axes)
-        gy = np.mean(np.abs(y)**2, axis=axes)
-        valid = (gx > 1e-25) & (gy > 1e-25)
+        gx=np.mean(abs(x)**2,axis=(2,3,4,5));gy=np.mean(abs(y)**2,axis=(2,3,4,5))
+        valid=(gx>1e-25)&(gy>1e-25)
         if valid.any():
-            max_gain_delta_db = max(max_gain_delta_db,
-                float(np.max(np.abs(10*np.log10(gx[valid]/gy[valid])))))
+            max_gain_delta_db=max(max_gain_delta_db,float(np.max(abs(10*np.log10(gx[valid]/gy[valid])))))
     return {'completed': True, 'device': 'cuda', 'scene': a['scene'],
         'cells': len(a['cells']), 'ues': len(a['ues']), 'slots': slots,
         'replay_trace_exact_match': True,

@@ -60,7 +60,13 @@ class ScenarioMatrixRegistryTest(unittest.TestCase):
         cases = registry.expand_matrix("oran_paper_eval_suite")
         case_map = {case.case_id: case for case in cases}
 
-        self.assertEqual(len(cases), 7)
+        self.assertEqual(set(case_map), {
+            "oran_small_debug_mixed", "oran_medium_nominal_mixed",
+            "oran_medium_dense_hotspot_high_mobility", "oran_medium_urllc_burst",
+            "oran_medium_interference_edge", "oran_medium_hotspot_shift_blockage",
+            "oran_medium_high_mobility_interference", "oran_medium_low_load_energy_saving",
+            "oran_large_19cell_scalability",
+        })
         self.assertEqual(len(case_map["oran_small_debug_mixed"].ue_overrides["ues"]), 24)
         self.assertEqual(len(case_map["oran_medium_nominal_mixed"].ue_overrides["ues"]), 42)
         self.assertEqual(

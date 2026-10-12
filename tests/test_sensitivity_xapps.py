@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from core.config_loader import load_yaml_file
 from core.factory import build_controller_registry
@@ -173,7 +174,7 @@ def _build_observation() -> Observation:
 
 class TestSensitivityXApps(unittest.TestCase):
     def test_factory_builds_sensitivity_bundle(self) -> None:
-        ric_config = load_yaml_file("D:\\研究生\\oran_slot_sim\\configs\\ric_sensitivity.yaml")
+        ric_config = load_yaml_file(str(Path(__file__).resolve().parents[1]/"configs/ric_sensitivity.yaml"))
         registry = build_controller_registry(ric_config)
 
         self.assertEqual(len(registry.xapps), 8)

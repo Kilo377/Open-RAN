@@ -39,7 +39,7 @@ def test_real_sys_mask_calibration_and_keyed_ack():
     b=model.evaluate(values,'qam64',0,7,1,'ue_0')
     assert a==b
     assert 0<=a['tbler']<=1 and a['capacity_bytes']>0
-    assert a['mcs']==3 and a['mcs_projection']=='calibrated_table_projection:0->3'
+    assert a['mcs']==3 and a['mcs_projection']=='supported_table_projection:0->3'
     c=model.evaluate(values[:,:12],'qam64',0,7,1,'ue_0')
     assert a==c
     with pytest.raises(ValueError,match='EESM'):

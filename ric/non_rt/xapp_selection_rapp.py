@@ -69,6 +69,7 @@ class XAppSelectionRApp(RAppBase):
         dependency_category_pairs: list[list[str]] | None = None,
         available_xapp_names: list[str] | None = None,
         static_xapp_selection_enabled: bool = False,
+        freeze_learning: bool = False,
         reflection_enabled: bool = True,
         memory_mode: str = "full",
         selection_mode: str = "reflective",
@@ -123,6 +124,7 @@ class XAppSelectionRApp(RAppBase):
             if str(item).strip() != ""
         ] or None
         self.static_xapp_selection_enabled = bool(static_xapp_selection_enabled)
+        self.freeze_learning=bool(freeze_learning)
         self.reflection_enabled = bool(reflection_enabled)
         self.memory_mode = self._normalize_memory_mode(memory_mode)
         self.selection_mode = self._normalize_selection_mode(selection_mode)
@@ -309,6 +311,7 @@ class XAppSelectionRApp(RAppBase):
             self._literature_baseline_state = {}
 
     def _persist_literature_baseline_state(self) -> None:
+        if self.freeze_learning:return
         if not self.literature_baseline_state_enabled or self.literature_baseline_state_path == "":
             return
         path = Path(self.literature_baseline_state_path)
@@ -328,6 +331,7 @@ class XAppSelectionRApp(RAppBase):
         return section
 
     def _baseline_training_active(self, baseline_name: str) -> bool:
+        if self.freeze_learning:return False
         if not self.literature_baseline_state_enabled:
             return False
         if baseline_name == "intent_hrl":
@@ -771,6 +775,7 @@ class XAppSelectionRApp(RAppBase):
         )
 
     def _store_success_case(self, memory_case: OrchestrationMemoryCase) -> None:
+        if self.freeze_learning:return
         if not self._success_memory_enabled():
             return
         self.success_memory.append(memory_case)
@@ -782,6 +787,7 @@ class XAppSelectionRApp(RAppBase):
         self._persist_memory_state()
 
     def _store_failure_case(self, memory_case: OrchestrationMemoryCase) -> None:
+        if self.freeze_learning:return
         if not self._failure_memory_enabled():
             return
         self.failure_memory.append(memory_case)
@@ -793,6 +799,7 @@ class XAppSelectionRApp(RAppBase):
         self._persist_memory_state()
 
     def _persist_memory_state(self) -> None:
+        if self.freeze_learning:return
         if not self.persistent_memory_enabled or not self._memory_enabled():
             return
         self.memory_store.save(
@@ -828,6 +835,7 @@ class XAppSelectionRApp(RAppBase):
         retrieved_failure_cases: list[OrchestrationMemoryCase],
         selection_query_key: SelectionQueryKey,
     ) -> None:
+        if self.freeze_learning:return
         query_slot_id = getattr(selection_query_key, "query_slot_id", None)
         success_case_ids = {
             str(getattr(memory_case, "case_id", "") or "")
@@ -1090,7 +1098,7 @@ class XAppSelectionRApp(RAppBase):
             recommended_changes=recommended_changes or ["rebalance the portfolio toward complementary xApp categories"],
             generated_by=generated_by,
         )
-        if self._failure_memory_enabled():
+        if self._failure_memory_enabled() and not self.freeze_learning:
             self.reflection_memory.append(note)
             self.reflection_memory = self.reflection_memory[-self.reflection_memory_size :]
             self._persist_memory_state()
@@ -1104,7 +1112,7 @@ class XAppSelectionRApp(RAppBase):
         retrieved_success_cases: list[OrchestrationMemoryCase] | None = None,
         retrieved_failure_cases: list[OrchestrationMemoryCase] | None = None,
     ) -> ReflectionNote:
-        if not self.reflection_enabled:
+        if not self.reflection_enabled or self.freeze_learning:
             return ReflectionNote(
                 reflection_round=int(len(self.reflection_memory) + 1),
                 outcome_summary="Reflection disabled for this method variant.",
@@ -1239,7 +1247,7 @@ class XAppSelectionRApp(RAppBase):
             recommended_changes=[str(item) for item in recommended_changes if str(item).strip() != ""],
             generated_by=f"{self.client.generated_by_tag}_reflexion",
         )
-        if self._failure_memory_enabled():
+        if self._failure_memory_enabled() and not self.freeze_learning:
             self.reflection_memory.append(note)
             self.reflection_memory = self.reflection_memory[-self.reflection_memory_size :]
             self._persist_memory_state()

@@ -200,6 +200,8 @@ class ClosedLoopTests(unittest.TestCase):
                           configs['cell'],configs['ue'],configs['beamforming'],root)
             for _ in range(3):sim.step()
             self.assertEqual(sim.state.slot_id,3);self.assertIn('rt_sys',sim.slot_records[-1])
+            self.assertIn('mobility_events',sim.slot_records[-1]['rt_sys'])
+            self.assertEqual(set(sim.slot_records[-1]['rt_sys']['handover_counts']),set(sim.state.connections))
             self.assertEqual(set(adapter.trace['cells']),{'cell_0','cell_1'})
             self.assertTrue(all(0<=u.queue_bytes for u in sim.state.ues))
             self.assertTrue(any(u['delivered_bytes']>0 for u in adapter.trace['ues']))

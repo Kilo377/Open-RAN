@@ -13,6 +13,39 @@ class RtMobilityManager(MobilityManager):
         super().__init__(slot_duration_ms=slot_duration_ms,rng_seed=rng_seed)
         self.adapter=adapter; self.delay=max(0,int(delay_slots)); self.noise=noise_std_db
         self.history=deque(maxlen=self.delay+2); self.observed={}
+        cfg=adapter.config.get('mobility',{})
+        self.filter_ms=float(cfg.get('measurement_filter_ms',20))
+        self.load_filter_ms=float(cfg.get('load_filter_ms',50))
+        self.ttt_slots=math.ceil(float(cfg.get('time_to_trigger_ms',40))/slot_duration_ms)
+        self.dwell_slots=math.ceil(float(cfg.get('min_dwell_ms',100))/slot_duration_ms)
+        if min(self.filter_ms,self.load_filter_ms,self.ttt_slots,self.dwell_slots)<0:
+            raise ValueError('Mobility time constants must be nonnegative')
+        self.filtered={}; self.filtered_load={}; self.trigger_since={}
+
+    def _build_cell_load_view(self,state,profiles):
+        view=super()._build_cell_load_view(state,profiles)
+        alpha=1-math.exp(-self.slot_duration_s*1000/max(self.load_filter_ms,1e-12))
+        for cid,load in view.items():
+            previous=self.filtered_load.get(cid,load)
+            for key in ('estimated_load','load_penalty_db','activity_factor'):
+                load[key]=previous[key]+alpha*(load[key]-previous[key])
+            self.filtered_load[cid]=dict(load)
+        return view
+
+    def _compute_measurement_event_met(self,**kwargs):
+        base=super()._compute_measurement_event_met(**kwargs)
+        state,ue,connection=self._event_context
+        slot=int(state.slot_id); target=kwargs['best_candidate'].cell_id
+        key=(ue.ue_id,target)
+        serving_sleep=state.managed_cells[connection.serving_cell_id].cell.cell_sleep_mode=='deep_sleep'
+        threshold=state.cell.handover_margin_db+state.cell.steering_hysteresis_db+state.cell.handover_cost_db
+        last=connection.last_handover_slot
+        dwell_ok=serving_sleep or last is None or slot-last>=self.dwell_slots
+        if not base or kwargs['trigger_margin_db']<threshold or not dwell_ok:
+            self.trigger_since.pop(key,None)
+            return False
+        started=self.trigger_since.setdefault(key,slot)
+        return serving_sleep or slot-started>=self.ttt_slots
 
     def _advance_geometry(self,link):
         pass  # RtChannelProvider owns the preconfigured trajectory.
@@ -41,12 +74,26 @@ class RtMobilityManager(MobilityManager):
                 u1=max(keyed_uniform(self.rng_seed,snapshot.slot_id,uid,'measurement_'+cid+'_1'),1e-12)
                 u2=keyed_uniform(self.rng_seed,snapshot.slot_id,uid,'measurement_'+cid+'_2')
                 noise=self.noise*math.sqrt(-2*math.log(u1))*math.cos(2*math.pi*u2)
-                values[uid][cid]=(rsrp+noise,gain,best)
+                raw=rsrp+noise
+                previous=self.filtered.get((uid,cid),raw)
+                alpha=1-math.exp(-self.slot_duration_s*1000/max(self.filter_ms,1e-12))
+                filtered=raw if cell.cell_sleep_mode=='deep_sleep' else previous+alpha*(raw-previous)
+                self.filtered[uid,cid]=filtered
+                values[uid][cid]=(filtered,gain,best)
         self.history.append(values)
         self.observed=self.history[max(0,len(self.history)-1-self.delay)]
+        previous={uid:(c.serving_cell_id,c.handover_count) for uid,c in state.connections.items()}
         super().update(state)
+        self.events=[]
+        for uid,c in state.connections.items():
+            if previous[uid][0]!=c.serving_cell_id:
+                self.events.append({'ue_id':uid,'from_cell':previous[uid][0],'to_cell':c.serving_cell_id,
+                    'handover_completed':c.handover_count>previous[uid][1],
+                    'completed_handover_count':c.handover_count,'slot_id':state.slot_id})
+                self.trigger_since={key:start for key,start in self.trigger_since.items() if key[0]!=uid}
 
     def _compute_candidate_cells(self,state,ue,link,connection,cell_load_view):
+        self._event_context=(state,ue,connection)
         profiles=self._cell_radio_profiles(state)
         positions=self._managed_cells(state)
         serving=str(connection.serving_cell_id)
@@ -75,4 +122,10 @@ class RtMobilityManager(MobilityManager):
                 is_serving=cid==serving,estimated_load=load['estimated_load'],load_penalty_db=load['load_penalty_db'],
                 connected_ue_count=int(load['connected_ue_count']),scheduled_ue_count=int(load['scheduled_ue_count']),
                 queued_bytes=int(load['queued_bytes'])))
-        return sorted(candidates,key=lambda c:c.quality_score_db,reverse=True)
+        ranked=sorted(candidates,key=lambda c:c.quality_score_db,reverse=True)
+        # TTT is continuous for the current best target. Returning to serving
+        # or changing target breaks all previous candidate timers.
+        best=ranked[0].cell_id
+        self.trigger_since={key:start for key,start in self.trigger_since.items()
+            if key[0]!=ue.ue_id or (key[1]==best and best!=serving)}
+        return ranked

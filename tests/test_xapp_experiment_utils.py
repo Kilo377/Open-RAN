@@ -25,7 +25,7 @@ class TestXAppExperimentUtils(unittest.TestCase):
         self.assertEqual([item["name"] for item in filtered["rapps"]], ["rapp_a"])
 
     def test_stress_config_bundle_loads_and_generates(self) -> None:
-        project_root = Path("D:\\研究生\\oran_slot_sim")
+        project_root = Path(__file__).resolve().parents[1]
         configs, _ = load_xapp_experiment_configs(
             project_root,
             ric_filename="ric_sensitivity.yaml",

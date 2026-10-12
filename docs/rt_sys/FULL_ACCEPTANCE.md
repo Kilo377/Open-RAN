@@ -2,7 +2,9 @@
 
 本记录对应两个地图、3 小区、12/24 UE、3 个种子、每次 1000 时隙。结果以实际矩阵审计文件为准，不作为算法泛化结论。
 
-## 2026-10-12 状态
+最新六项修复和复验见 [SIX_ISSUE_REPAIRS.md](SIX_ISSUE_REPAIRS.md)。以下保留早期矩阵结果，其中测试失败、关联抖动及自然 MU 缺口已在新记录中更新；默认 PHY 校准仍未通过。
+
+## 早期矩阵记录（2026-10-12）
 
 修复后矩阵已完成，12/12 场景通过严格审计：共 12000 时隙、216000 条 UE 记录、17667224 字节交付，三个并行进程总耗时 3055.43 秒（50.92 分钟）。实际 Sionna RT CUDA 与 SYS/PyTorch CUDA 执行、控制物理响应、多小区物理记账及资源统计接入验证通过。摘要见 [full_acceptance.json](full_acceptance.json)，最终详细输出在 `outputs/rt_sys_matrix_grid/` 与 `outputs/rt_sys_acceptance_grid/`，已从 Spark 同步回本地副本。
 

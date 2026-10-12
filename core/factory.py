@@ -179,6 +179,7 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
                         or []
                     ),
                     static_xapp_selection_enabled=bool(global_static_xapp_selection_enabled),
+                    freeze_learning=bool(rapp_item.get('freeze_learning',ric_config.get('freeze_learning',False))),
                     reflection_enabled=bool(global_reflection_enabled),
                     memory_mode=str(global_memory_mode),
                     selection_mode=str(global_selection_mode),

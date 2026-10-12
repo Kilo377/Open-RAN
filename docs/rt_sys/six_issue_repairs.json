@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-12",
+  "scope": "Independent copy; GPU integration verification, not formal algorithm generalization or full PHY calibration",
+  "original_source": {
+    "files": 1113,
+    "sha256_unchanged": true
+  },
+  "local_regression": {
+    "passed": 210,
+    "cuda_skipped": 1,
+    "subtests_passed": 2
+  },
+  "spark_regression": {
+    "passed": 211,
+    "warnings": 1,
+    "subtests_passed": 2,
+    "evidence": "outputs/rt_sys_repairs/pytest_release.log"
+  },
+  "spark_connection": {
+    "host": "njupt@192.168.1.202",
+    "identity_verified_against_saved_spark_host_key": true
+  },
+  "matrix": {
+    "matrix_passed": true,
+    "cases": 12,
+    "totals": {
+      "slots": 12000,
+      "ue_rows": 216000,
+      "delivered_bytes": 14243452,
+      "mu_resource_groups": 74754,
+      "association_changes": 247,
+      "live_completed_handovers": 247
+    },
+    "matrix_elapsed_s": 2510.360865593888,
+    "max_power_error_w": 9.992007221626409e-16,
+    "max_precoder_norm_error": 3.768539033055518e-07,
+    "source_fingerprints": [
+      "1cb10ce2bc13de48c6dae568197e121daea7cb981d1056d00c15b7b0646a7f32"
+    ],
+    "per_slot_mobility_events_present": false,
+    "per_map_mu_resource_groups": {
+      "simple_street_canyon": 74754,
+      "munich": 0
+    }
+  },
+  "cache": {
+    "all_formats_bytes": {
+      "dense_v1": 279703345720,
+      "paths_v2": 35965636
+    },
+    "matrix_unique_keys": 12,
+    "matrix_compact_cache_bytes": 24739713,
+    "deleted_keys": []
+  },
+  "export_probe": {
+    "completed": true,
+    "cases": [
+      {
+        "case": "export_street",
+        "completed": true,
+        "source_sha256": "bb06349dc226b92a45c11bca56a261e1276ab573c02c2a8f7c36e0fe7eedf531",
+        "slots": 400,
+        "completed_handovers": 2,
+        "per_slot_events_and_counters": true
+      },
+      {
+        "case": "export_munich",
+        "completed": true,
+        "source_sha256": "bb06349dc226b92a45c11bca56a261e1276ab573c02c2a8f7c36e0fe7eedf531",
+        "slots": 400,
+        "completed_handovers": 2,
+        "per_slot_events_and_counters": true
+      }
+    ]
+  },
+  "path_update_probe": {
+    "completed": true,
+    "device": "cuda",
+    "scene": "simple_street_canyon",
+    "cells": 2,
+    "ues": 4,
+    "slots": 2000,
+    "replay_trace_exact_match": true,
+    "delivered_bytes": {
+      "path_dt1": 322132,
+      "path_dt10": 322132,
+      "path_replay": 322132
+    },
+    "relative_cfr_l2_error": 0.0026635623308987042,
+    "max_link_mean_gain_difference_db": 7.7158203125,
+    "scope": "Short integration check; SYS-reported SINR may saturate. Does not establish long-term approximation accuracy."
+  },
+  "protocol": {
+    "completed": true,
+    "actual_spark_cuda": true,
+    "cases": 12,
+    "trained_nonempty_memory": true,
+    "evaluation_artifacts_unchanged": true,
+    "fold_artifact_sha256": {
+      "0": "64ca1d92eb8ff02a484a6b1a27deba48a0e65a6522f983e28d5e19d99b962a41",
+      "1": "cffa49d35a69dd7bf128e925fe83e4a99ffa671f3cc65441a3bf2a77cbd4859c"
+    },
+    "uncalibrated_phy_probe": true,
+    "formal_benchmark_jobs": 516,
+    "scope": "Execution and isolation proof only; no algorithm generalization or calibrated PHY claim"
+  },
+  "calibration": {
+    "full_phy_calibrated": false,
+    "all_mcs_flat_awgn": {
+      "points": 312,
+      "failed": 114
+    },
+    "selective_awgn": {
+      "points": 24,
+      "failed": 2
+    },
+    "formal_protocol_execution_blocked": true,
+    "custom_bler_beta_fit_and_independent_validation": "pending"
+  },
+  "remaining": [
+    "Refit BLER/EESM beta and independently validate intended PHY domain",
+    "Characterize 1 ms/10 ms update errors by link and scenario",
+    "Run formal held-out-map benchmark after PHY validation"
+  ]
+}

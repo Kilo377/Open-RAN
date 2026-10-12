@@ -190,6 +190,13 @@ class Simulator:
                 delay_slots=config.measurement_queue_delay_slots,
                 noise_std_db=config.measurement_sinr_noise_std_db)
             self.phy_adapter.bind_state(self.state)
+            for runtime in self.state.managed_cells.values():
+                runtime.scheduler.enable_spatial_multiplexing=self.scheduler.enable_spatial_multiplexing
+                runtime.scheduler.max_mu_users_per_group=self.scheduler.max_mu_users_per_group
+                runtime.scheduler.max_total_spatial_layers=self.scheduler.max_total_spatial_layers
+            self.mobility_manager.update(self.state)
+            self._refresh_managed_cell_runtime_views(self.state)
+            self.measurement_updater.update(self.state)
 
 
         self._rng = random.Random(int(getattr(config, "rng_seed", 1)))
@@ -859,6 +866,8 @@ class Simulator:
             beamforming=scoped_beamforming,
             runtime_mode=str(getattr(state, "runtime_mode", "single_active_cell")),
             managed_cells=getattr(state, "managed_cells", {}),
+            rt_channel_snapshot=self.phy_adapter.scheduler_snapshot if self._rt_sys_mode else None,
+            rt_harq_combining=self.phy_adapter.config.get('harq_combining','none') if self._rt_sys_mode else 'none',
         )
 
     def _aggregate_cluster_stage_trace(
@@ -1422,6 +1431,12 @@ class Simulator:
                 # StateUpdater replaces the scoped grid after PHY accounting.
                 # Publish that grid to the views used by telemetry and the RIC.
                 runtime_state.resource_grid = scoped_state.resource_grid
+                # MU shares REs across users. Report occupied physical REs,
+                # rather than double-counting per-user allocations.
+                runtime_state.resource_grid.allocated_resource_elements=int(
+                    self.phy_adapter.trace['cells'][runtime_state.cell_id]['occupied_re'])
+                runtime_state.resource_grid.utilization=runtime_state.resource_grid.allocated_resource_elements/max(
+                    1,runtime_state.resource_grid.total_resource_elements)
                 if runtime_state.is_primary:
                     state.resource_grid = runtime_state.resource_grid
             per_cell_phy_results.append(phy_result)
@@ -2114,9 +2129,11 @@ class Simulator:
         )
 
         # Initialize measurement view for controllers.
-        self.mobility_manager.update(state)
+        if not bool(getattr(self.phy_adapter,'cluster_execution',False)):
+            self.mobility_manager.update(state)
         self._refresh_managed_cell_runtime_views(state)
-        self.measurement_updater.update(state)
+        if not bool(getattr(self.phy_adapter,'cluster_execution',False)):
+            self.measurement_updater.update(state)
         return state
 
     def _sync_beam_state_from_cell(self) -> None:
@@ -3299,6 +3316,10 @@ class Simulator:
         )
 
         if self._rt_sys_mode and self.slot_records:
+            self.phy_adapter.trace.update(
+                mobility_events=list(self.mobility_manager.events),
+                handover_counts={uid:c.handover_count for uid,c in self.state.connections.items()},
+                connection_states={uid:c.connection_state for uid,c in self.state.connections.items()})
             self.slot_records[-1]["rt_sys"] = dict(self.phy_adapter.trace)
             self.slot_records[-1]["rt_sys"]["control_audit"] = self._rt_control_audit
         return post_phy_observation

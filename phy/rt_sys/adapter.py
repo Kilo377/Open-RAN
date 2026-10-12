@@ -1,11 +1,12 @@
 """Cluster-wide downlink RT/SYS executor, retaining legacy PhyResult contracts."""
-from dataclasses import fields
+from dataclasses import fields,replace
 import math
 import numpy as np
 from models.phy_result import PhyResult, PhyUeResult
 from phy.mcs_profiles import select_mcs_index_from_sinr
 from phy.rt_sys.numerics import Algebra, beam_subspace
 from phy.rt_sys.abstraction import SionnaAbstraction
+from phy.rt_sys.fidelity import estimate_csi,ChaseCombiner
 
 
 class RtSysPhyAdapter:
@@ -17,7 +18,7 @@ class RtSysPhyAdapter:
         if abstraction is None and self.device == 'numpy':
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
         self.math = Algebra(self.device)
-        self.abstraction = abstraction or SionnaAbstraction(self.device, self.config.get('bler_target', .1))
+        self.abstraction = abstraction or SionnaAbstraction(self.device, self.config.get('bler_target', .1),self.config.get('bler_table_files'),self.config.get('beta_table_file'))
         self.channel_provider = channel_provider
         if self.channel_provider is None and self.config.get('manifest_path'):
             from pathlib import Path
@@ -32,6 +33,8 @@ class RtSysPhyAdapter:
         self.seed = int(self.config.get('rng_seed', 1))
         self.trace = {}
         self.current_snapshot = None
+        self.scheduler_snapshot=None
+        self.combiner=ChaseCombiner(self.config.get('harq_combining','none'))
 
     def run_slot(self, phy_input):
         raise RuntimeError('RT/SYS requires run_cluster_slot with all managed-cell grants')
@@ -41,6 +44,10 @@ class RtSysPhyAdapter:
             raise RuntimeError('No RT channel provider configured')
         self.current_snapshot = self.channel_provider.snapshot(int(state.slot_id))
         self.current_snapshot.validate()
+        self.scheduler_snapshot=replace(self.current_snapshot,
+            cfr=estimate_csi(self.current_snapshot,self.seed,self.config.get('csi_error_nmse_db')))
+        state.rt_channel_snapshot=self.scheduler_snapshot
+        state.rt_harq_combining=self.combiner.mode
         for i, uid in enumerate(self.current_snapshot.ue_ids):
             link = state.links[uid]
             link.x_m, link.y_m, link.z_m = map(float, self.current_snapshot.positions[i])
@@ -83,6 +90,7 @@ class RtSysPhyAdapter:
             raise ValueError('RT and runtime carrier grids differ')
         a = self.math
         h = a.array(snapshot.cfr)
+        estimated=a.array(estimate_csi(snapshot,self.seed,self.config.get('csi_error_nmse_db'))) if self.config.get('csi_error_nmse_db') is not None else h
         noise = 10**((-174+10*math.log10(self.config.get('subcarrier_spacing_hz',30000))+
                       self.config.get('noise_figure_db',7)-30)/10)
         entries = []
@@ -122,64 +130,79 @@ class RtSysPhyAdapter:
                                     'occupied_re':int(np.logical_or.reduce([e['mask'] for e in active]).sum()) if active and budget>0 else 0,
                                     'grid_re':int(ns*nf),
                                     'tx_power_dbm':float(p.tx_power_dbm)}
-        # Group subcarriers with the same grant activity to batch matrix solves.
+        # Batch all REs with the same transmitter/stream set across symbols.
+        # Each RE retains its true channel and the original per-symbol ridge.
+        patterns={}
         for symbol in range(ns):
-            patterns = {}
             for f in range(nf):
-                pattern = tuple(i for i,e in enumerate(entries) if e['mask'][symbol,f] and e['power']>0)
-                if pattern: patterns.setdefault(pattern, []).append(f)
-            for pattern, frequencies in patterns.items():
-                tx = []
-                for ci in sorted({entries[i]['ci'] for i in pattern}):
-                    group = [entries[i] for i in pattern if entries[i]['ci']==ci]
-                    stream_rows = []
-                    owners = []
-                    dft=beam_subspace(nt,0,0,0)
-                    directions=set()
-                    for member in group:
-                        sub=beam_subspace(nt,member['p'].current_codebook_id,
-                            member['p'].current_beam_profile_id,int(member['ue'].serving_beam_id))
-                        directions.update(np.argmax(abs(dft.conj().T @ sub),axis=0).tolist())
-                    basis=dft[:,sorted(directions)]
-                    for e in group:
-                        hu = h[e['ui'],ci,:,:,symbol,:][:,:,frequencies].moveaxis(-1,0) if a.torch else np.moveaxis(h[e['ui'],ci,:,:,symbol,:][:,:,frequencies],-1,0)
-                        u,_,_ = a.svd(hu)
-                        effective = a.adj(u)[..., :e['layers'], :] @ hu
-                        stream_rows.append(effective)
-                        owners.extend((e,k) for k in range(e['layers']))
-                    if len(owners) > basis.shape[-1]:
-                        raise ValueError('Scheduled MU layers exceed physical beam subspace')
-                    rows = a.cat(stream_rows, -2)
-                    # Relative ridge keeps physical scale and works at small RT gains.
-                    scale = max(float(a.numpy(a.sum(abs(rows)**2,-1)).mean()), 1e-30)
-                    weights = a.rzf(rows,a.array(basis), self.config.get('rzf_relative_regularization',.01)*scale)
-                    sample=a.numpy(weights[0])
+                pattern=tuple(i for i,e in enumerate(entries) if e['mask'][symbol,f] and e['power']>0)
+                if pattern:patterns.setdefault(pattern,[]).append((symbol,f))
+        for pattern,coordinates in patterns.items():
+            symbols,frequencies=map(list,zip(*coordinates))
+            tx = []
+            for ci in sorted({entries[i]['ci'] for i in pattern}):
+                group = [entries[i] for i in pattern if entries[i]['ci']==ci]
+                stream_rows = []
+                owners = []
+                dft=beam_subspace(nt,0,0,0)
+                directions=set()
+                for member in group:
+                    sub=beam_subspace(nt,member['p'].current_codebook_id,
+                        member['p'].current_beam_profile_id,int(member['ue'].serving_beam_id))
+                    directions.update(np.argmax(abs(dft.conj().T @ sub),axis=0).tolist())
+                basis=dft[:,sorted(directions)]
+                for e in group:
+                    hu = estimated[e['ui'],ci][:,:,symbols,frequencies].moveaxis(-1,0) if a.torch else np.moveaxis(estimated[e['ui'],ci][:,:,symbols,frequencies],-1,0)
+                    u,_,_ = a.svd(hu)
+                    effective = a.adj(u)[..., :e['layers'], :] @ hu
+                    stream_rows.append(effective)
+                    owners.extend((e,k) for k in range(e['layers']))
+                if len(owners) > basis.shape[-1]:
+                    raise ValueError('Scheduled MU layers exceed physical beam subspace')
+                rows = a.cat(stream_rows, -2)
+                # Relative ridge keeps physical scale and works at small RT gains.
+                row_power=a.numpy(a.sum(abs(rows)**2,-1))
+                symbol_indices={symbol:np.flatnonzero(np.asarray(symbols)==symbol) for symbol in set(symbols)}
+                scales={symbol:max(float(row_power[indices].mean()),1e-30) for symbol,indices in symbol_indices.items()}
+                alpha=a.array(np.asarray([scales[s] for s in symbols])[:,None,None])*self.config.get('rzf_relative_regularization',.01)
+                weights = a.rzf(rows,a.array(basis),alpha)
+                samples=a.numpy(weights)
+                for symbol,indices in sorted(symbol_indices.items()):
+                    sample=samples[indices[0]]
                     precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
-                        'representative_subcarrier':frequencies[0],'subcarrier_count':len(frequencies),
+                        'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
                         'beam_subspace_dimension':basis.shape[-1],
                         'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':e['power']} for e,k in owners],
                         'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist()})
-                    for j,(e,k) in enumerate(owners):
-                        w = weights[...,j:j+1]*math.sqrt(e['power'])
-                        e['precoder_norms'].append(float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
-                        tx.append((e,k,w))
-                for e,k,w in tx:
-                    received = []
-                    desired = None
-                    inter_power = np.zeros(len(frequencies))
-                    for other,ok,ow in tx:
-                        hu = h[e['ui'],other['ci'],:,:,symbol,:][:,:,frequencies]
-                        hu = hu.moveaxis(-1,0) if a.torch else np.moveaxis(hu,-1,0)
-                        signal = hu @ ow
-                        if other is e and ok == k: desired = signal
-                        else:
-                            received.append(signal)
-                            if other['ci'] != e['ci']:
-                                inter_power += a.numpy(a.sum(abs(signal)**2,(-2,-1)))
-                    others = a.cat(received) if received else a.array(np.zeros((len(frequencies),nr,0)))
-                    values = a.numpy(a.lmmse(desired,others,noise))
-                    e['sinr'][symbol,frequencies,k] = values
-                    e['inter'].extend(inter_power.tolist())
+                for j,(e,k) in enumerate(owners):
+                    w = weights[...,j:j+1]*math.sqrt(e['power'])
+                    e['precoder_norms'].append(float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
+                    tx.append((e,k,w))
+            for e,k,w in tx:
+                received = []
+                desired = None
+                estimated_desired=None;estimated_received=[]
+                inter_power = np.zeros(len(frequencies))
+                for other,ok,ow in tx:
+                    hu = h[e['ui'],other['ci']][:,:,symbols,frequencies]
+                    hu = hu.moveaxis(-1,0) if a.torch else np.moveaxis(hu,-1,0)
+                    signal = hu @ ow
+                    eh=estimated[e['ui'],other['ci']][:,:,symbols,frequencies]
+                    eh=eh.moveaxis(-1,0) if a.torch else np.moveaxis(eh,-1,0)
+                    esignal=eh@ow
+                    if other is e and ok == k:
+                        desired = signal;estimated_desired=esignal
+                    else:
+                        received.append(signal)
+                        estimated_received.append(esignal)
+                        if other['ci'] != e['ci']:
+                            inter_power += a.numpy(a.sum(abs(signal)**2,(-2,-1)))
+                others = a.cat(received) if received else a.array(np.zeros((len(frequencies),nr,0)))
+                eothers=a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))
+                values = a.numpy(a.lmmse(desired,others,noise,estimated_desired,eothers)
+                    if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
+                e['sinr'][symbols,frequencies,k] = values
+                e['inter'].extend(inter_power.tolist())
         results = {}
         trace_ues = []
         for p in phy_inputs:
@@ -203,8 +226,12 @@ class RtSysPhyAdapter:
                     result.resource_grid_re_count = int(e['mask'].sum())
                     result.effective_data_re_count = int(data.sum())
                     result.dmrs_overhead_fraction = 1-data.sum()/max(1,e['mask'].sum())
+                    no_path=not np.any(values[data,:]>0)
+                    # Zero SINR on an allocated stream is an erasure, not an
+                    # unscheduled RE. SYS uses zero as its resource-mask value.
+                    if not no_path:values[data,:]=np.maximum(values[data,:],1e-30)
                     usable = values[values>0]
-                    no_path = len(usable)==0
+                    values,combining_reason=self.combiner.combine(ue,p.cell_id,p.slot_id,values)
                     mean = float(usable.mean()) if not no_path else 0
                     result.sinr_db = result.effective_sinr_db = 10*math.log10(max(mean,1e-30))
                     result.pre_eq_sinr_db = result.post_eq_sinr_db = result.sinr_db
@@ -217,6 +244,7 @@ class RtSysPhyAdapter:
                             self.seed,p.slot_id,ue.ue_id,fixed=ue.target_mcs is not None)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
                         result.link_adaptation_reason = metrics.get('mcs_projection') or 'sys_bler_mapping'
+                        physical_capacity=metrics['capacity_bytes']
                         result.mcs_index = metrics['mcs']; result.modulation_order = metrics['qm']
                         result.code_rate = metrics['rate']; result.bler = metrics['tbler']
                         result.effective_sinr_db = 10*math.log10(max(metrics['sinr_eff'],1e-30))
@@ -227,6 +255,8 @@ class RtSysPhyAdapter:
                         else: result.ack = bool(metrics['ack']) and result.tb_size_bytes>0
                     result.transport_block_size_bytes = result.scheduled_bytes = result.tb_size_bytes
                     result.delivered_bytes = result.tb_size_bytes if result.ack else 0
+                    self.combiner.set_payload(ue,result.tb_size_bytes)
+                    if result.ack:self.combiner.acknowledge(ue)
                     result.throughput_mbps = result.delivered_bytes*8/((p.runtime_context.slot_duration_ms if p.runtime_context is not None else self.config.get("slot_duration_ms",1))*1000)
                     result.num_layers = e['layers']
                     result.inter_cell_interference_dbm = 10*math.log10(max(float(np.mean(e['inter'])) if e['inter'] else 0,1e-30))+30
@@ -242,12 +272,16 @@ class RtSysPhyAdapter:
                         'scheduled':True,'queue_bytes':ue.queue_bytes,
                         'throughput_mbps':result.throughput_mbps,
                         'mcs_mapping':result.link_adaptation_reason or ''})
+                    trace_ues[-1].update(raw_sinr_db=result.sinr_db,harq_combining=combining_reason,
+                        physical_tb_capacity_bytes=physical_capacity if not no_path else 0,
+                        padding_bytes=max(0,physical_capacity-result.tb_size_bytes) if not no_path else 0)
                 else:
                     trace_ues.append({'ue_id':ue.ue_id,'cell_id':p.cell_id,'sinr_db':0.0,
                         'bler':0.0,'mcs':0,'allocated_re':0,'data_re':0,'layers':0,'ack':False,
                         'tb_bytes':0,'delivered_bytes':0,'inter_cell_interference_dbm':-270.0,
                         'precoder_column_norm_mean':0.0,'beam_subspace_codebook':p.current_codebook_id,
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
+                    trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 outputs.append(result)
             scheduled = [r for r in outputs if r.is_scheduled]
             results[p.cell_id] = PhyResult(p.slot_id,p.cell_id,outputs,
@@ -255,4 +289,6 @@ class RtSysPhyAdapter:
                 float(np.mean([r.bler for r in scheduled])) if scheduled else 0,
                 sum(r.tb_size_bytes for r in outputs))
         self.trace = {'mcs_table_policy':'SYS default EESM tables 1/2; low-SE MAC requests use table 1', 'slot_id':snapshot.slot_id,'cache_key':snapshot.cache_key,'cells':cell_trace,'ues':trace_ues,'precoders':precoder_trace}
+        self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.combiner.mode)
+        self.trace['phy_calibration_status']='custom_tables_require_validation' if self.config.get('bler_table_files') else 'default_tables_failed_expanded_validation'
         return results

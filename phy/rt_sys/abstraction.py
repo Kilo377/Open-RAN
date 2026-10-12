@@ -7,12 +7,19 @@ TABLES = {'qam64': 1, 'qam256': 2, 'qam64_low_se': 3}
 
 
 class SionnaAbstraction:
-    def __init__(self, device='cuda', target_bler=.1):
+    def __init__(self, device='cuda', target_bler=.1,bler_table_files=None,beta_table_file=None):
         import torch
         from importlib.metadata import version
         if version('sionna') != '2.2.0':
             raise RuntimeError('RT/SYS backend requires sionna==2.2.0; use its dedicated environment')
         from sionna.sys import PHYAbstraction
+        from pathlib import Path
+        if bler_table_files is not None:
+            files=[bler_table_files] if isinstance(bler_table_files,str) else list(bler_table_files)
+            if not files or any(not Path(path).is_file() for path in files):
+                raise ValueError('Requested custom BLER tables must all exist')
+        if beta_table_file is not None and not Path(beta_table_file).is_file():
+            raise ValueError('Requested custom EESM beta table must exist')
         from sionna.phy.nr.utils import MCSDecoderNR, TransportBlockNR
         self.torch, self.device, self.target_bler = torch, device, target_bler
         if device == 'cuda' and not torch.cuda.is_available():
@@ -21,7 +28,9 @@ class SionnaAbstraction:
         # PyTorch also accepts the shorthand 'cuda'.
         device='cuda:0' if device=='cuda' else device
         self.device=device
-        self.phy = PHYAbstraction(device=device)
+        from sionna.sys import EESM
+        effective=EESM(device=device,load_beta_table_from=beta_table_file or 'default')
+        self.phy = PHYAbstraction(device=device,load_bler_tables_from=bler_table_files or 'default',sinr_effective_fun=effective)
         self.decoder = MCSDecoderNR(device=device)
         self.transport = TransportBlockNR(device=device)
 
@@ -55,4 +64,4 @@ class SionnaAbstraction:
                 'capacity_bytes':int(capacity.item())//8,
                 'sinr_eff':float(eff.item()), 'tbler':error, 'cbler':float(cbler.item()),
                 'ack':keyed_uniform(seed,slot,ue_id) >= error,
-                'mcs_projection':None if candidate == mcs else f'calibrated_table_projection:{mcs}->{candidate}'}
+                'mcs_projection':None if candidate == mcs else f'supported_table_projection:{mcs}->{candidate}'}

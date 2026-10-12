@@ -82,7 +82,10 @@ class TestXAppSelectionRApp(unittest.TestCase):
         self.assertEqual(base_spec["variant_params"], {})
 
     def test_llm_selection_uses_exact_variant_names_and_full_catalog_prompt(self) -> None:
-        app = XAppSelectionRApp()
+        # URLLC requires a scheduler; steering requires mobility prediction.
+        # Leave room for both dependencies so
+        # the feasibility projection need not drop a requested variant.
+        app = XAppSelectionRApp(max_selected_xapps=5,max_cpu_cost=20,max_mem_cost=20)
         app.client = _StubLlmClient(
             [
                 {
@@ -114,6 +117,8 @@ class TestXAppSelectionRApp(unittest.TestCase):
                 "massive_mimo_beamformer_xapp_capacity_push",
                 "traffic_steering_xapp_quality_first",
                 "urllc_guard_xapp_balanced",
+                "mobility_predictor_xapp",
+                "latency_scheduler_xapp",
             ],
         )
         self.assertEqual(plan.candidate_scores[1].xapp_name, "traffic_steering_xapp_quality_first")
@@ -158,6 +163,7 @@ class TestXAppSelectionRApp(unittest.TestCase):
             [
                 "massive_mimo_beamformer_xapp_capacity_push",
                 "urllc_guard_xapp_balanced",
+                "latency_scheduler_xapp",
             ],
         )
 

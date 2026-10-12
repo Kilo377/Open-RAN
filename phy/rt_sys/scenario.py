@@ -12,12 +12,14 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_slots=40,
-               path_update_ms=None,device='cuda',config_path=None):
+               path_update_ms=None,device='cuda',config_path=None,*,deployment_id=None,traffic_load=1):
     base=json.loads((Path(config_path) if config_path else ROOT/'configs/rt_sys/default.json').read_text())
     catalog=json.loads((ROOT/'configs/rt_sys/scene_catalog.json').read_text())
     if scene not in catalog or not 1<=num_cells<=len(catalog[scene]['cells']) or num_ues<1 or total_slots<1:
         raise ValueError('Invalid scene/cell/UE/slot configuration')
     radio=deepcopy(base['radio']); dt=radio['slot_duration_ms']; duration=dt*total_slots/1000
+    if deployment_id is not None and deployment_id not in (0,1,2):raise ValueError('Deployment ID must be 0, 1, or 2')
+    if not np.isfinite(traffic_load) or traffic_load<=0:raise ValueError('Positive finite traffic load required')
     nprb,_=lookup_nr_max_prbs(bandwidth_hz=radio['bandwidth_hz'],subcarrier_spacing_hz=radio['subcarrier_spacing_hz'],carrier_frequency_hz=radio['carrier_frequency_hz'])
     fft=2**math.ceil(math.log2(math.ceil(nprb*12*1.25)))
     ns=14*max(1,round(dt/(1000*15/radio['subcarrier_spacing_hz'])))
@@ -26,16 +28,32 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     for i in range(num_ues):
         route=np.asarray(catalog[scene]['routes'][i%len(catalog[scene]['routes'])],float)
         phase=((i//len(catalog[scene]['routes']))+.5)/max(1,math.ceil(num_ues/len(catalog[scene]['routes'])))
-        start=route[0]+min(.8,phase*.8)*(route[1]-route[0])
+        fraction=min(.8,phase*.8) if deployment_id is None else .05+.25*deployment_id+.2*phase
+        start=route[0]+fraction*(route[1]-route[0])
         direction=route[1]-start
         distance=float(np.linalg.norm(direction))
-        travel=min(float(base.get('ue_speed_mps',1.5))*duration,distance)
-        end=start+direction*(travel/max(distance,1e-12))
-        ues.append({'ue_id':f'ue_{i}','trajectory':{'times_s':[0,duration], 'positions_m':[start.tolist(),end.tolist()]}})
+        speed=float(base.get('ue_speed_mps',1.5))
+        if speed<0:raise ValueError('UE speed must be nonnegative')
+        times=[0.];points=[start.tolist()];target=route[1];now=start.copy()
+        while times[-1]<duration-1e-12:
+            distance=float(np.linalg.norm(target-now))
+            if speed==0:
+                times.append(duration);points.append(now.tolist());break
+            if distance<1e-9:
+                target=route[0] if np.allclose(target,route[1]) else route[1];continue
+            remaining=duration-times[-1];step=min(remaining,distance/speed)
+            now=now+(target-now)*(speed*step/distance)
+            times.append(times[-1]+step);points.append(now.tolist())
+            if step<remaining:target=route[0] if np.allclose(target,route[1]) else route[1]
+        ues.append({'ue_id':f'ue_{i}','trajectory':{'times_s':times,'positions_m':points}})
     manifest={'scene':scene,'cells':deepcopy(catalog[scene]['cells'][:num_cells]),'ues':ues,
               'rng_seed':seed,'total_slots':total_slots,'path_update_ms':path_update_ms if path_update_ms is not None else base['path_update_ms'],
               'chunk_slots':base['chunk_slots'],'ray_solver':base['ray_solver'],
+              'cache_format':base.get('cache_format','dense_v1'),
               'num_symbols':ns,'fft_size':fft,**radio}
+    if deployment_id is not None:
+        manifest['deployment_id']=deployment_id
+        for cell in manifest['cells']:cell['orientation_rad'][0]+=.1*deployment_id
     configs=load_all_configs(str(ROOT/'configs'))
     for name in ('sim','ric','ue'):
         override=ROOT/'configs'/f'{name}_intent_orchestration.yaml'
@@ -62,7 +80,15 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         item=deepcopy(originals[i%len(originals)])
         item.update(ue_id=u['ue_id'],queue_bytes=1000,serving_beam_id=0,is_indoor=False,serving_cell_id=manifest['cells'][i%num_cells]['cell_id'],
                     num_rx_ant=radio['num_rx_ant'],velocity_mps=0,shadowing_db=0,pathloss_db=100)
+        if configs['sim'].get('scheduler_enable_spatial_multiplexing'):
+            # One stream per UE leaves the configured two-stream budget for MU.
+            item.update(rank=1,ri=1)
         item.update(dict(zip(('x_m','y_m','z_m'),u['trajectory']['positions_m'][0])))
+        for key in ('arrival_rate_bps','burst_size_bytes'):
+            if key in item:item[key]=item[key]*traffic_load
+        for lc in item.get('logical_channels',[]):
+            for key in ('arrival_rate_bps','burst_size_bytes'):
+                if key in lc:lc[key]=lc[key]*traffic_load
         configs['ue']['ues'].append(item)
     configs['beamforming']['antenna'].update({**radio,'gnb_num_tx_ant':radio['tx_rows']*radio['tx_cols'],
         'default_ue_num_rx_ant':radio['num_rx_ant'],'gnb_panel_layout':f'{radio["tx_rows"]}x{radio["tx_cols"]}'})

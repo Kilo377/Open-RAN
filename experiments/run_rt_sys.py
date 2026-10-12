@@ -6,11 +6,18 @@ import json
 import time
 import resource
 import platform
+import hashlib
+import os
 from dataclasses import asdict
 
+# Small per-link matrices suffer severe oversubscription in concurrent cases.
+# Respect explicitly configured thread budgets; set defaults before NumPy/Torch.
+for variable in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'):
+    os.environ.setdefault(variable,'1')
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from phy.rt_sys.scenario import build_case
+from phy.rt_sys.contracts import source_fingerprint
 
 
 def parse_args():
@@ -24,20 +31,50 @@ def parse_args():
     p.add_argument('--output',type=Path)
     p.add_argument('--dry-run',action='store_true')
     p.add_argument('--generate-only',action='store_true')
+    p.add_argument('--deployment-id',type=int,choices=[0,1,2])
+    p.add_argument('--traffic-load',type=float,default=1)
+    p.add_argument('--phase',choices=['integration','train','validation','test'],default='integration')
+    p.add_argument('--selection-mode',choices=['reflective','fixed_plan'],default='reflective')
+    p.add_argument('--model-state',type=Path)
+    p.add_argument('--warmup-ms',type=float,default=0)
+    p.add_argument('--csi-error-nmse-db',type=float)
+    p.add_argument('--harq-combining',choices=['none','chase'],default='none')
     return p.parse_args()
 
 
 def run_case(args):
-    manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config)
+    manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config,
+        deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1))
+    phase=getattr(args,'phase','integration');mode=getattr(args,'selection_mode','reflective')
+    warmup=getattr(args,'warmup_ms',0)
+    if not 0<=warmup<manifest['total_slots']*manifest['slot_duration_ms']:raise ValueError('Warmup must leave an evaluation interval')
+    model_path=getattr(args,'model_state',None);model_hash=None
+    if model_path:
+        model_path=model_path.resolve()
+        if not model_path.is_relative_to(ROOT/'outputs'):raise ValueError('Model states must stay under copy outputs/')
+        if model_path.exists():model_hash=hashlib.sha256(model_path.read_bytes()).hexdigest()
+    if phase in ('validation','test') and mode=='reflective':
+        if not model_path or not model_path.is_file():raise ValueError('Frozen evaluation requires a training artifact')
+        payload=json.loads(model_path.read_text())
+        if not payload.get('success_cases') and not payload.get('failure_cases'):
+            raise ValueError('Training memory is empty; cannot declare trained evaluation')
+    configs['ric'].update(selection_mode=mode,freeze_learning=phase in ('validation','test'))
+    if model_path:
+        configs['ric'].update(persistent_memory_enabled=True,memory_store_path=str(model_path))
+        for rapp in configs['ric'].get('rapps',[]):
+            if rapp['type']=='xapp_selection_rapp':rapp.update(persistent_memory_enabled=True,memory_store_path=str(model_path))
+    configs['phy']['rt_sys'].update(csi_error_nmse_db=getattr(args,'csi_error_nmse_db',None),harq_combining=getattr(args,'harq_combining','none'))
     name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}'
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
     if args.dry_run:
         print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy']},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
-    snapshot={'manifest':manifest,'configs':configs,'intent':intent,'validation':'local/remote integration; not a generalization result'}
+    source_hash=source_fingerprint(ROOT)
+    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'warmup_ms':warmup,'input_model_sha256':model_hash,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
-    status={'completed':False,'spark_verified':False,'stage':'initializing'}
+    status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,
+        'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
     def write_status(): (output/'run_status.json').write_text(json.dumps(status,indent=2))
     write_status(); started=time.perf_counter()
     try:
@@ -61,12 +98,19 @@ def run_case(args):
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
         DebugConfig.SLOT_METRICS=False
         status.update(stage='simulating',cache_key=provider.key); write_status()
+        evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
         with (output/'rt_sys_trace.jsonl').open('w') as trace:
             import csv
             with (output/'ue_metrics.csv').open('w',newline='') as ufile, (output/'cell_metrics.csv').open('w',newline='') as cfile:
                 uw=cw=None
                 for _ in range(args.slots):
                     simulator.step()
+                    adapter.trace['mobility_events']=simulator.mobility_manager.events
+                    adapter.trace['handover_counts']={uid:c.handover_count for uid,c in simulator.state.connections.items()}
+                    adapter.trace['connection_states']={uid:c.connection_state for uid,c in simulator.state.connections.items()}
+                    if simulator.state.sim_time_ms>warmup:
+                        completed_handovers+=sum(e['handover_completed'] for e in simulator.mobility_manager.events)
+                        evaluated_bytes+=sum(u['delivered_bytes'] for u in adapter.trace['ues']);evaluated_slots+=1
                     trace.write(json.dumps(simulator.slot_records[-1]['rt_sys'],allow_nan=False)+'\n')
                     for row in adapter.trace['ues']:
                         row={'slot_id':simulator.state.slot_id,**row}
@@ -77,11 +121,21 @@ def run_case(args):
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
         summary=simulator._build_final_summary()
-        summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':True,
-            'harq_soft_combining':False,'full_phy_calibrated':False,'cache_hits':provider.hits,'cache_misses':provider.misses}
+        summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
+            'harq_soft_combining':adapter.combiner.mode=='chase','full_phy_calibrated':False,'cache_hits':provider.hits,'cache_misses':provider.misses}
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)
         simulator.result_writer.write_orchestration_epoch_history(simulator.controller_manager.get_orchestration_epoch_history())
+        if phase=='train' and model_path:
+            for app in registry.rapps:
+                if hasattr(app,'_persist_memory_state'):app._persist_memory_state()
+        if phase in ('validation','test') and model_hash:
+            if hashlib.sha256(model_path.read_bytes()).hexdigest()!=model_hash:raise RuntimeError('Evaluation mutated training artifact')
+        evaluation={'phase':phase,'selection_mode':mode,'warmup_ms':warmup,'evaluated_slots':evaluated_slots,
+            'delivered_bytes':evaluated_bytes,'throughput_mbps':evaluated_bytes*8/max(evaluated_slots*manifest['slot_duration_ms']*1000,1),
+            'completed_handovers':completed_handovers,'training_artifact_sha256':model_hash,
+            'learning_frozen':configs['ric']['freeze_learning']}
+        (output/'evaluation_summary.json').write_text(json.dumps(evaluation,indent=2))
         status.update(completed=True,stage='completed',runtime_environment=environment,
             spark_verified=args.device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
