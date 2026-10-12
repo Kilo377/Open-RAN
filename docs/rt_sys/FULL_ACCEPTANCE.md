@@ -45,6 +45,10 @@ python -m pytest -q tests --ignore=tests/test_xapp_experiment_utils.py --disable
 
 每小区局部资源网格替换后现同步回运行状态与主小区视图；旧近似后端的流程保持原状。矩阵新增 `--output-root`，审计新增 `--require-resource-metrics` 及 `--output`，以保留修复前证据并独立验证新版本。
 
+## 更新间隔与重放
+
+Spark 上额外运行 street / 2 小区 / 4 UE / 40 时隙的 1 ms 和 10 ms 更新，以及独立固定种子 10 ms 重放。重放的全部 trace 完全一致；三次均交付 42885 字节。两更新间隔原始 CFR 相对 L2 差异为 0.00088336，非零链路平均增益最大差异为 0.006933 dB。报告 SINR 处于 SYS 标定范围限制，不能用相同 SINR 证明物理信道一致；原始张量比较见 [path_update_validation.json](path_update_validation.json)。这段 20 ms 短对照不构成长时轨迹误差保证。
+
 ## 回归范围
 
 原有缺失模块 tests/test_xapp_experiment_utils.py 显式排除。此前复现的四项原有失败单独记录：场景注册表数量断言、Windows 配置路径、两个 xApp 选择断言。不得把它们记为本轮新增失败，也不得把完整测试套件记为全部通过。

@@ -1,0 +1,17 @@
+{
+  "completed": true,
+  "device": "cuda",
+  "scene": "simple_street_canyon",
+  "cells": 2,
+  "ues": 4,
+  "slots": 40,
+  "replay_trace_exact_match": true,
+  "delivered_bytes": {
+    "path_dt1": 42885,
+    "path_dt10": 42885,
+    "path_replay": 42885
+  },
+  "relative_cfr_l2_error": 0.0008833628202399629,
+  "max_link_mean_gain_difference_db": 0.0069333934225142,
+  "scope": "Short integration check; SYS-reported SINR may saturate. Does not establish long-term approximation accuracy."
+}
