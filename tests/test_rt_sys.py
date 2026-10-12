@@ -88,7 +88,9 @@ class PhysicsTests(unittest.TestCase):
         corr=channel(np.array([[[[1e-5,0]]],[[[1e-5,0]]]]),('u0','u1'),('c0',))
         adapter=self.adapter(); inputs=[phy('c0',[ue('u0'),ue('u1')])]
         good=adapter.run_cluster_slot(inputs,orth)['c0'].ue_results
+        self.assertLess(adapter.trace['precoders'][0]['mean_pair_channel_correlation'],1e-5)
         bad=adapter.run_cluster_slot(inputs,corr)['c0'].ue_results
+        self.assertGreater(adapter.trace['precoders'][0]['mean_pair_channel_correlation'],.999)
         self.assertGreater(good[0].sinr_db,bad[0].sinr_db+5)
         self.assertAlmostEqual(adapter.trace['ues'][0]['precoder_column_norm_mean'],1)
         solo=adapter.run_cluster_slot([phy('c0',[ue('u0'),ue('u1',False)])],orth)['c0'].ue_results[0]

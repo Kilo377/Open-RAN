@@ -100,9 +100,9 @@
           50
         ],
         "orientation_rad": [
-          0,
-          0,
-          0
+          0.3,
+          0.8,
+          0.0
         ]
       },
       {
@@ -113,9 +113,9 @@
           50
         ],
         "orientation_rad": [
-          0,
-          0,
-          0
+          -1.2,
+          0.8,
+          0.0
         ]
       },
       {
@@ -126,52 +126,88 @@
           50
         ],
         "orientation_rad": [
-          0,
-          0,
-          0
+          0.0,
+          0.6,
+          0.0
         ]
       }
     ],
     "routes": [
       [
         [
-          45,
-          90,
+          -27.0,
+          -30.0,
           1.5
         ],
         [
-          48,
-          90,
+          -3.0,
+          -30.0,
           1.5
         ]
       ],
       [
         [
-          45,
-          93,
+          15.0,
+          20.0,
           1.5
         ],
         [
-          48,
-          93,
+          67.0,
+          20.0,
           1.5
         ]
       ],
       [
         [
-          45,
-          87,
+          -9.0,
+          40.0,
           1.5
         ],
         [
-          48,
-          87,
+          103.0,
+          40.0,
+          1.5
+        ]
+      ],
+      [
+        [
+          -35.0,
+          60.0,
+          1.5
+        ],
+        [
+          109.0,
+          60.0,
+          1.5
+        ]
+      ],
+      [
+        [
+          -25.0,
+          90.0,
+          1.5
+        ],
+        [
+          149.0,
+          90.0,
+          1.5
+        ]
+      ],
+      [
+        [
+          -19.0,
+          120.0,
+          1.5
+        ],
+        [
+          75.0,
+          120.0,
           1.5
         ]
       ]
     ],
     "validation": {
-      "scope": "Sionna RT 2.2 CPU mesh intersection check",
+      "scope": "Sionna RT 2.2 GPU mesh endpoint/segment check; dispersed long road segments",
       "bs_count": 3,
       "ue_counts": [
         12,
@@ -179,6 +215,7 @@
       ],
       "full_route_segments_checked": true,
       "outdoor_height_m": 1.5
-    }
+    },
+    "deployment_note": "Spatially distributed roads and downtilted BS; replaces clustered 3 m routes. Not selected by algorithm throughput."
   }
 }

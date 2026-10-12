@@ -27,12 +27,12 @@ def audit(root):
     error_energy = reference_energy = 0.; max_gain_delta_db = 0.
     import sys
     sys.path.insert(0,str(ROOT))
-    from phy.rt_sys.channel import reconstruct_paths
+    from phy.rt_sys.channel import reconstruct_paths,geometry_blocks
     def cached_slot(name,slot):
         manifest=manifests[name];folder=ROOT/'channel_cache'/statuses[name]['cache_key']
         if manifest.get('cache_format')=='paths_v2':
-            step=round(manifest['path_update_ms']/manifest['slot_duration_ms'])
-            block=slot//step*step
+            blocks,_=geometry_blocks(manifest)
+            block=blocks[np.searchsorted(blocks,slot,side='right')-1]
             with np.load(folder/f'paths_{block:09d}.npz') as arrays:
                 return reconstruct_paths(arrays,manifest,(slot-block)*manifest['slot_duration_ms']/1000)
         chunk=slot//manifest['chunk_slots'];index=slot%manifest['chunk_slots']

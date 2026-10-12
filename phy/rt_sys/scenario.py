@@ -51,6 +51,8 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
               'chunk_slots':base['chunk_slots'],'ray_solver':base['ray_solver'],
               'cache_format':base.get('cache_format','dense_v1'),
               'num_symbols':ns,'fft_size':fft,**radio}
+    if 'max_geometry_displacement_m' in base:
+        manifest['max_geometry_displacement_m']=base['max_geometry_displacement_m']
     if deployment_id is not None:
         manifest['deployment_id']=deployment_id
         for cell in manifest['cells']:cell['orientation_rad'][0]+=.1*deployment_id

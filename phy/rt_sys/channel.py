@@ -43,6 +43,29 @@ def reconstruct_paths(arrays,manifest,elapsed_s):
     return np.transpose(cfr,(0,2,1,3,4,5)).astype(np.complex64)
 
 
+def geometry_blocks(manifest):
+    """Deterministic, policy-independent updates capped by motion distance.
+
+    Every trajectory velocity change starts a new block at its next slot.
+    The displacement cap is a geometric budget, not a universal RF error bound.
+    """
+    dt=float(manifest['slot_duration_ms'])/1000
+    update=max(1,round(float(manifest['path_update_ms'])/manifest['slot_duration_ms']))
+    if abs(update*manifest['slot_duration_ms']-manifest['path_update_ms'])>1e-6:
+        raise ValueError('Path update must be an integral number of simulation slots')
+    cap=manifest.get('max_geometry_displacement_m')
+    if cap is not None:
+        if not np.isfinite(cap) or cap<=0:raise ValueError('Positive finite geometry displacement cap required')
+        speed=max((float(np.linalg.norm(np.diff(u['trajectory']['positions_m'],axis=0)/np.diff(u['trajectory']['times_s'])[:,None],axis=1).max()) for u in manifest['ues']),default=0)
+        if speed*dt>cap*(1+1e-9):
+            raise ValueError('Per-slot UE displacement exceeds geometry cap; shorten slot or increase explicit cap')
+        if speed>0:update=min(update,max(1,int(np.floor(cap/(speed*dt)))))
+    blocks=set(range(0,int(manifest['total_slots'])+1,update))
+    for u in manifest['ues']:
+        blocks.update(int(np.ceil(t/dt-1e-9)) for t in u['trajectory']['times_s'][1:-1])
+    return sorted(blocks),update
+
+
 class RtChannelProvider:
     def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3):
         self.manifest = json.loads(json.dumps(manifest))
@@ -69,22 +92,21 @@ class RtChannelProvider:
         self.total = int(manifest['total_slots'])
         self.dt = float(manifest['slot_duration_ms'])/1000
         self.chunk_slots = int(manifest.get('chunk_slots',20))
-        self.update_slots = max(1,round(float(manifest['path_update_ms'])/manifest['slot_duration_ms']))
-        if abs(self.update_slots*manifest['slot_duration_ms']-manifest['path_update_ms'])>1e-6:
-            raise ValueError('Path update must be an integral number of simulation slots')
+        self.blocks,self.update_slots=geometry_blocks(manifest)
         self.backend.validate_geometry()
 
     def snapshot(self, slot_id):
         if not 0<=slot_id<=self.total:
             raise ValueError('Requested slot outside RT trace')
-        chunk = slot_id//(self.update_slots if self.compact else self.chunk_slots)
+        chunk = int(np.searchsorted(self.blocks,slot_id,side='right')-1) if self.compact else slot_id//self.chunk_slots
+        block=self.blocks[chunk] if self.compact else chunk*self.chunk_slots
         if chunk != self.loaded_chunk:
-            path = self.root/(f'paths_{chunk*self.update_slots:09d}.npz' if self.compact else f'chunk_{chunk:06d}.npz')
+            path = self.root/(f'paths_{block:09d}.npz' if self.compact else f'chunk_{chunk:06d}.npz')
             if path.exists():
                 arrays = dict(np.load(path,allow_pickle=False)); self.hits+=1
             else:
                 if self.compact:
-                    arrays=self.backend.generate_paths(chunk*self.update_slots)
+                    arrays=self.backend.generate_paths(block)
                 else:
                     first = chunk*self.chunk_slots
                     last = min(self.total+1,first+self.chunk_slots)
@@ -99,7 +121,7 @@ class RtChannelProvider:
             self.loaded_arrays, self.loaded_chunk = arrays, chunk
         i = slot_id-chunk*self.chunk_slots
         if self.compact:
-            cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-chunk*self.update_slots)*self.dt)
+            cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt)
             positions=np.asarray([position_at(u['trajectory'],slot_id*self.dt)[0] for u in self.manifest['ues']])
         else:
             cfr=self.loaded_arrays['cfr'][i]; positions=self.loaded_arrays['positions'][i]
@@ -108,13 +130,16 @@ class RtChannelProvider:
             positions,self.key,{
                 'normalized':False,'bandwidth_hz':self.manifest['bandwidth_hz'],'source':'sionna_rt','path_update_ms':self.manifest['path_update_ms'],
                 'carrier_frequency_hz':self.manifest['carrier_frequency_hz'],
+                'geometry_block_slot':block,'effective_max_path_update_ms':self.update_slots*self.manifest['slot_duration_ms'],
+                'inter_slot_geometry_approximation':self.update_slots>1,
+                'ray_seed_policy':'fixed_per_trace',
                 'subcarrier_spacing_hz':self.manifest['subcarrier_spacing_hz'],
                 'cache_hits':self.hits,'cache_misses':self.misses})
         return snap.validate()
 
     def pregenerate(self):
-        step=self.update_slots if self.compact else self.chunk_slots
-        for start in range(0,self.total+1,step): self.snapshot(start)
+        starts=self.blocks if self.compact else range(0,self.total+1,self.chunk_slots)
+        for start in starts:self.snapshot(start)
 
 
 class SionnaRayTracer:
@@ -167,7 +192,8 @@ class SionnaRayTracer:
         import platform
         return {'python':platform.python_version(),'torch':version('torch'),'sionna':version('sionna'),'sionna_rt':version('sionna-rt'),
                 'mitsuba':version('mitsuba'),'drjit':version('drjit'),
-                'materials':materials,'assets':meshes,'rt_variant':self.mi.variant()}
+                'materials':materials,'assets':meshes,'rt_variant':self.mi.variant(),
+                'path_sampling_revision':3,'ray_seed_policy':'fixed_per_trace'}
 
     def validate_geometry(self):
         # Outdoor fixtures: upward ray detects a building/roof above a UE point.
@@ -196,7 +222,7 @@ class SionnaRayTracer:
         for ue in self.m['ues']:
             pos,vel=position_at(ue['trajectory'],block*self.m['slot_duration_ms']/1000)
             receiver=self.scene.get(ue['ue_id']); receiver.position=pos.tolist(); receiver.velocity=vel.tolist()
-        params=dict(self.m['ray_solver']); params['seed']=int(self.m['rng_seed'])+block
+        params=dict(self.m['ray_solver']); params['seed']=int(self.m['rng_seed'])
         paths=self.solver(self.scene,**params)
         cir,_=paths.cir(normalize_delays=False,out_type='numpy')
         arrays={'cir0':combine_complex(cir)[...,0].astype(np.complex64)}
@@ -210,15 +236,17 @@ class SionnaRayTracer:
         frequencies=(np.arange(nf)-nf//2)*m['subcarrier_spacing_hz']
         out=[]; positions=[]; paths_arrays={}
         # Regenerate geometry only at configured boundaries; cfr() evolves path Doppler.
-        for block in range((first//update_slots)*update_slots,last,update_slots):
-            length=min(update_slots,m['total_slots']+1-block)
+        blocks,_=geometry_blocks(m)
+        for index,block in enumerate(blocks):
+            end=blocks[index+1] if index+1<len(blocks) else m['total_slots']+1
+            if end<=first or block>=last:continue
+            length=end-block
             if block != self._last_block:
                 for ue in m['ues']:
                     pos,vel=position_at(ue['trajectory'],block*dt)
                     receiver=self.scene.get(ue['ue_id']); receiver.position=pos.tolist(); receiver.velocity=vel.tolist()
-                params=dict(m['ray_solver']); params['seed']=int(m['rng_seed'])+block
+                params=dict(m['ray_solver']); params['seed']=int(m['rng_seed'])
                 paths=self.solver(self.scene,**params)
-                length=min(update_slots,m['total_slots']+1-block)
                 cfr=combine_complex(paths.cfr(frequencies=self.mi.Float(frequencies.tolist()),
                     sampling_frequency=ns/dt,num_time_steps=length*ns,
                     normalize_delays=False,normalize=False,out_type='numpy'))

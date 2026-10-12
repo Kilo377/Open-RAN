@@ -1,5 +1,7 @@
 # DGX Spark 配置与小型 GPU 验证
 
+当前地址为 `njupt@192.168.1.202`，使用已有可信主机公钥别名 `HostKeyAlias=192.168.1.201`。当前默认反馈已切换到 NR 参考模式，最新验证见 [物理修复记录](TARGETED_PHYSICS_REPAIRS.md)。下面保留 2026-10-10 的安装与历史验收结果。
+
 验收日期：2026-10-10。通过 SSH `njupt@192.168.1.201` 部署到 `/home/njupt/oran_slot_sim_sionna`，使用项目独立 `.venv-spark`。详细摘要见 [spark_validation.json](spark_validation.json)，准确依赖见 [requirements-spark.lock.txt](../../requirements-spark.lock.txt)。
 
 ## 实际环境

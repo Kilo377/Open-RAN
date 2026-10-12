@@ -2,6 +2,14 @@
 
 A slot-driven O-RAN-style RAN simulator prototype in Python.
 
+This independent copy now defaults to Sionna 2.2 RT with actual NR-TB reference
+feedback and SYS transport-budget adaptation (`sionna_rt_sys`,
+`feedback_mode: nr_tb_reference`). Geometry updates every 0.5 ms slot; Munich
+uses dispersed legal roads for MU scheduling. See
+[the current physics repair report](docs/rt_sys/TARGETED_PHYSICS_REPAIRS.md)
+for execution scope, validation and Spark commands. The failed default
+BLER/EESM abstraction is restricted to explicit diagnostic runs.
+
 ## Current Status
 
 The project has moved beyond the original minimum runnable skeleton and now

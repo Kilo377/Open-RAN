@@ -7,7 +7,7 @@ TABLES = {'qam64': 1, 'qam256': 2, 'qam64_low_se': 3}
 
 
 class SionnaAbstraction:
-    def __init__(self, device='cuda', target_bler=.1,bler_table_files=None,beta_table_file=None):
+    def __init__(self, device='cuda', target_bler=.1,bler_table_files=None,beta_table_file=None,calibration_file=None,_allow_unvalidated=False):
         import torch
         from importlib.metadata import version
         if version('sionna') != '2.2.0':
@@ -30,7 +30,17 @@ class SionnaAbstraction:
         self.device=device
         from sionna.sys import EESM
         effective=EESM(device=device,load_beta_table_from=beta_table_file or 'default')
-        self.phy = PHYAbstraction(device=device,load_bler_tables_from=bler_table_files or 'default',sinr_effective_fun=effective)
+        self.calibration=None
+        if calibration_file:
+            if bler_table_files or beta_table_file:raise ValueError('Exact-RE calibration cannot be combined with other BLER/beta tables')
+            from phy.rt_sys.calibration import load_artifact,calibrated_sys_class,stable_eesm_class
+            file=Path(calibration_file)
+            if not file.is_absolute():file=Path(__file__).resolve().parents[2]/file
+            self.calibration=load_artifact(file,_allow_unvalidated)
+            effective=stable_eesm_class(EESM)(self.calibration,device=device)
+            self.phy=calibrated_sys_class(PHYAbstraction)(self.calibration,device=device,sinr_effective_fun=effective)
+        else:
+            self.phy = PHYAbstraction(device=device,load_bler_tables_from=bler_table_files or 'default',sinr_effective_fun=effective)
         self.decoder = MCSDecoderNR(device=device)
         self.transport = TransportBlockNR(device=device)
 
@@ -44,6 +54,9 @@ class SionnaAbstraction:
         tensor = t.as_tensor(sinr[None, :, :, None, :], dtype=t.float32, device=self.device)
         count = int(np.count_nonzero(sinr > 0))
         supported = sorted(int(k) for k in self.phy.bler_table['category'][1]['index'][table_index]['MCS'])
+        if self.calibration is not None:
+            supported=sorted(int(k.split(':')[1]) for k in self.calibration['curves'] if k.split(':')[0]==str(table_index) and k.split(':')[2]==str(count))
+            if not supported:raise ValueError(f'Unvalidated NR resource budget: table={table_index}, RE={count}')
         eligible = [k for k in supported if k <= int(mcs)]
         candidates = list(reversed(eligible)) if eligible else [supported[0]]
         for candidate in candidates:
@@ -64,4 +77,4 @@ class SionnaAbstraction:
                 'capacity_bytes':int(capacity.item())//8,
                 'sinr_eff':float(eff.item()), 'tbler':error, 'cbler':float(cbler.item()),
                 'ack':keyed_uniform(seed,slot,ue_id) >= error,
-                'mcs_projection':None if candidate == mcs else f'supported_table_projection:{mcs}->{candidate}'}
+                'mcs_projection':None if candidate == mcs else f'{"validated_resource_domain_projection" if self.calibration else "supported_table_projection"}:{mcs}->{candidate}'}

@@ -18,7 +18,19 @@ class RtSysPhyAdapter:
         if abstraction is None and self.device == 'numpy':
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
         self.math = Algebra(self.device)
-        self.abstraction = abstraction or SionnaAbstraction(self.device, self.config.get('bler_target', .1),self.config.get('bler_table_files'),self.config.get('beta_table_file'))
+        mode=self.config.get('feedback_mode','sys_abstraction')
+        if mode not in ('sys_abstraction','nr_tb_reference'):raise ValueError('Unknown RT/SYS feedback mode')
+        if abstraction is not None:self.abstraction=abstraction
+        elif mode=='nr_tb_reference':
+            if any(self.config.get(k) for k in ('bler_table_files','beta_table_file','calibration_file')):
+                raise ValueError('NR reference cannot use a BLER/EESM calibration table')
+            if self.config.get('harq_combining','none')!='none':raise ValueError('NR reference does not implement waveform Chase/IR')
+            from phy.rt_sys.reference import NrReferenceAbstraction
+            self.abstraction=NrReferenceAbstraction(self.device,self.config.get('bler_target',.1),self.config.get('reference'))
+        else:
+            if not self.config.get('calibration_file') and not self.config.get('allow_unvalidated_sys',False):
+                raise ValueError('Unvalidated SYS BLER/EESM feedback requires explicit diagnostic opt-in; use nr_tb_reference for actual feedback')
+            self.abstraction=SionnaAbstraction(self.device, self.config.get('bler_target', .1),self.config.get('bler_table_files'),self.config.get('beta_table_file'),self.config.get('calibration_file'))
         self.channel_provider = channel_provider
         if self.channel_provider is None and self.config.get('manifest_path'):
             from pathlib import Path
@@ -167,13 +179,20 @@ class RtSysPhyAdapter:
                 alpha=a.array(np.asarray([scales[s] for s in symbols])[:,None,None])*self.config.get('rzf_relative_regularization',.01)
                 weights = a.rzf(rows,a.array(basis),alpha)
                 samples=a.numpy(weights)
+                correlations=None
+                if len({e['ue'].ue_id for e,k in owners})==2 and len(owners)==2:
+                    projected=a.numpy(rows)@basis
+                    numerator=abs(np.sum(projected[:,0].conj()*projected[:,1],axis=-1))**2
+                    denominator=np.sum(abs(projected[:,0])**2,axis=-1)*np.sum(abs(projected[:,1])**2,axis=-1)
+                    correlations=np.clip(numerator/np.maximum(denominator,1e-60),0,1)
                 for symbol,indices in sorted(symbol_indices.items()):
                     sample=samples[indices[0]]
                     precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
                         'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
                         'beam_subspace_dimension':basis.shape[-1],
                         'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':e['power']} for e,k in owners],
-                        'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist()})
+                        'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist(),
+                        'mean_pair_channel_correlation':float(correlations[indices].mean()) if correlations is not None else None})
                 for j,(e,k) in enumerate(owners):
                     w = weights[...,j:j+1]*math.sqrt(e['power'])
                     e['precoder_norms'].append(float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
@@ -212,6 +231,7 @@ class RtSysPhyAdapter:
                 payload = {f.name:getattr(ue,f.name) for f in fields(PhyUeResult)
                            if hasattr(ue,f.name) and f.name not in {'sinr_db','bler','queue_bytes'}}
                 result = PhyUeResult(**payload)
+                metrics={}
                 result.queue_bytes = ue.queue_bytes
                 result.phy_mode = 'rt_sys'; result.waveform_backend = 'sionna_rt_sys'
                 if e is not None:
@@ -240,10 +260,11 @@ class RtSysPhyAdapter:
                         maximum = int(ue.mcs_cap if ue.mcs_cap is not None else 27)
                         mcs = int(ue.target_mcs) if ue.target_mcs is not None else int(select_mcs_index_from_sinr(result.sinr_db,mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
                         if mcs > maximum: raise ValueError('MCS target exceeds cap')
+                        fixed=ue.is_retx if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference' else ue.target_mcs is not None
                         metrics = self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
-                            self.seed,p.slot_id,ue.ue_id,fixed=ue.target_mcs is not None)
+                            self.seed,p.slot_id,ue.ue_id,fixed=fixed)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
-                        result.link_adaptation_reason = metrics.get('mcs_projection') or 'sys_bler_mapping'
+                        result.link_adaptation_reason = metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
                         physical_capacity=metrics['capacity_bytes']
                         result.mcs_index = metrics['mcs']; result.modulation_order = metrics['qm']
                         result.code_rate = metrics['rate']; result.bler = metrics['tbler']
@@ -283,6 +304,15 @@ class RtSysPhyAdapter:
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 outputs.append(result)
+                if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference':
+                    defaults={'ack_source':'no_path' if e is not None else 'not_scheduled','bler_probe_errors':0,'bler_probe_samples':0,
+                        'bler_wilson_95':[1.,1.] if e is not None else [0.,0.],'amc_probes':[],'unsupported_nr_mcs':[],
+                        'bler_probe_seed':None,'ack_seed':None,'reference_tb_errors':None,'reference_tb_ack':False,
+                        'effective_sinr_kind':'arithmetic_mean_diagnostic_only'}
+                    trace_ues[-1].update({key:metrics.get(key,value) for key,value in defaults.items()})
+                    trace_ues[-1]['mac_capacity_guard']=bool(ue.is_retx and result.tb_size_bytes<ue.requested_bytes) if e is not None else False
+                    trace_ues[-1]['reference_rv']=0
+                    trace_ues[-1]['mac_requested_rv']=ue.harq_redundancy_version
             scheduled = [r for r in outputs if r.is_scheduled]
             results[p.cell_id] = PhyResult(p.slot_id,p.cell_id,outputs,
                 float(np.mean([r.sinr_db for r in scheduled])) if scheduled else 0,
@@ -291,4 +321,14 @@ class RtSysPhyAdapter:
         self.trace = {'mcs_table_policy':'SYS default EESM tables 1/2; low-SE MAC requests use table 1', 'slot_id':snapshot.slot_id,'cache_key':snapshot.cache_key,'cells':cell_trace,'ues':trace_ues,'precoders':precoder_trace}
         self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.combiner.mode)
         self.trace['phy_calibration_status']='custom_tables_require_validation' if self.config.get('bler_table_files') else 'default_tables_failed_expanded_validation'
+        artifact=getattr(self.abstraction,'calibration',None)
+        if artifact is not None:
+            self.trace['phy_calibration_status']='independently_validated_exact_re_domain'
+            self.trace['phy_calibration_digest']=artifact['digest']
+            self.trace['phy_calibration_scope']='Exact table/MCS/coded-RE tuples and validation profiles only; not URLLC tails or waveform HARQ'
+        if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference':
+            self.trace.update(phy_calibration_status='nr_tb_equivalent_link_reference',default_bler_eesm_used=False,
+                feedback_mode='nr_tb_reference',reference_decode_trials=self.abstraction.decode_trials,
+                phy_calibration_scope='Actual RV0 NR-TB CRC/LDPC/QAM on independent Gaussian post-LMMSE resources; finite-probe AMC/BLER; no waveform HARQ combining',
+                mcs_table_policy='PDSCH tables 1/2; grant target is an AMC ceiling; valid retransmission MCS fixed, unsupported NR code projected explicitly')
         return results

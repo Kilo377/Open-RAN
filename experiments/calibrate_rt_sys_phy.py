@@ -18,13 +18,13 @@ def wilson(errors,samples):
     return [max(0,center-radius),min(1,center+radius)]
 
 
-def calibrate(device,samples,batch,data_re,selective=False,full_mcs=False,bler_files=None,beta_file=None):
+def calibrate(device,samples,batch,data_re,selective=False,full_mcs=False,bler_files=None,beta_file=None,calibration_file=None):
     import numpy as np
     import torch
     from phy.rt_sys.abstraction import SionnaAbstraction
     from sionna.phy.nr import TBEncoder,TBDecoder
     from sionna.phy.mapping import Mapper,Demapper
-    model=SionnaAbstraction(device,bler_table_files=bler_files,beta_table_file=beta_file); dev=model.device; results=[]
+    model=SionnaAbstraction(device,bler_table_files=bler_files,beta_table_file=beta_file,calibration_file=calibration_file); dev=model.device; results=[]
     cases=[('qam64',3),('qam64',10),('qam64',20),('qam256',20)]
     if full_mcs:
         cases=[(table,int(mcs)) for table,index in [('qam64',1),('qam256',2)] if index in model.phy.bler_table['category'][1]['index']
@@ -53,7 +53,7 @@ def calibrate(device,samples,batch,data_re,selective=False,full_mcs=False,bler_f
                     gain=torch.as_tensor(np.sqrt(profile),dtype=torch.float32,device=dev)
                     llr=demapper((x*gain+noise)/gain,torch.as_tensor(no/profile,dtype=torch.float32,device=dev))
                     decoded,valid=decoder(llr)
-                    errors+=int(torch.any(decoded!=u,dim=-1).sum())
+                    errors+=int((torch.any(decoded!=u,dim=-1)|~valid.bool()).sum())
                     crc_errors+=int((~valid.bool()).sum())
             sys=model.evaluate((profile*10**(snr_db/10))[None,:,None],table,mcs,1,1,'probe',fixed=True)
             interval=wilson(errors,samples); predicted=sys['tbler']
@@ -74,8 +74,9 @@ if __name__=='__main__':
     p.add_argument('--samples',type=int,default=512);p.add_argument('--batch',type=int,default=64);p.add_argument('--data-re',type=int,default=324)
     p.add_argument('--frequency-selective',action='store_true');p.add_argument('--full-mcs',action='store_true')
     p.add_argument('--bler-table',action='append');p.add_argument('--beta-table')
+    p.add_argument('--nr-calibration')
     p.add_argument('--output',type=Path,default=ROOT/'outputs/rt_sys_repairs/phy_calibration.json');args=p.parse_args()
     if min(args.samples,args.batch,args.data_re)<=0:raise ValueError('Positive sample/resource budgets required')
-    report=calibrate(args.device,args.samples,args.batch,args.data_re,args.frequency_selective,args.full_mcs,args.bler_table,args.beta_table);args.output.parent.mkdir(parents=True,exist_ok=True)
+    report=calibrate(args.device,args.samples,args.batch,args.data_re,args.frequency_selective,args.full_mcs,args.bler_table,args.beta_table,args.nr_calibration);args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,indent=2)+'\n')
     if not report['passed']:raise SystemExit('PHY calibration exposes domain mismatch; see report')

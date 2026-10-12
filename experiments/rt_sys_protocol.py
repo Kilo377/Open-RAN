@@ -60,7 +60,7 @@ def validate(jobs):
 
 def execute(jobs,root,device,allow_uncalibrated):
     if not allow_uncalibrated:
-        raise RuntimeError('SYS default tables failed broader PHY calibration; only explicitly uncalibrated protocol probes are enabled')
+        raise RuntimeError('Formal protocol PHY/HARQ/CSI validation is still pending; only explicitly labeled integration probes are enabled')
     root=root.resolve()
     if not root.is_relative_to(ROOT/'outputs'):raise ValueError('Protocol artifacts must stay under copy outputs/')
     if any((root/f'fold{fold}'/'trained_memory.json').exists() for fold in (0,1)):

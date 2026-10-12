@@ -10,19 +10,22 @@ from concurrent.futures import ThreadPoolExecutor
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def cases(slots=1000,update_ms=10):
+def cases(slots=1000,update_ms=.5):
     return [{'scene':scene,'cells':3,'ues':ues,'seed':seed,'slots':slots,'path_update_ms':update_ms}
             for scene in ('simple_street_canyon','munich') for ues in (12,24) for seed in (1,2,3)]
 
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--dry-run',action='store_true')
-    p.add_argument('--slots',type=int,default=1000);p.add_argument('--path-update-ms',type=float,default=10)
+    p.add_argument('--slots',type=int,default=1000);p.add_argument('--path-update-ms',type=float,default=.5)
     p.add_argument('--device',choices=['cuda','cpu'],default='cuda');p.add_argument('--skip-completed',action='store_true')
     p.add_argument('--workers',type=int,default=1,choices=range(1,5))
     p.add_argument('--output-root',type=Path,default=ROOT/'outputs/rt_sys_matrix')
     args=p.parse_args();plan=cases(args.slots,args.path_update_ms)
     if args.dry_run:print(json.dumps(plan,indent=2));sys.exit(0)
+    sys.path.insert(0,str(ROOT))
+    from phy.rt_sys.contracts import source_fingerprint
+    source_hash=source_fingerprint(ROOT)
     root=args.output_root.resolve();root.mkdir(parents=True,exist_ok=True)
     if args.device=='cuda':
         sys.path.insert(0,str(ROOT))
@@ -39,6 +42,7 @@ if __name__=='__main__':
                 saved_status=json.loads(status.read_text())
                 saved_device=json.loads(saved.read_text())['configs']['phy']['rt_sys']['device']
                 if (saved_status.get('completed') and saved_status.get('stage')=='completed' and
+                    saved_status.get('source_sha256')==source_hash and
                     saved_device==args.device and m['total_slots']==args.slots and m['path_update_ms']==args.path_update_ms):
                     return {'case':case,'skipped':True,'returncode':0}
         command=[sys.executable,str(ROOT/'experiments/run_rt_sys.py'),'--output',str(out),'--device',args.device]

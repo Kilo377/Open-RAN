@@ -122,7 +122,11 @@ def run_case(args):
                         cw.writerow(row)
         summary=simulator._build_final_summary()
         summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
-            'harq_soft_combining':adapter.combiner.mode=='chase','full_phy_calibrated':False,'cache_hits':provider.hits,'cache_misses':provider.misses}
+            'harq_soft_combining':adapter.combiner.mode=='chase','full_phy_calibrated':False,
+            'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
+            'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None)=='nr_tb_reference',
+            'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None)!='nr_tb_reference',
+            'cache_hits':provider.hits,'cache_misses':provider.misses}
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)
         simulator.result_writer.write_orchestration_epoch_history(simulator.controller_manager.get_orchestration_epoch_history())

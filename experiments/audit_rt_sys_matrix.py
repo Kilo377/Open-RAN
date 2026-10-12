@@ -18,13 +18,16 @@ def audit(path, require_resource_metrics=False):
     assert saved['configs']['phy']['rt_sys']['device']=='cuda'
     totals=defaultdict(int);perue=defaultdict(lambda:defaultdict(int));percell=defaultdict(lambda:defaultdict(float))
     max_power_error=0.;max_norm_error=0.;delays=[];unsupported=defaultdict(int);last_cell={}
-    previous_counts={};last_completed={};last_association_change={}
+    previous_counts={};last_completed={};last_association_change={};mu_correlations=[]
+    reference=saved['configs']['phy']['rt_sys'].get('feedback_mode')=='nr_tb_reference'
     with (path/'rt_sys_trace.jsonl').open() as trace,(path/'slot_metrics.csv').open() as metrics:
         metric_reader=csv.DictReader(metrics)
         for slot,line in enumerate(trace,1):
             t=json.loads(line);row=next(metric_reader)
             assert t['slot_id']==slot==int(row['slot_id'])
             assert t['cache_key']==status['cache_key']
+            if reference:
+                assert t['feedback_mode']=='nr_tb_reference' and t['default_bler_eesm_used'] is False
             if 'handover_counts' in t:
                 for uid,count in t['handover_counts'].items():
                     if uid in previous_counts:
@@ -45,6 +48,9 @@ def audit(path, require_resource_metrics=False):
                 transmitted_energy[cid]+=count*sum(s['power_per_re_w'] for s in streams)
                 emitted[cid]+=count*len(streams);occupied[cid]+=count
                 if len({stream['ue_id'] for stream in streams})>1:totals['mu_resource_groups']+=1
+                if group.get('mean_pair_channel_correlation') is not None:
+                    correlation=group['mean_pair_channel_correlation'];assert 0<=correlation<=1
+                    mu_correlations.append(correlation)
                 if len(streams)>1:totals['multi_layer_resource_groups']+=1
                 for k in range(len(streams)):
                     norm=sum(re[k]**2+im[k]**2 for re,im in zip(group['weights_real'],group['weights_imag']))
@@ -77,6 +83,20 @@ def audit(path, require_resource_metrics=False):
             assert sum(u['tb_bytes'] for u in t['ues'])<=int(row['true_grant_bytes_budget_total'])
             assert float(row['true_queue_bytes'])>=0 and float(row['true_total_pending_retx_bytes'])>=0
             for u in t['ues']:
+                if reference and u['bler_probe_samples']:
+                    n=u['bler_probe_samples'];errors=u['bler_probe_errors']
+                    assert abs(u['bler']-errors/n)<1e-6
+                    assert u['ack_source']=='actual_nr_crc_and_bit_check'
+                    assert u['reference_tb_errors'] in (0,1)
+                    assert u['reference_tb_ack']==(u['reference_tb_errors']==0)
+                    assert u['ack']==(u['reference_tb_ack'] and not u['mac_capacity_guard'] and u['tb_bytes']>0)
+                    assert u['bler_probe_seed']!=u['ack_seed']
+                    totals['nr_reference_attempts']+=1
+                    totals['nr_crc_acks']+=int(u['reference_tb_ack'])
+                    totals['nr_crc_nacks']+=u['reference_tb_errors']
+                    totals['nr_decode_trials']+=n+1+sum(p['samples'] for p in u['amc_probes'])
+                    totals['nr_constraint_projections']+=len(u['unsupported_nr_mcs'])
+                elif reference:assert u['delivered_bytes']==0
                 assert 0<=u['data_re']<=u['allocated_re']
                 assert 0<=u['delivered_bytes']<=u['tb_bytes']<=u['queue_bytes']
                 assert u['delivered_bytes']==(u['tb_bytes'] if u['ack'] else 0)
@@ -106,6 +126,7 @@ def audit(path, require_resource_metrics=False):
                     if field['route']=='unsupported':
                         assert field['reason'];unsupported[field['field']]+=1
             totals['slots']+=1;totals['ue_rows']+=len(t['ues']);totals['delivered_bytes']+=delivered
+            if reference:assert t['reference_decode_trials']==totals['nr_decode_trials']
         assert next(metric_reader,None) is None
     assert totals['slots']==m['total_slots']
     evaluation_path=path/'evaluation_summary.json'
@@ -128,7 +149,9 @@ def audit(path, require_resource_metrics=False):
         'handover_count_source':'trace_and_live_summary' if previous_counts else 'live_summary; per-slot events absent',
         'per_cell':{k:dict(v) for k,v in percell.items()},'max_power_error_w':max_power_error,
         'max_precoder_norm_error':max_norm_error,'control_measurement_age_max':max(delays),
-        'unsupported_actions':dict(unsupported),'status':status}
+        'unsupported_actions':dict(unsupported),'status':status,
+        'nr_reference_accounting_checked':reference,
+        'natural_mu_correlation_quantiles':sorted(mu_correlations)[::max(1,len(mu_correlations)//10)] if mu_correlations else []}
 
 
 if __name__=='__main__':
