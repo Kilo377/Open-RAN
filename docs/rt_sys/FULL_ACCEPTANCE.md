@@ -4,29 +4,34 @@
 
 ## 2026-10-12 状态
 
-首轮矩阵已完成，12/12 场景通过物理与交付记账审计：共 12000 时隙、216000 条 UE 记录、17829847 字节交付，三个并行进程总耗时 4594.90 秒（76.58 分钟）。原始摘要见 [full_acceptance.json](full_acceptance.json)，详细输出保留在 `outputs/rt_sys_matrix/` 与 `outputs/rt_sys_acceptance/`。
+修复后矩阵已完成，12/12 场景通过严格审计：共 12000 时隙、216000 条 UE 记录、17667224 字节交付，三个并行进程总耗时 3055.43 秒（50.92 分钟）。实际 Sionna RT CUDA 与 SYS/PyTorch CUDA 执行、控制物理响应、多小区物理记账及资源统计接入验证通过。摘要见 [full_acceptance.json](full_acceptance.json)，最终详细输出在 `outputs/rt_sys_matrix_grid/` 与 `outputs/rt_sys_acceptance_grid/`，已从 Spark 同步回本地副本。
+
+修复前首轮输出保留在 `outputs/rt_sys_matrix/` 与 `outputs/rt_sys_acceptance/`，该轮物理审计通过，但旧资源汇总及其控制观测存在下述缺口。它共交付 17829847 字节、耗时 76.58 分钟，属于排查证据；当前结论以修复后复验为准。
 
 | 地图 | UE | 三种子平均交付 MB | 平均单场景耗时 秒 |
 | --- | ---: | ---: | ---: |
-| simple_street_canyon | 12 | 1.818 | 1089.8 |
-| simple_street_canyon | 24 | 2.476 | 1425.9 |
-| munich | 12 | 0.784 | 822.3 |
-| munich | 24 | 0.865 | 1171.5 |
+| simple_street_canyon | 12 | 1.754 | 1119.1 |
+| simple_street_canyon | 24 | 2.476 | 898.3 |
+| munich | 12 | 0.794 | 481.6 |
+| munich | 24 | 0.865 | 489.2 |
 
 矩阵的原调度策略没有产生自然 MU 组，因此不能据此证明 MU 调度收益。两地图的强制重叠资源 GPU 探针各通过 28 个双用户组；正交与相关已知信道测试另检查复用与干扰响应。
 
 最终汇总时发现，首轮旧 `slot_metrics.csv` 的资源利用率及总层数为零：StateUpdater 替换每小区局部状态的资源网格后，集群视图仍引用初始化对象。物理独立 trace 与交付记账仍通过，但该轮资源汇总及相关控制观测不应使用。
 
-现已在新 RT/SYS 路径同步更新 managed cell 和主小区资源网格。修复后的本地闭环测试、Spark GPU 控制探针均通过；探针明确检查非零利用率进入原有延迟观测链路。Spark 全量回归为 193 passed、4 个原有失败、2 subtests passed，没有新增失败。由于控制输入发生变化，正在使用同一传播缓存重跑完整 12 场景，输出单独保存在 `outputs/rt_sys_matrix_grid/`；该轮通过新的资源汇总审计之前，不标记整条链路最终验收完成。
+现已在新 RT/SYS 路径同步更新 managed cell 和主小区资源网格。修复后的本地闭环测试、Spark GPU 控制探针均通过；探针明确检查非零利用率进入原有延迟观测链路。Spark 全量回归为 193 passed、4 个原有失败、2 subtests passed，没有新增失败。由于控制输入发生变化，独立目录重跑了完整 12 场景，并通过逐时隙层数与资源利用率精确记账审计，缺口已解决。最大功率记账误差 6.66e-16 W，最大预编码列归一化误差 3.68e-7。
+
+复验记录 8351 次逐 UE PHY 服务小区变化，这是关联轨迹计数，不能直接解释成完成切换次数。当前矩阵用于接入验证；正式实验前仍需校准移动性参数、完整 PHY 抽象和训练/测试地图隔离协议。
 
 ## 执行与审计
 
 ```bash
 source scripts/spark/activate.sh
-python experiments/run_rt_sys_matrix.py --workers 3 --skip-completed
-python experiments/audit_rt_sys_matrix.py
+python experiments/run_rt_sys_matrix.py --workers 3 --output-root outputs/rt_sys_matrix_grid
+python experiments/audit_rt_sys_matrix.py --root outputs/rt_sys_matrix_grid --require-resource-metrics --output outputs/rt_sys_acceptance_grid/matrix_audit.json
 python experiments/validate_rt_sys_controls.py --device cuda
 python -m pytest -q tests --ignore=tests/test_xapp_experiment_utils.py --disable-warnings
+python experiments/audit_rt_sys_path_update.py
 ```
 
 矩阵支持每个场景单独日志、失败汇总和续跑。默认 workers=1；本次采用三个进程并行。进程耗时受到并行竞争和缓存状态影响，不能当成单独占用设备时的性能基准。
@@ -58,3 +63,5 @@ Spark 上额外运行 street / 2 小区 / 4 UE / 40 时隙的 1 ms 和 10 ms 更
 矩阵每秒采样 cudaMemGetInfo 与 Linux MemAvailable。CUDA 计数覆盖设备总体可用内存，能够观察 Torch 和 RT/Dr.Jit 之外的设备内存变化，但也包含并行任务、其他进程及 GB10 共享内存效应，不能用于精确归因单个项目。另保留每个进程峰值 RSS 和 Torch 分配峰值；Torch 计数不包含全部 RT 分配。
 
 首轮最大进程 RSS 4.99 GB，Torch CUDA 分配峰值 77.85 MB；4593 次设备整体采样中，最小系统 MemAvailable 84.88 GB、最小 CUDA 全局 free 0.849 GB，未发生 OOM。该共享内存设备的全局 free 包含其他使用者且不等于可回收文件缓存后的容量，不能把它解释为本项目独占峰值。
+
+修复后复验最大进程 RSS 3.51 GB，Torch CUDA 分配峰值 77.85 MB；3054 次采样中最小系统 MemAvailable 101.65 GB，最小 CUDA 全局 free 0.855 GB，未发生 OOM。两轮缓存状态与并行负载不同，耗时及 RSS 差异不代表同步修复带来了性能优化。

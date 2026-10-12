@@ -2,6 +2,8 @@
 
 第一阶段接入三维传播信道驱动的多小区下行闭环。入口为 `experiments/run_rt_sys.py`，后端为 `sionna_rt_sys`。原目录没有修改；`source_manifest.json` 保存复制时的源码 SHA256，独立 Git 的首个提交保存原始快照。
 
+2026-10-12：Spark 上修复后完整接入矩阵 12/12 通过，覆盖两地图、3 小区、12/24 UE、3 种子、各 1000 时隙；真实 RT/SYS GPU 控制探针、资源/功率记账和固定种子重放通过。全量回归 193 项通过、4 项原有失败。当前调度矩阵没有自然 MU 组，MU 由专项重叠资源及已知信道测试验证。详见 [完整接入报告](docs/rt_sys/FULL_ACCEPTANCE.md)；这些结果不作为算法跨场景泛化结论。
+
 ## 已实现
 
 - Sionna 2.2 RT：内置 `simple_street_canyon` / `munich`，固定三维部署、可变 UE 数量、预设轨迹、全 BS→UE 的绝对多天线 CFR。启动时检查基站、UE 位置与轨迹线段是否被建筑遮盖或穿过几何。

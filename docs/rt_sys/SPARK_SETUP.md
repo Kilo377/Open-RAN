@@ -52,6 +52,6 @@ python experiments/validate_rt_sys_mu.py --device cuda
 
 新设备安装入口为 `bash scripts/spark/bootstrap.sh`；可设置 `ORAN_PYTHON` 指定解释器。准确依赖锁针对本次 Python 3.12 / ARM64 / Linux 环境，重建时使用相同解释器并在独立虚拟环境执行 `python -m pip install -r requirements-spark.lock.txt`，随后重跑 GPU 预检。
 
-## 尚未完成
+## 完整接入验证与后续范围
 
-完整 12 场景矩阵已完成并通过物理记账审计。汇总发现资源网格同步问题，修复后的控制 GPU 探针已通过，完整矩阵正在独立目录重跑；当前状态和内存记录见 [FULL_ACCEPTANCE.md](FULL_ACCEPTANCE.md)。完整 PHY 校准、正式训练/测试地图隔离及算法泛化结论仍属后续阶段。
+完整 12 场景矩阵已完成，汇总发现的资源网格同步问题已修复；修复后的控制 GPU 探针及完整矩阵严格复验均通过。当前结果、原始信道更新间隔对照及内存记录见 [FULL_ACCEPTANCE.md](FULL_ACCEPTANCE.md)。完整 PHY 校准、正式训练/测试地图隔离及算法泛化结论仍属后续阶段。

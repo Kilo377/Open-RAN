@@ -54,6 +54,8 @@ def audit(path, require_resource_metrics=False):
             if require_resource_metrics:
                 layers=sum(u['layers'] for u in t['ues'] if u['scheduled'])
                 assert int(row['true_scheduled_layer_count_total'])==layers,(path,slot,'layer telemetry')
+                grant_utilization=sum(u['allocated_re'] for u in t['ues'])/(active_re*len(m['cells']))
+                assert abs(float(row['true_resource_grid_utilization'])-grant_utilization)<1e-6,(path,slot,'resource telemetry accounting')
                 if any(cell['occupied_re'] for cell in t['cells'].values()):
                     assert float(row['true_resource_grid_utilization'])>0,(path,slot,'resource telemetry')
             assert delivered==int(row['true_delivered_new_bytes_this_slot'])+int(row['true_delivered_retx_bytes_this_slot'])
@@ -108,6 +110,7 @@ if __name__=='__main__':
         except Exception as exc:errors.append({'case':path.name,'error':repr(exc)})
     target=args.output;target.parent.mkdir(parents=True,exist_ok=True)
     report={'completed':not errors and len(reports)==len(plan),'cases':reports,'errors':errors,
+        'resource_metrics_checked':args.require_resource_metrics,
         'checks':'GPU completion, all slots/UEs, precoder normalization, resource/energy accounting, TB/ACK/queue budgets, delayed controller observations',
         'harq_scope':'ACK/TB accounting here; per-process queue/HARQ state checked by control probes and regression'}
     target.write_text(json.dumps(report,indent=2));print(json.dumps({'completed':report['completed'],'passed_cases':len(reports),'errors':errors},indent=2))
