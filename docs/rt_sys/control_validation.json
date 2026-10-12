@@ -27,6 +27,7 @@
     "delayed_controls": true,
     "delayed_controller_observations": true,
     "queue_and_harq_consistency": true,
+    "resource_utilization_reaches_delayed_controller": true,
     "power_beam_sleep_scheduler_responses": true
   },
   "variants": {

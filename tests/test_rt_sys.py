@@ -203,6 +203,13 @@ class ClosedLoopTests(unittest.TestCase):
             self.assertEqual(set(adapter.trace['cells']),{'cell_0','cell_1'})
             self.assertTrue(all(0<=u.queue_bytes for u in sim.state.ues))
             self.assertTrue(any(u['delivered_bytes']>0 for u in adapter.trace['ues']))
+            from core.runtime_views import get_cluster_resource_grid_summary
+            grid = get_cluster_resource_grid_summary(sim.state)
+            self.assertGreater(grid['scheduled_layer_count_total'], 0)
+            self.assertTrue(any(r.resource_grid.utilization > 0
+                                for r in sim.state.managed_cells.values()))
+            self.assertIs(sim.state.resource_grid,
+                          sim.state.managed_cells['cell_0'].resource_grid)
 
 
     def test_nack_pending_payload_matches_sys_tb_then_ack_clears(self):

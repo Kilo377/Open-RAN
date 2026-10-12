@@ -1,0 +1,2791 @@
+{
+  "audit_date": "2026-10-12",
+  "scope": "Pre-grid-sync matrix; physical validation only. See FULL_ACCEPTANCE.md for repaired version.",
+  "matrix_completed": true,
+  "physical_accounting_audit_passed": true,
+  "overall_acceptance": "grid_sync_fixed_and_gpu_control_probe_passed; repaired_matrix_revalidation_pending",
+  "workers": 3,
+  "elapsed_s": 4594.8952009130735,
+  "environment": {
+    "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+    "compute_capability": [
+      12,
+      1
+    ],
+    "python": "3.12.3",
+    "machine": "aarch64",
+    "system": "Linux",
+    "torch": "2.9.1+cu130",
+    "sionna": "2.2.0",
+    "sionna_rt": "2.2.0",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GB10",
+    "rt_variant": "cuda_ad_mono_polarized",
+    "rt_actual_call": true,
+    "sys_actual_call": true,
+    "sys_probe": {
+      "mcs": 3,
+      "qm": 2,
+      "rate": 0.2451171875,
+      "capacity_bytes": 10,
+      "sinr_eff": 10.0,
+      "tbler": 0.0,
+      "cbler": 0.0,
+      "ack": true,
+      "mcs_projection": "calibrated_table_projection:0->3"
+    },
+    "cache_key": "1d415bea4dcc4ef63445c0dfe0f515a12fa931f1c2fe263f2cc73d5bcbc50242"
+  },
+  "totals": {
+    "cases": 12,
+    "slots": 12000,
+    "ue_rows": 216000,
+    "delivered_bytes": 17829847,
+    "natural_mu_resource_groups": 0
+  },
+  "max_power_error_w": 6.661338147750939e-16,
+  "max_precoder_norm_error": 3.6785020118834666e-07,
+  "memory": {
+    "max_process_peak_rss_bytes": 4987408384,
+    "max_process_peak_torch_cuda_bytes": 77854208,
+    "min_system_available_bytes": 84879986688,
+    "min_device_global_free_bytes": 849256448,
+    "samples": 4593,
+    "scope": "device/system counters include other processes and GB10 unified-memory file-cache effects; Torch allocator excludes RT"
+  },
+  "regression": {
+    "passed": 193,
+    "original_failures": 4,
+    "subtests_passed": 2,
+    "warnings": 1,
+    "excluded_missing_original_module": "tests/test_xapp_experiment_utils.py"
+  },
+  "controls": {
+    "completed": true,
+    "device": "cuda",
+    "scripted_controls": true,
+    "physical_checks": {
+      "simple_street_canyon": {
+        "neighbor_power_interference_10db": true,
+        "neighbor_silence_reduces_interference": true,
+        "resource_separation_matches_silence": true,
+        "own_power_sinr_10db": true,
+        "beam_changes_physical_sinr": true,
+        "sleep_zero_power_and_delivery": true,
+        "no_path_zero_delivery": true
+      },
+      "munich": {
+        "neighbor_power_interference_10db": true,
+        "neighbor_silence_reduces_interference": true,
+        "resource_separation_matches_silence": true,
+        "own_power_sinr_10db": true,
+        "beam_changes_physical_sinr": true,
+        "sleep_zero_power_and_delivery": true,
+        "no_path_zero_delivery": true
+      }
+    },
+    "closed_loop_checks": {
+      "same_propagation_and_arrivals": true,
+      "delayed_controls": true,
+      "delayed_controller_observations": true,
+      "queue_and_harq_consistency": true,
+      "power_beam_sleep_scheduler_responses": true
+    },
+    "variants": {
+      "baseline": {
+        "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+        "delivered_bytes": 91611
+      },
+      "power": {
+        "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+        "delivered_bytes": 75546
+      },
+      "beam": {
+        "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+        "delivered_bytes": 91611
+      },
+      "sleep": {
+        "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+        "delivered_bytes": 59639
+      },
+      "scheduler": {
+        "cache_key": "2852706000e2a16b5e0b3af891b9933bb50ef6b6d1326922e9730773d1128856",
+        "delivered_bytes": 81351
+      }
+    }
+  },
+  "forced_mu": {
+    "simple_street_canyon": {
+      "device": "cuda",
+      "actual_rt_sys": true,
+      "resource_groups": 28,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 0.0,
+        "relative_l2_error": 0.0
+      }
+    },
+    "munich": {
+      "device": "cuda",
+      "actual_rt_sys": true,
+      "resource_groups": 28,
+      "cache_recompute": {
+        "rtol": 0.0001,
+        "atol": 1e-10,
+        "max_abs_error": 0.0,
+        "relative_l2_error": 0.0
+      }
+    }
+  },
+  "legacy_resource_metrics_valid": false,
+  "reporting_gap": {
+    "fields": [
+      "true_resource_grid_utilization",
+      "true_scheduled_layer_count_total"
+    ],
+    "all_matrix_cases_affected": true,
+    "cause": "StateUpdater replaces scoped_state.resource_grid; managed cell runtime retains prior grid reference",
+    "authoritative_resource_kpi_source": "rt_sys_trace.jsonl, cell_metrics.csv, matrix_audit.json",
+    "next_required_before_resource_observation_experiments": "Synchronize managed cell resource grid and verify telemetry/control observations, then rerun impacted closed loops"
+  },
+  "cases": [
+    {
+      "case": "simple_street_canyon_u12_s1_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 1,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1830713,
+        "association_changes": 218
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 518031,
+          "scheduled_slots": 974,
+          "ack": 974,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 8.288496
+        },
+        "ue_3": {
+          "delivered_bytes": 6600,
+          "scheduled_slots": 55,
+          "ack": 55,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.1056
+        },
+        "ue_6": {
+          "delivered_bytes": 65637,
+          "scheduled_slots": 980,
+          "ack": 980,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 1.050192
+        },
+        "ue_9": {
+          "delivered_bytes": 14000,
+          "scheduled_slots": 622,
+          "ack": 622,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.224
+        },
+        "ue_1": {
+          "delivered_bytes": 18000,
+          "scheduled_slots": 711,
+          "ack": 711,
+          "nack": 0,
+          "association_changes": 44,
+          "throughput_mbps": 0.288
+        },
+        "ue_4": {
+          "delivered_bytes": 577650,
+          "scheduled_slots": 687,
+          "ack": 686,
+          "nack": 1,
+          "association_changes": 3,
+          "throughput_mbps": 9.2424
+        },
+        "ue_7": {
+          "delivered_bytes": 5800,
+          "scheduled_slots": 36,
+          "ack": 36,
+          "nack": 0,
+          "association_changes": 19,
+          "throughput_mbps": 0.0928
+        },
+        "ue_10": {
+          "delivered_bytes": 63000,
+          "scheduled_slots": 966,
+          "ack": 966,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 1.008
+        },
+        "ue_2": {
+          "delivered_bytes": 74662,
+          "scheduled_slots": 651,
+          "ack": 651,
+          "nack": 0,
+          "association_changes": 71,
+          "throughput_mbps": 1.194592
+        },
+        "ue_5": {
+          "delivered_bytes": 15775,
+          "scheduled_slots": 520,
+          "ack": 520,
+          "nack": 0,
+          "association_changes": 52,
+          "throughput_mbps": 0.2524
+        },
+        "ue_8": {
+          "delivered_bytes": 464758,
+          "scheduled_slots": 923,
+          "ack": 923,
+          "nack": 0,
+          "association_changes": 5,
+          "throughput_mbps": 7.436128
+        },
+        "ue_11": {
+          "delivered_bytes": 6800,
+          "scheduled_slots": 60,
+          "ack": 60,
+          "nack": 0,
+          "association_changes": 19,
+          "throughput_mbps": 0.1088
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 994.0,
+          "occupied_re_sum": 1873740.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 547564.0,
+          "throughput_mbps": 8.761024,
+          "active_resource_utilization": 0.4647172619047619
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1417164.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 634197.0,
+          "throughput_mbps": 10.147152,
+          "active_resource_utilization": 0.3514791666666667
+        },
+        "cell_2": {
+          "power_w_slot_sum": 988.0,
+          "occupied_re_sum": 2558808.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 648952.0,
+          "throughput_mbps": 10.383232,
+          "active_resource_utilization": 0.634625
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.255822630388039e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "b19c2d90aaa2c0b99b697949a4d29069b35ad122fb98ad75d327aef3f586ef3c",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1011.6090823940467,
+        "peak_rss_native": 3441692,
+        "peak_rss_bytes": 3524292608,
+        "peak_cuda_bytes": 61095424
+      }
+    },
+    {
+      "case": "simple_street_canyon_u12_s2_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 2,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1784384,
+        "association_changes": 318
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 490009,
+          "scheduled_slots": 980,
+          "ack": 980,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 7.840144
+        },
+        "ue_3": {
+          "delivered_bytes": 7141,
+          "scheduled_slots": 61,
+          "ack": 61,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.114256
+        },
+        "ue_6": {
+          "delivered_bytes": 65090,
+          "scheduled_slots": 981,
+          "ack": 981,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 1.04144
+        },
+        "ue_9": {
+          "delivered_bytes": 13833,
+          "scheduled_slots": 537,
+          "ack": 537,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.221328
+        },
+        "ue_1": {
+          "delivered_bytes": 18000,
+          "scheduled_slots": 770,
+          "ack": 770,
+          "nack": 0,
+          "association_changes": 32,
+          "throughput_mbps": 0.288
+        },
+        "ue_4": {
+          "delivered_bytes": 566973,
+          "scheduled_slots": 827,
+          "ack": 827,
+          "nack": 0,
+          "association_changes": 47,
+          "throughput_mbps": 9.071568
+        },
+        "ue_7": {
+          "delivered_bytes": 5000,
+          "scheduled_slots": 44,
+          "ack": 43,
+          "nack": 1,
+          "association_changes": 59,
+          "throughput_mbps": 0.08
+        },
+        "ue_10": {
+          "delivered_bytes": 62472,
+          "scheduled_slots": 789,
+          "ack": 789,
+          "nack": 0,
+          "association_changes": 36,
+          "throughput_mbps": 0.999552
+        },
+        "ue_2": {
+          "delivered_bytes": 71218,
+          "scheduled_slots": 693,
+          "ack": 693,
+          "nack": 0,
+          "association_changes": 58,
+          "throughput_mbps": 1.139488
+        },
+        "ue_5": {
+          "delivered_bytes": 15985,
+          "scheduled_slots": 416,
+          "ack": 416,
+          "nack": 0,
+          "association_changes": 53,
+          "throughput_mbps": 0.25576
+        },
+        "ue_8": {
+          "delivered_bytes": 462899,
+          "scheduled_slots": 886,
+          "ack": 886,
+          "nack": 0,
+          "association_changes": 7,
+          "throughput_mbps": 7.406384
+        },
+        "ue_11": {
+          "delivered_bytes": 5764,
+          "scheduled_slots": 47,
+          "ack": 47,
+          "nack": 0,
+          "association_changes": 22,
+          "throughput_mbps": 0.092224
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 994.0,
+          "occupied_re_sum": 1882116.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 551396.0,
+          "throughput_mbps": 8.822336,
+          "active_resource_utilization": 0.46679464285714284
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1415676.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 609989.0,
+          "throughput_mbps": 9.759824,
+          "active_resource_utilization": 0.3511101190476191
+        },
+        "cell_2": {
+          "power_w_slot_sum": 904.0,
+          "occupied_re_sum": 2288100.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 622999.0,
+          "throughput_mbps": 9.967984,
+          "active_resource_utilization": 0.567485119047619
+        }
+      },
+      "max_power_error_w": 6.661338147750939e-16,
+      "max_precoder_norm_error": 3.398847896463053e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "498472bcf6714a94554d00e4d3d28235fd19c7a3cbd97438589d3cefa20688e3",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1131.3395240840036,
+        "peak_rss_native": 3418880,
+        "peak_rss_bytes": 3500933120,
+        "peak_cuda_bytes": 61095424
+      }
+    },
+    {
+      "case": "simple_street_canyon_u12_s3_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 3,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1837897,
+        "association_changes": 249
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 514878,
+          "scheduled_slots": 975,
+          "ack": 965,
+          "nack": 10,
+          "association_changes": 1,
+          "throughput_mbps": 8.238048
+        },
+        "ue_3": {
+          "delivered_bytes": 7800,
+          "scheduled_slots": 68,
+          "ack": 68,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.1248
+        },
+        "ue_6": {
+          "delivered_bytes": 65845,
+          "scheduled_slots": 981,
+          "ack": 981,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 1.05352
+        },
+        "ue_9": {
+          "delivered_bytes": 13935,
+          "scheduled_slots": 599,
+          "ack": 599,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.22296
+        },
+        "ue_1": {
+          "delivered_bytes": 18000,
+          "scheduled_slots": 679,
+          "ack": 679,
+          "nack": 0,
+          "association_changes": 50,
+          "throughput_mbps": 0.288
+        },
+        "ue_4": {
+          "delivered_bytes": 577650,
+          "scheduled_slots": 691,
+          "ack": 691,
+          "nack": 0,
+          "association_changes": 13,
+          "throughput_mbps": 9.2424
+        },
+        "ue_7": {
+          "delivered_bytes": 4600,
+          "scheduled_slots": 27,
+          "ack": 27,
+          "nack": 0,
+          "association_changes": 25,
+          "throughput_mbps": 0.0736
+        },
+        "ue_10": {
+          "delivered_bytes": 63000,
+          "scheduled_slots": 967,
+          "ack": 967,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 1.008
+        },
+        "ue_2": {
+          "delivered_bytes": 77421,
+          "scheduled_slots": 693,
+          "ack": 693,
+          "nack": 0,
+          "association_changes": 60,
+          "throughput_mbps": 1.238736
+        },
+        "ue_5": {
+          "delivered_bytes": 15985,
+          "scheduled_slots": 498,
+          "ack": 498,
+          "nack": 0,
+          "association_changes": 59,
+          "throughput_mbps": 0.25576
+        },
+        "ue_8": {
+          "delivered_bytes": 470583,
+          "scheduled_slots": 911,
+          "ack": 911,
+          "nack": 0,
+          "association_changes": 7,
+          "throughput_mbps": 7.529328
+        },
+        "ue_11": {
+          "delivered_bytes": 8200,
+          "scheduled_slots": 70,
+          "ack": 70,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 0.1312
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 998.0,
+          "occupied_re_sum": 1899492.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 558654.0,
+          "throughput_mbps": 8.938464,
+          "active_resource_utilization": 0.47110416666666666
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1421628.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 631986.0,
+          "throughput_mbps": 10.111776,
+          "active_resource_utilization": 0.35258630952380954
+        },
+        "cell_2": {
+          "power_w_slot_sum": 991.0,
+          "occupied_re_sum": 2572956.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 647257.0,
+          "throughput_mbps": 10.356112,
+          "active_resource_utilization": 0.6381339285714286
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.430106125801302e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "0a7ee7e001b2ca408a675a447f3dbee84e9709ac8ea7e9f2ef872aecce4a5e82",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1126.5928459900897,
+        "peak_rss_native": 3425812,
+        "peak_rss_bytes": 3508031488,
+        "peak_cuda_bytes": 61095424
+      }
+    },
+    {
+      "case": "simple_street_canyon_u24_s1_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 1,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 2480213,
+        "association_changes": 620
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 336129,
+          "scheduled_slots": 904,
+          "ack": 904,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 5.378064
+        },
+        "ue_3": {
+          "delivered_bytes": 302,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.004832
+        },
+        "ue_6": {
+          "delivered_bytes": 3504,
+          "scheduled_slots": 44,
+          "ack": 44,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.056064
+        },
+        "ue_9": {
+          "delivered_bytes": 1167,
+          "scheduled_slots": 8,
+          "ack": 8,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.018672
+        },
+        "ue_12": {
+          "delivered_bytes": 298273,
+          "scheduled_slots": 864,
+          "ack": 864,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 4.772368
+        },
+        "ue_15": {
+          "delivered_bytes": 4546,
+          "scheduled_slots": 15,
+          "ack": 15,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.072736
+        },
+        "ue_18": {
+          "delivered_bytes": 272748,
+          "scheduled_slots": 750,
+          "ack": 750,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 4.363968
+        },
+        "ue_21": {
+          "delivered_bytes": 425,
+          "scheduled_slots": 4,
+          "ack": 4,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.0068
+        },
+        "ue_1": {
+          "delivered_bytes": 9739,
+          "scheduled_slots": 38,
+          "ack": 38,
+          "nack": 0,
+          "association_changes": 36,
+          "throughput_mbps": 0.155824
+        },
+        "ue_4": {
+          "delivered_bytes": 243529,
+          "scheduled_slots": 823,
+          "ack": 823,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 3.896464
+        },
+        "ue_7": {
+          "delivered_bytes": 5311,
+          "scheduled_slots": 32,
+          "ack": 32,
+          "nack": 0,
+          "association_changes": 68,
+          "throughput_mbps": 0.084976
+        },
+        "ue_10": {
+          "delivered_bytes": 59847,
+          "scheduled_slots": 514,
+          "ack": 514,
+          "nack": 0,
+          "association_changes": 40,
+          "throughput_mbps": 0.957552
+        },
+        "ue_13": {
+          "delivered_bytes": 437720,
+          "scheduled_slots": 569,
+          "ack": 540,
+          "nack": 29,
+          "association_changes": 127,
+          "throughput_mbps": 7.00352
+        },
+        "ue_16": {
+          "delivered_bytes": 247666,
+          "scheduled_slots": 499,
+          "ack": 467,
+          "nack": 32,
+          "association_changes": 64,
+          "throughput_mbps": 3.962656
+        },
+        "ue_19": {
+          "delivered_bytes": 14626,
+          "scheduled_slots": 376,
+          "ack": 376,
+          "nack": 0,
+          "association_changes": 93,
+          "throughput_mbps": 0.234016
+        },
+        "ue_22": {
+          "delivered_bytes": 237828,
+          "scheduled_slots": 289,
+          "ack": 246,
+          "nack": 43,
+          "association_changes": 77,
+          "throughput_mbps": 3.805248
+        },
+        "ue_2": {
+          "delivered_bytes": 44771,
+          "scheduled_slots": 620,
+          "ack": 620,
+          "nack": 0,
+          "association_changes": 5,
+          "throughput_mbps": 0.716336
+        },
+        "ue_5": {
+          "delivered_bytes": 7816,
+          "scheduled_slots": 66,
+          "ack": 66,
+          "nack": 0,
+          "association_changes": 5,
+          "throughput_mbps": 0.125056
+        },
+        "ue_8": {
+          "delivered_bytes": 150519,
+          "scheduled_slots": 566,
+          "ack": 566,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 2.408304
+        },
+        "ue_11": {
+          "delivered_bytes": 638,
+          "scheduled_slots": 5,
+          "ack": 5,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.010208
+        },
+        "ue_14": {
+          "delivered_bytes": 41934,
+          "scheduled_slots": 136,
+          "ack": 136,
+          "nack": 0,
+          "association_changes": 2,
+          "throughput_mbps": 0.670944
+        },
+        "ue_17": {
+          "delivered_bytes": 16032,
+          "scheduled_slots": 54,
+          "ack": 54,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 0.256512
+        },
+        "ue_20": {
+          "delivered_bytes": 45143,
+          "scheduled_slots": 648,
+          "ack": 648,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.722288
+        },
+        "ue_23": {
+          "delivered_bytes": 0,
+          "scheduled_slots": 0,
+          "ack": 0,
+          "nack": 0,
+          "association_changes": 17,
+          "throughput_mbps": 0.0
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 999.0,
+          "occupied_re_sum": 1370016.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 489841.0,
+          "throughput_mbps": 7.837456,
+          "active_resource_utilization": 0.3397857142857143
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1345332.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 1047005.0,
+          "throughput_mbps": 16.75208,
+          "active_resource_utilization": 0.3336636904761905
+        },
+        "cell_2": {
+          "power_w_slot_sum": 882.0,
+          "occupied_re_sum": 2192328.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 943367.0,
+          "throughput_mbps": 15.093872,
+          "active_resource_utilization": 0.5437321428571429
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.549360945154234e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "93a27fcc9a98f59d6b9a3461df11020655417ca4458d59da384f6664b5005afe",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1451.7156075921375,
+        "peak_rss_native": 4870516,
+        "peak_rss_bytes": 4987408384,
+        "peak_cuda_bytes": 77854208
+      }
+    },
+    {
+      "case": "simple_street_canyon_u24_s2_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 2,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 2441100,
+        "association_changes": 616
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 332885,
+          "scheduled_slots": 904,
+          "ack": 904,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 5.32616
+        },
+        "ue_3": {
+          "delivered_bytes": 282,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.004512
+        },
+        "ue_6": {
+          "delivered_bytes": 4040,
+          "scheduled_slots": 52,
+          "ack": 52,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.06464
+        },
+        "ue_9": {
+          "delivered_bytes": 288,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.004608
+        },
+        "ue_12": {
+          "delivered_bytes": 294458,
+          "scheduled_slots": 866,
+          "ack": 866,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 4.711328
+        },
+        "ue_15": {
+          "delivered_bytes": 3901,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.062416
+        },
+        "ue_18": {
+          "delivered_bytes": 268291,
+          "scheduled_slots": 744,
+          "ack": 739,
+          "nack": 5,
+          "association_changes": 1,
+          "throughput_mbps": 4.292656
+        },
+        "ue_21": {
+          "delivered_bytes": 330,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.00528
+        },
+        "ue_1": {
+          "delivered_bytes": 7410,
+          "scheduled_slots": 38,
+          "ack": 38,
+          "nack": 0,
+          "association_changes": 38,
+          "throughput_mbps": 0.11856
+        },
+        "ue_4": {
+          "delivered_bytes": 235539,
+          "scheduled_slots": 827,
+          "ack": 827,
+          "nack": 0,
+          "association_changes": 28,
+          "throughput_mbps": 3.768624
+        },
+        "ue_7": {
+          "delivered_bytes": 5000,
+          "scheduled_slots": 34,
+          "ack": 34,
+          "nack": 0,
+          "association_changes": 66,
+          "throughput_mbps": 0.08
+        },
+        "ue_10": {
+          "delivered_bytes": 57779,
+          "scheduled_slots": 530,
+          "ack": 530,
+          "nack": 0,
+          "association_changes": 42,
+          "throughput_mbps": 0.924464
+        },
+        "ue_13": {
+          "delivered_bytes": 397287,
+          "scheduled_slots": 546,
+          "ack": 515,
+          "nack": 31,
+          "association_changes": 137,
+          "throughput_mbps": 6.356592
+        },
+        "ue_16": {
+          "delivered_bytes": 276570,
+          "scheduled_slots": 499,
+          "ack": 474,
+          "nack": 25,
+          "association_changes": 54,
+          "throughput_mbps": 4.42512
+        },
+        "ue_19": {
+          "delivered_bytes": 14457,
+          "scheduled_slots": 439,
+          "ack": 439,
+          "nack": 0,
+          "association_changes": 81,
+          "throughput_mbps": 0.231312
+        },
+        "ue_22": {
+          "delivered_bytes": 231109,
+          "scheduled_slots": 284,
+          "ack": 254,
+          "nack": 30,
+          "association_changes": 85,
+          "throughput_mbps": 3.697744
+        },
+        "ue_2": {
+          "delivered_bytes": 47498,
+          "scheduled_slots": 654,
+          "ack": 654,
+          "nack": 0,
+          "association_changes": 3,
+          "throughput_mbps": 0.759968
+        },
+        "ue_5": {
+          "delivered_bytes": 4820,
+          "scheduled_slots": 40,
+          "ack": 40,
+          "nack": 0,
+          "association_changes": 7,
+          "throughput_mbps": 0.07712
+        },
+        "ue_8": {
+          "delivered_bytes": 153851,
+          "scheduled_slots": 562,
+          "ack": 562,
+          "nack": 0,
+          "association_changes": 36,
+          "throughput_mbps": 2.461616
+        },
+        "ue_11": {
+          "delivered_bytes": 605,
+          "scheduled_slots": 4,
+          "ack": 4,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.00968
+        },
+        "ue_14": {
+          "delivered_bytes": 37697,
+          "scheduled_slots": 122,
+          "ack": 122,
+          "nack": 0,
+          "association_changes": 2,
+          "throughput_mbps": 0.603152
+        },
+        "ue_17": {
+          "delivered_bytes": 14793,
+          "scheduled_slots": 46,
+          "ack": 46,
+          "nack": 0,
+          "association_changes": 8,
+          "throughput_mbps": 0.236688
+        },
+        "ue_20": {
+          "delivered_bytes": 47479,
+          "scheduled_slots": 676,
+          "ack": 676,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.759664
+        },
+        "ue_23": {
+          "delivered_bytes": 4731,
+          "scheduled_slots": 41,
+          "ack": 41,
+          "nack": 0,
+          "association_changes": 19,
+          "throughput_mbps": 0.075696
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 999.0,
+          "occupied_re_sum": 1370952.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 485733.0,
+          "throughput_mbps": 7.771728,
+          "active_resource_utilization": 0.34001785714285715
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1345404.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 1038627.0,
+          "throughput_mbps": 16.618032,
+          "active_resource_utilization": 0.3336815476190476
+        },
+        "cell_2": {
+          "power_w_slot_sum": 901.0,
+          "occupied_re_sum": 2145288.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 916740.0,
+          "throughput_mbps": 14.66784,
+          "active_resource_utilization": 0.5320654761904762
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.245152846442778e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "97f5f3b35a9897efe4cc3511371fe6e083c0961fa74218d7103dbe34dbbcbb09",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1446.683174884878,
+        "peak_rss_native": 4803312,
+        "peak_rss_bytes": 4918591488,
+        "peak_cuda_bytes": 77854208
+      }
+    },
+    {
+      "case": "simple_street_canyon_u24_s3_dt10",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 3,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 2507101,
+        "association_changes": 633
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 335928,
+          "scheduled_slots": 909,
+          "ack": 904,
+          "nack": 5,
+          "association_changes": 1,
+          "throughput_mbps": 5.374848
+        },
+        "ue_3": {
+          "delivered_bytes": 302,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.004832
+        },
+        "ue_6": {
+          "delivered_bytes": 3537,
+          "scheduled_slots": 46,
+          "ack": 46,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.056592
+        },
+        "ue_9": {
+          "delivered_bytes": 337,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.005392
+        },
+        "ue_12": {
+          "delivered_bytes": 290605,
+          "scheduled_slots": 862,
+          "ack": 857,
+          "nack": 5,
+          "association_changes": 1,
+          "throughput_mbps": 4.64968
+        },
+        "ue_15": {
+          "delivered_bytes": 4891,
+          "scheduled_slots": 15,
+          "ack": 15,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.078256
+        },
+        "ue_18": {
+          "delivered_bytes": 276168,
+          "scheduled_slots": 758,
+          "ack": 758,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 4.418688
+        },
+        "ue_21": {
+          "delivered_bytes": 111,
+          "scheduled_slots": 2,
+          "ack": 2,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.001776
+        },
+        "ue_1": {
+          "delivered_bytes": 7674,
+          "scheduled_slots": 32,
+          "ack": 32,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 0.122784
+        },
+        "ue_4": {
+          "delivered_bytes": 238678,
+          "scheduled_slots": 817,
+          "ack": 817,
+          "nack": 0,
+          "association_changes": 28,
+          "throughput_mbps": 3.818848
+        },
+        "ue_7": {
+          "delivered_bytes": 3733,
+          "scheduled_slots": 25,
+          "ack": 25,
+          "nack": 0,
+          "association_changes": 62,
+          "throughput_mbps": 0.059728
+        },
+        "ue_10": {
+          "delivered_bytes": 60106,
+          "scheduled_slots": 495,
+          "ack": 495,
+          "nack": 0,
+          "association_changes": 43,
+          "throughput_mbps": 0.961696
+        },
+        "ue_13": {
+          "delivered_bytes": 406637,
+          "scheduled_slots": 558,
+          "ack": 526,
+          "nack": 32,
+          "association_changes": 126,
+          "throughput_mbps": 6.506192
+        },
+        "ue_16": {
+          "delivered_bytes": 261412,
+          "scheduled_slots": 476,
+          "ack": 464,
+          "nack": 12,
+          "association_changes": 60,
+          "throughput_mbps": 4.182592
+        },
+        "ue_19": {
+          "delivered_bytes": 14428,
+          "scheduled_slots": 412,
+          "ack": 412,
+          "nack": 0,
+          "association_changes": 91,
+          "throughput_mbps": 0.230848
+        },
+        "ue_22": {
+          "delivered_bytes": 283676,
+          "scheduled_slots": 288,
+          "ack": 259,
+          "nack": 29,
+          "association_changes": 86,
+          "throughput_mbps": 4.538816
+        },
+        "ue_2": {
+          "delivered_bytes": 45989,
+          "scheduled_slots": 637,
+          "ack": 637,
+          "nack": 0,
+          "association_changes": 3,
+          "throughput_mbps": 0.735824
+        },
+        "ue_5": {
+          "delivered_bytes": 4905,
+          "scheduled_slots": 42,
+          "ack": 42,
+          "nack": 0,
+          "association_changes": 3,
+          "throughput_mbps": 0.07848
+        },
+        "ue_8": {
+          "delivered_bytes": 161341,
+          "scheduled_slots": 565,
+          "ack": 565,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 2.581456
+        },
+        "ue_11": {
+          "delivered_bytes": 308,
+          "scheduled_slots": 3,
+          "ack": 3,
+          "nack": 0,
+          "association_changes": 3,
+          "throughput_mbps": 0.004928
+        },
+        "ue_14": {
+          "delivered_bytes": 34612,
+          "scheduled_slots": 109,
+          "ack": 109,
+          "nack": 0,
+          "association_changes": 2,
+          "throughput_mbps": 0.553792
+        },
+        "ue_17": {
+          "delivered_bytes": 20780,
+          "scheduled_slots": 87,
+          "ack": 87,
+          "nack": 0,
+          "association_changes": 28,
+          "throughput_mbps": 0.33248
+        },
+        "ue_20": {
+          "delivered_bytes": 45970,
+          "scheduled_slots": 653,
+          "ack": 653,
+          "nack": 0,
+          "association_changes": 1,
+          "throughput_mbps": 0.73552
+        },
+        "ue_23": {
+          "delivered_bytes": 4973,
+          "scheduled_slots": 45,
+          "ack": 45,
+          "nack": 0,
+          "association_changes": 29,
+          "throughput_mbps": 0.079568
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 999.0,
+          "occupied_re_sum": 1370136.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 486757.0,
+          "throughput_mbps": 7.788112,
+          "active_resource_utilization": 0.3398154761904762
+        },
+        "cell_1": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1345740.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 1046903.0,
+          "throughput_mbps": 16.750448,
+          "active_resource_utilization": 0.33376488095238094
+        },
+        "cell_2": {
+          "power_w_slot_sum": 882.0,
+          "occupied_re_sum": 2169684.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 973441.0,
+          "throughput_mbps": 15.575056,
+          "active_resource_utilization": 0.5381160714285714
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.467598284068174e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "9aa63e98623f6dd16fe58615618d6185612dc518391c001e5d277908f4a8e271",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1379.1770270690322,
+        "peak_rss_native": 4801356,
+        "peak_rss_bytes": 4916588544,
+        "peak_cuda_bytes": 77854208
+      }
+    },
+    {
+      "case": "munich_u12_s1_dt10",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 1,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 784116,
+        "association_changes": 713
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 207618,
+          "scheduled_slots": 720,
+          "ack": 720,
+          "nack": 0,
+          "association_changes": 67,
+          "throughput_mbps": 3.321888
+        },
+        "ue_3": {
+          "delivered_bytes": 6600,
+          "scheduled_slots": 26,
+          "ack": 26,
+          "nack": 0,
+          "association_changes": 59,
+          "throughput_mbps": 0.1056
+        },
+        "ue_6": {
+          "delivered_bytes": 60057,
+          "scheduled_slots": 283,
+          "ack": 283,
+          "nack": 0,
+          "association_changes": 66,
+          "throughput_mbps": 0.960912
+        },
+        "ue_9": {
+          "delivered_bytes": 13987,
+          "scheduled_slots": 242,
+          "ack": 242,
+          "nack": 0,
+          "association_changes": 98,
+          "throughput_mbps": 0.223792
+        },
+        "ue_1": {
+          "delivered_bytes": 17829,
+          "scheduled_slots": 101,
+          "ack": 101,
+          "nack": 0,
+          "association_changes": 35,
+          "throughput_mbps": 0.285264
+        },
+        "ue_4": {
+          "delivered_bytes": 182824,
+          "scheduled_slots": 631,
+          "ack": 631,
+          "nack": 0,
+          "association_changes": 73,
+          "throughput_mbps": 2.925184
+        },
+        "ue_7": {
+          "delivered_bytes": 5800,
+          "scheduled_slots": 36,
+          "ack": 36,
+          "nack": 0,
+          "association_changes": 72,
+          "throughput_mbps": 0.0928
+        },
+        "ue_10": {
+          "delivered_bytes": 61212,
+          "scheduled_slots": 289,
+          "ack": 289,
+          "nack": 0,
+          "association_changes": 97,
+          "throughput_mbps": 0.979392
+        },
+        "ue_2": {
+          "delivered_bytes": 42321,
+          "scheduled_slots": 534,
+          "ack": 534,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 0.677136
+        },
+        "ue_5": {
+          "delivered_bytes": 14746,
+          "scheduled_slots": 93,
+          "ack": 93,
+          "nack": 0,
+          "association_changes": 26,
+          "throughput_mbps": 0.235936
+        },
+        "ue_8": {
+          "delivered_bytes": 164322,
+          "scheduled_slots": 707,
+          "ack": 707,
+          "nack": 0,
+          "association_changes": 44,
+          "throughput_mbps": 2.629152
+        },
+        "ue_11": {
+          "delivered_bytes": 6800,
+          "scheduled_slots": 28,
+          "ack": 28,
+          "nack": 0,
+          "association_changes": 60,
+          "throughput_mbps": 0.1088
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 481.0,
+          "occupied_re_sum": 1543284.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 232721.0,
+          "throughput_mbps": 3.723536,
+          "active_resource_utilization": 0.38275892857142857
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1407576.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 551395.0,
+          "throughput_mbps": 8.82232,
+          "active_resource_utilization": 0.3491011904761905
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.2436964869653195e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "e20ba35c95e4f157e1725a666351741161e73c917bbbe1b6460b25fd75bc360b",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 825.099445264088,
+        "peak_rss_native": 3385748,
+        "peak_rss_bytes": 3467005952,
+        "peak_cuda_bytes": 61095424
+      }
+    },
+    {
+      "case": "munich_u12_s2_dt10",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 2,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 781424,
+        "association_changes": 700
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 196891,
+          "scheduled_slots": 720,
+          "ack": 720,
+          "nack": 0,
+          "association_changes": 49,
+          "throughput_mbps": 3.150256
+        },
+        "ue_3": {
+          "delivered_bytes": 7200,
+          "scheduled_slots": 28,
+          "ack": 28,
+          "nack": 0,
+          "association_changes": 41,
+          "throughput_mbps": 0.1152
+        },
+        "ue_6": {
+          "delivered_bytes": 60707,
+          "scheduled_slots": 306,
+          "ack": 306,
+          "nack": 0,
+          "association_changes": 69,
+          "throughput_mbps": 0.971312
+        },
+        "ue_9": {
+          "delivered_bytes": 13974,
+          "scheduled_slots": 225,
+          "ack": 225,
+          "nack": 0,
+          "association_changes": 103,
+          "throughput_mbps": 0.223584
+        },
+        "ue_1": {
+          "delivered_bytes": 17558,
+          "scheduled_slots": 98,
+          "ack": 98,
+          "nack": 0,
+          "association_changes": 35,
+          "throughput_mbps": 0.280928
+        },
+        "ue_4": {
+          "delivered_bytes": 187959,
+          "scheduled_slots": 616,
+          "ack": 616,
+          "nack": 0,
+          "association_changes": 95,
+          "throughput_mbps": 3.007344
+        },
+        "ue_7": {
+          "delivered_bytes": 5000,
+          "scheduled_slots": 29,
+          "ack": 29,
+          "nack": 0,
+          "association_changes": 71,
+          "throughput_mbps": 0.08
+        },
+        "ue_10": {
+          "delivered_bytes": 62938,
+          "scheduled_slots": 303,
+          "ack": 303,
+          "nack": 0,
+          "association_changes": 92,
+          "throughput_mbps": 1.007008
+        },
+        "ue_2": {
+          "delivered_bytes": 43892,
+          "scheduled_slots": 524,
+          "ack": 524,
+          "nack": 0,
+          "association_changes": 22,
+          "throughput_mbps": 0.702272
+        },
+        "ue_5": {
+          "delivered_bytes": 15596,
+          "scheduled_slots": 105,
+          "ack": 105,
+          "nack": 0,
+          "association_changes": 22,
+          "throughput_mbps": 0.249536
+        },
+        "ue_8": {
+          "delivered_bytes": 164109,
+          "scheduled_slots": 714,
+          "ack": 714,
+          "nack": 0,
+          "association_changes": 43,
+          "throughput_mbps": 2.625744
+        },
+        "ue_11": {
+          "delivered_bytes": 5600,
+          "scheduled_slots": 34,
+          "ack": 34,
+          "nack": 0,
+          "association_changes": 58,
+          "throughput_mbps": 0.0896
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 483.0,
+          "occupied_re_sum": 1542972.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 222198.0,
+          "throughput_mbps": 3.555168,
+          "active_resource_utilization": 0.3826815476190476
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1405104.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 559226.0,
+          "throughput_mbps": 8.947616,
+          "active_resource_utilization": 0.34848809523809526
+        }
+      },
+      "max_power_error_w": 3.3306690738754696e-16,
+      "max_precoder_norm_error": 3.298309885213513e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "fc77d51dfd4c7de580c79900a1df6f2ef1ab209d04c1ff40288de600effea1aa",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 843.9341979890596,
+        "peak_rss_native": 3314584,
+        "peak_rss_bytes": 3394134016,
+        "peak_cuda_bytes": 61095424
+      }
+    },
+    {
+      "case": "munich_u12_s3_dt10",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 3,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 786439,
+        "association_changes": 706
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 205898,
+          "scheduled_slots": 721,
+          "ack": 721,
+          "nack": 0,
+          "association_changes": 46,
+          "throughput_mbps": 3.294368
+        },
+        "ue_3": {
+          "delivered_bytes": 6632,
+          "scheduled_slots": 34,
+          "ack": 34,
+          "nack": 0,
+          "association_changes": 61,
+          "throughput_mbps": 0.106112
+        },
+        "ue_6": {
+          "delivered_bytes": 40461,
+          "scheduled_slots": 283,
+          "ack": 283,
+          "nack": 0,
+          "association_changes": 49,
+          "throughput_mbps": 0.647376
+        },
+        "ue_9": {
+          "delivered_bytes": 13687,
+          "scheduled_slots": 186,
+          "ack": 186,
+          "nack": 0,
+          "association_changes": 97,
+          "throughput_mbps": 0.218992
+        },
+        "ue_1": {
+          "delivered_bytes": 15973,
+          "scheduled_slots": 105,
+          "ack": 105,
+          "nack": 0,
+          "association_changes": 24,
+          "throughput_mbps": 0.255568
+        },
+        "ue_4": {
+          "delivered_bytes": 192310,
+          "scheduled_slots": 603,
+          "ack": 603,
+          "nack": 0,
+          "association_changes": 105,
+          "throughput_mbps": 3.07696
+        },
+        "ue_7": {
+          "delivered_bytes": 4000,
+          "scheduled_slots": 24,
+          "ack": 24,
+          "nack": 0,
+          "association_changes": 79,
+          "throughput_mbps": 0.064
+        },
+        "ue_10": {
+          "delivered_bytes": 62573,
+          "scheduled_slots": 282,
+          "ack": 282,
+          "nack": 0,
+          "association_changes": 99,
+          "throughput_mbps": 1.001168
+        },
+        "ue_2": {
+          "delivered_bytes": 45193,
+          "scheduled_slots": 555,
+          "ack": 555,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 0.723088
+        },
+        "ue_5": {
+          "delivered_bytes": 14063,
+          "scheduled_slots": 81,
+          "ack": 81,
+          "nack": 0,
+          "association_changes": 18,
+          "throughput_mbps": 0.225008
+        },
+        "ue_8": {
+          "delivered_bytes": 178249,
+          "scheduled_slots": 707,
+          "ack": 707,
+          "nack": 0,
+          "association_changes": 60,
+          "throughput_mbps": 2.851984
+        },
+        "ue_11": {
+          "delivered_bytes": 7400,
+          "scheduled_slots": 32,
+          "ack": 32,
+          "nack": 0,
+          "association_changes": 52,
+          "throughput_mbps": 0.1184
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 410.0,
+          "occupied_re_sum": 1300896.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 238631.0,
+          "throughput_mbps": 3.818096,
+          "active_resource_utilization": 0.3226428571428571
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1391352.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 547808.0,
+          "throughput_mbps": 8.764928,
+          "active_resource_utilization": 0.34507738095238094
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.6785020118834666e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "c324ef96aeb8d7e5524e2d3d4a67ff3adcd9662454cffbd54e9fdab71fbf4a0d",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 797.7400992771145,
+        "peak_rss_native": 3313900,
+        "peak_rss_bytes": 3393433600,
+        "peak_cuda_bytes": 61076992
+      }
+    },
+    {
+      "case": "munich_u24_s1_dt10",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 1,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 890277,
+        "association_changes": 1130
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 146248,
+          "scheduled_slots": 661,
+          "ack": 661,
+          "nack": 0,
+          "association_changes": 49,
+          "throughput_mbps": 2.339968
+        },
+        "ue_3": {
+          "delivered_bytes": 6204,
+          "scheduled_slots": 11,
+          "ack": 11,
+          "nack": 0,
+          "association_changes": 37,
+          "throughput_mbps": 0.099264
+        },
+        "ue_6": {
+          "delivered_bytes": 14917,
+          "scheduled_slots": 78,
+          "ack": 78,
+          "nack": 0,
+          "association_changes": 55,
+          "throughput_mbps": 0.238672
+        },
+        "ue_9": {
+          "delivered_bytes": 8907,
+          "scheduled_slots": 24,
+          "ack": 24,
+          "nack": 0,
+          "association_changes": 47,
+          "throughput_mbps": 0.142512
+        },
+        "ue_12": {
+          "delivered_bytes": 85829,
+          "scheduled_slots": 416,
+          "ack": 416,
+          "nack": 0,
+          "association_changes": 41,
+          "throughput_mbps": 1.373264
+        },
+        "ue_15": {
+          "delivered_bytes": 33854,
+          "scheduled_slots": 47,
+          "ack": 44,
+          "nack": 3,
+          "association_changes": 77,
+          "throughput_mbps": 0.541664
+        },
+        "ue_18": {
+          "delivered_bytes": 88093,
+          "scheduled_slots": 378,
+          "ack": 378,
+          "nack": 0,
+          "association_changes": 69,
+          "throughput_mbps": 1.409488
+        },
+        "ue_21": {
+          "delivered_bytes": 6153,
+          "scheduled_slots": 17,
+          "ack": 17,
+          "nack": 0,
+          "association_changes": 71,
+          "throughput_mbps": 0.098448
+        },
+        "ue_1": {
+          "delivered_bytes": 1667,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 27,
+          "throughput_mbps": 0.026672
+        },
+        "ue_4": {
+          "delivered_bytes": 104818,
+          "scheduled_slots": 474,
+          "ack": 474,
+          "nack": 0,
+          "association_changes": 27,
+          "throughput_mbps": 1.677088
+        },
+        "ue_7": {
+          "delivered_bytes": 4400,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 41,
+          "throughput_mbps": 0.0704
+        },
+        "ue_10": {
+          "delivered_bytes": 17883,
+          "scheduled_slots": 71,
+          "ack": 71,
+          "nack": 0,
+          "association_changes": 71,
+          "throughput_mbps": 0.286128
+        },
+        "ue_13": {
+          "delivered_bytes": 107470,
+          "scheduled_slots": 416,
+          "ack": 416,
+          "nack": 0,
+          "association_changes": 67,
+          "throughput_mbps": 1.71952
+        },
+        "ue_16": {
+          "delivered_bytes": 25605,
+          "scheduled_slots": 54,
+          "ack": 50,
+          "nack": 4,
+          "association_changes": 71,
+          "throughput_mbps": 0.40968
+        },
+        "ue_19": {
+          "delivered_bytes": 17048,
+          "scheduled_slots": 21,
+          "ack": 21,
+          "nack": 0,
+          "association_changes": 61,
+          "throughput_mbps": 0.272768
+        },
+        "ue_22": {
+          "delivered_bytes": 73136,
+          "scheduled_slots": 169,
+          "ack": 163,
+          "nack": 6,
+          "association_changes": 89,
+          "throughput_mbps": 1.170176
+        },
+        "ue_2": {
+          "delivered_bytes": 11410,
+          "scheduled_slots": 46,
+          "ack": 46,
+          "nack": 0,
+          "association_changes": 26,
+          "throughput_mbps": 0.18256
+        },
+        "ue_5": {
+          "delivered_bytes": 3591,
+          "scheduled_slots": 9,
+          "ack": 9,
+          "nack": 0,
+          "association_changes": 20,
+          "throughput_mbps": 0.057456
+        },
+        "ue_8": {
+          "delivered_bytes": 74943,
+          "scheduled_slots": 369,
+          "ack": 369,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 1.199088
+        },
+        "ue_11": {
+          "delivered_bytes": 2078,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 20,
+          "throughput_mbps": 0.033248
+        },
+        "ue_14": {
+          "delivered_bytes": 16683,
+          "scheduled_slots": 66,
+          "ack": 66,
+          "nack": 0,
+          "association_changes": 22,
+          "throughput_mbps": 0.266928
+        },
+        "ue_17": {
+          "delivered_bytes": 16675,
+          "scheduled_slots": 79,
+          "ack": 77,
+          "nack": 2,
+          "association_changes": 46,
+          "throughput_mbps": 0.2668
+        },
+        "ue_20": {
+          "delivered_bytes": 8465,
+          "scheduled_slots": 70,
+          "ack": 70,
+          "nack": 0,
+          "association_changes": 32,
+          "throughput_mbps": 0.13544
+        },
+        "ue_23": {
+          "delivered_bytes": 14200,
+          "scheduled_slots": 20,
+          "ack": 20,
+          "nack": 0,
+          "association_changes": 34,
+          "throughput_mbps": 0.2272
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 273.0,
+          "occupied_re_sum": 726192.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 311129.0,
+          "throughput_mbps": 4.978064,
+          "active_resource_utilization": 0.18010714285714285
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1345764.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 579148.0,
+          "throughput_mbps": 9.266368,
+          "active_resource_utilization": 0.33377083333333335
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.5204276727096584e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "731c3adc0a280cceb90f28d95e333733ba33038e0d3bbc273bede3fd8954a439",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1101.726639413042,
+        "peak_rss_native": 4859120,
+        "peak_rss_bytes": 4975738880,
+        "peak_cuda_bytes": 77854208
+      }
+    },
+    {
+      "case": "munich_u24_s2_dt10",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 2,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 835352,
+        "association_changes": 1205
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 144331,
+          "scheduled_slots": 653,
+          "ack": 653,
+          "nack": 0,
+          "association_changes": 39,
+          "throughput_mbps": 2.309296
+        },
+        "ue_3": {
+          "delivered_bytes": 5889,
+          "scheduled_slots": 8,
+          "ack": 8,
+          "nack": 0,
+          "association_changes": 25,
+          "throughput_mbps": 0.094224
+        },
+        "ue_6": {
+          "delivered_bytes": 6052,
+          "scheduled_slots": 51,
+          "ack": 51,
+          "nack": 0,
+          "association_changes": 59,
+          "throughput_mbps": 0.096832
+        },
+        "ue_9": {
+          "delivered_bytes": 8515,
+          "scheduled_slots": 21,
+          "ack": 21,
+          "nack": 0,
+          "association_changes": 51,
+          "throughput_mbps": 0.13624
+        },
+        "ue_12": {
+          "delivered_bytes": 86165,
+          "scheduled_slots": 395,
+          "ack": 395,
+          "nack": 0,
+          "association_changes": 65,
+          "throughput_mbps": 1.37864
+        },
+        "ue_15": {
+          "delivered_bytes": 23329,
+          "scheduled_slots": 39,
+          "ack": 39,
+          "nack": 0,
+          "association_changes": 60,
+          "throughput_mbps": 0.373264
+        },
+        "ue_18": {
+          "delivered_bytes": 87707,
+          "scheduled_slots": 342,
+          "ack": 342,
+          "nack": 0,
+          "association_changes": 83,
+          "throughput_mbps": 1.403312
+        },
+        "ue_21": {
+          "delivered_bytes": 3509,
+          "scheduled_slots": 15,
+          "ack": 15,
+          "nack": 0,
+          "association_changes": 75,
+          "throughput_mbps": 0.056144
+        },
+        "ue_1": {
+          "delivered_bytes": 5069,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 19,
+          "throughput_mbps": 0.081104
+        },
+        "ue_4": {
+          "delivered_bytes": 105844,
+          "scheduled_slots": 504,
+          "ack": 504,
+          "nack": 0,
+          "association_changes": 39,
+          "throughput_mbps": 1.693504
+        },
+        "ue_7": {
+          "delivered_bytes": 5000,
+          "scheduled_slots": 13,
+          "ack": 13,
+          "nack": 0,
+          "association_changes": 60,
+          "throughput_mbps": 0.08
+        },
+        "ue_10": {
+          "delivered_bytes": 15941,
+          "scheduled_slots": 82,
+          "ack": 82,
+          "nack": 0,
+          "association_changes": 89,
+          "throughput_mbps": 0.255056
+        },
+        "ue_13": {
+          "delivered_bytes": 104898,
+          "scheduled_slots": 420,
+          "ack": 417,
+          "nack": 3,
+          "association_changes": 69,
+          "throughput_mbps": 1.678368
+        },
+        "ue_16": {
+          "delivered_bytes": 18961,
+          "scheduled_slots": 55,
+          "ack": 55,
+          "nack": 0,
+          "association_changes": 62,
+          "throughput_mbps": 0.303376
+        },
+        "ue_19": {
+          "delivered_bytes": 15659,
+          "scheduled_slots": 24,
+          "ack": 24,
+          "nack": 0,
+          "association_changes": 67,
+          "throughput_mbps": 0.250544
+        },
+        "ue_22": {
+          "delivered_bytes": 52685,
+          "scheduled_slots": 175,
+          "ack": 172,
+          "nack": 3,
+          "association_changes": 93,
+          "throughput_mbps": 0.84296
+        },
+        "ue_2": {
+          "delivered_bytes": 9048,
+          "scheduled_slots": 67,
+          "ack": 67,
+          "nack": 0,
+          "association_changes": 24,
+          "throughput_mbps": 0.144768
+        },
+        "ue_5": {
+          "delivered_bytes": 2142,
+          "scheduled_slots": 10,
+          "ack": 10,
+          "nack": 0,
+          "association_changes": 22,
+          "throughput_mbps": 0.034272
+        },
+        "ue_8": {
+          "delivered_bytes": 74797,
+          "scheduled_slots": 399,
+          "ack": 399,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 1.196752
+        },
+        "ue_11": {
+          "delivered_bytes": 4905,
+          "scheduled_slots": 11,
+          "ack": 11,
+          "nack": 0,
+          "association_changes": 24,
+          "throughput_mbps": 0.07848
+        },
+        "ue_14": {
+          "delivered_bytes": 12988,
+          "scheduled_slots": 66,
+          "ack": 66,
+          "nack": 0,
+          "association_changes": 24,
+          "throughput_mbps": 0.207808
+        },
+        "ue_17": {
+          "delivered_bytes": 14748,
+          "scheduled_slots": 78,
+          "ack": 78,
+          "nack": 0,
+          "association_changes": 30,
+          "throughput_mbps": 0.235968
+        },
+        "ue_20": {
+          "delivered_bytes": 14346,
+          "scheduled_slots": 76,
+          "ack": 76,
+          "nack": 0,
+          "association_changes": 56,
+          "throughput_mbps": 0.229536
+        },
+        "ue_23": {
+          "delivered_bytes": 12824,
+          "scheduled_slots": 20,
+          "ack": 20,
+          "nack": 0,
+          "association_changes": 54,
+          "throughput_mbps": 0.205184
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 268.0,
+          "occupied_re_sum": 706764.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 257210.0,
+          "throughput_mbps": 4.11536,
+          "active_resource_utilization": 0.17528869047619047
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1345536.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 578142.0,
+          "throughput_mbps": 9.250272,
+          "active_resource_utilization": 0.33371428571428574
+        }
+      },
+      "max_power_error_w": 5.551115123125783e-16,
+      "max_precoder_norm_error": 3.096689211723458e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "e7f42fcd50e0665622285fb150126527ee9fb762d5cf92a79db7cd752bd0f067",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1235.9026338111144,
+        "peak_rss_native": 4794460,
+        "peak_rss_bytes": 4909527040,
+        "peak_cuda_bytes": 77854208
+      }
+    },
+    {
+      "case": "munich_u24_s3_dt10",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 3,
+      "passed": true,
+      "totals": {
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 870831,
+        "association_changes": 1141
+      },
+      "per_ue": {
+        "ue_0": {
+          "delivered_bytes": 148407,
+          "scheduled_slots": 671,
+          "ack": 671,
+          "nack": 0,
+          "association_changes": 51,
+          "throughput_mbps": 2.374512
+        },
+        "ue_3": {
+          "delivered_bytes": 2830,
+          "scheduled_slots": 8,
+          "ack": 8,
+          "nack": 0,
+          "association_changes": 31,
+          "throughput_mbps": 0.04528
+        },
+        "ue_6": {
+          "delivered_bytes": 7241,
+          "scheduled_slots": 56,
+          "ack": 56,
+          "nack": 0,
+          "association_changes": 39,
+          "throughput_mbps": 0.115856
+        },
+        "ue_9": {
+          "delivered_bytes": 8248,
+          "scheduled_slots": 27,
+          "ack": 27,
+          "nack": 0,
+          "association_changes": 39,
+          "throughput_mbps": 0.131968
+        },
+        "ue_12": {
+          "delivered_bytes": 89026,
+          "scheduled_slots": 351,
+          "ack": 344,
+          "nack": 7,
+          "association_changes": 49,
+          "throughput_mbps": 1.424416
+        },
+        "ue_15": {
+          "delivered_bytes": 31708,
+          "scheduled_slots": 43,
+          "ack": 39,
+          "nack": 4,
+          "association_changes": 63,
+          "throughput_mbps": 0.507328
+        },
+        "ue_18": {
+          "delivered_bytes": 97724,
+          "scheduled_slots": 368,
+          "ack": 365,
+          "nack": 3,
+          "association_changes": 89,
+          "throughput_mbps": 1.563584
+        },
+        "ue_21": {
+          "delivered_bytes": 6485,
+          "scheduled_slots": 14,
+          "ack": 14,
+          "nack": 0,
+          "association_changes": 62,
+          "throughput_mbps": 0.10376
+        },
+        "ue_1": {
+          "delivered_bytes": 892,
+          "scheduled_slots": 7,
+          "ack": 7,
+          "nack": 0,
+          "association_changes": 15,
+          "throughput_mbps": 0.014272
+        },
+        "ue_4": {
+          "delivered_bytes": 107269,
+          "scheduled_slots": 480,
+          "ack": 480,
+          "nack": 0,
+          "association_changes": 37,
+          "throughput_mbps": 1.716304
+        },
+        "ue_7": {
+          "delivered_bytes": 2897,
+          "scheduled_slots": 12,
+          "ack": 12,
+          "nack": 0,
+          "association_changes": 63,
+          "throughput_mbps": 0.046352
+        },
+        "ue_10": {
+          "delivered_bytes": 22485,
+          "scheduled_slots": 81,
+          "ack": 81,
+          "nack": 0,
+          "association_changes": 75,
+          "throughput_mbps": 0.35976
+        },
+        "ue_13": {
+          "delivered_bytes": 101109,
+          "scheduled_slots": 402,
+          "ack": 396,
+          "nack": 6,
+          "association_changes": 74,
+          "throughput_mbps": 1.617744
+        },
+        "ue_16": {
+          "delivered_bytes": 18237,
+          "scheduled_slots": 53,
+          "ack": 51,
+          "nack": 2,
+          "association_changes": 63,
+          "throughput_mbps": 0.291792
+        },
+        "ue_19": {
+          "delivered_bytes": 13291,
+          "scheduled_slots": 29,
+          "ack": 29,
+          "nack": 0,
+          "association_changes": 67,
+          "throughput_mbps": 0.212656
+        },
+        "ue_22": {
+          "delivered_bytes": 65211,
+          "scheduled_slots": 218,
+          "ack": 212,
+          "nack": 6,
+          "association_changes": 101,
+          "throughput_mbps": 1.043376
+        },
+        "ue_2": {
+          "delivered_bytes": 11058,
+          "scheduled_slots": 70,
+          "ack": 70,
+          "nack": 0,
+          "association_changes": 24,
+          "throughput_mbps": 0.176928
+        },
+        "ue_5": {
+          "delivered_bytes": 935,
+          "scheduled_slots": 7,
+          "ack": 7,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 0.01496
+        },
+        "ue_8": {
+          "delivered_bytes": 77717,
+          "scheduled_slots": 408,
+          "ack": 408,
+          "nack": 0,
+          "association_changes": 16,
+          "throughput_mbps": 1.243472
+        },
+        "ue_11": {
+          "delivered_bytes": 3685,
+          "scheduled_slots": 11,
+          "ack": 11,
+          "nack": 0,
+          "association_changes": 26,
+          "throughput_mbps": 0.05896
+        },
+        "ue_14": {
+          "delivered_bytes": 15893,
+          "scheduled_slots": 85,
+          "ack": 85,
+          "nack": 0,
+          "association_changes": 11,
+          "throughput_mbps": 0.254288
+        },
+        "ue_17": {
+          "delivered_bytes": 20203,
+          "scheduled_slots": 69,
+          "ack": 65,
+          "nack": 4,
+          "association_changes": 28,
+          "throughput_mbps": 0.323248
+        },
+        "ue_20": {
+          "delivered_bytes": 10596,
+          "scheduled_slots": 58,
+          "ack": 58,
+          "nack": 0,
+          "association_changes": 44,
+          "throughput_mbps": 0.169536
+        },
+        "ue_23": {
+          "delivered_bytes": 7684,
+          "scheduled_slots": 18,
+          "ack": 18,
+          "nack": 0,
+          "association_changes": 58,
+          "throughput_mbps": 0.122944
+        }
+      },
+      "per_cell": {
+        "cell_0": {
+          "power_w_slot_sum": 291.0,
+          "occupied_re_sum": 807012.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 295605.0,
+          "throughput_mbps": 4.72968,
+          "active_resource_utilization": 0.2001517857142857
+        },
+        "cell_1": {
+          "power_w_slot_sum": 0.0,
+          "occupied_re_sum": 0.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 0.0,
+          "throughput_mbps": 0.0,
+          "active_resource_utilization": 0.0
+        },
+        "cell_2": {
+          "power_w_slot_sum": 1000.0,
+          "occupied_re_sum": 1346892.0,
+          "grid_re_sum": 7168000.0,
+          "active_grid_re_sum": 4032000.0,
+          "delivered_bytes": 575226.0,
+          "throughput_mbps": 9.203616,
+          "active_resource_utilization": 0.3340505952380952
+        }
+      },
+      "max_power_error_w": 3.3306690738754696e-16,
+      "max_precoder_norm_error": 3.365572567304298e-07,
+      "control_measurement_age_max": 2,
+      "unsupported_actions": {},
+      "status": {
+        "completed": true,
+        "spark_verified": true,
+        "stage": "completed",
+        "cache_key": "7a0a0f87ef3b2ecb4adda5fc812276162a4a1124af959da7828cfabb88460576",
+        "runtime_environment": {
+          "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+          "compute_capability": [
+            12,
+            1
+          ],
+          "python": "3.12.3",
+          "machine": "aarch64",
+          "system": "Linux",
+          "torch": "2.9.1+cu130",
+          "sionna": "2.2.0",
+          "sionna_rt": "2.2.0",
+          "cuda_available": true,
+          "cuda_version": "13.0",
+          "gpu_name": "NVIDIA GB10",
+          "rt_variant": "cuda_ad_mono_polarized"
+        },
+        "elapsed_s": 1176.8061138750054,
+        "peak_rss_native": 4797224,
+        "peak_rss_bytes": 4912357376,
+        "peak_cuda_bytes": 77854208
+      }
+    }
+  ],
+  "grid_sync_revalidation": {
+    "output_root": "outputs/rt_sys_matrix_grid",
+    "completed": false,
+    "gpu_controls_passed": true,
+    "delayed_resource_observation_verified": true,
+    "regression_passed": 193,
+    "regression_existing_failures": 4
+  }
+}

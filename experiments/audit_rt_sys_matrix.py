@@ -9,7 +9,7 @@ from collections import defaultdict
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def audit(path):
+def audit(path, require_resource_metrics=False):
     status=json.loads((path/'run_status.json').read_text())
     saved=json.loads((path/'config_snapshot.json').read_text());m=saved['manifest']
     final=json.loads((path/'final_summary.json').read_text())
@@ -51,6 +51,11 @@ def audit(path):
                 percell[cid]['grid_re_sum']+=cell['grid_re']
                 percell[cid]['active_grid_re_sum']+=active_re
             delivered=sum(u['delivered_bytes'] for u in t['ues'])
+            if require_resource_metrics:
+                layers=sum(u['layers'] for u in t['ues'] if u['scheduled'])
+                assert int(row['true_scheduled_layer_count_total'])==layers,(path,slot,'layer telemetry')
+                if any(cell['occupied_re'] for cell in t['cells'].values()):
+                    assert float(row['true_resource_grid_utilization'])>0,(path,slot,'resource telemetry')
             assert delivered==int(row['true_delivered_new_bytes_this_slot'])+int(row['true_delivered_retx_bytes_this_slot'])
             assert sum(u['tb_bytes'] for u in t['ues'])<=int(row['true_grant_bytes_budget_total'])
             assert float(row['true_queue_bytes'])>=0 and float(row['true_total_pending_retx_bytes'])>=0
@@ -93,13 +98,15 @@ def audit(path):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--root',type=Path,default=ROOT/'outputs/rt_sys_matrix')
+    parser.add_argument('--output',type=Path,default=ROOT/'outputs/rt_sys_acceptance/matrix_audit.json')
+    parser.add_argument('--require-resource-metrics',action='store_true')
     args=parser.parse_args();plan=json.loads((args.root/'run_plan.json').read_text())
     reports=[];errors=[]
     for case in plan:
         path=args.root/f'{case["scene"]}_u{case["ues"]}_s{case["seed"]}_dt{case["path_update_ms"]}'
-        try:reports.append(audit(path))
+        try:reports.append(audit(path,args.require_resource_metrics))
         except Exception as exc:errors.append({'case':path.name,'error':repr(exc)})
-    target=ROOT/'outputs/rt_sys_acceptance/matrix_audit.json';target.parent.mkdir(parents=True,exist_ok=True)
+    target=args.output;target.parent.mkdir(parents=True,exist_ok=True)
     report={'completed':not errors and len(reports)==len(plan),'cases':reports,'errors':errors,
         'checks':'GPU completion, all slots/UEs, precoder normalization, resource/energy accounting, TB/ACK/queue budgets, delayed controller observations',
         'harq_scope':'ACK/TB accounting here; per-process queue/HARQ state checked by control probes and regression'}

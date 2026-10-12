@@ -96,7 +96,8 @@ def closed_loop(device,slots=40):
         observations=[]
         def update(slot_id,observation):
             observations.append(dict(slot=slot_id,produced_at_slot=observation.produced_at_slot,
-                delivered_at_slot=observation.delivered_at_slot))
+                delivered_at_slot=observation.delivered_at_slot,
+                resource_grid_utilization=observation.resource_grid_utilization))
             # Issue at slot 2; original one-slot control delay applies at 3.
             return ControlDecision(config_actions=[ConfigAction(target_cell_id='cell_0',source_name='acceptance_probe',
                 metadata=ControlMetadata(source='acceptance_probe',issued_at_slot=slot_id),
@@ -116,6 +117,7 @@ def closed_loop(device,slots=40):
                 'scheduler_mode':sim.state.managed_cells['cell_0'].scheduler.scheduler_mode,
                 'control_observation':dict(sim.state.control.input_observation_trace)})
         assert all(o['produced_at_slot']<o['slot'] for o in observations[5:])
+        assert any((o['resource_grid_utilization'] or 0)>0 for o in observations[5:]), name
         variants[name]={'cache_key':provider.key,'arrivals':arrivals,'observations':observations,'states':states,
             'traces':traces,'delivered_bytes':sum(u['delivered_bytes'] for t in traces for u in t['ues'])}
     progress=ROOT/'outputs/rt_sys_acceptance/control_probe_details.json'
@@ -131,6 +133,7 @@ def closed_loop(device,slots=40):
     assert grants(variants['scheduler'])!=grants(baseline)
     return {'checks':{'same_propagation_and_arrivals':True,'delayed_controls':True,
         'delayed_controller_observations':True,'queue_and_harq_consistency':True,
+        'resource_utilization_reaches_delayed_controller':True,
         'power_beam_sleep_scheduler_responses':True},'variants':variants}
 
 

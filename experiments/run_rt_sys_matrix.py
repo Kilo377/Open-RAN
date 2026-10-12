@@ -20,9 +20,10 @@ if __name__=='__main__':
     p.add_argument('--slots',type=int,default=1000);p.add_argument('--path-update-ms',type=float,default=10)
     p.add_argument('--device',choices=['cuda','cpu'],default='cuda');p.add_argument('--skip-completed',action='store_true')
     p.add_argument('--workers',type=int,default=1,choices=range(1,5))
+    p.add_argument('--output-root',type=Path,default=ROOT/'outputs/rt_sys_matrix')
     args=p.parse_args();plan=cases(args.slots,args.path_update_ms)
     if args.dry_run:print(json.dumps(plan,indent=2));sys.exit(0)
-    root=ROOT/'outputs/rt_sys_matrix';root.mkdir(parents=True,exist_ok=True)
+    root=args.output_root.resolve();root.mkdir(parents=True,exist_ok=True)
     if args.device=='cuda':
         sys.path.insert(0,str(ROOT))
         from scripts.spark.preflight import check

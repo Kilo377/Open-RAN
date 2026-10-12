@@ -1,6 +1,6 @@
 # 本地接入验收记录
 
-状态：**本记录保留本地 CPU 接入验收结果。Spark 已完成环境预检和小型 GPU 验证，见 [SPARK_SETUP.md](SPARK_SETUP.md)；1000 时隙接入矩阵尚未执行。** 数据摘要见同目录 `local_validation.json`，详细结果保留在副本 `outputs/rt_sys/`。
+状态：**本记录保留历史本地 CPU 接入验收结果。Spark 环境见 [SPARK_SETUP.md](SPARK_SETUP.md)，完整 1000 时隙矩阵及修复后的复验状态见 [FULL_ACCEPTANCE.md](FULL_ACCEPTANCE.md)。** 数据摘要见同目录 `local_validation.json`，详细结果保留在副本 `outputs/rt_sys/`。
 
 原目录的 1113 个清单文件逐一校验，SHA256 均未改变。副本首个 Git 提交保留复制时快照；输出、虚拟环境、LLVM 与缓存均不进入源码提交。
 
@@ -44,6 +44,6 @@ MPLCONFIGDIR="$PWD/.cache/matplotlib" .venv-local/bin/python -m pytest -q tests 
 
 ## 后续 Spark 验收
 
-ARM64 Linux、GB10/驱动、PyTorch CUDA 与 RT GPU 的真实调用和准确依赖锁已完成，结果另见 Spark 记录。尚待两地图 12 次、各 1000 时隙的接入矩阵，以及整体 GPU 内存与运行性能测量。所有历史本地运行仍为 `spark_verified: false`。
+ARM64 Linux、GB10/驱动、PyTorch CUDA 与 RT GPU 的真实调用和准确依赖锁已完成，完整矩阵及内存测量另见 Spark 记录。所有历史本地运行仍为 `spark_verified: false`；下表未执行项描述本地阶段，不代表当前远端状态。
 
 新模式默认 SYS BLER/EESM 的校准范围、表 3 缺失、理想 CSI、导频开销模型和无 HARQ 软合并均已在主说明注明。完整 PHY 校准、自定义地图/动态障碍物、扩展控制动作及正式跨场景泛化协议尚未纳入本阶段结论。

@@ -1418,6 +1418,12 @@ class Simulator:
             runtime_state.last_phy_result = phy_result
             runtime_state.last_shadow_phy_result = shadow_phy_result
             self.state_updater.apply_phy_result(scoped_state, phy_result)
+            if self._rt_sys_mode:
+                # StateUpdater replaces the scoped grid after PHY accounting.
+                # Publish that grid to the views used by telemetry and the RIC.
+                runtime_state.resource_grid = scoped_state.resource_grid
+                if runtime_state.is_primary:
+                    state.resource_grid = runtime_state.resource_grid
             per_cell_phy_results.append(phy_result)
             if shadow_phy_result is not None:
                 per_cell_shadow_results.append(shadow_phy_result)

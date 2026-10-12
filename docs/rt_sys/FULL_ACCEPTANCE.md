@@ -2,6 +2,23 @@
 
 本记录对应两个地图、3 小区、12/24 UE、3 个种子、每次 1000 时隙。结果以实际矩阵审计文件为准，不作为算法泛化结论。
 
+## 2026-10-12 状态
+
+首轮矩阵已完成，12/12 场景通过物理与交付记账审计：共 12000 时隙、216000 条 UE 记录、17829847 字节交付，三个并行进程总耗时 4594.90 秒（76.58 分钟）。原始摘要见 [full_acceptance.json](full_acceptance.json)，详细输出保留在 `outputs/rt_sys_matrix/` 与 `outputs/rt_sys_acceptance/`。
+
+| 地图 | UE | 三种子平均交付 MB | 平均单场景耗时 秒 |
+| --- | ---: | ---: | ---: |
+| simple_street_canyon | 12 | 1.818 | 1089.8 |
+| simple_street_canyon | 24 | 2.476 | 1425.9 |
+| munich | 12 | 0.784 | 822.3 |
+| munich | 24 | 0.865 | 1171.5 |
+
+矩阵的原调度策略没有产生自然 MU 组，因此不能据此证明 MU 调度收益。两地图的强制重叠资源 GPU 探针各通过 28 个双用户组；正交与相关已知信道测试另检查复用与干扰响应。
+
+最终汇总时发现，首轮旧 `slot_metrics.csv` 的资源利用率及总层数为零：StateUpdater 替换每小区局部状态的资源网格后，集群视图仍引用初始化对象。物理独立 trace 与交付记账仍通过，但该轮资源汇总及相关控制观测不应使用。
+
+现已在新 RT/SYS 路径同步更新 managed cell 和主小区资源网格。修复后的本地闭环测试、Spark GPU 控制探针均通过；探针明确检查非零利用率进入原有延迟观测链路。Spark 全量回归为 193 passed、4 个原有失败、2 subtests passed，没有新增失败。由于控制输入发生变化，正在使用同一传播缓存重跑完整 12 场景，输出单独保存在 `outputs/rt_sys_matrix_grid/`；该轮通过新的资源汇总审计之前，不标记整条链路最终验收完成。
+
 ## 执行与审计
 
 ```bash
@@ -26,6 +43,8 @@ python -m pytest -q tests --ignore=tests/test_xapp_experiment_utils.py --disable
 
 无服务传播路径的已调度流原本会产生零 RZF 列，但仍记为分配了发射功率。现为这种零列使用确定的归一化波束：服务链路仍零交付，但发射能量和对其他接收机的干扰得到一致计算。补充已知信道的干扰因果检查，并在 CPU/CUDA 上检查零列处理。矩阵审计逐列检查权重范数；对于早期版本生成且通过该检查的场景，这个零列分支未被触发。
 
+每小区局部资源网格替换后现同步回运行状态与主小区视图；旧近似后端的流程保持原状。矩阵新增 `--output-root`，审计新增 `--require-resource-metrics` 及 `--output`，以保留修复前证据并独立验证新版本。
+
 ## 回归范围
 
 原有缺失模块 tests/test_xapp_experiment_utils.py 显式排除。此前复现的四项原有失败单独记录：场景注册表数量断言、Windows 配置路径、两个 xApp 选择断言。不得把它们记为本轮新增失败，也不得把完整测试套件记为全部通过。
@@ -33,3 +52,5 @@ python -m pytest -q tests --ignore=tests/test_xapp_experiment_utils.py --disable
 ## 内存解释
 
 矩阵每秒采样 cudaMemGetInfo 与 Linux MemAvailable。CUDA 计数覆盖设备总体可用内存，能够观察 Torch 和 RT/Dr.Jit 之外的设备内存变化，但也包含并行任务、其他进程及 GB10 共享内存效应，不能用于精确归因单个项目。另保留每个进程峰值 RSS 和 Torch 分配峰值；Torch 计数不包含全部 RT 分配。
+
+首轮最大进程 RSS 4.99 GB，Torch CUDA 分配峰值 77.85 MB；4593 次设备整体采样中，最小系统 MemAvailable 84.88 GB、最小 CUDA 全局 free 0.849 GB，未发生 OOM。该共享内存设备的全局 free 包含其他使用者且不等于可回收文件缓存后的容量，不能把它解释为本项目独占峰值。
