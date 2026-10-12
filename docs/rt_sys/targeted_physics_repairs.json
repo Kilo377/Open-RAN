@@ -1,0 +1,642 @@
+{
+  "completed": true,
+  "spark_verified": true,
+  "feedback_mode": "nr_tb_reference",
+  "default_bler_eesm_used": false,
+  "fast_bler_eesm_calibrated": false,
+  "full_phy_calibrated": false,
+  "executed_matrix_source_sha256": "79b3aad5296098fa7ed6b696ee48bdc1f36805b8ec88d005809b526673a78079",
+  "release_source_sha256": "fc3638f329f178bb126ecd59851485e2b207c8824328945dbb05a274ff590c70",
+  "executed_source_archive": "outputs/rt_sys_targeted_repairs/executed_sources_79b3aad5.tar.gz",
+  "executed_archive_sha256": "c44dc01188f3d00b7f3cccc28f41baf8e89d8c9017fe277227e389dcf30f46e9",
+  "matrix_elapsed_s": 7133.831926839892,
+  "matrix_workers": 4,
+  "totals": {
+    "slots": 12000,
+    "ue_rows": 216000,
+    "delivered_bytes": 19068822,
+    "mu_resource_groups": 179317,
+    "nr_reference_attempts": 93217,
+    "nr_crc_acks": 92324,
+    "nr_crc_nacks": 893,
+    "nr_decode_trials": 9842209,
+    "nr_constraint_projections": 633,
+    "completed_handovers": 267
+  },
+  "max_power_error_w": 1.1102230246251565e-15,
+  "max_precoder_norm_error": 3.7583340928293296e-07,
+  "peak_case_rss_bytes": 4447649792,
+  "peak_case_torch_cuda_bytes": 3892612608,
+  "environment": {
+    "driver_report": "NVIDIA GB10, 580.173.02, [N/A]",
+    "compute_capability": [
+      12,
+      1
+    ],
+    "python": "3.12.3",
+    "machine": "aarch64",
+    "system": "Linux",
+    "torch": "2.9.1+cu130",
+    "sionna": "2.2.0",
+    "sionna_rt": "2.2.0",
+    "cuda_available": true,
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GB10",
+    "rt_variant": "cuda_ad_mono_polarized"
+  },
+  "checks": {
+    "reference_validation": {
+      "passed": true,
+      "sha256": "fb20d528e9e618dbda6b761e6ac5168d83bdb59d92b6a37b4ae9089e8938c9f8",
+      "path": "outputs/rt_sys_targeted_repairs/reference_validation.json"
+    },
+    "release_reference_validation": {
+      "passed": true,
+      "sha256": "5604e6619d3f98f0a0ae36326475a4beced154c240d9b08e6f1540de45a578b5",
+      "path": "outputs/rt_sys_targeted_repairs/release_reference_validation.json"
+    },
+    "control_validation": {
+      "passed": true,
+      "sha256": "55a79c9d0f0faa1de0f4fbfc9cf5c1868bf1c9f9ea4da1f2a5fa1452ffbb30b2",
+      "path": "outputs/rt_sys_targeted_repairs/control_validation.json"
+    },
+    "reference_replay_validation": {
+      "passed": true,
+      "sha256": "6a3ce32b77638a0d8777d78443154cfd809120615f436a148ebb9456aa016b5c",
+      "path": "outputs/rt_sys_targeted_repairs/reference_replay_validation.json"
+    },
+    "reference_mu_validation": {
+      "passed": true,
+      "sha256": "08648f641a03b6af36299a9936b249a1b46867a1fd4f24cf46da63b11caaae98",
+      "path": "outputs/rt_sys_targeted_repairs/reference_mu_validation.json"
+    },
+    "geometry_validation": {
+      "passed": true,
+      "sha256": "ae8bd8d2f31fd71890b0f6547858ce9e0f94647b4ed92ddbc40d14e108f0be21",
+      "path": "outputs/rt_sys_targeted_repairs/geometry_validation.json"
+    },
+    "native_cache_validation": {
+      "passed": true,
+      "sha256": "28919644696afc282543ff66b3d9db5862aad0c817b9ecdf1986325b56f935a6",
+      "path": "outputs/rt_sys_targeted_repairs/native_cache_validation.json"
+    }
+  },
+  "release_verification": {
+    "source_sha256": "fc3638f329f178bb126ecd59851485e2b207c8824328945dbb05a274ff590c70",
+    "local_regression": {
+      "passed": true,
+      "passed_tests": 223,
+      "skipped_gpu_tests": 1,
+      "passed_subtests": 2
+    },
+    "spark_regression": {
+      "passed": true,
+      "passed_tests": 224,
+      "passed_subtests": 2,
+      "warning_count": 1,
+      "elapsed_s": 57.62,
+      "log_sha256": "c6bd845986b3348481500db91817a0140fbf631fc7dc5288283b42d95dc46d5d",
+      "executed_in": "isolated release_candidate_source under owned outputs; active matrix runtime frozen"
+    },
+    "reference_validation": {
+      "passed": true,
+      "points": 331,
+      "source_sha256": "fc3638f329f178bb126ecd59851485e2b207c8824328945dbb05a274ff590c70"
+    },
+    "original_files_checked": 1113,
+    "original_changed_files": []
+  },
+  "cases": [
+    {
+      "case": "simple_street_canyon_u12_s1_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 1,
+      "totals": {
+        "mu_resource_groups": 14803,
+        "multi_layer_resource_groups": 14803,
+        "nr_reference_attempts": 7256,
+        "nr_crc_acks": 7251,
+        "nr_crc_nacks": 5,
+        "nr_decode_trials": 713144,
+        "nr_constraint_projections": 4,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1645378,
+        "completed_handovers": 18,
+        "association_changes": 18,
+        "live_completed_handovers": 18
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0012837405437462557,
+        0.0067551949232324835,
+        0.013984722755778728,
+        0.017427318997330982,
+        0.04156598876382664,
+        0.5120330600024676,
+        0.5266851944755945,
+        0.5297518737002573,
+        0.6216384741720579,
+        0.6337157826569567,
+        0.7960207698524326
+      ],
+      "elapsed_s": 2036.8481330280192,
+      "cache_key": "d5b8e44cdbd12a5cdc2b54aa68e28b4bea6eeebb11125de92dded62d89e9f757"
+    },
+    {
+      "case": "simple_street_canyon_u12_s2_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 2,
+      "totals": {
+        "mu_resource_groups": 14845,
+        "multi_layer_resource_groups": 14845,
+        "nr_reference_attempts": 7118,
+        "nr_crc_acks": 7109,
+        "nr_crc_nacks": 9,
+        "nr_decode_trials": 709198,
+        "nr_constraint_projections": 7,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1606922,
+        "completed_handovers": 15,
+        "association_changes": 15,
+        "live_completed_handovers": 15
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0012971697952940061,
+        0.0061344621051967274,
+        0.008337278168376603,
+        0.16135107153096728,
+        0.4885578888671336,
+        0.5123583650218758,
+        0.5234711388094909,
+        0.528582675310761,
+        0.620104072048938,
+        0.6342359996666852,
+        0.7928582122073341
+      ],
+      "elapsed_s": 2051.3724328679964,
+      "cache_key": "2ba4c302541d99d8e08066b8fb0d4ebabc3b338721cc1737b52c1929425a3d98"
+    },
+    {
+      "case": "simple_street_canyon_u12_s3_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 12,
+      "seed": 3,
+      "totals": {
+        "mu_resource_groups": 16375,
+        "multi_layer_resource_groups": 16375,
+        "nr_reference_attempts": 7206,
+        "nr_crc_acks": 7200,
+        "nr_crc_nacks": 6,
+        "nr_decode_trials": 703686,
+        "nr_constraint_projections": 6,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1604951,
+        "completed_handovers": 13,
+        "association_changes": 13,
+        "live_completed_handovers": 13
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0060321053842344735,
+        0.006213181899396492,
+        0.006254993952987444,
+        0.04709788497357245,
+        0.4607378624736186,
+        0.5065301827796802,
+        0.5228500329352241,
+        0.529048774105315,
+        0.6207916088597268,
+        0.6320605694458893,
+        0.7928582122073341
+      ],
+      "elapsed_s": 2069.147021224955,
+      "cache_key": "74894a56ef7412bd808f26fe291e8393f117746d4f90557731f42eb7d98bbb22"
+    },
+    {
+      "case": "simple_street_canyon_u24_s1_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 1,
+      "totals": {
+        "mu_resource_groups": 13066,
+        "multi_layer_resource_groups": 13066,
+        "nr_reference_attempts": 8133,
+        "nr_crc_acks": 8073,
+        "nr_crc_nacks": 60,
+        "nr_decode_trials": 841349,
+        "nr_constraint_projections": 41,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1858305,
+        "completed_handovers": 31,
+        "association_changes": 31,
+        "live_completed_handovers": 31
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0008329258073106453,
+        0.009348545820017531,
+        0.01694627207180181,
+        0.02535267405507917,
+        0.1617553534119644,
+        0.27640972458773044,
+        0.3081615299817317,
+        0.32604268615776544,
+        0.3966786787356769,
+        0.6422506075679251,
+        0.8032847606387074
+      ],
+      "elapsed_s": 2409.393708863994,
+      "cache_key": "29d8159fbb650254433d8ab03add7862e7694cb7cc1ee946b8f67a2e7f573f61"
+    },
+    {
+      "case": "simple_street_canyon_u24_s2_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 2,
+      "totals": {
+        "mu_resource_groups": 13471,
+        "multi_layer_resource_groups": 13471,
+        "nr_reference_attempts": 8087,
+        "nr_crc_acks": 8034,
+        "nr_crc_nacks": 53,
+        "nr_decode_trials": 832247,
+        "nr_constraint_projections": 34,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1873215,
+        "completed_handovers": 31,
+        "association_changes": 31,
+        "live_completed_handovers": 31
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0003835124412096355,
+        0.002672382367294396,
+        0.007646457526606054,
+        0.013873630367157946,
+        0.03864681058128601,
+        0.27630511680826453,
+        0.304897675985264,
+        0.3234361016195311,
+        0.3347407430646616,
+        0.6422245163581038,
+        0.8033133546011667
+      ],
+      "elapsed_s": 2482.3248446269426,
+      "cache_key": "aca93c776749e4f8a4a3ed45143fd38d9c82513c9fe8e981c7f2f7d78ef0fb26"
+    },
+    {
+      "case": "simple_street_canyon_u24_s3_dt0.5",
+      "scene": "simple_street_canyon",
+      "ues": 24,
+      "seed": 3,
+      "totals": {
+        "mu_resource_groups": 13170,
+        "multi_layer_resource_groups": 13170,
+        "nr_reference_attempts": 8134,
+        "nr_crc_acks": 8075,
+        "nr_crc_nacks": 59,
+        "nr_decode_trials": 843270,
+        "nr_constraint_projections": 38,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1836268,
+        "completed_handovers": 31,
+        "association_changes": 31,
+        "live_completed_handovers": 31
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0024932542370369403,
+        0.00931025261238109,
+        0.016728352850182125,
+        0.025359631120334354,
+        0.10544966843998506,
+        0.2791501134958972,
+        0.30806909381500125,
+        0.3260059535959368,
+        0.35492536680370357,
+        0.6437605446327103
+      ],
+      "elapsed_s": 2488.274582988117,
+      "cache_key": "ac328160878accfe0131b110871940ff7c457c0efb4fc712b6ad2737e8f2fa59"
+    },
+    {
+      "case": "munich_u12_s1_dt0.5",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 1,
+      "totals": {
+        "mu_resource_groups": 14975,
+        "multi_layer_resource_groups": 14975,
+        "nr_reference_attempts": 6679,
+        "nr_crc_acks": 6582,
+        "nr_crc_nacks": 97,
+        "nr_decode_trials": 709815,
+        "nr_constraint_projections": 49,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1672158,
+        "completed_handovers": 33,
+        "association_changes": 33,
+        "live_completed_handovers": 33
+      },
+      "natural_mu_correlation_quantiles": [
+        0.00014540432070426134,
+        0.01589318258440275,
+        0.03556745536696298,
+        0.03750903128451729,
+        0.04619390021293084,
+        0.14418359029817418,
+        0.20836269655862558,
+        0.2769910347860555,
+        0.5185315109206842,
+        0.648820594636523,
+        0.7847402594999938
+      ],
+      "elapsed_s": 2506.7393109740224,
+      "cache_key": "b4f9110d66dbc3fac1102f99a0ef8f69c1069bcd85f4d7a5a15f56e4212e3074"
+    },
+    {
+      "case": "munich_u12_s2_dt0.5",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 2,
+      "totals": {
+        "mu_resource_groups": 15984,
+        "multi_layer_resource_groups": 15984,
+        "nr_reference_attempts": 6807,
+        "nr_crc_acks": 6705,
+        "nr_crc_nacks": 102,
+        "nr_decode_trials": 736375,
+        "nr_constraint_projections": 47,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1596324,
+        "completed_handovers": 29,
+        "association_changes": 29,
+        "live_completed_handovers": 29
+      },
+      "natural_mu_correlation_quantiles": [
+        0.00014869027884691435,
+        0.025134454857737812,
+        0.03678572361084842,
+        0.038804238167685884,
+        0.23478222344724553,
+        0.29333352133157364,
+        0.45506631979131046,
+        0.5423349411775854,
+        0.6174896269505706,
+        0.6807877910604992,
+        0.7859713237333305
+      ],
+      "elapsed_s": 2576.117444399046,
+      "cache_key": "2e9835c5fceac7db022d51dc440d6118d482abe52c863a5d7e47294ef79fc66f"
+    },
+    {
+      "case": "munich_u12_s3_dt0.5",
+      "scene": "munich",
+      "ues": 12,
+      "seed": 3,
+      "totals": {
+        "mu_resource_groups": 20661,
+        "multi_layer_resource_groups": 20661,
+        "nr_reference_attempts": 7527,
+        "nr_crc_acks": 7405,
+        "nr_crc_nacks": 122,
+        "nr_decode_trials": 801927,
+        "nr_constraint_projections": 63,
+        "slots": 1000,
+        "ue_rows": 12000,
+        "delivered_bytes": 1388153,
+        "completed_handovers": 15,
+        "association_changes": 15,
+        "live_completed_handovers": 15
+      },
+      "natural_mu_correlation_quantiles": [
+        0.0001690419614215376,
+        0.01684731372551899,
+        0.034877337330095876,
+        0.03743921472331282,
+        0.12433512313398633,
+        0.27637894174495864,
+        0.4503971546786467,
+        0.5977495442760455,
+        0.6890765141119433,
+        0.7774388016937074,
+        0.8297912467075049
+      ],
+      "elapsed_s": 2286.908496457152,
+      "cache_key": "70db3215a9ce004cd026ccaddfb2164dcea85a96a4e32f9ce5aca3e4d7eba2cc"
+    },
+    {
+      "case": "munich_u24_s1_dt0.5",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 1,
+      "totals": {
+        "mu_resource_groups": 13861,
+        "multi_layer_resource_groups": 13861,
+        "nr_reference_attempts": 8769,
+        "nr_crc_acks": 8669,
+        "nr_crc_nacks": 100,
+        "nr_decode_trials": 977633,
+        "nr_constraint_projections": 98,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1325874,
+        "completed_handovers": 17,
+        "association_changes": 17,
+        "live_completed_handovers": 17
+      },
+      "natural_mu_correlation_quantiles": [
+        0.00011776377764618753,
+        0.020806344828024067,
+        0.08506577873773331,
+        0.10182742304410015,
+        0.11689075037225506,
+        0.1332335840313047,
+        0.25908986606339324,
+        0.33234411907664985,
+        0.6298227751326733,
+        0.7266771568562733,
+        0.7926995178530071
+      ],
+      "elapsed_s": 2389.264577112859,
+      "cache_key": "abddc8b749f66efb23f6d81ad8714b2d52537387f34b260693884fab6d26f732"
+    },
+    {
+      "case": "munich_u24_s2_dt0.5",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 2,
+      "totals": {
+        "mu_resource_groups": 14175,
+        "multi_layer_resource_groups": 14175,
+        "nr_reference_attempts": 8748,
+        "nr_crc_acks": 8622,
+        "nr_crc_nacks": 126,
+        "nr_decode_trials": 985100,
+        "nr_constraint_projections": 114,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1334719,
+        "completed_handovers": 17,
+        "association_changes": 17,
+        "live_completed_handovers": 17
+      },
+      "natural_mu_correlation_quantiles": [
+        2.7277078445871452e-05,
+        0.014915710869646206,
+        0.09898136831757466,
+        0.30181332131244654,
+        0.34538017940065036,
+        0.35317502861556144,
+        0.3627628651397187,
+        0.4414734156807534,
+        0.6428665929599934,
+        0.7122122279315849,
+        0.7927258529412596
+      ],
+      "elapsed_s": 2375.707181341946,
+      "cache_key": "0748650bf6ac1ccde09527818645de4173a26d06abacbc04291228d42ae93818"
+    },
+    {
+      "case": "munich_u24_s3_dt0.5",
+      "scene": "munich",
+      "ues": 24,
+      "seed": 3,
+      "totals": {
+        "mu_resource_groups": 13931,
+        "multi_layer_resource_groups": 13931,
+        "nr_reference_attempts": 8753,
+        "nr_crc_acks": 8599,
+        "nr_crc_nacks": 154,
+        "nr_decode_trials": 988465,
+        "nr_constraint_projections": 132,
+        "slots": 1000,
+        "ue_rows": 24000,
+        "delivered_bytes": 1326555,
+        "completed_handovers": 17,
+        "association_changes": 17,
+        "live_completed_handovers": 17
+      },
+      "natural_mu_correlation_quantiles": [
+        4.075793664571086e-05,
+        0.013910869443397712,
+        0.02415041069560334,
+        0.2627255348334445,
+        0.3433153490460891,
+        0.35159218158957756,
+        0.35982158322630103,
+        0.3830928119356413,
+        0.6394479576376468,
+        0.7096759918674905,
+        0.7927258532862264
+      ],
+      "elapsed_s": 2140.4553728960454,
+      "cache_key": "638811aed66fb641f6ae1602487ef06c7986f296f6d3c1f53937adf9ac792747"
+    }
+  ],
+  "limitations": [
+    "Independent post-LMMSE Gaussian resources, not full OFDM interference waveform",
+    "Ideal PHY CSI; delayed/noisy controller measurements retained",
+    "Finite-sample reference AMC, not a certified rare-error BLER estimator",
+    "RV0 reference attempts with existing MAC HARQ lifecycle; no same-codeword IR/Chase combining",
+    "Integration validation, not formal cross-scene generalization evidence"
+  ],
+  "release_delta_from_executed_matrix": "Added stricter production gate for unused fitted abstraction and enhanced matrix auditor; NR reference physics unchanged",
+  "data_copy_verification": {
+    "passed": true,
+    "verified_files": 2071,
+    "verified_bytes": 2015116631,
+    "manifest_sha256": "b9d220584b61d845f89c82eb09350b62a45fed67d9af8665078fe5221f9cd646",
+    "spark_to_mac_sha256_exact": true
+  },
+  "channel_cache_archive": {
+    "complete": true,
+    "cases": [
+      {
+        "case": "munich_u12_s1_dt0.5",
+        "cache_key": "b4f9110d66dbc3fac1102f99a0ef8f69c1069bcd85f4d7a5a15f56e4212e3074",
+        "path_blocks": 1001,
+        "raw_path_bytes": 26921062
+      },
+      {
+        "case": "munich_u12_s2_dt0.5",
+        "cache_key": "2e9835c5fceac7db022d51dc440d6118d482abe52c863a5d7e47294ef79fc66f",
+        "path_blocks": 1001,
+        "raw_path_bytes": 26907639
+      },
+      {
+        "case": "munich_u12_s3_dt0.5",
+        "cache_key": "70db3215a9ce004cd026ccaddfb2164dcea85a96a4e32f9ce5aca3e4d7eba2cc",
+        "path_blocks": 1001,
+        "raw_path_bytes": 26902926
+      },
+      {
+        "case": "munich_u24_s1_dt0.5",
+        "cache_key": "abddc8b749f66efb23f6d81ad8714b2d52537387f34b260693884fab6d26f732",
+        "path_blocks": 1001,
+        "raw_path_bytes": 50687363
+      },
+      {
+        "case": "munich_u24_s2_dt0.5",
+        "cache_key": "0748650bf6ac1ccde09527818645de4173a26d06abacbc04291228d42ae93818",
+        "path_blocks": 1001,
+        "raw_path_bytes": 50698022
+      },
+      {
+        "case": "munich_u24_s3_dt0.5",
+        "cache_key": "638811aed66fb641f6ae1602487ef06c7986f296f6d3c1f53937adf9ac792747",
+        "path_blocks": 1001,
+        "raw_path_bytes": 50712413
+      },
+      {
+        "case": "simple_street_canyon_u12_s1_dt0.5",
+        "cache_key": "d5b8e44cdbd12a5cdc2b54aa68e28b4bea6eeebb11125de92dded62d89e9f757",
+        "path_blocks": 1001,
+        "raw_path_bytes": 21582724
+      },
+      {
+        "case": "simple_street_canyon_u12_s2_dt0.5",
+        "cache_key": "2ba4c302541d99d8e08066b8fb0d4ebabc3b338721cc1737b52c1929425a3d98",
+        "path_blocks": 1001,
+        "raw_path_bytes": 21582365
+      },
+      {
+        "case": "simple_street_canyon_u12_s3_dt0.5",
+        "cache_key": "74894a56ef7412bd808f26fe291e8393f117746d4f90557731f42eb7d98bbb22",
+        "path_blocks": 1001,
+        "raw_path_bytes": 21583561
+      },
+      {
+        "case": "simple_street_canyon_u24_s1_dt0.5",
+        "cache_key": "29d8159fbb650254433d8ab03add7862e7694cb7cc1ee946b8f67a2e7f573f61",
+        "path_blocks": 1001,
+        "raw_path_bytes": 41386633
+      },
+      {
+        "case": "simple_street_canyon_u24_s2_dt0.5",
+        "cache_key": "aca93c776749e4f8a4a3ed45143fd38d9c82513c9fe8e981c7f2f7d78ef0fb26",
+        "path_blocks": 1001,
+        "raw_path_bytes": 41398475
+      },
+      {
+        "case": "simple_street_canyon_u24_s3_dt0.5",
+        "cache_key": "ac328160878accfe0131b110871940ff7c457c0efb4fc712b6ad2737e8f2fa59",
+        "path_blocks": 1001,
+        "raw_path_bytes": 41403347
+      }
+    ],
+    "archive": "outputs/rt_sys_targeted_repairs/matrix_channel_cache.tar.gz",
+    "archive_bytes": 418500086,
+    "sha256": "41b2425e012207f152bfa8c49fd112df9855819dcc2c90ecaaf848431bca76d8",
+    "elapsed_s": 8.058398281922564
+  },
+  "implementation_commit": "1ad14d4",
+  "primary_spark_source_sha256": "79b3aad5296098fa7ed6b696ee48bdc1f36805b8ec88d005809b526673a78079",
+  "release_gate_and_auditor_sync_pending": true,
+  "stopping_point": "User requested ending after complete run and data preservation; next work is manual continuation."
+}
