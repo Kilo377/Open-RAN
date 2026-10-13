@@ -23,6 +23,14 @@ class UeMeasurement:
     # Optional measurement extras.
     ack: bool = False
     tb_size_bytes: int = 0
+    hol_delay_ms: float | None = None
+    rsrp_dbm: float | None = None
+    reference_sinr_db: float | None = None
+    data_sinr_db: float | None = None
+    reference_beam_gain_db: float | None = None
+    sinr_kind: str = 'legacy_empirical'
+    no_path: bool = False
+    bler_window_nacks: int = 0
 
     # Measurement quality / provenance.
     produced_at_slot: int = 0

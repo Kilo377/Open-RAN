@@ -127,8 +127,17 @@ class NRWaveform:
         q,r=MCSDecoderNR(device=device)(mcs,table,1);self.q,self.rate=int(q),float(r)
         bits,cb,num=TransportBlockNR(device=device).transport_block_size(q,r,q*data_re)
         self.bits,self.cb,self.num_cb=int(bits),int(cb),int(num)
-        self.encoder=TBEncoder(self.bits,self.q*data_re,self.rate,self.q,channel_type='PDSCH',device=device)
-        self.decoder=TBDecoder(self.encoder,num_bp_iter=20,device=device)
+        self.coding_backend='sionna_tb_encoder'
+        try:
+            self.encoder=TBEncoder(self.bits,self.q*data_re,self.rate,self.q,channel_type='PDSCH',device=device)
+            self.decoder=TBDecoder(self.encoder,num_bp_iter=20,device=device)
+        except ValueError as exc:
+            if ('Unsupported coderate (r<1/5)' not in str(exc) and 'Repetition coding is currently not supported' not in str(exc)) or self.num_cb != 1:
+                raise
+            from phy.rt_sys.low_rate import LowRateNRCodec
+            self.low_rate_codec=LowRateNRCodec(self.bits,self.q,self.q*data_re,device)
+            self.encoder=self.low_rate_codec.encode;self.decoder=self.low_rate_codec.decode
+            self.coding_backend='sionna_bg2_rv0_circular_repetition'
         self.mapper=Mapper('qam',self.q,device=device);self.demapper=Demapper('app','qam',self.q,device=device)
 
     def simulate(self,snrs,profile,samples,seed,batch=64):

@@ -97,6 +97,11 @@ class TrafficEngine:
         seed = 700001 * int(self._rng_seed) + 37 * int(slot_id) + 19 * int(ue_hash)
         return random.Random(seed)
 
+    def enable_packet_tracking(self, state):
+        from traffic.packet_ledger import PacketLedger
+        for ue in state.ues:
+            ue.packet_ledger = PacketLedger(ue, self._slot_duration_s * 1000)
+
     def apply_arrivals(self, state) -> tuple[dict[str, int], dict[str, int]]:
         slot_id = int(getattr(state, "slot_id", 0))
 
@@ -142,6 +147,11 @@ class TrafficEngine:
                     if max_queue_bytes is not None:
                         new_queue = min(int(max_queue_bytes), int(new_queue))
                     new_queue = max(0, int(new_queue))
+                    ledger = getattr(ue, 'packet_ledger', None)
+                    if ledger is not None:
+                        logical_channel.max_queue_bytes = max_queue_bytes
+                        ledger.add(logical_channel, arrival_bytes, slot_id, packet_size=profile.packet_size_bytes)
+                        new_queue = logical_channel.queue_bytes
 
                     try:
                         setattr(logical_channel, "queue_bytes", int(new_queue))
@@ -162,6 +172,8 @@ class TrafficEngine:
                 except Exception:
                     pass
                 arrivals_by_ue[ue_id] = int(ue_arrival_total)
+                if getattr(ue, 'packet_ledger', None) is not None:
+                    ue.packet_ledger.refresh(slot_id)
                 continue
 
             profile = self._profiles.get(ue_id)

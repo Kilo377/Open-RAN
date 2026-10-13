@@ -289,10 +289,14 @@ class SimpleScheduler(SchedulerBase):
             return True
         return not self._is_harq_process_busy(process)
 
-    def _record_harq_process_flush(self, harq: Any, *, reason: str, slot_id: int) -> None:
+    def _record_harq_process_flush(self, harq: Any, *, reason: str, slot_id: int, process=None) -> None:
         try:
             harq.harq_flush_count = int(getattr(harq, "harq_flush_count", 0)) + 1
             harq.last_flush_reason = str(reason)
+            if hasattr(harq, 'events'):
+                harq.events.append(dict(kind='payload_flush', slot_id=slot_id, reason=reason,
+                    process_id=getattr(process, 'process_id', None), tb_id=getattr(process, 'tb_id', None),
+                    pending_bytes=int(getattr(process, 'pending_bytes', 0))))
             if reason in {"timeout", "retx_deadline"}:
                 harq.last_timeout_slot = int(slot_id)
         except Exception:
@@ -317,18 +321,23 @@ class SimpleScheduler(SchedulerBase):
         retained_processes: list[Any] = []
         flush_reason = None
         for process in self._get_harq_processes(harq):
+            if int(getattr(process, 'pending_bytes', 0)) <= 0:
+                harq.empty_process_cleanup_count = int(getattr(harq, 'empty_process_cleanup_count', 0)) + 1
+                if hasattr(harq, 'events'):
+                    harq.events.append(dict(kind='empty_process_cleanup', slot_id=current_slot, process_id=process.process_id, pending_bytes=0))
+                continue
             timeout_slot = getattr(process, "timeout_slot", None)
             retx_deadline_slot = getattr(process, "retx_deadline_slot", None)
             if timeout_slot is not None and int(current_slot) > int(timeout_slot):
                 flush_reason = "timeout"
-                self._record_harq_process_flush(harq, reason=flush_reason, slot_id=current_slot)
+                self._record_harq_process_flush(harq, reason=flush_reason, slot_id=current_slot, process=process)
                 continue
             if retx_deadline_slot is not None and int(current_slot) > int(retx_deadline_slot):
                 flush_reason = "retx_deadline"
-                self._record_harq_process_flush(harq, reason=flush_reason, slot_id=current_slot)
+                self._record_harq_process_flush(harq, reason=flush_reason, slot_id=current_slot, process=process)
                 continue
             retained_processes.append(process)
-        if flush_reason is None:
+        if flush_reason is None and len(retained_processes) == len(self._get_harq_processes(harq)):
             return
         self._set_harq_processes(harq, retained_processes)
         try:
@@ -344,7 +353,8 @@ class SimpleScheduler(SchedulerBase):
                     default=0,
                 )
             )
-            harq.last_decision = str(flush_reason).upper()
+            if flush_reason is not None:
+                harq.last_decision = str(flush_reason).upper()
         except Exception:
             pass
 
@@ -601,6 +611,9 @@ class SimpleScheduler(SchedulerBase):
         return None
 
     def _estimate_hol_delay_ms(self, state: Any, ue: Any, ue_measurement: Any | None) -> float:
+        if getattr(ue, 'packet_ledger', None) is not None:
+            measured = getattr(ue_measurement, 'hol_delay_ms', None)
+            return float(measured if measured is not None else ue.hol_delay_ms)
         slot_duration_ms = max(float(getattr(state, "slot_duration_ms", 1.0)), 0.0)
         if ue_measurement is None:
             return min(
@@ -765,7 +778,7 @@ class SimpleScheduler(SchedulerBase):
                     observed_backlog_bytes=int(observed_backlog_bytes),
                     demand_bytes=int(demand_bytes),
                     backlog_bytes=backlog_bytes,
-                    hol_delay_ms=float(hol_delay_ms),
+                    hol_delay_ms=float(getattr(logical_channel, "hol_delay_ms", hol_delay_ms)),
                     priority=int(getattr(logical_channel, "priority", getattr(ue, "priority", 0))),
                     packet_delay_budget_ms=float(
                         getattr(

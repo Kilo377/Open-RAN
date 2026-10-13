@@ -234,6 +234,12 @@ class UeObservation:
     combiner_id: int | None = None
     precoding_matrix_label: str | None = None
     post_eq_sinr_db: float | None = None
+    hol_delay_ms: float | None = None
+    rsrp_dbm: float | None = None
+    reference_sinr_db: float | None = None
+    data_sinr_db: float | None = None
+    sinr_kind: str = 'legacy_empirical'
+    post_eq_sinr_source: str = 'legacy_truth'
     precoder_match_score: float | None = None
     beam_direction_deg: float | None = None
     beamforming_gain_db: float | None = None

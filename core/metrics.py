@@ -529,6 +529,9 @@ def build_observation(state: GlobalState) -> Observation:
             queue_bytes = int(mm.queue_bytes)
             throughput_mbps = float(mm.throughput_mbps)
             sinr_db = float(mm.sinr_db)
+            if getattr(mm, 'sinr_kind', '') == 'rt_full_band_reference':
+                post_eq_sinr_db = mm.data_sinr_db if mm.data_sinr_db is not None else mm.reference_sinr_db
+                beamforming_gain_db = mm.reference_beam_gain_db
             bler = float(mm.bler)
             queue_age_slots = int(getattr(mm, "queue_age_slots", 0))
             queue_delay_slots_applied = int(getattr(mm, "queue_delay_slots_applied", queue_age_slots))
@@ -765,6 +768,12 @@ def build_observation(state: GlobalState) -> Observation:
                 combiner_id=(int(combiner_id) if combiner_id is not None else None),
                 precoding_matrix_label=(str(precoding_matrix_label) if precoding_matrix_label is not None else None),
                 post_eq_sinr_db=(float(post_eq_sinr_db) if post_eq_sinr_db is not None else None),
+                hol_delay_ms=getattr(measurement.ue_measurements.get(ue_id), 'hol_delay_ms', None) if measurement is not None else None,
+                rsrp_dbm=getattr(measurement.ue_measurements.get(ue_id), 'rsrp_dbm', None) if measurement is not None else None,
+                reference_sinr_db=getattr(measurement.ue_measurements.get(ue_id), 'reference_sinr_db', None) if measurement is not None else None,
+                data_sinr_db=getattr(measurement.ue_measurements.get(ue_id), 'data_sinr_db', None) if measurement is not None else None,
+                sinr_kind=getattr(measurement.ue_measurements.get(ue_id), 'sinr_kind', 'legacy_empirical') if measurement is not None else 'legacy_empirical',
+                post_eq_sinr_source=('data_measurement' if mm.data_sinr_db is not None else 'reference_hypothesis') if measurement is not None and ue_id in measurement.ue_measurements and getattr(mm,'sinr_kind','') == 'rt_full_band_reference' else 'legacy_truth',
                 precoder_match_score=(
                     float(precoder_match_score) if precoder_match_score is not None else None
                 ),

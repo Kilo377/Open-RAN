@@ -1,0 +1,748 @@
+{
+  "date": "2026-10-13",
+  "implemented": [
+    "RT reference and measured data observations",
+    "FIFO packet delays and byte ledger",
+    "HARQ zero-TB lifecycle and actual MCS retention",
+    "low-rate single-CB NR and confidence-based AMC",
+    "fixed baseline strongest RT initial gain association and auditing"
+  ],
+  "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+  "baseline_source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+  "source_archives": [
+    "executed_sources_13593c018577.tar.gz",
+    "executed_sources_352040b05a8d.tar.gz"
+  ],
+  "local_regression": {
+    "passed": 238,
+    "skipped": 1,
+    "subtests": 2
+  },
+  "spark_regression": {
+    "passed": 239,
+    "subtests": 2,
+    "warnings": 1
+  },
+  "fixed_baseline": {
+    "passed": true,
+    "cases": [
+      {
+        "case": "simple_street_canyon_u4_load1.0_slots40",
+        "passed": true,
+        "elapsed_s": 151.93963053496554,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 160,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 42285,
+        "max_power_error_w": 0.0,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.105,
+          "ue_1": 0.14444444444444443,
+          "ue_2": 1.3888888888888888,
+          "ue_3": 1.1
+        }
+      },
+      {
+        "case": "simple_street_canyon_u12_load0.1_slots120",
+        "passed": true,
+        "elapsed_s": 291.3004344718065,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 1440,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 18
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 35907,
+        "max_power_error_w": 1.1102230246251565e-16,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.8723404255319149,
+          "ue_1": 0.2,
+          "ue_2": 1.048,
+          "ue_3": 2.0,
+          "ue_4": 0.4095744680851064,
+          "ue_5": 0.432,
+          "ue_6": 1.888,
+          "ue_7": 2.5,
+          "ue_8": 0.5052631578947369,
+          "ue_9": 0.5080645161290323,
+          "ue_10": 2.288,
+          "ue_11": 4.7
+        }
+      },
+      {
+        "case": "simple_street_canyon_u24_load0.1_slots120",
+        "passed": true,
+        "elapsed_s": 420.0778966769576,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 4,
+          "capacity_guards": 0,
+          "rows": 2880,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 131
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 94190,
+        "max_power_error_w": 0.0,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 5.563157894736842,
+          "ue_1": 1.232,
+          "ue_2": 5.816,
+          "ue_3": 3.5,
+          "ue_4": 2.263440860215054,
+          "ue_5": 0.8617886178861789,
+          "ue_6": 5.158536585365853,
+          "ue_7": 4.7,
+          "ue_8": 2.021505376344086,
+          "ue_9": 1.0203252032520325,
+          "ue_10": 5.346774193548387,
+          "ue_11": 5.5,
+          "ue_12": 4.795698924731183,
+          "ue_13": 6.876344086021505,
+          "ue_14": 1.5851063829787233,
+          "ue_15": 1.8191489361702127,
+          "ue_16": 0.06315789473684211,
+          "ue_17": 2.4095744680851063,
+          "ue_18": 2.6451612903225805,
+          "ue_19": 2.816,
+          "ue_20": 6.352,
+          "ue_21": 4.071428571428571,
+          "ue_22": 0.06315789473684211,
+          "ue_23": 1.476
+        }
+      },
+      {
+        "case": "simple_street_canyon_u24_load1.0_slots120",
+        "passed": true,
+        "elapsed_s": 420.45110606215894,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 4,
+          "low_rate_reference": 9,
+          "capacity_guards": 0,
+          "rows": 2880,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 411
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 249143,
+        "max_power_error_w": 2.220446049250313e-16,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 29.095652173913045,
+          "ue_1": 3.932,
+          "ue_2": 30.235294117647058,
+          "ue_3": 4.25,
+          "ue_4": 28.904255319148938,
+          "ue_5": 1.9796747967479675,
+          "ue_6": 36.294117647058826,
+          "ue_7": 6.3125,
+          "ue_8": 28.86320754716981,
+          "ue_9": 1.556,
+          "ue_10": 38.892857142857146,
+          "ue_11": 6.85,
+          "ue_12": 31.83783783783784,
+          "ue_13": 31.182539682539684,
+          "ue_14": 25.88,
+          "ue_15": 25.695652173913043,
+          "ue_16": 0.5,
+          "ue_17": 27.408163265306122,
+          "ue_18": 28.183673469387756,
+          "ue_19": 20.427272727272726,
+          "ue_20": 30.13157894736842,
+          "ue_21": 6.25,
+          "ue_22": 0.65625,
+          "ue_23": 2.5766129032258065
+        }
+      },
+      {
+        "case": "munich_u4_load1.0_slots40",
+        "passed": true,
+        "elapsed_s": 86.77562629105523,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 160,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 42285,
+        "max_power_error_w": 0.0,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.035,
+          "ue_1": 0.14444444444444443,
+          "ue_2": 1.3888888888888888,
+          "ue_3": 0.9
+        }
+      },
+      {
+        "case": "munich_u12_load0.1_slots120",
+        "passed": true,
+        "elapsed_s": 562.0204389218707,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 2,
+          "low_rate_reference": 4,
+          "capacity_guards": 0,
+          "rows": 1440,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 22
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 35457,
+        "max_power_error_w": 0.0,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.16477272727272727,
+          "ue_1": 1.668,
+          "ue_2": 2.435483870967742,
+          "ue_3": 4.75,
+          "ue_4": 1.1263157894736842,
+          "ue_5": 0.664,
+          "ue_6": 0.316,
+          "ue_7": 2.5,
+          "ue_8": 0.2,
+          "ue_9": 1.012,
+          "ue_10": 2.356,
+          "ue_11": 4.5
+        }
+      },
+      {
+        "case": "munich_u24_load0.1_slots120",
+        "passed": true,
+        "elapsed_s": 621.8403486369643,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 2880,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 198
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 81509,
+        "max_power_error_w": 2.220446049250313e-16,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 5.777777777777778,
+          "ue_1": 5.182926829268292,
+          "ue_2": 14.39516129032258,
+          "ue_3": 2.3333333333333335,
+          "ue_4": 10.61046511627907,
+          "ue_5": 2.0806451612903225,
+          "ue_6": 3.036,
+          "ue_7": 3.2,
+          "ue_8": 30.318181818181817,
+          "ue_9": 3.22,
+          "ue_10": 25.589473684210525,
+          "ue_11": 6.6,
+          "ue_12": 3.095744680851064,
+          "ue_13": 30.66216216216216,
+          "ue_14": 1.648936170212766,
+          "ue_15": 17.08641975308642,
+          "ue_16": 14.563953488372093,
+          "ue_17": 6.269662921348314,
+          "ue_18": 0.6631578947368421,
+          "ue_19": 0.744,
+          "ue_20": 0.528,
+          "ue_21": 5.5,
+          "ue_22": 18.6231884057971,
+          "ue_23": 2.597560975609756
+        }
+      },
+      {
+        "case": "munich_u24_load1.0_slots120",
+        "passed": true,
+        "elapsed_s": 521.6298363418318,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 2880,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 350
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 209371,
+        "max_power_error_w": 2.220446049250313e-16,
+        "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 17.809322033898304,
+          "ue_1": 27.75,
+          "ue_2": 36.0,
+          "ue_3": 2.5,
+          "ue_4": 29.944444444444443,
+          "ue_5": 4.754032258064516,
+          "ue_6": 40.81578947368421,
+          "ue_7": 3.3125,
+          "ue_8": 29.620689655172413,
+          "ue_9": 13.004587155963304,
+          "ue_10": 37.72222222222222,
+          "ue_11": 8.0,
+          "ue_12": 24.45703125,
+          "ue_13": 32.66,
+          "ue_14": 29.572916666666668,
+          "ue_15": 30.473684210526315,
+          "ue_16": 31.65,
+          "ue_17": 29.266666666666666,
+          "ue_18": 4.944805194805195,
+          "ue_19": 5.568548387096774,
+          "ue_20": 8.245967741935484,
+          "ue_21": 12.875,
+          "ue_22": 29.67391304347826,
+          "ue_23": 5.134146341463414
+        }
+      }
+    ],
+    "scope": "Finite environment baseline integration; no QoS guarantee or algorithm comparison",
+    "checks": [
+      "RT-only reporting",
+      "packet byte ledger each UE/slot",
+      "delivery/ACK/TB/queue consistency",
+      "power conservation",
+      "no-path zero delivery",
+      "positive-payload HARQ flush only",
+      "no rApps/xApps or learning"
+    ],
+    "source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312"
+  },
+  "final_deployment": {
+    "passed": true,
+    "cases": [
+      {
+        "case": "simple_street_canyon_baseline",
+        "passed": true,
+        "elapsed_s": 216.54412973090075,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 160,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 42285,
+        "max_power_error_w": 0.0,
+        "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.105,
+          "ue_1": 0.14444444444444443,
+          "ue_2": 1.3888888888888888,
+          "ue_3": 1.1
+        },
+        "numerical_replay": true,
+        "replay_fields": [
+          "slot_id",
+          "ue_id",
+          "queue_bytes",
+          "tb_bytes",
+          "delivered_bytes",
+          "ack",
+          "sinr_db",
+          "reference_tb_ack",
+          "packet_pending_bytes"
+        ],
+        "prior_source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312"
+      },
+      {
+        "case": "munich_baseline",
+        "passed": true,
+        "elapsed_s": 133.20745237893425,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 0,
+          "rows": 160,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 42285,
+        "max_power_error_w": 0.0,
+        "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.035,
+          "ue_1": 0.14444444444444443,
+          "ue_2": 1.3888888888888888,
+          "ue_3": 0.9
+        },
+        "numerical_replay": true,
+        "replay_fields": [
+          "slot_id",
+          "ue_id",
+          "queue_bytes",
+          "tb_bytes",
+          "delivered_bytes",
+          "ack",
+          "sinr_db",
+          "reference_tb_ack",
+          "packet_pending_bytes"
+        ],
+        "prior_source_sha256": "13593c018577a801f24e2f3d670965099b26dc4807916683fc7e68ce9d8d3312"
+      },
+      {
+        "case": "simple_street_canyon_orchestrated",
+        "passed": true,
+        "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+        "control_mode": "orchestrated",
+        "scope": "Existing controller execution smoke; no training or performance comparison"
+      }
+    ],
+    "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+    "excluded_diagnostics": {
+      "munich_orchestrated": "Partial extra controller stress check stopped; not accepted and not part of environment baseline"
+    }
+  },
+  "independent_nr_gpu": {
+    "passed": true,
+    "points": 28,
+    "device": "cuda:0",
+    "cases": [
+      {
+        "table": 1,
+        "mcs": 0,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 0,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 3,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 3,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 14,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 14,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 27,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 27,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 0,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 0,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 3,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 3,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 14,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 14,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 26,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 26,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 0,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 0,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 3,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 3,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_bg2_rv0_circular_repetition",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 8,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 8,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 16,
+        "profile": "flat",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 3,
+        "mcs": 16,
+        "profile": "strong_selectivity",
+        "data_re": 432,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 0,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 20,
+        "profile": "saved_rt_profile",
+        "data_re": 1056,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 62,
+        "passed": true
+      },
+      {
+        "table": 2,
+        "mcs": 26,
+        "profile": "saved_rt_profile",
+        "data_re": 1056,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 14,
+        "profile": "saved_rt_profile",
+        "data_re": 990,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      },
+      {
+        "table": 1,
+        "mcs": 24,
+        "profile": "saved_rt_profile",
+        "data_re": 924,
+        "coding_backend": "sionna_tb_encoder",
+        "probe_errors": 64,
+        "passed": true
+      }
+    ],
+    "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09",
+    "scope": "Equivalent-link decoder execution, not full waveform or strict BLER-tail calibration"
+  },
+  "full_ofdm_required_for_current_system_level_goal": false,
+  "deferred": [
+    "Real A1/E2 protocols",
+    "Same-codeword waveform IR/Chase soft combining",
+    "Full OFDM interference waveform and actual pilot CSI estimator",
+    "Strict per-link BLER and URLLC tail-probability certification",
+    "Multi-CB low-rate repetition",
+    "Fast calibrated EESM model",
+    "Long baseline warmup and sustained-load QoS capacity validation"
+  ],
+  "partial_controller_diagnostic": {
+    "accepted": false,
+    "scope": "Optional Munich orchestrated stress check stopped deliberately; partial data preserved"
+  },
+  "data_root": "outputs/rt_environment_repairs_20261013",
+  "original_preservation": {
+    "original_source_files": 1113,
+    "historical_data_files": 2071,
+    "all_hashes_unchanged": true,
+    "source_sha256": "352040b05a8d9e3f86013f7121dfee0c0340a015a6a57fd4388fd54734c59d09"
+  },
+  "data_preservation": {
+    "mac_spark_sha256_verified": true,
+    "total_files": 189,
+    "total_bytes": 144298007,
+    "manifest": "outputs/rt_environment_repairs_20261013/data_manifest.json"
+  }
+}

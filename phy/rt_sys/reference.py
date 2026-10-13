@@ -56,12 +56,15 @@ class NrReferenceAbstraction:
         if device=='cuda' and not torch.cuda.is_available():raise RuntimeError('NR reference CUDA unavailable')
         self.torch=torch;self.device='cuda:0' if device=='cuda' else device
         self.target_bler=float(target_bler);cfg=dict(config or {})
-        self.selection_samples=int(cfg.get('selection_samples',32))
+        self.selection_samples=int(cfg.get('selection_samples',64))
         self.bler_samples=int(cfg.get('bler_samples',64))
         self.cache_size=int(cfg.get('decoder_cache_size',128))
         if not 0<self.target_bler<1 or self.selection_samples<16 or self.bler_samples<32 or self.cache_size<1:
             raise ValueError('NR reference requires valid BLER target, >=16 AMC probes, >=32 BLER probes, and a decoder cache')
-        self.candidates=cfg.get('mcs_candidates',{'qam64':[0,3,7,10,14,20,24,27,28],'qam256':[0,3,7,10,14,18,20,24,26,27]})
+        self.selection_criterion=cfg.get('selection_criterion', 'wilson_upper')
+        if self.selection_criterion not in ('wilson_upper', 'point_estimate'):
+            raise ValueError('Unknown AMC selection criterion')
+        self.candidates=cfg.get('mcs_candidates',{'qam64':list(range(29)), 'qam256':list(range(28)), 'qam64_low_se':list(range(29))})
         for table,maximum in (('qam64',28),('qam256',27)):
             indices=self.candidates.get(table)
             if not indices or len(set(indices))!=len(indices) or any(not isinstance(k,int) or not 0<=k<=maximum for k in indices):
@@ -82,13 +85,13 @@ class NrReferenceAbstraction:
         return self._waveforms[key]
 
     def evaluate(self,sinr,table,mcs,seed,slot,ue_id,fixed=False):
-        if table not in ('qam64','qam256'):raise ValueError('NR reference supports PDSCH tables 1 and 2')
-        table_index={'qam64':1,'qam256':2}[table];maximum=28 if table_index==1 else 27
+        if table not in ('qam64','qam256','qam64_low_se'):raise ValueError('Unknown NR PDSCH table')
+        table_index={'qam64':1,'qam256':2,'qam64_low_se':3}[table];maximum=27 if table_index==2 else 28
         if not 0<=int(mcs)<=maximum:raise ValueError('Invalid NR MCS index')
         values=np.asarray(sinr)[np.asarray(sinr)>0].astype(float)
         if not len(values) or not np.isfinite(values).all():raise ValueError('Reference requires positive finite scheduled SINRs')
-        count=len(values);probes=[];excluded=[];wave=None;candidate=None
-        choices=sorted({int(mcs)}|{k for k in self.candidates[table] if k<=mcs},reverse=True)
+        count=len(values);probes=[];excluded=[];wave=None;candidate=None;selection_met=None
+        choices=[int(mcs)] if fixed else sorted({int(mcs)}|{k for k in self.candidates.get(table, list(range(maximum+1))) if k<=mcs},reverse=True)
         for choice in choices:
             try:w=self.waveform(table_index,choice,count)
             except ValueError as exc:
@@ -99,9 +102,20 @@ class NrReferenceAbstraction:
             draw=reference_seed(seed,slot,ue_id,table_index,choice,count,'amc_probe')
             errors=int(w.simulate_fast([0.],values,self.selection_samples,draw)[0]);self.decode_trials+=self.selection_samples
             estimate=errors/self.selection_samples
-            probes.append({'mcs':choice,'errors':errors,'samples':self.selection_samples,'seed':draw})
-            if estimate<=self.target_bler:break
-        if wave is None:raise ValueError(f'No executable NR code for {table}, RE={count}; exclusions={excluded}')
+            upper=probability_interval(errors,self.selection_samples)[1]
+            selection_met=(upper if self.selection_criterion=='wilson_upper' else estimate)<=self.target_bler
+            probes.append({'mcs':choice,'errors':errors,'samples':self.selection_samples,'seed':draw,'wilson_upper':upper})
+            if selection_met:break
+        if wave is None:
+            # An unsupported low-rate tuple is an explicit transmission outage,
+            # not a license to violate the MCS ceiling or silently switch PHY.
+            return dict(mcs=mcs, qm=0, rate=0., capacity_bytes=0, sinr_eff=float(values.mean()),
+                tbler=1., cbler=1., ack=False, feedback_mode=self.feedback_mode,
+                ack_source='unsupported_nr_code_no_tb', unsupported_nr_mcs=excluded,
+                amc_probes=probes, amc_selection_target_met=False,
+                amc_selection_criterion=self.selection_criterion, bler_probe_samples=0,
+                bler_probe_errors=0, reference_tb_ack=None, reference_tb_errors=None,
+                bler_wilson_95=[0.,1.], effective_sinr_kind='arithmetic_mean_diagnostic_only')
         # Post-selection estimate is independent of the AMC selection samples.
         estimate_seed=reference_seed(seed,slot,ue_id,table_index,candidate,count,'bler_estimation')
         ack_seed=reference_seed(seed,slot,ue_id,table_index,candidate,count,'transmitted_tb')
@@ -127,5 +141,7 @@ class NrReferenceAbstraction:
             'feedback_mode':self.feedback_mode,'ack_source':'actual_nr_crc_and_bit_check',
             'bler_probe_errors':errors,'bler_probe_samples':self.bler_samples,'bler_wilson_95':probability_interval(errors,self.bler_samples),
             'amc_probes':probes,'unsupported_nr_mcs':excluded,'bler_probe_seed':estimate_seed,'ack_seed':ack_seed,
+            'amc_selection_target_met':selection_met,'amc_selection_criterion':self.selection_criterion,
+            'coding_backend':wave.coding_backend,
             'reference_tb_errors':failed,'reference_tb_ack':failed==0,
             'effective_sinr_kind':'arithmetic_mean_diagnostic_only'}

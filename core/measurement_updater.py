@@ -50,6 +50,10 @@ class MeasurementUpdater:
         self._tx_ack_hist: dict[str, deque[bool]] = {}
         self._acked_bytes_hist: dict[str, deque[int]] = {}
         self._bler_estimate: dict[str, float] = {}
+        self._hol_hist = {}
+        self._rsrp_ewma = {}
+        self._serving_cells = {}
+        self._data_sinr_ewma = {}
 
     def _per_ue_slot_rng(self, ue_id: str, slot_id: int) -> random.Random:
         ue_hash = sum(ord(ch) for ch in str(ue_id))
@@ -167,6 +171,11 @@ class MeasurementUpdater:
                 measured_queue = int(current_queue)
                 queue_age_slots = int(max(0, len(q_hist) - 1))
             queue_produced_at_slot = int(max(0, slot_id - queue_age_slots))
+            hol = None
+            if getattr(ue, 'packet_ledger', None) is not None:
+                h_hist = self._hol_hist.setdefault(ue_id, deque(maxlen=max(4, self._queue_delay_slots+2)))
+                h_hist.append(float(ue.hol_delay_ms))
+                hol = h_hist[-(queue_age_slots+1)]
 
             # SINR measurement independent of scheduling (avoids stale truth fields).
             rx_gain_db = float(getattr(ue, "radio_quality_db", 0.0))
@@ -190,6 +199,21 @@ class MeasurementUpdater:
                 - float(self._noise_floor_dbm)
                 - float(getattr(ue, "interference_penalty_db", 0.0) or 0.0)
             )
+            rt_sample = getattr(state, 'rt_reference_measurements', {}).get(ue_id)
+            if rt_sample is not None:
+                # RT values already include absolute channel and antenna gains.
+                # Only reporting noise is added; legacy fields above are unused.
+                from phy.rt_sys.contracts import digest
+                rt_rng = random.Random(int(digest([self._rng_seed, slot_id, ue_id, 'rt_reporting_noise'])[:15], 16))
+                noise = rt_rng.gauss(0., self._sinr_noise_std_db) if self._sinr_noise_std_db else 0.
+                raw_sinr_db = rt_sample['reference_sinr_db'] + noise
+                if self._serving_cells.get(ue_id) != serving_cell_id:
+                    self._sinr_ewma.pop(ue_id, None)
+                    self._rsrp_ewma.pop(ue_id, None)
+                    self._data_sinr_ewma.pop(ue_id, None)
+                self._serving_cells[ue_id] = serving_cell_id
+                previous_rsrp = self._rsrp_ewma.get(ue_id, rt_sample['rsrp_dbm']+noise)
+                self._rsrp_ewma[ue_id] = self._ewma_alpha()*(rt_sample['rsrp_dbm']+noise)+(1-self._ewma_alpha())*previous_rsrp
 
             alpha = self._ewma_alpha()
             prev = self._sinr_ewma.get(ue_id)
@@ -212,8 +236,9 @@ class MeasurementUpdater:
             if tx_hist is None:
                 tx_hist = deque(maxlen=self._bler_window_tbs)
                 self._tx_ack_hist[ue_id] = tx_hist
-            if is_scheduled:
-                tx_hist.append(bool(ack))
+            if is_scheduled and (rt_sample is None or int(getattr(ue, 'scheduled_bytes', 0)) > 0):
+                reference_ack = getattr(ue, "reference_tb_ack", None) if rt_sample is not None else None
+                tx_hist.append(bool(ack if reference_ack is None else reference_ack))
 
             if len(tx_hist) > 0:
                 nack_count = sum(1 for ok in tx_hist if not ok)
@@ -240,6 +265,12 @@ class MeasurementUpdater:
             denom_s = float(len(bytes_hist)) * float(self._slot_duration_s)
             measured_throughput_mbps = (float(total_bytes) * 8.0) / 1e6 / max(denom_s, 1e-9)
             throughput_window_slots = int(len(bytes_hist))
+            data_sinr = None
+            if rt_sample is not None and is_scheduled and int(getattr(ue, 'scheduled_bytes', 0)) > 0:
+                data_rng = random.Random(int(digest([self._rng_seed, slot_id, ue_id, 'rt_data_reporting_noise'])[:15], 16))
+                sample = float(ue.post_eq_sinr_db) + (data_rng.gauss(0., self._sinr_noise_std_db) if self._sinr_noise_std_db else 0.)
+                data_sinr = alpha*sample + (1-alpha)*self._data_sinr_ewma.get(ue_id, sample)
+                self._data_sinr_ewma[ue_id] = data_sinr
 
             measurement.ue_measurements[ue_id] = UeMeasurement(
                 ue_id=ue_id,
@@ -250,6 +281,14 @@ class MeasurementUpdater:
                 is_scheduled=bool(is_scheduled),
                 ack=bool(ack),
                 tb_size_bytes=int(acked_bytes),
+                hol_delay_ms=hol,
+                rsrp_dbm=self._rsrp_ewma.get(ue_id) if rt_sample is not None else None,
+                reference_sinr_db=float(smoothed_sinr) if rt_sample is not None else None,
+                data_sinr_db=data_sinr,
+                reference_beam_gain_db=rt_sample['reference_beam_gain_db'] if rt_sample is not None else None,
+                sinr_kind='rt_full_band_reference' if rt_sample is not None else 'legacy_empirical',
+                no_path=bool(rt_sample['no_path']) if rt_sample is not None else False,
+                bler_window_nacks=sum(not ok for ok in tx_hist),
                 produced_at_slot=int(slot_id),
                 delivered_at_slot=None,
                 age_slots=0,

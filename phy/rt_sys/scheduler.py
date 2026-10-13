@@ -40,6 +40,13 @@ class RtSysScheduler(SimpleScheduler):
         return 1-correlation if correlation<.8 else 0.
 
     def _derive_target_mcs(self, ue, **kwargs):
+        if getattr(ue, 'rt_feedback_mode', None) == 'nr_tb_reference':
+            process = self._get_active_harq_process(ue) if kwargs['is_retx'] else None
+            if process is not None and process.mcs_index is not None:
+                return process.mcs_index
+            # Actual post-LMMSE NR probes choose within this ceiling. A stale
+            # empirical SINR guess must not exclude executable low-rate entries.
+            return 16 if ue.latency_budget_ms <= 20 else 27
         target = super()._derive_target_mcs(ue, **kwargs)
         cap = super()._derive_mcs_cap(ue, kwargs['is_retx'], target)
         # The legacy MAC can emit target > cap for retransmissions or after
@@ -48,7 +55,23 @@ class RtSysScheduler(SimpleScheduler):
         return max(3, min(target, cap if cap is not None else 27))
 
     def _derive_mcs_table_id(self, *args, **kwargs):
+        ue = args[0] if args else kwargs['ue']
+        if getattr(ue, 'rt_feedback_mode', None) == 'nr_tb_reference':
+            process = self._get_active_harq_process(ue) if kwargs['is_retx'] else None
+            if process is not None and process.mcs_table_id is not None:
+                return process.mcs_table_id
+            return 'qam64_low_se' if ue.latency_budget_ms <= 20 else 'qam64'
         selected = super()._derive_mcs_table_id(*args, **kwargs)
         # Default SYS EESM beta parameters cover NR tables 1 and 2 only.
         # URLLC/retransmission grants use table 1; never fabricate table-3 beta.
         return 'qam64' if selected == 'qam64_low_se' else selected
+
+    def _derive_mcs_cap(self, ue, is_retx, target_mcs):
+        if getattr(ue, 'rt_feedback_mode', None) == 'nr_tb_reference':
+            return int(target_mcs)
+        return super()._derive_mcs_cap(ue, is_retx, target_mcs)
+
+    def _get_effective_link_quality_db(self, ue):
+        if getattr(ue, 'rt_feedback_mode', None) == 'nr_tb_reference':
+            return float(ue.post_eq_sinr_db if getattr(ue, 'last_scheduled_slot', None) is not None else ue.sinr_db)
+        return super()._get_effective_link_quality_db(ue)

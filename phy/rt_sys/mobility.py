@@ -50,6 +50,22 @@ class RtMobilityManager(MobilityManager):
     def _advance_geometry(self,link):
         pass  # RtChannelProvider owns the preconfigured trajectory.
 
+    def initialize_association(self, state):
+        # Initial attachment is not a handover and must not wait for TTT.
+        # Use actual RT reference gain (no noise/load bias) at snapshot zero.
+        for ue in state.ues:
+            connection = state.connections[ue.ue_id]
+            candidates = connection.candidate_cells
+            best = min(candidates, key=lambda c: c.pathloss_db) if candidates else None
+            if best is None or best.pathloss_db >= 300:
+                continue  # Explicit outage remains visible; do not invent a path.
+            self._apply_serving_candidate(ue, state.links[ue.ue_id], connection, best)
+            connection.connection_state = 'connected'
+            connection.handover_pending_target_cell_id = None
+            connection.handover_started_slot = None
+            connection.last_trigger_reason = 'initial_rt_attachment'
+        self.trigger_since.clear()
+
     def update(self,state):
         snapshot=self.adapter.current_snapshot
         values={}

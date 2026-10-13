@@ -158,7 +158,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path('outputs/rt_sys_targeted_matrix_nr'))
     parser.add_argument('--audit', type=Path, default=Path('outputs/rt_sys_targeted_repairs/matrix_audit.json'))
-    parser.add_argument('--output', type=Path, default=Path('outputs/rt_sys_resume_20261013/analysis'))
+    parser.add_argument('--output', type=Path, default=Path('outputs/rt_environment_repairs_20261013/historical_reanalysis'))
     args = parser.parse_args()
     assert not args.output.resolve().is_relative_to(args.root.resolve())
     audit = json.loads(args.audit.read_text())
@@ -212,10 +212,11 @@ def main():
     from state.harq_state import HarqState, HarqProcessState
     harq = HarqState(processes=[HarqProcessState(process_id=0, pending_bytes=0, timeout_slot=5, retx_deadline_slot=5)])
     SimpleScheduler.__new__(SimpleScheduler)._prune_expired_harq_processes(SimpleNamespace(slot_id=6), SimpleNamespace(harq=harq))
-    diagnosis = dict(empty_expired_process_flush_reproduced=harq.harq_flush_count == 1,
+    diagnosis = dict(empty_expired_process_payload_flush=harq.harq_flush_count > 0,
                      pending_bytes=0, flush_count=harq.harq_flush_count, flush_reason=harq.last_flush_reason,
+                     empty_cleanup_count=harq.empty_process_cleanup_count,
                      scope='Isolated in-memory fixture; no matrix or production state changed.')
-    assert diagnosis['empty_expired_process_flush_reproduced']
+    assert not diagnosis['empty_expired_process_payload_flush'] and diagnosis['empty_cleanup_count'] == 1
     (args.output / 'empty_harq_flush_diagnosis.json').write_text(json.dumps(diagnosis, indent=2))
     print(json.dumps({'checks': result['checks'], 'totals': result['totals'], 'groups': groups}, indent=2, ensure_ascii=False))
 

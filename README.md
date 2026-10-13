@@ -10,6 +10,11 @@ uses dispersed legal roads for MU scheduling. See
 for execution scope, validation and Spark commands. The failed default
 BLER/EESM abstraction is restricted to explicit diagnostic runs.
 
+Latest system-level observation, packet delay, HARQ bookkeeping, low-rate NR
+and fixed-baseline repairs: [2026-10-13 environment validation](docs/rt_sys/ENVIRONMENT_REPAIRS_20261013.md).
+The RT entry defaults to fixed baseline control; algorithm execution requires
+`--control-mode orchestrated`.
+
 ## Current Status
 
 The project has moved beyond the original minimum runnable skeleton and now

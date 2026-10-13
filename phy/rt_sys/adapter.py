@@ -267,6 +267,7 @@ class RtSysPhyAdapter:
                         result.link_adaptation_reason = metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
                         physical_capacity=metrics['capacity_bytes']
                         result.mcs_index = metrics['mcs']; result.modulation_order = metrics['qm']
+                        result.reference_tb_ack = metrics.get('reference_tb_ack')
                         result.code_rate = metrics['rate']; result.bler = metrics['tbler']
                         result.effective_sinr_db = 10*math.log10(max(metrics['sinr_eff'],1e-30))
                         result.tb_size_bytes = min(ue.queue_bytes,ue.requested_bytes,ue.grant_bytes_budget, metrics['capacity_bytes'])
@@ -313,6 +314,9 @@ class RtSysPhyAdapter:
                     trace_ues[-1]['mac_capacity_guard']=bool(ue.is_retx and result.tb_size_bytes<ue.requested_bytes) if e is not None else False
                     trace_ues[-1]['reference_rv']=0
                     trace_ues[-1]['mac_requested_rv']=ue.harq_redundancy_version
+                    trace_ues[-1]['amc_selection_target_met']=metrics.get('amc_selection_target_met')
+                    trace_ues[-1]['amc_selection_criterion']=metrics.get('amc_selection_criterion', 'not_evaluated')
+                    trace_ues[-1]['coding_backend']=metrics.get('coding_backend', 'not_evaluated')
             scheduled = [r for r in outputs if r.is_scheduled]
             results[p.cell_id] = PhyResult(p.slot_id,p.cell_id,outputs,
                 float(np.mean([r.sinr_db for r in scheduled])) if scheduled else 0,
@@ -330,5 +334,5 @@ class RtSysPhyAdapter:
             self.trace.update(phy_calibration_status='nr_tb_equivalent_link_reference',default_bler_eesm_used=False,
                 feedback_mode='nr_tb_reference',reference_decode_trials=self.abstraction.decode_trials,
                 phy_calibration_scope='Actual RV0 NR-TB CRC/LDPC/QAM on independent Gaussian post-LMMSE resources; finite-probe AMC/BLER; no waveform HARQ combining',
-                mcs_table_policy='PDSCH tables 1/2; grant target is an AMC ceiling; valid retransmission MCS fixed, unsupported NR code projected explicitly')
+                mcs_table_policy='PDSCH tables 1/2/3; grant target is an AMC ceiling; actual retransmission MCS/table fixed; single-CB low-rate RV0 repetition; unsupported multi-CB repetition is explicit')
         return results

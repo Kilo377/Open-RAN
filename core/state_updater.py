@@ -485,15 +485,21 @@ class StateUpdater:
                     list(getattr(base, "pending_logical_channels", []) or []),
                 )
             ),
+            mcs_index=applied_overrides.get('mcs_index', getattr(base, 'mcs_index', None)),
+            mcs_table_id=applied_overrides.get('mcs_table_id', getattr(base, 'mcs_table_id', None)),
         )
 
-    def _record_harq_flush(self, harq: Any, *, reason: str, slot_id: int) -> None:
+    def _record_harq_flush(self, harq: Any, *, reason: str, slot_id: int, process=None, pending_bytes=0) -> None:
         self._safe_set(
             harq,
             "harq_flush_count",
             int(getattr(harq, "harq_flush_count", 0)) + 1,
         )
         self._safe_set(harq, "last_flush_reason", str(reason))
+        if hasattr(harq, 'events'):
+            harq.events.append(dict(kind='payload_flush', slot_id=slot_id, reason=reason,
+                process_id=getattr(process, 'process_id', None), tb_id=getattr(process, 'tb_id', None),
+                pending_bytes=int(pending_bytes)))
         if str(reason) in {"timeout", "retx_deadline"}:
             self._safe_set(harq, "last_timeout_slot", int(slot_id))
 
@@ -651,6 +657,9 @@ class StateUpdater:
                 continue
             current_queue_bytes = int(getattr(logical_channel, "queue_bytes", 0))
             new_queue_bytes = max(0, current_queue_bytes - delivered_for_channel)
+            ledger = getattr(ue, 'packet_ledger', None)
+            if ledger is not None:
+                ledger.deliver(logical_channel, delivered_for_channel, slot_id)
             try:
                 logical_channel.queue_bytes = int(new_queue_bytes)
                 logical_channel.delivered_bytes = int(delivered_for_channel)
@@ -1658,6 +1667,11 @@ class StateUpdater:
                 "bler": float(getattr(measurement_entry, "bler", 0.0)),
                 "is_scheduled": bool(getattr(measurement_entry, "is_scheduled", False)),
                 "ack": bool(getattr(measurement_entry, "ack", False)),
+                "hol_delay_ms": getattr(measurement_entry, "hol_delay_ms", None),
+                "rsrp_dbm": getattr(measurement_entry, "rsrp_dbm", None),
+                "reference_sinr_db": getattr(measurement_entry, "reference_sinr_db", None),
+                "data_sinr_db": getattr(measurement_entry, "data_sinr_db", None),
+                "sinr_kind": getattr(measurement_entry, "sinr_kind", "legacy_empirical"),
                 "tb_size_bytes": int(getattr(measurement_entry, "tb_size_bytes", 0)),
             }
 
@@ -2254,6 +2268,7 @@ class StateUpdater:
             self._safe_set(ue, "delivered_new_bytes", delivered_bytes if (ack and not is_retx) else 0)
             self._safe_set(ue, "delivered_retx_bytes", delivered_bytes if (ack and is_retx) else 0)
             self._safe_set(ue, "ack", ack)
+            self._safe_set(ue, "reference_tb_ack", self._safe_get(ue_result, "reference_tb_ack", None))
             self._safe_set(ue, "cqi", cqi)
             self._safe_set(ue, "rank", rank)
             self._safe_set(ue, "pmi", pmi)
@@ -2350,8 +2365,21 @@ class StateUpdater:
                     harq.ndi = int(ndi_value)
                     harq.last_harq_process_id = process_id_value
                     harq.last_retransmission_round = int(retransmission_round_value)
+                    if hasattr(harq, 'events'):
+                        harq.events.append(dict(kind='tx_result' if scheduled_bytes else 'no_tb', slot_id=slot_id_value,
+                            tb_id=tb_id_value, process_id=process_id_value, bytes=scheduled_bytes,
+                            delivered_bytes=delivered_bytes, ack=ack, is_retx=is_retx))
 
-                    if ack:
+                    if scheduled_bytes <= 0:
+                        # Clear only an empty new reservation. A zero-capacity
+                        # retransmission still owns its original pending payload.
+                        active_processes = [p for p in active_processes
+                            if int(getattr(p, 'process_id', -1)) != int(process_id_value if process_id_value is not None else harq.process_id)
+                            or int(getattr(p, 'pending_bytes', 0)) > 0]
+                        harq.last_decision = 'NO_TB'
+                        self._set_harq_processes(harq, active_processes)
+                        self._synchronize_harq_legacy_fields(harq)
+                    elif ack:
                         harq.last_decision = "ACK"
                         harq.last_flush_reason = None
                         if is_retx:
@@ -2456,7 +2484,7 @@ class StateUpdater:
                             elif int(next_retransmission_round) > int(max_retransmission_rounds):
                                 flush_reason = "max_rounds"
                             if flush_reason is not None:
-                                self._record_harq_flush(harq, reason=flush_reason, slot_id=int(slot_id_value))
+                                self._record_harq_flush(harq, reason=flush_reason, slot_id=int(slot_id_value), process=matching_process, pending_bytes=pending_retx_bytes)
                                 harq.last_decision = f"NACK_{str(flush_reason).upper()}"
                                 active_processes = [
                                     process
@@ -2536,7 +2564,7 @@ class StateUpdater:
                             elif 1 > int(max_retransmission_rounds):
                                 flush_reason = "max_rounds"
                             if flush_reason is not None:
-                                self._record_harq_flush(harq, reason=flush_reason, slot_id=int(slot_id_value))
+                                self._record_harq_flush(harq, reason=flush_reason, slot_id=int(slot_id_value), process=matching_process, pending_bytes=pending_retx_bytes)
                                 harq.last_decision = f"NACK_{str(flush_reason).upper()}"
                                 active_processes = [
                                     process
@@ -2581,7 +2609,13 @@ class StateUpdater:
                                 active_processes.append(updated_process)
                         self._set_harq_processes(harq, active_processes)
                         self._synchronize_harq_legacy_fields(harq)
+                    for process in self._get_harq_processes(harq):
+                        if process.process_id == process_id_value:
+                            process.mcs_index = mcs_index
+                            process.mcs_table_id = grant_mcs_table_id
                 except Exception:
+                    if phy_mode == 'rt_sys':
+                        raise
                     pass
 
             connection = self._get_connection(state, str(ue_id))

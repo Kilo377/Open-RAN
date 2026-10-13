@@ -185,6 +185,9 @@ class Simulator:
         self._rt_sys_mode = bool(getattr(self.phy_adapter, "cluster_execution", False))
         if self._rt_sys_mode:
             from phy.rt_sys.mobility import RtMobilityManager
+            self.traffic_engine.enable_packet_tracking(self.state)
+            for ue in self.state.ues:
+                ue.rt_feedback_mode = self.phy_adapter.config.get('feedback_mode', 'sys_abstraction')
             self.mobility_manager = RtMobilityManager(self.phy_adapter,
                 slot_duration_ms=config.slot_duration_ms, rng_seed=config.rng_seed,
                 delay_slots=config.measurement_queue_delay_slots,
@@ -195,7 +198,12 @@ class Simulator:
                 runtime.scheduler.max_mu_users_per_group=self.scheduler.max_mu_users_per_group
                 runtime.scheduler.max_total_spatial_layers=self.scheduler.max_total_spatial_layers
             self.mobility_manager.update(self.state)
+            if self.phy_adapter.config.get('initial_association') == 'strongest_rt_reference':
+                self.mobility_manager.initialize_association(self.state)
             self._refresh_managed_cell_runtime_views(self.state)
+            from phy.rt_sys.measurements import reference_measurements
+            self.state.rt_reference_measurements = reference_measurements(self.phy_adapter.current_snapshot, self.state,
+                self.phy_adapter.config.get('noise_figure_db', 7))
             self.measurement_updater.update(self.state)
 
 
@@ -3289,6 +3297,10 @@ class Simulator:
         phy_result, shadow_phy_result = self._run_managed_cell_phy(self.state, scoped_states)
 
         # Update controller-visible measurements after truth evolves.
+        if self._rt_sys_mode:
+            from phy.rt_sys.measurements import reference_measurements
+            self.state.rt_reference_measurements = reference_measurements(self.phy_adapter.current_snapshot, self.state,
+                self.phy_adapter.config.get('noise_figure_db', 7))
         self.measurement_updater.update(self.state)
 
         post_phy_observation = build_observation(self.state)

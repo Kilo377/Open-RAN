@@ -35,6 +35,8 @@ def parse_args():
     p.add_argument('--traffic-load',type=float,default=1)
     p.add_argument('--phase',choices=['integration','train','validation','test'],default='integration')
     p.add_argument('--selection-mode',choices=['reflective','fixed_plan'],default='reflective')
+    p.add_argument('--control-mode',choices=['baseline','orchestrated'],default='baseline',
+        help='Baseline disables rApps/xApps and uses fixed round-robin MAC')
     p.add_argument('--model-state',type=Path)
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
@@ -59,19 +61,25 @@ def run_case(args):
         if not payload.get('success_cases') and not payload.get('failure_cases'):
             raise ValueError('Training memory is empty; cannot declare trained evaluation')
     configs['ric'].update(selection_mode=mode,freeze_learning=phase in ('validation','test'))
+    control_mode=getattr(args,'control_mode','baseline')
+    if control_mode == 'baseline':
+        configs['ric'].update(rapps=[], xapps=[], freeze_learning=True, run_rapps_on_start=False)
+        configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
+    if control_mode == 'baseline' and phase != 'integration':
+        raise ValueError('Fixed environment baseline is an integration run, not algorithm training/evaluation')
     if model_path:
         configs['ric'].update(persistent_memory_enabled=True,memory_store_path=str(model_path))
         for rapp in configs['ric'].get('rapps',[]):
             if rapp['type']=='xapp_selection_rapp':rapp.update(persistent_memory_enabled=True,memory_store_path=str(model_path))
     configs['phy']['rt_sys'].update(csi_error_nmse_db=getattr(args,'csi_error_nmse_db',None),harq_combining=getattr(args,'harq_combining','none'))
-    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}'
+    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}'
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
     if args.dry_run:
         print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy']},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
     source_hash=source_fingerprint(ROOT)
-    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'warmup_ms':warmup,'input_model_sha256':model_hash,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
+    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
     status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
@@ -99,12 +107,25 @@ def run_case(args):
         DebugConfig.SLOT_METRICS=False
         status.update(stage='simulating',cache_key=provider.key); write_status()
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
-        with (output/'rt_sys_trace.jsonl').open('w') as trace:
+        with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
             import csv
             with (output/'ue_metrics.csv').open('w',newline='') as ufile, (output/'cell_metrics.csv').open('w',newline='') as cfile:
                 uw=cw=None
                 for _ in range(args.slots):
                     simulator.step()
+                    ue_by_id={u.ue_id:u for u in simulator.state.ues}
+                    for row in adapter.trace['ues']:
+                        user=ue_by_id[row['ue_id']]
+                        row.update({'packet_'+k:v for k,v in user.packet_ledger.summary().items()})
+                        sample=simulator.state.measurement.ue_measurements[user.ue_id]
+                        row.update(reference_rsrp_dbm=sample.rsrp_dbm,reference_sinr_db=sample.reference_sinr_db,
+                            data_sinr_db=sample.data_sinr_db,measurement_sinr_kind=sample.sinr_kind,
+                            measured_hol_delay_ms=sample.hol_delay_ms)
+                        for event in user.packet_ledger.drain_events():
+                            packet_events.write(json.dumps(event)+'\n')
+                        for event in user.harq.events:
+                            harq_events.write(json.dumps({'ue_id':user.ue_id,**event})+'\n')
+                        user.harq.events.clear()
                     adapter.trace['mobility_events']=simulator.mobility_manager.events
                     adapter.trace['handover_counts']={uid:c.handover_count for uid,c in simulator.state.connections.items()}
                     adapter.trace['connection_states']={uid:c.connection_state for uid,c in simulator.state.connections.items()}
@@ -121,6 +142,9 @@ def run_case(args):
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
         summary=simulator._build_final_summary()
+        summary['packet_metrics']={u.ue_id:u.packet_ledger.summary() for u in simulator.state.ues}
+        summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
+            'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
         summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':adapter.combiner.mode=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
@@ -135,7 +159,7 @@ def run_case(args):
                 if hasattr(app,'_persist_memory_state'):app._persist_memory_state()
         if phase in ('validation','test') and model_hash:
             if hashlib.sha256(model_path.read_bytes()).hexdigest()!=model_hash:raise RuntimeError('Evaluation mutated training artifact')
-        evaluation={'phase':phase,'selection_mode':mode,'warmup_ms':warmup,'evaluated_slots':evaluated_slots,
+        evaluation={'phase':phase,'selection_mode':mode,'control_mode':control_mode,'warmup_ms':warmup,'evaluated_slots':evaluated_slots,
             'delivered_bytes':evaluated_bytes,'throughput_mbps':evaluated_bytes*8/max(evaluated_slots*manifest['slot_duration_ms']*1000,1),
             'completed_handovers':completed_handovers,'training_artifact_sha256':model_hash,
             'learning_frozen':configs['ric']['freeze_learning']}

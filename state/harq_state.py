@@ -55,6 +55,8 @@ class HarqProcessState:
     reserved_at_slot: int | None = None
     last_tx_slot: int | None = None
     pending_logical_channels: list[HarqLogicalChannelState] = field(default_factory=list)
+    mcs_index: int | None = None
+    mcs_table_id: str | None = None
 
 
 @dataclass
@@ -100,3 +102,5 @@ class HarqState:
     harq_flush_count: int = 0
     last_flush_reason: str | None = None
     last_timeout_slot: int | None = None
+    empty_process_cleanup_count: int = 0
+    events: list[dict] = field(default_factory=list)

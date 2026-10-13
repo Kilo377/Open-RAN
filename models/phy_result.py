@@ -41,6 +41,7 @@ class PhyUeResult:
     scheduled_bytes: int = 0
     delivered_bytes: int = 0
     ack: bool = False
+    reference_tb_ack: bool | None = None
 
     # Core PHY metrics
     sinr_db: float = 0.0
