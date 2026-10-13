@@ -1,0 +1,224 @@
+{
+  "status": "partial_validation_matrix_running",
+  "overall_passed": null,
+  "source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254",
+  "regression": {
+    "local_passed": 252,
+    "local_skipped": 1,
+    "spark_passed": 253,
+    "subtests": 2
+  },
+  "checks": {
+    "links": {
+      "passed": true,
+      "file": "outputs/rt_research_readiness_20261013/final_ran_completed_checks/link_validation_optimized.json"
+    },
+    "control_short": {
+      "passed": true,
+      "file": "outputs/rt_research_readiness_20261013/final_ran_completed_checks/control_lifecycle_verified/validation.json"
+    },
+    "control_500ms": {
+      "passed": true,
+      "file": "outputs/rt_research_readiness_20261013/final_ran_completed_checks/control_lifecycle_long/validation.json"
+    },
+    "initial_fairness": {
+      "passed": true,
+      "file": "outputs/rt_research_readiness_20261013/final_ran_completed_checks/initial_fairness/validation.json"
+    }
+  },
+  "completed_capacity_cases": [
+    {
+      "case": "munich_u4_load1.0_slots2000",
+      "completed": true,
+      "payload_audit": {
+        "case": "munich_u4_load1.0_slots2000",
+        "passed": true,
+        "elapsed_s": 1131.1718852207996,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 14,
+          "capacity_guards": 0,
+          "rows": 8000,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 1556125,
+        "max_power_error_w": 0.0,
+        "source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.013390501319261214,
+          "ue_1": 0.0,
+          "ue_2": 0.003,
+          "ue_3": 0.0
+        }
+      },
+      "cell_diagnostics": {
+        "cell_0": {
+          "offered_bytes": 117332,
+          "delivered_bytes": 117332,
+          "scheduled": 2632,
+          "capacity_outage": 0,
+          "no_path": 0,
+          "amc_unmet": 0,
+          "final_ues": 2,
+          "pending_bytes": 0,
+          "occupied_re_sum": 6451200,
+          "evaluated_slots": 1600,
+          "offered_mbps": 1.1733200000000001,
+          "delivered_mbps": 1.1733200000000001,
+          "active_grid_occupancy": 1.0
+        },
+        "cell_1": {
+          "offered_bytes": 1068725,
+          "delivered_bytes": 1068725,
+          "scheduled": 1151,
+          "capacity_outage": 0,
+          "no_path": 0,
+          "amc_unmet": 0,
+          "final_ues": 1,
+          "pending_bytes": 0,
+          "occupied_re_sum": 4640832,
+          "evaluated_slots": 1600,
+          "offered_mbps": 10.687249999999999,
+          "delivered_mbps": 10.687249999999999,
+          "active_grid_occupancy": 0.719375
+        },
+        "cell_2": {
+          "offered_bytes": 59068,
+          "delivered_bytes": 59068,
+          "scheduled": 609,
+          "capacity_outage": 0,
+          "no_path": 0,
+          "amc_unmet": 0,
+          "final_ues": 1,
+          "pending_bytes": 0,
+          "occupied_re_sum": 2386944,
+          "evaluated_slots": 1600,
+          "offered_mbps": 0.59068,
+          "delivered_mbps": 0.59068,
+          "active_grid_occupancy": 0.37
+        }
+      },
+      "offered_mbps": 12.451249999999998,
+      "delivered_mbps": 12.451249999999998,
+      "queue_growth_bytes_per_s": 0.0,
+      "overflow_bytes": 0,
+      "deadline_misses": 0
+    },
+    {
+      "case": "simple_street_canyon_u4_load1.0_slots2000",
+      "completed": true,
+      "payload_audit": {
+        "case": "simple_street_canyon_u4_load1.0_slots2000",
+        "passed": true,
+        "elapsed_s": 1178.7907397588715,
+        "counters": {
+          "zero_tb": 0,
+          "no_path": 0,
+          "unsupported_code": 0,
+          "target_unmet": 0,
+          "low_rate_reference": 0,
+          "capacity_guards": 44,
+          "rows": 8000,
+          "packet_overflow_bytes": 0,
+          "packet_deadline_misses": 0
+        },
+        "zero_delivery_ues": [],
+        "never_scheduled_ues": [],
+        "delivered_bytes": 1556125,
+        "max_power_error_w": 0.0,
+        "source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254",
+        "control_mode": "baseline",
+        "mean_completion_latency_ms_by_ue": {
+          "ue_0": 0.19689973614775724,
+          "ue_1": 0.00075,
+          "ue_2": 0.0,
+          "ue_3": 0.0
+        }
+      },
+      "cell_diagnostics": {
+        "cell_0": {
+          "offered_bytes": 166400,
+          "delivered_bytes": 166400,
+          "scheduled": 3198,
+          "capacity_outage": 0,
+          "no_path": 0,
+          "amc_unmet": 0,
+          "final_ues": 2,
+          "pending_bytes": 0,
+          "occupied_re_sum": 6451200,
+          "evaluated_slots": 1600,
+          "offered_mbps": 1.6640000000000001,
+          "delivered_mbps": 1.6640000000000001,
+          "active_grid_occupancy": 1.0
+        },
+        "cell_1": {
+          "offered_bytes": 1078725,
+          "delivered_bytes": 1081350,
+          "scheduled": 1205,
+          "capacity_outage": 0,
+          "no_path": 0,
+          "amc_unmet": 0,
+          "final_ues": 2,
+          "pending_bytes": 0,
+          "occupied_re_sum": 4693248,
+          "evaluated_slots": 1600,
+          "offered_mbps": 10.787249999999998,
+          "delivered_mbps": 10.8135,
+          "active_grid_occupancy": 0.7275
+        },
+        "cell_2": {
+          "occupied_re_sum": 0,
+          "evaluated_slots": 1600,
+          "offered_mbps": 0.0,
+          "delivered_mbps": 0.0,
+          "active_grid_occupancy": 0.0
+        }
+      },
+      "offered_mbps": 12.451249999999998,
+      "delivered_mbps": 12.4775,
+      "queue_growth_bytes_per_s": -3281.25,
+      "overflow_bytes": 0,
+      "deadline_misses": 0
+    }
+  ],
+  "pending_capacity_cases": [
+    "simple_street_canyon_u24_load0.1_slots2000",
+    "simple_street_canyon_u24_load1.0_slots2000",
+    "munich_u24_load0.1_slots2000",
+    "munich_u24_load1.0_slots2000"
+  ],
+  "clocks_unchanged": {
+    "slot_ms": 0.5,
+    "xapp_slots": 5,
+    "rapp_slots": 10
+  },
+  "execution_root": "/home/njupt/oran_slot_sim_sionna/validation_candidates/final_ran_fix",
+  "automatic_finalization": {
+    "spark": "scripts/validation/finalize_research_run.py",
+    "mac": "scripts/validation/receive_research_run.py",
+    "timeout_hours": 24,
+    "mac_requires_awake_and_network": true
+  },
+  "final_result": "outputs/rt_research_readiness_20261013/final_ran/validation_summary.json",
+  "limitations": [
+    "Pending 24 UE capacity matrix is not accepted yet",
+    "Stationary finite run does not establish asymptotic or moving-channel stability",
+    "IR and strict URLLC tail not validated",
+    "Cold NR calibration remains expensive for unseen profiles",
+    "Ideal CSI and Gaussian equivalent resources; full OFDM deferred"
+  ],
+  "preservation_verified": {
+    "original_source_files": 1113,
+    "historical_targeted_files": 2071,
+    "historical_environment_files": 189,
+    "completed_checks_mac_spark_identical_files": 109,
+    "completed_checks_bytes": 347798034
+  }
+}
