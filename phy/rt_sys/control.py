@@ -35,3 +35,18 @@ def limit_logical_allocations(allocations, budget):
         item.used_pbr_credit_bytes=min(item.prioritized_bytes,max(0,int(item.used_pbr_credit_bytes)))
         limited.append(item)
     return limited
+
+
+def runtime_control_values(state,cell_ids):
+    """Record the actual scoped consumers, rather than only the requested fields."""
+    result={}
+    for cid in cell_ids:
+        runtime=state.managed_cells[cid]
+        c,s=runtime.cell,runtime.scheduler
+        result[cid]={name:getattr(c,name,None) for name in ('tx_power_dbm','current_codebook_id',
+            'current_beam_profile_id','power_cap_dbm','cell_sleep_mode','traffic_steering_preference',
+            'mobility_bias_db','handover_cost_db','handover_interruption_slots','steering_hysteresis_db',
+            'measurement_event_trigger','measurement_event_offset_db')}
+        result[cid].update({name:getattr(s,name,None) for name in ('scheduler_mode','scheduler_policy_hint',
+            'latency_bias','slice_weight_adjustment')})
+    return result

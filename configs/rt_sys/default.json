@@ -1,4 +1,5 @@
 {
+ "initial_queue_bytes":0,
  "phy_type":"sionna_rt_sys",
  "rt_sys": {"device":"cuda","feedback_mode":"nr_tb_reference","reference":{"selection_samples":64,"selection_criterion":"wilson_upper","bler_samples":64,"decoder_cache_size":128},"bler_target":0.1,"noise_figure_db":7,"rzf_relative_regularization":0.01,
     "mobility":{"measurement_filter_ms":20,"load_filter_ms":50,"time_to_trigger_ms":40,"min_dwell_ms":100}},

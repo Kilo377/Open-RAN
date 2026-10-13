@@ -56,7 +56,8 @@ class RtMobilityManager(MobilityManager):
         for ue in state.ues:
             connection = state.connections[ue.ue_id]
             candidates = connection.candidate_cells
-            best = min(candidates, key=lambda c: c.pathloss_db) if candidates else None
+            best = max(candidates, key=lambda c: c.tx_power_dbm - 10*math.log10(state.managed_cells[c.cell_id].resource_grid.n_prbs_total*12) - c.pathloss_db
+                if state.managed_cells[c.cell_id].cell.cell_sleep_mode!='deep_sleep' else -math.inf) if candidates else None
             if best is None or best.pathloss_db >= 300:
                 continue  # Explicit outage remains visible; do not invent a path.
             self._apply_serving_candidate(ue, state.links[ue.ue_id], connection, best)

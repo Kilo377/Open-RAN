@@ -2217,6 +2217,30 @@ class Simulator:
         self._sync_beam_state_from_cell()
         self._refresh_managed_cell_runtime_views(self.state)
 
+    def _apply_rt_config_action(self, action, apply_slot):
+        from phy.rt_sys.control import audit_action,runtime_control_values
+        fields=audit_action(action)
+        scope=str(getattr(action,'apply_scope','cell')).lower()
+        target=getattr(action,'target_cell_id',None)
+        reason=None
+        if scope not in ('cell','cluster'):reason='unsupported_scope'
+        elif scope=='cell' and target is not None and target not in self.state.managed_cells:reason='unknown_target_cell'
+        elif any(f['route']=='unsupported' for f in fields):reason='unsupported_fields:'+','.join(f['field'] for f in fields if f['route']=='unsupported')
+        elif action.effective_until_slot is not None and self.state.slot_id>action.effective_until_slot:reason='expired_before_actuation'
+        elif self._rng.random()<self._control_reject_prob:reason='probabilistic_reject'
+        targets=[] if reason in ('unknown_target_cell','unsupported_scope') else self._resolve_config_target_cell_ids(action)
+        before=runtime_control_values(self.state,targets)
+        if reason is None:
+            applied=self.executor.apply_action(self.state,action)
+            if not applied:reason='no_runtime_consumer_applied'
+            self._refresh_runtime_views_after_config_apply()
+        else:applied=[]
+        outcome=self._build_config_actuation_outcome(action=action,apply_slot=int(self.state.slot_id),
+            status='rejected' if reason else 'applied',reason=reason,target_cell_ids=applied if not reason else targets)
+        outcome.update(requested_apply_slot=int(apply_slot),fields=fields,before=before,
+            after=runtime_control_values(self.state,targets),validity_semantics='Persistent target state; expiry bounds admission, not automatic rollback')
+        self.state.control.actuation_outcomes.append(outcome)
+
     def _build_config_actuation_outcome(
         self,
         *,
@@ -2229,7 +2253,7 @@ class Simulator:
         metadata = getattr(action, "metadata", None)
         outcome = {
             "kind": "config",
-            "issued_at_slot": int(getattr(metadata, "issued_at_slot", -1)),
+            "issued_at_slot": int(getattr(metadata, "issued_at_slot", -1) if getattr(metadata, "issued_at_slot", -1) is not None else -1),
             "apply_slot": int(apply_slot),
             "source": str(getattr(metadata, "source", getattr(action, "source_name", "unknown"))),
             "decision_id": str(getattr(metadata, "decision_id", "")),
@@ -3094,6 +3118,9 @@ class Simulator:
         due_configs.sort(key=lambda x: (x[0], x[1]))
 
         for apply_slot, _, action in due_configs:
+            if self._rt_sys_mode:
+                self._apply_rt_config_action(action,apply_slot)
+                continue
             target_cell_ids = self._resolve_config_target_cell_ids(action)
             rejected = self._rng.random() < self._control_reject_prob
             if rejected:
@@ -3176,7 +3203,16 @@ class Simulator:
         self._refresh_control_lifecycle_outcomes()
 
         # Apply/enqueue actuation effects (config/commands) with delay.
-        if int(self._config_delay_slots) <= 0:
+        if self._rt_sys_mode:
+            for config_action in control_decision.config_actions:
+                apply_slot=max(int(self.state.slot_id)+int(self._config_delay_slots),
+                    int(config_action.effective_from_slot) if config_action.effective_from_slot is not None else int(self.state.slot_id))
+                if apply_slot<=self.state.slot_id:self._apply_rt_config_action(config_action,apply_slot)
+                else:
+                    self._actuation_seq+=1
+                    self._pending_config_actuations.append((apply_slot,self._actuation_seq,config_action))
+                    self._update_e2_control_request_status(config_action.control_request_id,status='queued',reason='waiting_for_actuation_or_effective_from')
+        elif int(self._config_delay_slots) <= 0:
             for config_action in list(control_decision.config_actions):
                 target_cell_ids = self._resolve_config_target_cell_ids(config_action)
                 rejected = self._rng.random() < self._control_reject_prob

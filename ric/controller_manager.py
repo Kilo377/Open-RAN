@@ -1285,6 +1285,8 @@ class ControllerManager:
                 decision_id_prefix="xapp_config",
             )
             received_config_actions.append(xapp_action)
+            if not hasattr(self,'_field_validities'):self._field_validities={}
+            validity=(xapp_action.effective_from_slot,xapp_action.effective_until_slot)
             scope_key, apply_scope, target_cell_id = self._normalize_scope_key(xapp_action)
             scope_specs_by_key[scope_key] = (apply_scope, target_cell_id)
             scope_field_winners = field_winners_by_scope.setdefault(scope_key, {})
@@ -1371,10 +1373,14 @@ class ControllerManager:
                         self._copy_action_field_value(field_value),
                         xapp.name,
                     )
+                    self._field_validities[(scope_key,field_name)]=validity
                     continue
 
-                current_priority, _, current_owner = scope_field_winners[field_name]
+                current_priority, current_value, current_owner = scope_field_winners[field_name]
                 if xapp.priority > current_priority:
+                    dropped_items.append(DroppedControlItem(kind='field_write',source=str(current_owner),
+                        reason='superseded_by_higher_priority',field_name=str(field_name),
+                        value=self._copy_action_field_value(current_value)))
                     debug_print(
                         f"Field conflict at slot {slot_id}: "
                         f"{scope_key}.{field_name} reassigned from {current_owner} "
@@ -1385,6 +1391,7 @@ class ControllerManager:
                         self._copy_action_field_value(field_value),
                         xapp.name,
                     )
+                    self._field_validities[(scope_key,field_name)]=validity
                 else:
                     dropped_items.append(
                         DroppedControlItem(
@@ -1482,7 +1489,20 @@ class ControllerManager:
             self.current_action_by_scope.keys(),
             key=lambda item: (0 if item == "cell:__default__" else 1, item),
         )
-        return [self.current_action_by_scope[item] for item in ordered_scope_keys]
+        grouped_actions=[]
+        for scope_key in ordered_scope_keys:
+            action=self.current_action_by_scope[scope_key]
+            groups={}
+            for field in self.ACTION_FIELDS:
+                value=getattr(action,field)
+                if not self._action_field_has_value(field,value):continue
+                window=getattr(self,'_field_validities',{}).get((scope_key,field),(None,None))
+                if window not in groups:
+                    groups[window]=ConfigAction(apply_scope=action.apply_scope,target_cell_id=action.target_cell_id,
+                        source_name=action.source_name,effective_from_slot=window[0],effective_until_slot=window[1])
+                setattr(groups[window],field,self._copy_action_field_value(value))
+            grouped_actions.extend(groups.values() if groups else [action])
+        return grouped_actions
 
     def update(self, slot_id: int, observation: Observation) -> ControlDecision:
         """

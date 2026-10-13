@@ -38,6 +38,9 @@ def parse_args():
     p.add_argument('--control-mode',choices=['baseline','orchestrated'],default='baseline',
         help='Baseline disables rApps/xApps and uses fixed round-robin MAC')
     p.add_argument('--model-state',type=Path)
+    p.add_argument('--initial-queue-bytes',type=int)
+    p.add_argument('--ue-speed-mps',type=float)
+    p.add_argument('--feedback-mode',choices=['nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
@@ -46,7 +49,8 @@ def parse_args():
 
 def run_case(args):
     manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config,
-        deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1))
+        deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
+        initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None))
     phase=getattr(args,'phase','integration');mode=getattr(args,'selection_mode','reflective')
     warmup=getattr(args,'warmup_ms',0)
     if not 0<=warmup<manifest['total_slots']*manifest['slot_duration_ms']:raise ValueError('Warmup must leave an evaluation interval')
@@ -62,6 +66,8 @@ def run_case(args):
             raise ValueError('Training memory is empty; cannot declare trained evaluation')
     configs['ric'].update(selection_mode=mode,freeze_learning=phase in ('validation','test'))
     control_mode=getattr(args,'control_mode','baseline')
+    configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
+    if getattr(args,'feedback_mode',None):configs['phy']['rt_sys']['feedback_mode']=args.feedback_mode
     if control_mode == 'baseline':
         configs['ric'].update(rapps=[], xapps=[], freeze_learning=True, run_rapps_on_start=False)
         configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
@@ -78,6 +84,10 @@ def run_case(args):
     if args.dry_run:
         print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy']},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
+    if configs['phy']['rt_sys']['feedback_mode'] in ('nr_cached_reference','nr_bler_bank'):
+        ref=configs['phy']['rt_sys'].setdefault('reference',{})
+        bank=ref.setdefault('probability_bank',{})
+        bank.setdefault('bank_file',str(output/'link_bler_bank.json'))
     source_hash=source_fingerprint(ROOT)
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
@@ -104,8 +114,15 @@ def run_case(args):
         registry.active_intent_manager=ActiveIntentManager(initial_intent_text=intent)
         runtime=build_runtime_scenario_config(scenario_name=name,scenario_type='rt_scene',sim_config=configs['sim'],cell_config=configs['cell'],ric_config=configs['ric'])
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
+        initial={'seed':args.seed,'cache_key':provider.key,'deployment':manifest,'business':configs['ue'],
+            'ues':[{"ue_id":u.ue_id,"serving_cell_id":simulator.state.connections[u.ue_id].serving_cell_id,"beam_id":u.serving_beam_id,"queue_bytes":u.queue_bytes} for u in simulator.state.ues]}
+        from phy.rt_sys.contracts import digest
+        initial['environment_sha256']=digest(initial)
+        (output/'initial_conditions.json').write_text(json.dumps(initial,indent=2))
         DebugConfig.SLOT_METRICS=False
         status.update(stage='simulating',cache_key=provider.key); write_status()
+        from experiments.steady_state import SteadyStateMonitor
+        steady=SteadyStateMonitor(simulator.state.ues,warmup,manifest['slot_duration_ms'])
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
         with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
             import csv
@@ -113,6 +130,7 @@ def run_case(args):
                 uw=cw=None
                 for _ in range(args.slots):
                     simulator.step()
+                    slot_packet_events=[]
                     ue_by_id={u.ue_id:u for u in simulator.state.ues}
                     for row in adapter.trace['ues']:
                         user=ue_by_id[row['ue_id']]
@@ -122,10 +140,11 @@ def run_case(args):
                             data_sinr_db=sample.data_sinr_db,measurement_sinr_kind=sample.sinr_kind,
                             measured_hol_delay_ms=sample.hol_delay_ms)
                         for event in user.packet_ledger.drain_events():
-                            packet_events.write(json.dumps(event)+'\n')
+                            packet_events.write(json.dumps(event)+'\n');slot_packet_events.append(event)
                         for event in user.harq.events:
                             harq_events.write(json.dumps({'ue_id':user.ue_id,**event})+'\n')
                         user.harq.events.clear()
+                    steady.observe(simulator.state.sim_time_ms,simulator.state.ues,adapter.trace,slot_packet_events)
                     adapter.trace['mobility_events']=simulator.mobility_manager.events
                     adapter.trace['handover_counts']={uid:c.handover_count for uid,c in simulator.state.connections.items()}
                     adapter.trace['connection_states']={uid:c.connection_state for uid,c in simulator.state.connections.items()}
@@ -142,14 +161,19 @@ def run_case(args):
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
         summary=simulator._build_final_summary()
+        if hasattr(adapter.abstraction,'bank'):adapter.abstraction.bank.save()
+        if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
+        summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})
+        summary['steady_state']=steady.summary()
+        (output/'steady_state.json').write_text(json.dumps(summary['steady_state'],indent=2))
         summary['packet_metrics']={u.ue_id:u.packet_ledger.summary() for u in simulator.state.ues}
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
             'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
         summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
-            'harq_soft_combining':adapter.combiner.mode=='chase','full_phy_calibrated':False,
+            'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
-            'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None)=='nr_tb_reference',
-            'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None)!='nr_tb_reference',
+            'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_tb_reference','nr_cached_reference'),
+            'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'),
             'cache_hits':provider.hits,'cache_misses':provider.misses}
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)

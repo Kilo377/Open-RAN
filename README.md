@@ -15,6 +15,12 @@ and fixed-baseline repairs: [2026-10-13 environment validation](docs/rt_sys/ENVI
 The RT entry defaults to fixed baseline control; algorithm execution requires
 `--control-mode orchestrated`.
 
+Shared initial conditions, warmup-separated load diagnostics, validated local
+BLER caching/statistical feedback, same-codeword Chase, and scoped control
+lifecycle checks are documented in [the research readiness repair report](docs/rt_sys/RESEARCH_READINESS_REPAIRS_20261013.md).
+The xApp/rApp periods remain unchanged. Fast feedback is explicit
+(`--feedback-mode nr_bler_bank`); actual NR reference feedback remains the default.
+
 ## Current Status
 
 The project has moved beyond the original minimum runnable skeleton and now

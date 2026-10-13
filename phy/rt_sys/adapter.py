@@ -19,14 +19,16 @@ class RtSysPhyAdapter:
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
         self.math = Algebra(self.device)
         mode=self.config.get('feedback_mode','sys_abstraction')
-        if mode not in ('sys_abstraction','nr_tb_reference'):raise ValueError('Unknown RT/SYS feedback mode')
+        if mode not in ('sys_abstraction','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
         if abstraction is not None:self.abstraction=abstraction
-        elif mode=='nr_tb_reference':
+        elif mode in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             if any(self.config.get(k) for k in ('bler_table_files','beta_table_file','calibration_file')):
                 raise ValueError('NR reference cannot use a BLER/EESM calibration table')
-            if self.config.get('harq_combining','none')!='none':raise ValueError('NR reference does not implement waveform Chase/IR')
-            from phy.rt_sys.reference import NrReferenceAbstraction
-            self.abstraction=NrReferenceAbstraction(self.device,self.config.get('bler_target',.1),self.config.get('reference'))
+            from phy.rt_sys.reference import NrReferenceAbstraction,CachedNrReferenceAbstraction,StatisticalBankAbstraction
+            if mode=='nr_bler_bank' and self.config.get('harq_combining','none')!='none':raise ValueError('Statistical BLER bank cannot claim waveform HARQ combining; use nr_cached_reference')
+            backend={'nr_cached_reference':CachedNrReferenceAbstraction,'nr_tb_reference':NrReferenceAbstraction,'nr_bler_bank':StatisticalBankAbstraction}[mode]
+            self.abstraction=backend(self.device,self.config.get('bler_target',.1),
+                {**self.config.get('reference',{}),'harq_combining':self.config.get('harq_combining','none')})
         else:
             if not self.config.get('calibration_file') and not self.config.get('allow_unvalidated_sys',False):
                 raise ValueError('Unvalidated SYS BLER/EESM feedback requires explicit diagnostic opt-in; use nr_tb_reference for actual feedback')
@@ -46,7 +48,7 @@ class RtSysPhyAdapter:
         self.trace = {}
         self.current_snapshot = None
         self.scheduler_snapshot=None
-        self.combiner=ChaseCombiner(self.config.get('harq_combining','none'))
+        self.combiner=ChaseCombiner('none' if mode in ('nr_tb_reference','nr_cached_reference','nr_bler_bank') else self.config.get('harq_combining','none'))
 
     def run_slot(self, phy_input):
         raise RuntimeError('RT/SYS requires run_cluster_slot with all managed-cell grants')
@@ -59,7 +61,7 @@ class RtSysPhyAdapter:
         self.scheduler_snapshot=replace(self.current_snapshot,
             cfr=estimate_csi(self.current_snapshot,self.seed,self.config.get('csi_error_nmse_db')))
         state.rt_channel_snapshot=self.scheduler_snapshot
-        state.rt_harq_combining=self.combiner.mode
+        state.rt_harq_combining=self.config.get('harq_combining','none')
         for i, uid in enumerate(self.current_snapshot.ue_ids):
             link = state.links[uid]
             link.x_m, link.y_m, link.z_m = map(float, self.current_snapshot.positions[i])
@@ -260,9 +262,12 @@ class RtSysPhyAdapter:
                         maximum = int(ue.mcs_cap if ue.mcs_cap is not None else 27)
                         mcs = int(ue.target_mcs) if ue.target_mcs is not None else int(select_mcs_index_from_sinr(result.sinr_db,mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
                         if mcs > maximum: raise ValueError('MCS target exceeds cap')
-                        fixed=ue.is_retx if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference' else ue.target_mcs is not None
+                        fixed=ue.is_retx if getattr(self.abstraction,'feedback_mode',None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank') else ue.target_mcs is not None
+                        context={}
+                        if getattr(self.abstraction,'supports_harq_context',False):
+                            context['harq_context']=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,ndi=ue.harq_ndi if ue.harq_ndi is not None else 0,is_retx=ue.is_retx,cell_id=p.cell_id)
                         metrics = self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
-                            self.seed,p.slot_id,ue.ue_id,fixed=fixed)
+                            self.seed,p.slot_id,ue.ue_id,fixed=fixed,**context)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
                         result.link_adaptation_reason = metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
                         physical_capacity=metrics['capacity_bytes']
@@ -278,7 +283,9 @@ class RtSysPhyAdapter:
                     result.transport_block_size_bytes = result.scheduled_bytes = result.tb_size_bytes
                     result.delivered_bytes = result.tb_size_bytes if result.ack else 0
                     self.combiner.set_payload(ue,result.tb_size_bytes)
-                    if result.ack:self.combiner.acknowledge(ue)
+                    if result.ack:
+                        self.combiner.acknowledge(ue)
+                        if getattr(self.abstraction,'supports_harq_context',False):self.abstraction.harq.acknowledge(ue.ue_id,ue.harq_process_id)
                     result.throughput_mbps = result.delivered_bytes*8/((p.runtime_context.slot_duration_ms if p.runtime_context is not None else self.config.get("slot_duration_ms",1))*1000)
                     result.num_layers = e['layers']
                     result.inter_cell_interference_dbm = 10*math.log10(max(float(np.mean(e['inter'])) if e['inter'] else 0,1e-30))+30
@@ -305,7 +312,7 @@ class RtSysPhyAdapter:
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 outputs.append(result)
-                if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference':
+                if getattr(self.abstraction,'feedback_mode',None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
                     defaults={'ack_source':'no_path' if e is not None else 'not_scheduled','bler_probe_errors':0,'bler_probe_samples':0,
                         'bler_wilson_95':[1.,1.] if e is not None else [0.,0.],'amc_probes':[],'unsupported_nr_mcs':[],
                         'bler_probe_seed':None,'ack_seed':None,'reference_tb_errors':None,'reference_tb_ack':False,
@@ -317,22 +324,29 @@ class RtSysPhyAdapter:
                     trace_ues[-1]['amc_selection_target_met']=metrics.get('amc_selection_target_met')
                     trace_ues[-1]['amc_selection_criterion']=metrics.get('amc_selection_criterion', 'not_evaluated')
                     trace_ues[-1]['coding_backend']=metrics.get('coding_backend', 'not_evaluated')
+                    trace_ues[-1]['harq_reference']=metrics.get('harq_reference')
+                    trace_ues[-1]['bler_estimate_source']=metrics.get('bler_estimate_source','not_evaluated')
+                    trace_ues[-1]['bler_estimate_scope']='Single-attempt BLER; actual LLR combining only in reference Chase mode'
             scheduled = [r for r in outputs if r.is_scheduled]
             results[p.cell_id] = PhyResult(p.slot_id,p.cell_id,outputs,
                 float(np.mean([r.sinr_db for r in scheduled])) if scheduled else 0,
                 float(np.mean([r.bler for r in scheduled])) if scheduled else 0,
                 sum(r.tb_size_bytes for r in outputs))
         self.trace = {'mcs_table_policy':'SYS default EESM tables 1/2; low-SE MAC requests use table 1', 'slot_id':snapshot.slot_id,'cache_key':snapshot.cache_key,'cells':cell_trace,'ues':trace_ues,'precoders':precoder_trace}
-        self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.combiner.mode)
+        self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.config.get('harq_combining','none'))
         self.trace['phy_calibration_status']='custom_tables_require_validation' if self.config.get('bler_table_files') else 'default_tables_failed_expanded_validation'
         artifact=getattr(self.abstraction,'calibration',None)
         if artifact is not None:
             self.trace['phy_calibration_status']='independently_validated_exact_re_domain'
             self.trace['phy_calibration_digest']=artifact['digest']
             self.trace['phy_calibration_scope']='Exact table/MCS/coded-RE tuples and validation profiles only; not URLLC tails or waveform HARQ'
-        if getattr(self.abstraction,'feedback_mode',None)=='nr_tb_reference':
+        if getattr(self.abstraction,'feedback_mode',None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             self.trace.update(phy_calibration_status='nr_tb_equivalent_link_reference',default_bler_eesm_used=False,
-                feedback_mode='nr_tb_reference',reference_decode_trials=self.abstraction.decode_trials,
-                phy_calibration_scope='Actual RV0 NR-TB CRC/LDPC/QAM on independent Gaussian post-LMMSE resources; finite-probe AMC/BLER; no waveform HARQ combining',
+                feedback_mode=self.abstraction.feedback_mode,reference_decode_trials=self.abstraction.decode_trials+getattr(getattr(self.abstraction,'bank',None),'stats',{}).get('calibration_decode_trials',0),
+                phy_calibration_scope='Actual RV0 NR-TB CRC/LDPC/QAM on independent Gaussian post-LMMSE resources; finite-probe or local validated BLER; same-codeword RV0/Chase LLR combining, no IR',
                 mcs_table_policy='PDSCH tables 1/2/3; grant target is an AMC ceiling; actual retransmission MCS/table fixed; single-CB low-rate RV0 repetition; unsupported multi-CB repetition is explicit')
+        if getattr(self.abstraction,'feedback_mode',None)=='nr_bler_bank':
+            self.trace.update(phy_calibration_status='locally_validated_statistical_bler_bank',
+                phy_calibration_scope='Independent actual NR bin-bound validation; sampled TB ACK inside domain; explicit NR on rejected entries; no waveform HARQ',
+                default_bler_eesm_used=False)
         return results

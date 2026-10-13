@@ -60,6 +60,8 @@ def geometry_blocks(manifest):
         if speed*dt>cap*(1+1e-9):
             raise ValueError('Per-slot UE displacement exceeds geometry cap; shorten slot or increase explicit cap')
         if speed>0:update=min(update,max(1,int(np.floor(cap/(speed*dt)))))
+    if all(np.all(np.diff(np.asarray(u['trajectory']['positions_m']),axis=0)==0) for u in manifest['ues']):
+        return [0],int(manifest['total_slots'])+1  # Exact static geometry, no moving objects modeled.
     blocks=set(range(0,int(manifest['total_slots'])+1,update))
     for u in manifest['ues']:
         blocks.update(int(np.ceil(t/dt-1e-9)) for t in u['trajectory']['times_s'][1:-1])
@@ -121,7 +123,11 @@ class RtChannelProvider:
             self.loaded_arrays, self.loaded_chunk = arrays, chunk
         i = slot_id-chunk*self.chunk_slots
         if self.compact:
-            cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt)
+            static=len(self.blocks)==1 and np.all(self.loaded_arrays['doppler']==0)
+            if static and hasattr(self,'_static_cfr'):cfr=self._static_cfr
+            else:
+                cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt)
+                if static:self._static_cfr=cfr
             positions=np.asarray([position_at(u['trajectory'],slot_id*self.dt)[0] for u in self.manifest['ues']])
         else:
             cfr=self.loaded_arrays['cfr'][i]; positions=self.loaded_arrays['positions'][i]
@@ -131,7 +137,8 @@ class RtChannelProvider:
                 'normalized':False,'bandwidth_hz':self.manifest['bandwidth_hz'],'source':'sionna_rt','path_update_ms':self.manifest['path_update_ms'],
                 'carrier_frequency_hz':self.manifest['carrier_frequency_hz'],
                 'geometry_block_slot':block,'effective_max_path_update_ms':self.update_slots*self.manifest['slot_duration_ms'],
-                'inter_slot_geometry_approximation':self.update_slots>1,
+                'inter_slot_geometry_approximation':self.update_slots>1 and len(self.blocks)>1,
+                'static_geometry_exact_reuse':len(self.blocks)==1,
                 'ray_seed_policy':'fixed_per_trace',
                 'subcarrier_spacing_hz':self.manifest['subcarrier_spacing_hz'],
                 'cache_hits':self.hits,'cache_misses':self.misses})

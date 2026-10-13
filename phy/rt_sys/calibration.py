@@ -124,6 +124,7 @@ class NRWaveform:
         from sionna.phy.nr.utils import MCSDecoderNR,TransportBlockNR
         from sionna.phy.mapping import Mapper,Demapper
         self.torch,self.device,self.data_re=torch,device,int(data_re)
+        self.table,self.mcs=int(table),int(mcs)
         q,r=MCSDecoderNR(device=device)(mcs,table,1);self.q,self.rate=int(q),float(r)
         bits,cb,num=TransportBlockNR(device=device).transport_block_size(q,r,q*data_re)
         self.bits,self.cb,self.num_cb=int(bits),int(cb),int(num)

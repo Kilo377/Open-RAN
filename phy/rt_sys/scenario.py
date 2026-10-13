@@ -12,11 +12,13 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_slots=40,
-               path_update_ms=None,device='cuda',config_path=None,*,deployment_id=None,traffic_load=1):
+               path_update_ms=None,device='cuda',config_path=None,*,deployment_id=None,traffic_load=1,initial_queue_bytes=None,ue_speed_mps=None):
     base=json.loads((Path(config_path) if config_path else ROOT/'configs/rt_sys/default.json').read_text())
     catalog=json.loads((ROOT/'configs/rt_sys/scene_catalog.json').read_text())
     if scene not in catalog or not 1<=num_cells<=len(catalog[scene]['cells']) or num_ues<1 or total_slots<1:
         raise ValueError('Invalid scene/cell/UE/slot configuration')
+    initial_queue_bytes=int(base.get('initial_queue_bytes',0) if initial_queue_bytes is None else initial_queue_bytes)
+    if initial_queue_bytes<0:raise ValueError('Initial queue must be nonnegative')
     radio=deepcopy(base['radio']); dt=radio['slot_duration_ms']; duration=dt*total_slots/1000
     if deployment_id is not None and deployment_id not in (0,1,2):raise ValueError('Deployment ID must be 0, 1, or 2')
     if not np.isfinite(traffic_load) or traffic_load<=0:raise ValueError('Positive finite traffic load required')
@@ -32,7 +34,7 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         start=route[0]+fraction*(route[1]-route[0])
         direction=route[1]-start
         distance=float(np.linalg.norm(direction))
-        speed=float(base.get('ue_speed_mps',1.5))
+        speed=float(base.get('ue_speed_mps',1.5) if ue_speed_mps is None else ue_speed_mps)
         if speed<0:raise ValueError('UE speed must be nonnegative')
         times=[0.];points=[start.tolist()];target=route[1];now=start.copy()
         while times[-1]<duration-1e-12:
@@ -80,7 +82,7 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     configs['ric']['memory_store_path']=str(ROOT/'outputs/rt_sys/model_state/xapp_selection.json')
     for i,u in enumerate(ues):
         item=deepcopy(originals[i%len(originals)])
-        item.update(ue_id=u['ue_id'],queue_bytes=1000,serving_beam_id=0,is_indoor=False,serving_cell_id=manifest['cells'][i%num_cells]['cell_id'],
+        item.update(ue_id=u['ue_id'],queue_bytes=initial_queue_bytes,serving_beam_id=0,is_indoor=False,serving_cell_id=manifest['cells'][i%num_cells]['cell_id'],
                     num_rx_ant=radio['num_rx_ant'],velocity_mps=0,shadowing_db=0,pathloss_db=100)
         if configs['sim'].get('scheduler_enable_spatial_multiplexing'):
             # One stream per UE leaves the configured two-stream budget for MU.
@@ -91,8 +93,15 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         for lc in item.get('logical_channels',[]):
             for key in ('arrival_rate_bps','burst_size_bytes'):
                 if key in lc:lc[key]=lc[key]*traffic_load
+        lcs=item.get('logical_channels',[])
+        if lcs:
+            weights=[max(0,int(lc.get('queue_bytes',0))) for lc in lcs]
+            total=sum(weights);remaining=initial_queue_bytes
+            for j,lc in enumerate(lcs):
+                amount=remaining if j==len(lcs)-1 else int(initial_queue_bytes*(weights[j]/total if total else 1/len(lcs)))
+                lc['queue_bytes']=amount;remaining-=amount
         configs['ue']['ues'].append(item)
     configs['beamforming']['antenna'].update({**radio,'gnb_num_tx_ant':radio['tx_rows']*radio['tx_cols'],
         'default_ue_num_rx_ant':radio['num_rx_ant'],'gnb_panel_layout':f'{radio["tx_rows"]}x{radio["tx_cols"]}'})
-    configs['phy']={'phy_type':'sionna_rt_sys','rt_sys':{**base['rt_sys'],'device':device,'rng_seed':seed,**radio}}
+    configs['phy']={'phy_type':'sionna_rt_sys','rt_sys':{**base['rt_sys'],'initial_association':'strongest_rt_reference','device':device,'rng_seed':seed,**radio}}
     return manifest,configs,base['intent']
