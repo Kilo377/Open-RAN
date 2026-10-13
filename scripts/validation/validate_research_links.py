@@ -10,7 +10,7 @@ from phy.rt_sys.calibration import NRWaveform
 
 
 def main():
-    out=ROOT/'outputs/rt_research_readiness_20261013';out.mkdir(parents=True,exist_ok=True)
+    out=ROOT/'outputs/rt_research_readiness_20261013/final_ran';out.mkdir(parents=True,exist_ok=True)
     fast=CachedNrReferenceAbstraction('cuda',config={'probability_bank':{'calibration_samples':512,'validation_samples':512}});normal=NrReferenceAbstraction('cuda')
     import torch
     cases=[]

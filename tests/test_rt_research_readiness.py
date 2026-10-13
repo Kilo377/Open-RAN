@@ -148,3 +148,62 @@ def test_information_screening_rejects_provably_impossible_candidates_before_dec
     assert a.statistics['information_rejected_candidates']==28
     assert all(p['samples']==0 for p in r['amc_probes'])
     assert a.information_lower_bound(1,3,324,np.ones(324)*100)==0
+
+
+def test_nonprimary_association_controls_change_only_serving_ues_and_can_block_handover(tmp_path):
+    from models.action import ConfigAction
+    sim=make_sim(tmp_path)
+    manager=sim.mobility_manager
+    manager.noise=0;manager.filter_ms=0;manager.ttt_slots=0;manager.dwell_slots=0;manager.delay=0
+    # Equal reference channels and equal loads isolate the association knobs.
+    manager._build_cell_load_view=lambda state,profiles:{cid:dict(estimated_load=0.,load_penalty_db=0.,
+        activity_factor=1.,connected_ue_count=0,scheduled_ue_count=0,queued_bytes=0) for cid in profiles}
+    user=sim.state.ues[0];connection=sim.state.connections[user.ue_id]
+    candidate=next(c for c in connection.candidate_cells if c.cell_id=='cell_1')
+    manager._apply_serving_candidate(user,sim.state.links[user.ue_id],connection,candidate)
+    for other in sim.state.ues[1:]:
+        conn=sim.state.connections[other.ue_id]
+        manager._apply_serving_candidate(other,sim.state.links[other.ue_id],conn,
+            next(c for c in conn.candidate_cells if c.cell_id=='cell_0'))
+    reference_hysteresis=sim.state.managed_cells['cell_0'].cell.steering_hysteresis_db
+    sim._apply_rt_config_action(ConfigAction(target_cell_id='cell_1',traffic_steering_preference='edge_offload',
+        mobility_bias_db=30.,steering_hysteresis_db=100.),0)
+    for _ in range(3):sim.step()
+    assert connection.serving_cell_id=='cell_1' and connection.steering_hysteresis_db==100
+    assert all(c.steering_hysteresis_db==reference_hysteresis for uid,c in sim.state.connections.items() if uid!=user.ue_id)
+    assert sim.state.managed_cells['cell_0'].cell.mobility_bias_db==0
+    sim._apply_rt_config_action(ConfigAction(target_cell_id='cell_1',steering_hysteresis_db=0.),3)
+    for _ in range(5):sim.step()
+    assert connection.serving_cell_id=='cell_0' and connection.handover_count==1
+    assert next(row for row in sim.phy_adapter.trace['ues'] if row['ue_id']==user.ue_id)['cell_id']=='cell_0'
+
+
+@pytest.mark.parametrize('strategy',['frequency_first','time_first'])
+@pytest.mark.parametrize('mu',[False,True])
+def test_rt_packing_uses_cartesian_grid_without_cross_group_overlap(strategy,mu):
+    from phy.rt_sys.scheduler import RtSysScheduler
+    from models.scheduling import UeGrant
+    scheduler=RtSysScheduler(total_prbs_per_slot=24,total_symbols_per_slot=14,
+        min_prbs_per_grant=4,min_symbols_per_grant=4,max_ues_per_slot=8)
+    state=NS(scheduler=NS(packing_strategy=strategy))
+    users={f'u{k}':NS(ue_id=f'u{k}',ri=1) for k in range(3)}
+    grants=[UeGrant(uid,4,4,requested_bytes=100000,priority_score=1,target_mcs=12) for uid in users]
+    if mu:
+        grants[0].spatial_group_id=0;grants[1].spatial_group_id=0
+    scheduler._repack_rt_groups(state,grants,users)
+    rectangles=[{(p,s) for p in g.resource_block_indices for s in g.ofdm_symbol_indices} for g in grants]
+    assert len(set.union(*rectangles))==24*14
+    assert rectangles[0]&rectangles[1]==(rectangles[0] if mu else set())
+    assert not rectangles[0]&rectangles[2] and not rectangles[1]&rectangles[2]
+    assert all(0<g.grant_bytes_budget<=g.requested_bytes for g in grants)
+    scheduler._rt_packing=strategy
+    assert scheduler._max_grants_allowed(8)==(6 if strategy=='frequency_first' else 3)
+
+
+def test_rt_candidate_load_counts_secondary_cell_scheduling(tmp_path):
+    sim=make_sim(tmp_path);sim.step()
+    sim.mobility_manager.load_filter_ms=0
+    view=sim.mobility_manager._build_cell_load_view(sim.state,sim.mobility_manager._cell_radio_profiles(sim.state))
+    assert any(r.scheduler.scheduled_ue_ids for cid,r in sim.state.managed_cells.items() if cid!='cell_0')
+    for cid,runtime in sim.state.managed_cells.items():
+        assert view[cid]['scheduled_ue_count']==len(runtime.scheduler.scheduled_ue_ids)

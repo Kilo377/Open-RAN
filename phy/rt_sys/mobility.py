@@ -1,5 +1,7 @@
 """Reuse handover state machine with delayed RT-derived candidate measurements."""
 from collections import deque
+from copy import copy
+from types import SimpleNamespace
 import math
 import numpy as np
 from core.mobility_manager import MobilityManager
@@ -23,7 +25,10 @@ class RtMobilityManager(MobilityManager):
         self.filtered={}; self.filtered_load={}; self.trigger_since={}
 
     def _build_cell_load_view(self,state,profiles):
-        view=super()._build_cell_load_view(state,profiles)
+        view_state=copy(state)
+        view_state.scheduler=SimpleNamespace(scheduled_ue_ids=sorted({uid
+            for runtime in state.managed_cells.values() for uid in runtime.scheduler.scheduled_ue_ids}))
+        view=super()._build_cell_load_view(view_state,profiles)
         alpha=1-math.exp(-self.slot_duration_s*1000/max(self.load_filter_ms,1e-12))
         for cid,load in view.items():
             previous=self.filtered_load.get(cid,load)
@@ -38,7 +43,8 @@ class RtMobilityManager(MobilityManager):
         slot=int(state.slot_id); target=kwargs['best_candidate'].cell_id
         key=(ue.ue_id,target)
         serving_sleep=state.managed_cells[connection.serving_cell_id].cell.cell_sleep_mode=='deep_sleep'
-        threshold=state.cell.handover_margin_db+state.cell.steering_hysteresis_db+state.cell.handover_cost_db
+        policy=state.managed_cells[connection.serving_cell_id].cell
+        threshold=policy.handover_margin_db+policy.steering_hysteresis_db+policy.handover_cost_db
         last=connection.last_handover_slot
         dwell_ok=serving_sleep or last is None or slot-last>=self.dwell_slots
         if not base or kwargs['trigger_margin_db']<threshold or not dwell_ok:
@@ -100,7 +106,7 @@ class RtMobilityManager(MobilityManager):
         self.history.append(values)
         self.observed=self.history[max(0,len(self.history)-1-self.delay)]
         previous={uid:(c.serving_cell_id,c.handover_count) for uid,c in state.connections.items()}
-        super().update(state)
+        super().update(state,scoped_cell_policy=True)
         self.events=[]
         for uid,c in state.connections.items():
             if previous[uid][0]!=c.serving_cell_id:
@@ -114,6 +120,7 @@ class RtMobilityManager(MobilityManager):
         profiles=self._cell_radio_profiles(state)
         positions=self._managed_cells(state)
         serving=str(connection.serving_cell_id)
+        policy=state.managed_cells[serving].cell
         values=self.observed[ue.ue_id]
         candidates=[]
         for cid,(rsrp,gain,beam) in values.items():
@@ -126,7 +133,7 @@ class RtMobilityManager(MobilityManager):
             denominator=10*math.log10(10**(noise/10)+interference)
             score=rsrp-denominator-load['load_penalty_db']
             if cid!=serving:
-                preference=state.cell.traffic_steering_preference; bias=state.cell.mobility_bias_db
+                preference=policy.traffic_steering_preference; bias=policy.mobility_bias_db
                 score+=bias if preference=='edge_offload' else -abs(bias) if preference=='stay_put' else 0
             dx=link.x_m-position['x_m']; dy=link.y_m-position['y_m']; dz=link.z_m-position['z_m']
             candidates.append(CandidateCellState(cell_id=cid,x_m=position['x_m'],y_m=position['y_m'],z_m=position['z_m'],

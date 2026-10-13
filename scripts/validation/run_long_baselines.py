@@ -7,9 +7,9 @@ from phy.rt_sys.contracts import source_fingerprint
 
 
 def main():
-    out=ROOT/'outputs/rt_research_readiness_20261013/long_baselines_verified';out.mkdir(parents=True,exist_ok=True)
+    out=ROOT/'outputs/rt_research_readiness_20261013/final_ran/long_baselines_verified';out.mkdir(parents=True,exist_ok=True)
     plan=[(scene,n,load,slots) for scene in ('simple_street_canyon','munich')
-          for n,load,slots in ((4,1.,4000),(24,.1,2000),(24,1.,2000))]
+          for n,load,slots in ((4,1.,2000),(24,.1,2000),(24,1.,2000))]
     def run(spec):
         scene,n,load,slots=spec;folder=out/f'{scene}_u{n}_load{load}_slots{slots}'
         if folder.exists():raise ValueError(f'Refusing overwrite {folder}')
@@ -42,7 +42,7 @@ def main():
             link_statistics=final['link_reference_statistics'])
     with ThreadPoolExecutor(max_workers=3) as pool:cases=list(pool.map(run,plan))
     report=dict(passed=True,cases=cases,source_sha256=source_fingerprint(ROOT),
-        scope='1-2 second stationary finite capacity validation, not moving-channel generalization or asymptotic stability',
+        scope='1 second stationary finite capacity validation, not moving-channel generalization or asymptotic stability',
         clocks_unchanged=True)
     (out/'validation.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,indent=2))
 if __name__=='__main__':main()

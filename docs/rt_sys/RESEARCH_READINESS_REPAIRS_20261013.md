@@ -34,16 +34,26 @@ RT 控制写入遵守既有执行延迟与 `effective_from_slot` 的较晚者。
 
 字段仲裁同时记录被更高优先级覆盖的低优先级写入；获胜字段携带自身有效窗口，不再因合并而丢失。不同窗口拆分成不同配置动作。验收覆盖 rApp 策略 → xApp 消费 → 多 xApp 冲突 → 指定小区延迟生效 → 调度及关联参数消费者；不以控制器发出动作替代实际生效证据。
 
+关联策略按 UE 当前服务小区读取，包含偏置、滞回、事件触发/偏移、切换成本、执行等待和中断时长，避免主小区参数影响所有小区 UE。偏置沿用原语义：`edge_offload` 提高非服务候选得分，`stay_put` 降低候选得分，`balanced` 不额外应用此偏置；它是服务小区的出站策略，不是目标小区 CIO。已知等信道对照验证非主小区参数只作用于其服务 UE，高滞回阻止切换，解除后完成切换并采用新的服务链路。
+
+## 调度资源打包修复
+
+较长诊断发现频分调度同时划分 PRB 与符号，造成大量二维网格空洞；MU 配对还会丢弃伙伴原来的矩形资源。旧版本 Street 24 UE 满负载区间到达约 94.3 Mbps、交付约 29.7 Mbps，三个小区的活跃网格占用仅约 23%–34%。这不能直接解释为无线容量不足，旧结果保留为诊断而不是修复后验收。
+
+RT 调度现按 SU/MU 组只划分一个轴：频分组使用全部时域符号，时分组使用全部频域 PRB；MU 组成员共享同一个矩形，组间不重叠。完成配对后重新分配释放的资源，并重新计算每个 grant 的 TB/LC 字节预算。准入用户数只受当前打包轴的最小分配粒度限制。既有调度优先级、RR 选择、切片权重及旧后端保持其原流程。满网格分配可能包含 TB padding，交付量仍受真实队列、grant 与 NR TB 预算共同限制，不把 padding 计入吞吐量。
+
 ## 复现入口
 
 ```bash
 .venv-spark/bin/python -m pytest -q tests
 .venv-spark/bin/python scripts/validation/validate_research_links.py
 .venv-spark/bin/python scripts/validation/validate_control_lifecycle.py
+.venv-spark/bin/python scripts/validation/validate_control_lifecycle.py --slots 1000 \
+  --output outputs/rt_research_readiness_20261013/final_ran/control_lifecycle_long
 .venv-spark/bin/python scripts/validation/validate_initial_fairness.py
 .venv-spark/bin/python scripts/validation/run_long_baselines.py
 ```
 
-输出目录都在独立副本 `outputs/rt_research_readiness_20261013/`。矩阵使用新目录并拒绝覆盖已保存场景；重新执行应修改脚本输出目录。较长矩阵为两地图 × 3 小区 × 4/24 UE，静止 UE、空初始队列、200 ms 预热，1–2 秒仿真时长；它属于有限承载检查，不是移动信道泛化实验。
+修复后的正式接入验证保存到独立副本 `outputs/rt_research_readiness_20261013/final_ran/`。矩阵使用新目录并拒绝覆盖已保存场景；重新执行应修改脚本输出目录。矩阵为两地图 × 3 小区 × 4/24 UE，4 UE 满负载、24 UE 的 0.1/1 倍负载，静止 UE、空初始队列、200 ms 预热、每次 1 秒仿真时间。固定策略控制循环另在两地图各执行 500 ms（1000 slots）；其初始 1000 字节队列是控制测试夹具，不混入空队列承载矩阵。上述测试属于有限承载与生命周期检查，不是移动信道泛化或长期稳定性证明。
 
 执行结果与源码指纹、各版本是否完成、数据校验记录将在相邻 JSON 验收报告中保存。历史报告与停止后的部分数据保留，不把未完成运行计为验收通过。

@@ -469,7 +469,7 @@ class MobilityManager:
             )
         return float(trigger_margin_db) >= float(event_offset_db)
 
-    def update(self, state: Any) -> None:
+    def update(self, state: Any, *, scoped_cell_policy: bool = False) -> None:
         handover_margin_db = float(getattr(getattr(state, "cell", None), "handover_margin_db", 3.0))
         handover_delay_slots = max(1, int(getattr(getattr(state, "cell", None), "handover_delay_slots", 2)))
         handover_cost_db = max(0.0, float(getattr(getattr(state, "cell", None), "handover_cost_db", 0.0)))
@@ -500,6 +500,18 @@ class MobilityManager:
             link = self._get_link(state, ue_id)
             if link is None:
                 continue
+
+            if scoped_cell_policy:
+                # RT association controls belong to the UE's current serving
+                # cell, including while a handover is pending.
+                policy = state.managed_cells[str(connection.serving_cell_id)].cell
+                handover_margin_db = float(policy.handover_margin_db)
+                handover_delay_slots = max(1, int(policy.handover_delay_slots))
+                handover_cost_db = max(0., float(policy.handover_cost_db))
+                handover_interruption_slots = max(0, int(policy.handover_interruption_slots))
+                steering_hysteresis_db = max(0., float(policy.steering_hysteresis_db))
+                measurement_event_trigger = str(policy.measurement_event_trigger).strip().lower()
+                measurement_event_offset_db = float(policy.measurement_event_offset_db)
 
             self._advance_geometry(link)
             candidates = self._compute_candidate_cells(state, ue, link, connection, cell_load_view)

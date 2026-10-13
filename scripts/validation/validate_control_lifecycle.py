@@ -1,5 +1,6 @@
 """A1 policy -> owned xApp writes -> arbitration -> delayed scoped RT actuation."""
 from pathlib import Path
+import argparse
 import sys,json
 from dataclasses import asdict
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
@@ -44,13 +45,20 @@ class SchedulerProbe(XAppBase):
 
 
 def main():
-    out=ROOT/'outputs/rt_research_readiness_20261013/control_lifecycle_verified';out.mkdir(parents=True,exist_ok=True)
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--slots',type=int,default=25)
+    parser.add_argument('--output',type=Path,default=ROOT/'outputs/rt_research_readiness_20261013/final_ran/control_lifecycle_verified')
+    args=parser.parse_args()
+    if args.slots<25:raise ValueError('Control lifecycle requires at least 25 slots')
+    out=args.output.resolve()
+    if not out.is_relative_to(ROOT/'outputs'):raise ValueError('Outputs must remain inside copy outputs')
+    out.mkdir(parents=True,exist_ok=True)
     reports=[]
     for scene in ('simple_street_canyon','munich'):
         folder=out/scene
         if folder.exists():raise ValueError('Refusing overwrite saved controls')
         folder.mkdir()
-        m,c,_=build_case(scene,num_cells=3,num_ues=4,total_slots=25,initial_queue_bytes=1000,ue_speed_mps=0)
+        m,c,_=build_case(scene,num_cells=3,num_ues=4,total_slots=args.slots,initial_queue_bytes=1000,ue_speed_mps=0)
         c['ric'].update(rapps=[],xapps=[],run_rapps_on_start=False)
         c['phy']['rt_sys']['feedback_mode']='nr_bler_bank'
         provider=RtChannelProvider(m,ROOT/'channel_cache',device='cuda')
@@ -65,7 +73,7 @@ def main():
         assert sim.controller_manager.xapp_interval_slots==5 and sim.controller_manager.rapp_interval_slots==10
         outcomes=[];dropped=[];states=[]
         with (folder/'trace.jsonl').open('w') as log:
-            for _ in range(25):
+            for _ in range(args.slots):
                 sim.step();outcomes.extend(sim.state.control.actuation_outcomes)
                 arbitration=sim.state.control.arbitration_trace
                 if arbitration is not None:dropped.extend(asdict(x) for x in arbitration.dropped_items_with_reason)
@@ -78,7 +86,7 @@ def main():
                     event_offset=cells['cell_0'].cell.measurement_event_offset_db))
                 log.write(json.dumps(dict(slot=sim.state.slot_id,phy=adapter.trace,
                     outcomes=sim.state.control.actuation_outcomes,arbitration=asdict(arbitration)),default=str)+'\n')
-        assert rapp.calls==3,rapp.calls
+        assert rapp.calls==1+args.slots//10,rapp.calls
         assert all(s['power1']==30 for s in states if s['slot']<15)
         assert states[14]['power1']==20 and all(s['power0']==30 for s in states)
         assert states[-1]['weights']=={'urllc':2.,'embb':.5} and states[-1]['scheduler']=='slice_aware'
@@ -86,6 +94,7 @@ def main():
         assert any(x['source']=='low_power_priority' and x['reason']=='superseded_by_higher_priority' for x in dropped),dropped
         assert any(x.get('reason')=='expired_before_actuation' for x in outcomes),outcomes
         report=dict(scene=scene,passed=True,source_sha256=source_fingerprint(ROOT),policy_updates=rapp.calls,
+            total_slots=args.slots,simulated_ms=args.slots*.5,
             clocks={'xapp_interval_slots':5,'rapp_interval_slots':10},states=states,outcomes=outcomes,dropped=dropped,
             scope='Actual RT/SYS GPU with validated statistical feedback; verifies policy, arbitration and actuation, not algorithm performance')
         (folder/'validation.json').write_text(json.dumps(report,indent=2));reports.append(report)

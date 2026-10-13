@@ -7,7 +7,7 @@ from phy.rt_sys.contracts import source_fingerprint
 
 
 def main():
-    out = ROOT / 'outputs/rt_research_readiness_20261013/initial_fairness'
+    out = ROOT / 'outputs/rt_research_readiness_20261013/final_ran/initial_fairness'
     out.mkdir(parents=True, exist_ok=True)
     cases = []
     for scene in ('simple_street_canyon', 'munich'):
