@@ -26,11 +26,11 @@
 
 调用形式仍为 `run(observation, policy_snapshot)`。`XAppBase(..., contract=...)` 可显式传入冻结的 `XAppContract`，否则根据声明动作和内置类别生成契约。契约包含 required_kpis、actions、entities、max_age_slots、cell_ids；空 cell_ids 表示所有管理小区。默认最大年龄继承报告延迟、窗口与 xApp 周期。
 
-公开的测量包括队列、分组 HOL、参考 SINR/RSRP、数据 SINR、吞吐、真实 CRC 窗口 BLER、独立首传 BLER、重传尝试比例、分组超期比例；小区提供已完成时隙的资源利用率和 RF 发射功率。每项带来源、单位、窗口、产生/交付时间、样本数、有效性和原因。超期比例为累计已超期分组/累计接纳分组，不是分位时延。无 BLER 样本表示无效/None；空队列与零吞吐是有效的零业务。
+公开的测量包括队列、分组 HOL、参考 SINR/RSRP、数据 SINR、吞吐、真实 CRC 窗口 BLER、独立首传 BLER、重传尝试比例、分组超期比例；小区提供已完成时隙的资源利用率和 RF 发射功率。每项带来源、单位、窗口、产生/交付时间、样本数、有效性和原因。窗口明确区分 slots、transport_blocks、reports 与累计统计；BLER 的 TB 窗口不解释为时隙。超期比例为累计已超期分组/累计接纳分组，不是分位时延。无 BLER 样本表示无效/None；空队列与零吞吐是有效的零业务。
 
 xApp/rApp 接收独立投影和策略副本。投影不含真实 backlog、当前 CFR、未交付测量、MCS 反推 CQI 或内部 precoder 匹配度。兼容别名只能来自已交付测量：demand_bytes 来自报告队列，HOL 来自报告分组时延，参考干扰惩罚由报告 RSRP、参考 SINR 和接收噪声计算，不能解释为实际数据干扰。
 
-必需 KPI 缺失/过期/未来时间戳时不执行并记录原因。独立 CQI 和 precoder 匹配度没有测量来源，因此目前依赖这些输入的 mobility_predictor/massive_mimo 内置算法明确不可用；普通波束、关联参数和其他已有动作消费者仍可通过合法 xApp 控制。内置适配器在 RT 投影下不请求未接入的 TTT/CIO/muting 等参数；能力目录仍明确列出 unavailable_actions。自定义 xApp 写未声明/未实现字段、错误小区或范围时整条动作拒绝。non-RT 选择器使用相同能力目录。
+必需 KPI 缺失/过期/未来时间戳时不执行并记录原因。独立 CQI 和 precoder 匹配度没有测量来源，因此目前依赖这些输入的 mobility_predictor/massive_mimo 内置算法明确不可用；普通波束、关联参数和其他已有动作消费者仍可通过合法 xApp 控制。内置适配器在 RT 投影下不请求未接入的 TTT/CIO/muting 等参数；能力目录仍明确列出 unavailable_actions。自定义 xApp 写未声明/未实现字段、错误小区或范围时整条动作拒绝；受限小区契约省略目标时，也检查默认主小区是否在允许范围内。non-RT 选择器使用相同能力目录。
 
 OLLA/HARQ 参数不在 xApp 动作面。整机功耗模型尚未建立；`rf_tx_power_w` 只表示 RF 发射功率。
 

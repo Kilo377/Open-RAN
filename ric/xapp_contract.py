@@ -28,7 +28,7 @@ KPI_REGISTRY={
     'reference_sinr_db':KpiSpec('ue','dB','RT_reference_measurement_filtered_noisy_delayed','sinr_window_slots','sinr_effective_sample_count'),
     'rsrp_dbm':KpiSpec('ue','dBm','RT_reference_measurement_filtered_noisy_delayed','sinr_window_slots','sinr_effective_sample_count'),
     'data_sinr_db':KpiSpec('ue','dB','RT_data_measurement_filtered_noisy_delayed','sinr_window_slots','sinr_effective_sample_count'),
-    'throughput_mbps':KpiSpec('ue','Mbit/s','delivered_goodput_report','throughput_window_slots'),
+    'throughput_mbps':KpiSpec('ue','Mbit/s','delivered_goodput_report','throughput_window_slots','throughput_window_slots'),
     'retx_fraction':KpiSpec('ue','ratio','delivered_actual_attempt_counter','bler_window_tbs','retx_sample_count'),
     'reference_noise_dbm':KpiSpec('ue','dBm','configured_receiver_noise_report','sinr_window_slots','sinr_effective_sample_count'),
     'first_tx_bler':KpiSpec('ue','ratio','delivered_first_tx_actual_crc_window','bler_window_tbs','first_tx_sample_count'),
@@ -117,11 +117,14 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 value=tuple((c.cell_id,c.rsrp_dbm) for c in candidates) or None
                 window=max((c.measurement_window_slots or 1 for c in candidates),default=1)
                 samples=len(candidates)
+            window_kind=('transport_blocks' if spec.window=='bler_window_tbs' else
+                         'cumulative' if spec.window=='since_start' else
+                         'reports' if spec.window=='single_report' else 'slots')
             age=None if produced is None else now-produced
             max_age=contract.max_age_slots
             if max_age is None:
                 delay=(getattr(observation,'measurement_queue_delay_slots',0) or 0)+(getattr(observation,'report_delay_slots',0) or 0)
-                max_age=delay+(window if isinstance(window,(int,float)) else 1)+interval_slots
+                max_age=delay+(window if window_kind=='slots' and isinstance(window,(int,float)) else 1)+interval_slots
             reason=('missing' if value is None or produced is None or delivered is None else
                     'future' if produced>now or delivered>now else
                     'stale' if age>max_age else
@@ -130,7 +133,10 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             valid=reason is None
             setattr(v,name,deepcopy(value) if valid else None)
             record=dict(name=name,entity='ue',entity_id=u.ue_id,unit=spec.unit,source=spec.source,
-                window_slots=window,produced_at_slot=produced,delivered_at_slot=delivered,
+                window=dict(kind=window_kind,size=None if window_kind=='cumulative' else window),
+                window_slots=window if window_kind=='slots' else None,
+                window_tbs=window if window_kind=='transport_blocks' else None,
+                produced_at_slot=produced,delivered_at_slot=delivered,
                 sample_count=samples,valid=valid,reason=reason,age_slots=age)
             v.kpi_metadata[name]=record;result.kpi_records.append(record)
             if name in contract.required_kpis and not valid:errors.append(f'{u.ue_id}:{name}:{reason}')
@@ -182,7 +188,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             max_age=contract.max_age_slots if contract.max_age_slots is not None else (getattr(observation,'report_delay_slots',0) or 0)+interval_slots+1
             reason=('missing' if value is None or produced is None else 'future' if produced>now else 'stale' if now-produced>max_age else None)
             record=dict(name=name,entity='cell',entity_id=cell.cell_id,unit=spec.unit,source=spec.source,
-                window_slots=1,produced_at_slot=produced,delivered_at_slot=now,sample_count=1 if reason is None else 0,
+                window=dict(kind='slots',size=1),window_tbs=None,window_slots=1,produced_at_slot=produced,delivered_at_slot=now,sample_count=1 if reason is None else 0,
                 valid=reason is None,reason=reason,age_slots=now-produced if produced is not None else None)
             c.kpi_metadata[name]=record;result.kpi_records.append(record)
             if name in contract.required_kpis and reason:errors.append(f'{cell.cell_id}:{name}:{reason}')

@@ -76,3 +76,16 @@ def test_restricted_contract_rejects_implicit_primary_cell_and_unknown_scope():
     assert 'default_primary_cell_exceeds_contract' in validate_action(ConfigAction(power_cap_dbm=20),c,o)
     assert not validate_action(ConfigAction(power_cap_dbm=20,target_cell_id='c'),c,o)
     assert 'unsupported_scope' in validate_action(ConfigAction(power_cap_dbm=20,apply_scope='primary_cell'),c,o)
+
+
+def test_kpi_windows_distinguish_tb_counts_slots_and_cumulative_counters():
+    o=fixture();o.ue_observations[0].bler_sample_count=3
+    view,_=project(o,contract_for(['power_cap_dbm']))
+    meta=view.ue_observations[0].kpi_metadata
+    assert meta['bler']['window']=={'kind':'transport_blocks','size':16}
+    assert meta['bler']['window_slots'] is None and meta['bler']['window_tbs']==16
+    assert meta['reference_sinr_db']['window']=={'kind':'slots','size':4}
+    assert meta['throughput_mbps']['sample_count']==4
+    assert meta['queue_bytes']['window']['kind']=='reports'
+    assert meta['deadline_miss_rate']['window']=={'kind':'cumulative','size':None}
+    assert view.cell_observations[0].kpi_metadata['rf_tx_power_w']['window']=={'kind':'slots','size':1}
