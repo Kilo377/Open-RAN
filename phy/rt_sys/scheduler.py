@@ -89,7 +89,14 @@ class RtSysScheduler(SimpleScheduler):
         return 1-correlation if correlation<.8 else 0.
 
     def _derive_target_mcs(self, ue, **kwargs):
-        if getattr(ue, 'rt_feedback_mode', None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        if getattr(ue, 'rt_feedback_mode', None) == 'nr_direct':
+            process = self._get_active_harq_process(ue) if kwargs['is_retx'] else None
+            if process is not None and process.mcs_index is not None:
+                return process.mcs_index
+            # Without PHY-side probes the reference ceiling is not a selected
+            # MCS. Use the existing MAC link/QoS/CSI-age heuristic instead.
+            return super()._derive_target_mcs(ue, **kwargs)
+        if getattr(ue, 'rt_feedback_mode', None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             process = self._get_active_harq_process(ue) if kwargs['is_retx'] else None
             if process is not None and process.mcs_index is not None:
                 return process.mcs_index
@@ -105,7 +112,7 @@ class RtSysScheduler(SimpleScheduler):
 
     def _derive_mcs_table_id(self, *args, **kwargs):
         ue = args[0] if args else kwargs['ue']
-        if getattr(ue, 'rt_feedback_mode', None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        if getattr(ue, 'rt_feedback_mode', None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             process = self._get_active_harq_process(ue) if kwargs['is_retx'] else None
             if process is not None and process.mcs_table_id is not None:
                 return process.mcs_table_id
@@ -116,11 +123,11 @@ class RtSysScheduler(SimpleScheduler):
         return 'qam64' if selected == 'qam64_low_se' else selected
 
     def _derive_mcs_cap(self, ue, is_retx, target_mcs):
-        if getattr(ue, 'rt_feedback_mode', None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        if getattr(ue, 'rt_feedback_mode', None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             return int(target_mcs)
         return super()._derive_mcs_cap(ue, is_retx, target_mcs)
 
     def _get_effective_link_quality_db(self, ue):
-        if getattr(ue, 'rt_feedback_mode', None) in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        if getattr(ue, 'rt_feedback_mode', None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             return float(ue.post_eq_sinr_db if getattr(ue, 'last_scheduled_slot', None) is not None else ue.sinr_db)
         return super()._get_effective_link_quality_db(ue)

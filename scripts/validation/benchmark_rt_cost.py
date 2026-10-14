@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 def worker(args):
     import torch
     from phy.rt_sys.reference import NrReferenceAbstraction, StatisticalBankAbstraction
+    from phy.rt_sys.direct import DirectNrAbstraction
     from phy.rt_sys.channel import RtChannelProvider
     from experiments.run_rt_sys import parse_args, run_case
     from phy.rt_sys.contracts import source_fingerprint
@@ -31,6 +32,7 @@ def worker(args):
     latest = {}
 
     def instrument(cls, method, label):
+        stages[label]  # preserve zero-call stages as explicit evidence
         original = getattr(cls, method)
 
         @functools.wraps(original)
@@ -48,7 +50,8 @@ def worker(args):
                                   link_statistics=dict(self.statistics))
         setattr(cls, method, timed)
 
-    active = NrReferenceAbstraction if args.mode == 'nr_tb_reference' else StatisticalBankAbstraction
+    active = {'nr_tb_reference': NrReferenceAbstraction, 'nr_bler_bank': StatisticalBankAbstraction,
+              'nr_direct': DirectNrAbstraction}[args.mode]
     for method, label in (('evaluate', 'link_total'), ('waveform', 'waveform_lookup_or_build'),
                           ('_probe', 'amc_and_bler_probes'),
                           ('_transmitted_feedback', 'transmitted_tb_feedback')):
@@ -114,7 +117,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--worker', action='store_true')
     parser.add_argument('--scene', choices=['simple_street_canyon', 'munich'])
-    parser.add_argument('--mode', choices=['nr_tb_reference', 'nr_bler_bank'])
+    parser.add_argument('--mode', choices=['nr_direct', 'nr_tb_reference', 'nr_bler_bank'])
     parser.add_argument('--slots', type=int, default=8)
     parser.add_argument('--config', type=Path)
     parser.add_argument('--output', type=Path, required=True)

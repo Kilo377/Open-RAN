@@ -4,7 +4,7 @@ A slot-driven O-RAN-style RAN simulator prototype in Python.
 
 This independent copy now defaults to Sionna 2.2 RT with actual NR-TB reference
 feedback and SYS transport-budget adaptation (`sionna_rt_sys`,
-`feedback_mode: nr_tb_reference`). Geometry updates every 0.5 ms slot; Munich
+`feedback_mode: nr_direct`, no online Monte Carlo probes). Geometry updates every 0.5 ms slot; Munich
 uses dispersed legal roads for MU scheduling. See
 [the current physics repair report](docs/rt_sys/TARGETED_PHYSICS_REPAIRS.md)
 for execution scope, validation and Spark commands. The failed default
@@ -19,7 +19,9 @@ Shared initial conditions, warmup-separated load diagnostics, validated local
 BLER caching/statistical feedback, same-codeword Chase, and scoped control
 lifecycle checks are documented in [the research readiness repair report](docs/rt_sys/RESEARCH_READINESS_REPAIRS_20261013.md).
 The xApp/rApp periods remain unchanged. Fast feedback is explicit
-(`--feedback-mode nr_bler_bank`); actual NR reference feedback remains the default.
+(`--feedback-mode nr_bler_bank`). The default `nr_direct` executes the MAC-selected
+MCS with actual NR feedback; it does not promise a target BLER. Probe-based
+reference modes remain explicit validation tools. See [no-probe operation](docs/rt_sys/NR_DIRECT_20261014.md).
 
 ## Current Status
 

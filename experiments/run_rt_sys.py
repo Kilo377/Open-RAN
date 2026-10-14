@@ -40,7 +40,7 @@ def parse_args():
     p.add_argument('--model-state',type=Path)
     p.add_argument('--initial-queue-bytes',type=int)
     p.add_argument('--ue-speed-mps',type=float)
-    p.add_argument('--feedback-mode',choices=['nr_tb_reference','nr_cached_reference','nr_bler_bank'])
+    p.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
@@ -172,8 +172,8 @@ def run_case(args):
         summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
-            'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_tb_reference','nr_cached_reference'),
-            'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_tb_reference','nr_cached_reference','nr_bler_bank'),
+            'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference'),
+            'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'),
             'cache_hits':provider.hits,'cache_misses':provider.misses}
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)
