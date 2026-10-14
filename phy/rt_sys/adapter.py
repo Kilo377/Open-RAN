@@ -71,6 +71,8 @@ class RtSysPhyAdapter:
         self.release_inactive_contexts(state)
         self.current_snapshot = self.channel_provider.snapshot(int(state.slot_id))
         self.current_snapshot.validate()
+        if getattr(self,'paper',None):
+            self.current_snapshot.metadata.update(tx_rows=self.config['tx_rows'],tx_cols=self.config['tx_cols'])
         self.scheduler_snapshot=replace(self.current_snapshot,
             cfr=estimate_csi(self.current_snapshot,self.seed,self.config.get('csi_error_nmse_db')))
         state.rt_channel_snapshot=self.scheduler_snapshot
@@ -111,6 +113,7 @@ class RtSysPhyAdapter:
         nr, nt = snapshot.cfr.shape[2:4]
         if radio and (radio[0].num_ofdm_symbols_per_slot != ns):
             raise ValueError('RT and grant symbol grids differ')
+        paper=getattr(self,'paper',None)
         metadata = snapshot.metadata
         if radio and any(abs(getattr(r,k)-metadata[k]) > 1e-3 for r in radio
                          for k in ('carrier_frequency_hz','subcarrier_spacing_hz','bandwidth_hz') if k in metadata):
@@ -158,17 +161,28 @@ class RtSysPhyAdapter:
                 budget = 0.0
             power = budget*ns/max(1,total)
             for e in active: e['power'] = power
-            cell_trace[p.cell_id] = {'budget_w':budget, 'average_used_w':power*total/ns,
+            if paper and getattr(paper.state.managed_cells[p.cell_id].cell,'prb_power_w',None) is not None:
+                cell=paper.state.managed_cells[p.cell_id].cell
+                nprb=p.runtime_context.n_prbs_total;offset=(nf-nprb*12)//2
+                for e in active:e['power']=np.zeros((ns,nf))
+                for prb,target in enumerate(cell.prb_power_w):
+                    lo=offset+12*prb;hi=lo+12
+                    used=sum(e['mask'][:,lo:hi].sum()*e['layers'] for e in active)
+                    value=target*ns/used if used and budget>0 else 0.
+                    for e in active:e['power'][:,lo:hi]=value
+                power=sum(float((e['power']*e['mask']).sum())*e['layers'] for e in active)/ns
+            cell_trace[p.cell_id] = {'budget_w':budget, 'average_used_w':(power if paper and getattr(paper.state.managed_cells[p.cell_id].cell,'prb_power_w',None) is not None else power*total/ns),
                                     're_streams':int(total),'emitted_re_streams':int(total) if budget>0 else 0,
                                     'occupied_re':int(np.logical_or.reduce([e['mask'] for e in active]).sum()) if active and budget>0 else 0,
                                     'grid_re':int(ns*nf),
                                     'tx_power_dbm':float(p.tx_power_dbm)}
         # Batch all REs with the same transmitter/stream set across symbols.
         # Each RE retains its true channel and the original per-symbol ridge.
+        def at(e,s,f):return e['power'][s,f] if isinstance(e['power'],np.ndarray) else e['power']
         patterns={}
         for symbol in range(ns):
             for f in range(nf):
-                pattern=tuple(i for i,e in enumerate(entries) if e['mask'][symbol,f] and e['power']>0)
+                pattern=tuple(i for i,e in enumerate(entries) if e['mask'][symbol,f] and at(e,symbol,f)>0)
                 if pattern:patterns.setdefault(pattern,[]).append((symbol,f))
         for pattern,coordinates in patterns.items():
             symbols,frequencies=map(list,zip(*coordinates))
@@ -184,6 +198,9 @@ class RtSysPhyAdapter:
                         member['p'].current_beam_profile_id,int(member['ue'].serving_beam_id))
                     directions.update(np.argmax(abs(dft.conj().T @ sub),axis=0).tolist())
                 basis=dft[:,sorted(directions)]
+                if paper and getattr(paper.state.managed_cells[snapshot.cell_ids[ci]].cell,'ret_enabled',False):
+                    from phy.rt_sys.paper_radio import basis as paper_basis
+                    basis=paper_basis(snapshot,paper.state.managed_cells[snapshot.cell_ids[ci]].cell,group[0]['ue'].serving_beam_id)
                 for e in group:
                     hu = estimated[e['ui'],ci][:,:,symbols,frequencies].moveaxis(-1,0) if a.torch else np.moveaxis(estimated[e['ui'],ci][:,:,symbols,frequencies],-1,0)
                     u,_,_ = a.svd(hu)
@@ -211,11 +228,11 @@ class RtSysPhyAdapter:
                     precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
                         'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
                         'beam_subspace_dimension':basis.shape[-1],
-                        'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':e['power']} for e,k in owners],
+                        'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':float(at(e,symbol,frequencies[indices[0]]))} for e,k in owners],
                         'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist(),
                         'mean_pair_channel_correlation':float(correlations[indices].mean()) if correlations is not None else None})
                 for j,(e,k) in enumerate(owners):
-                    w = weights[...,j:j+1]*math.sqrt(e['power'])
+                    w = weights[...,j:j+1]*(a.array(np.sqrt(e['power'][symbols,frequencies]))[:,None,None] if isinstance(e['power'],np.ndarray) else math.sqrt(e['power']))
                     e['precoder_norms'].append(float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
                     tx.append((e,k,w))
             for e,k,w in tx:
@@ -328,6 +345,7 @@ class RtSysPhyAdapter:
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 contract=getattr(ue,'tx_contract',None)
+                if paper:trace_ues[-1]['resource_allocation']=dict(prbs=list(ue.resource_block_indices),symbols=list(ue.allocated_symbol_indices),layers=int(ue.layer_count or 1),scheduled=bool(ue.is_scheduled))
                 trace_ues[-1].update(tb_id=contract.tb_id if contract else None,is_retx=bool(ue.is_retx),
                     actual_decode=metrics.get('reference_tb_ack') is not None,
                     mcs_table=ue.mcs_table_id,tx_contract=asdict(contract) if contract else None,

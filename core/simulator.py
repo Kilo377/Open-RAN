@@ -188,6 +188,10 @@ class Simulator:
         if self._rt_sys_mode:
             from phy.rt_sys.mobility import RtMobilityManager
             self.traffic_engine.enable_packet_tracking(self.state)
+            if self.phy_adapter.config.get('paper_interfaces',{}).get('enabled',False):
+                from phy.rt_sys.paper_environment import PaperEnvironment
+                self._paper_ue_config=ue_config
+                self.state.paper=PaperEnvironment(self,self.phy_adapter.config['paper_interfaces'])
             for ue in self.state.ues:
                 ue.rt_feedback_mode = self.phy_adapter.config.get('feedback_mode', 'sys_abstraction')
             self.mobility_manager = RtMobilityManager(self.phy_adapter,
@@ -876,6 +880,7 @@ class Simulator:
             beamforming=scoped_beamforming,
             runtime_mode=str(getattr(state, "runtime_mode", "single_active_cell")),
             managed_cells=getattr(state, "managed_cells", {}),
+            paper=getattr(state,'paper',None),
             rt_du_observation=getattr(state,'rt_du_observation',None),
             rt_tx_contracts=self._rt_sys_mode and getattr(self.phy_adapter.abstraction,'feedback_mode',None)=='nr_direct',
             rt_channel_snapshot=self.phy_adapter.scheduler_snapshot if self._rt_sys_mode else None,
@@ -2237,8 +2242,14 @@ class Simulator:
         elif self._rng.random()<self._control_reject_prob:reason='probabilistic_reject'
         targets=[] if reason in ('unknown_target_cell','unsupported_scope') else self._resolve_config_target_cell_ids(action)
         before=runtime_control_values(self.state,targets)
+        from phy.rt_sys.paper_controls import validate_transaction
+        if reason is None:reason=validate_transaction(self.state,action,targets)
         if reason is None:
+            action._paper_hysteresis_changed=action.steering_hysteresis_db is not None and any(self.state.managed_cells[c].cell.steering_hysteresis_db!=action.steering_hysteresis_db for c in targets)
             applied=self.executor.apply_action(self.state,action)
+            if applied and getattr(self.state,'paper',None):
+                from phy.rt_sys.paper_controls import apply_values
+                apply_values(self.state,action,applied)
             if not applied:reason='no_runtime_consumer_applied'
             self._refresh_runtime_views_after_config_apply()
         else:applied=[]
@@ -3339,6 +3350,9 @@ class Simulator:
         self._refresh_control_lifecycle_outcomes()
 
         # Consume one-shot commands before scheduling.
+        if getattr(self.state,'paper',None):
+            commands_to_apply=self.state.paper.consume_commands(commands_to_apply)
+            self.state.paper.before_scheduling()
         self.command_consumer.apply_commands(self.state, commands_to_apply)
 
         self._refresh_managed_cell_runtime_views(self.state)
@@ -3352,7 +3366,9 @@ class Simulator:
                 self.phy_adapter.config.get('noise_figure_db', 7))
         self.measurement_updater.update(self.state)
 
+        if getattr(self.state,'paper',None):self.state.paper.after_phy()
         post_phy_observation = build_observation(self.state)
+        if getattr(self.state,'paper',None):self.state.paper.attach_observation(post_phy_observation)
         post_phy_observation.produced_at_slot = int(self.state.slot_id)
         post_phy_observation.delivered_at_slot = None
         self._observation_queue.append(post_phy_observation)

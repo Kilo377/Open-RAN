@@ -74,6 +74,17 @@ class ConfigAction:
     beam_profile_id: Optional[int] = None
     scheduler_mode: Optional[str] = None
 
+    # Opt-in paper environment controls. None means absent; empty maps clear.
+    prb_power_w: Optional[list[float]] = None
+    clear_prb_power: Optional[bool] = None
+    power_group_size_prbs: Optional[int] = None
+    ue_prb_limits: Optional[dict[str, int]] = None
+    neighbor_cell_ids: Optional[list[str]] = None
+    cio_offsets_db: Optional[dict[str, float]] = None
+    ret_enabled: Optional[bool] = None
+    ret_tilt_deg: Optional[float] = None
+    ret_codebook_id: Optional[int] = None
+
     # Capability-limited control surface.
     scheduler_policy_hint: Optional[str] = None
     latency_bias: Optional[float] = None
@@ -130,6 +141,7 @@ class CommandAction:
     command_type: str
     target_ue_id: Optional[str] = None
     delta_priority: float = 0.0
+    target_cell_id: Optional[str] = None
 
     valid_from_slot: Optional[int] = None
     valid_until_slot: Optional[int] = None

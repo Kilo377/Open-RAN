@@ -207,7 +207,7 @@ class MeasurementUpdater:
                 # Only reporting noise is added; legacy fields above are unused.
                 from phy.rt_sys.contracts import digest
                 rt_rng = random.Random(int(digest([self._rng_seed, slot_id, ue_id, 'rt_reporting_noise'])[:15], 16))
-                noise = rt_rng.gauss(0., self._sinr_noise_std_db) if self._sinr_noise_std_db else 0.
+                noise = rt_rng.gauss(0., self._sinr_noise_std_db) if self._sinr_noise_std_db and not rt_sample.get('prefiltered_reference') else 0.
                 raw_sinr_db = rt_sample['reference_sinr_db'] + noise
                 if self._serving_cells.get(ue_id) != serving_cell_id:
                     self._first_tx_ack_hist.pop(ue_id,None)
@@ -217,9 +217,10 @@ class MeasurementUpdater:
                     self._data_sinr_ewma.pop(ue_id, None)
                 self._serving_cells[ue_id] = serving_cell_id
                 previous_rsrp = self._rsrp_ewma.get(ue_id, rt_sample['rsrp_dbm']+noise)
-                self._rsrp_ewma[ue_id] = self._ewma_alpha()*(rt_sample['rsrp_dbm']+noise)+(1-self._ewma_alpha())*previous_rsrp
+                rt_alpha=1. if rt_sample.get('prefiltered_reference') else self._ewma_alpha()
+                self._rsrp_ewma[ue_id] = rt_alpha*(rt_sample['rsrp_dbm']+noise)+(1-rt_alpha)*previous_rsrp
 
-            alpha = self._ewma_alpha()
+            alpha = 1. if rt_sample is not None and rt_sample.get('prefiltered_reference') else self._ewma_alpha()
             prev = self._sinr_ewma.get(ue_id)
             if prev is None:
                 smoothed_sinr = float(raw_sinr_db)

@@ -53,6 +53,8 @@ class ControllerManager:
     """
 
     ACTION_FIELDS = [
+        "prb_power_w", "clear_prb_power", "power_group_size_prbs", "ue_prb_limits",
+        "neighbor_cell_ids", "cio_offsets_db", "ret_enabled", "ret_tilt_deg", "ret_codebook_id", "time_to_trigger_ms",
         "codebook_id",
         "tx_power_dbm",
         "beam_profile_id",
@@ -970,6 +972,7 @@ class ControllerManager:
             payload_summary={
                 "command_type": str(getattr(command, "command_type", "")),
                 "target_ue_id": getattr(command, "target_ue_id", None),
+                "target_cell_id": getattr(command, "target_cell_id", None),
                 "delta_priority": float(getattr(command, "delta_priority", 0.0)),
             },
         )
@@ -1293,8 +1296,9 @@ class ControllerManager:
             xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
             if rt_contract:
                 failures = validate_action(xapp_decision.config_action, contract, observation)
-                if xapp_decision.commands:
-                    failures.append('undeclared_command_surface')
+                from ric.xapp_contract import validate_commands
+                failures.extend(validate_commands(xapp_decision.commands,contract,observation))
+                for command in xapp_decision.commands:command._paper_allowed_cells=contract.cell_ids
                 if failures:
                     dropped_items.append(DroppedControlItem(kind='xapp_action',source=str(xapp.name),
                         reason='action_contract_rejected:' + ';'.join(failures)))
@@ -1497,6 +1501,8 @@ class ControllerManager:
                 apply_scope=apply_scope,
                 target_cell_id=target_cell_id,
             )
+            if 'prb_power_w' in scope_field_winners:scope_action.clear_prb_power=None
+            if scope_field_winners.get('clear_prb_power',(0,False,''))[1]:scope_action.prb_power_w=None
             for field_name, (_, field_value, _) in scope_field_winners.items():
                 setattr(scope_action, field_name, self._copy_action_field_value(field_value))
             self.current_action = self.current_action_by_scope.get("cell:__default__", self.current_action)
@@ -1543,7 +1549,7 @@ class ControllerManager:
         """
         from ric.xapp_contract import is_rt, capability_record
         if is_rt(observation):
-            catalog = [capability_record(i.xapp.name, i.xapp.controlled_fields) for i in self.e2_interfaces]
+            catalog = [capability_record(i.xapp.name, i.xapp.controlled_fields,getattr(i.xapp,'contract',None)) for i in self.e2_interfaces]
             available = [item['xapp_name'] for item in catalog if item['available']]
             for interface in self.a1_interfaces:
                 interface.rapp.rt_xapp_capabilities = catalog
@@ -1653,6 +1659,9 @@ class ControllerManager:
                 effective_until_slot=getattr(merged_scope_action, "effective_until_slot", None),
                 source_name="controller_manager",
             )
+            from copy import deepcopy
+            from phy.rt_sys.paper_controls import FIELDS as PAPER_FIELDS
+            for field in PAPER_FIELDS:setattr(stamped_scope_action,field,deepcopy(getattr(merged_scope_action,field)))
             self._stamp_metadata(
                 stamped_scope_action,
                 source="controller_manager",

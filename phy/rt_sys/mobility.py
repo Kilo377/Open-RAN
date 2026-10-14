@@ -57,6 +57,8 @@ class RtMobilityManager(MobilityManager):
         pass  # RtChannelProvider owns the preconfigured trajectory.
 
     def initialize_association(self, state):
+        if getattr(state,'paper',None):return
+
         # Initial attachment is not a handover and must not wait for TTT.
         # Use actual RT reference gain (no noise/load bias) at snapshot zero.
         for ue in state.ues:
@@ -74,6 +76,11 @@ class RtMobilityManager(MobilityManager):
         self.trigger_since.clear()
 
     def update(self,state):
+        if getattr(state,'paper',None):
+            state.paper.prepare_reference()
+            if state.slot_id==0:state.paper.before_scheduling()
+            self.events=[]
+            return
         snapshot=self.adapter.current_snapshot
         values={}
         for uid in snapshot.ue_ids:

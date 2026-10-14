@@ -28,6 +28,7 @@ def parse_args():
     p.add_argument('--path-update-ms',type=float)
     p.add_argument('--device',choices=['cuda','cpu'],default='cuda')
     p.add_argument('--config',type=Path)
+    p.add_argument('--control-timeline',type=Path)
     p.add_argument('--output',type=Path)
     p.add_argument('--dry-run',action='store_true')
     p.add_argument('--generate-only',action='store_true')
@@ -111,6 +112,12 @@ def run_case(args):
         environment=environment_info()
         adapter=RtSysPhyAdapter(configs['phy']['rt_sys'],channel_provider=provider)
         registry=build_controller_registry(configs['ric'])
+        timeline_path=getattr(args,'control_timeline',None)
+        if timeline_path:
+            if not configs['phy']['rt_sys'].get('paper_interfaces',{}).get('enabled'):raise ValueError('Control timeline requires paper interfaces')
+            from experiments.fixed_control_timeline import FixedControlTimeline
+            registry.register_xapp(FixedControlTimeline(timeline_path))
+            (output/'control_timeline.json').write_text(Path(timeline_path).read_text())
         registry.active_intent_manager=ActiveIntentManager(initial_intent_text=intent)
         runtime=build_runtime_scenario_config(scenario_name=name,scenario_type='rt_scene',sim_config=configs['sim'],cell_config=configs['cell'],ric_config=configs['ric'])
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
@@ -161,6 +168,12 @@ def run_case(args):
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
         summary=simulator._build_final_summary()
+        if getattr(simulator.state,'paper',None):
+            paper=simulator.state.paper
+            summary['paper_interfaces']=dict(model=paper.model,connection_events_enabled=paper.events_enabled,final_reports=paper.published,events=paper.all_events,rf_energy_j=paper.rf_energy)
+            (output/'connection_events.json').write_text(json.dumps(paper.all_events,indent=2))
+            for app in registry.xapps:
+                if app.name=='fixed_control_timeline':(output/'public_kpi_inputs.json').write_text(json.dumps(app.inputs,indent=2))
         if hasattr(adapter.abstraction,'bank'):adapter.abstraction.bank.save()
         if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})

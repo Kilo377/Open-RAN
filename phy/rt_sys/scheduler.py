@@ -5,8 +5,13 @@ from phy.rt_sys.numerics import beam_subspace
 
 
 class RtSysScheduler(SimpleScheduler):
+    _paper=None
     def run(self,state):
         self._rt_state=state
+        self._paper=getattr(state,'paper',None)
+        if self._paper:
+            cap=self._paper.layer_caps[state.cell.cell_id]
+            state.scheduler.max_total_spatial_layers=min(cap,self._paper.adapter.current_snapshot.metadata['tx_cols'] if state.cell.ret_codebook_id==0 else 1) if state.cell.ret_enabled else cap
         self._contracts=bool(getattr(state,'rt_tx_contracts',False))
         self._rt_packing=self._get_packing_strategy(state)
         if self._contracts:
@@ -32,6 +37,26 @@ class RtSysScheduler(SimpleScheduler):
                     if tb not in active:ue.packet_ledger.release(tb)
         return result
 
+    def _is_ue_connected(self,state,ue):
+        if getattr(state,'paper',None):
+            cell=state.cell
+            blocked=(getattr(cell,'ue_prb_limits',{}).get(ue.ue_id,1)==0 or
+                (getattr(cell,'prb_power_w',None) is not None and not any(cell.prb_power_w)))
+            if blocked:
+                for p in ue.harq.processes:
+                    if p.tx_contract is not None and getattr(p,'last_paper_wait_slot',None)!=state.slot_id:
+                        p.last_paper_wait_slot=state.slot_id
+                        ue.harq.retx_deferred_resource=getattr(ue.harq,'retx_deferred_resource',0)+1
+                        ue.harq.events.append(dict(kind='retx_deferred_resource',slot_id=state.slot_id,tb_id=p.tb_id,reason='zero_power_or_budget'))
+                return False
+        return super()._is_ue_connected(state,ue)
+
+    def _get_layer_count(self,state,ue):
+        layers=super()._get_layer_count(state,ue)
+        if getattr(state,'paper',None) and getattr(state.cell,'ret_enabled',False):
+            layers=min(layers,state.paper.adapter.current_snapshot.metadata['tx_cols'] if state.cell.ret_codebook_id==0 else 1)
+        return layers
+
     def _max_grants_allowed(self,eligible_count):
         strategy=getattr(self,'_rt_packing',self.packing_strategy)
         limit=(self.total_symbols_per_slot//self.min_symbols_per_grant if strategy=='time_first'
@@ -47,6 +72,9 @@ class RtSysScheduler(SimpleScheduler):
         retx = [g for g in grants if g.is_retx]
         new = [g for g in grants if not g.is_retx]
         occupied = np.zeros((self.total_symbols_per_slot,self.total_prbs_per_slot), bool)
+        limits=getattr(state.cell,'ue_prb_limits',{}) if self._paper else {}
+        vector=getattr(state.cell,'prb_power_w',None) if self._paper else None
+        if vector is not None:occupied[:,np.asarray(vector)<=0]=True
         kept = []
         def process(g):
             return next(p for p in ue_map[g.ue_id].harq.processes if p.process_id==g.harq_process_id)
@@ -56,9 +84,10 @@ class RtSysScheduler(SimpleScheduler):
             c = process(g).tx_contract
             if c is None:
                 raise ValueError('Retransmission lacks original TB contract')
+            allowed=limits.get(g.ue_id,self.total_prbs_per_slot)>=c.prbs
             location = next(((s,p) for s in range(occupied.shape[0]-c.symbols+1)
                 for p in range(occupied.shape[1]-c.prbs+1)
-                if not occupied[s:s+c.symbols,p:p+c.prbs].any()), None)
+                if allowed and not occupied[s:s+c.symbols,p:p+c.prbs].any()), None)
             if location is None:
                 ue_map[g.ue_id].harq.retx_deferred_resource=getattr(ue_map[g.ue_id].harq,'retx_deferred_resource',0)+1
                 ue_map[g.ue_id].harq.events.append(dict(kind='retx_deferred_resource',
@@ -86,7 +115,7 @@ class RtSysScheduler(SimpleScheduler):
         for i,value in enumerate(list(free)+[False]):
             if value and start is None:start=i
             if not value and start is not None:runs.append([start,i-start]);start=None
-        minimum=self.min_symbols_per_grant if time_first else self.min_prbs_per_grant
+        minimum=self.min_symbols_per_grant if time_first else (1 if self._paper else self.min_prbs_per_grant)
         members_list=list(groups.values())
         for index,members in enumerate(members_list):
             candidates=[r for r in runs if r[1]>=minimum]
@@ -94,6 +123,8 @@ class RtSysScheduler(SimpleScheduler):
             r=max(candidates,key=lambda r:r[1])
             remaining_groups=len(members_list)-index
             size=max(minimum,r[1]//remaining_groups)
+            if self._paper:
+                size=min(size,*(limits.get(g.ue_id,self.total_prbs_per_slot) for g in members))
             initial_size=size
             while size>=minimum:
                 if all(codec_format_supported(g.mcs_table_id,int(g.target_mcs),

@@ -10,6 +10,7 @@ from phy.rt_sys.numerics import beam_subspace
 
 
 def reference_measurements(snapshot, state, noise_figure_db=7):
+    if getattr(state,'paper',None):return state.paper.serving_references()
     result = {}
     for uid in snapshot.ue_ids:
         serving = state.connections[uid].serving_cell_id
