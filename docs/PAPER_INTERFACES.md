@@ -15,7 +15,7 @@
 
 持续配置扩展 `ConfigAction`：
 
-- `prb_power_w: list[float] | None`：每组绝对W，时隙平均；组大小 `power_group_size_prbs` 默认1。组内按静态成员均分。全向量之和受 `tx_power_dbm`/`power_cap_dbm` 预算约束；超限整条配置拒绝。显式 `clear_prb_power=True` 切回原模式。空闲份额不转移。
+- `prb_power_w: list[float] | None`：每组绝对W，时隙平均；组大小 `power_group_size_prbs` 默认1。组内按静态成员均分。全向量之和受 `tx_power_dbm`/`power_cap_dbm` 预算约束；超限整条配置拒绝。显式 `clear_prb_power=True` 切回原模式。空闲份额不转移。预算检查包含同一事务的功率上限、休眠、显式功率的最终结果；已有向量超过休眠后的预算时整条事务拒绝，应显式清除或降低向量。新模式持续遵守功率上限，旧默认路径保持原行为。
 - `ue_prb_limits: dict[UE,int] | None`：每UE上限；0暂停，空字典清除。预算/功率模式要求frequency_first；重传原格式放不下合法等待，不改码字、不计NACK/轮次。MU按每UE检查，功率和物理占用按共享网格记账。
 - `time_to_trigger_ms`、`cio_offsets_db: dict[候选小区,dB]`、`neighbor_cell_ids: list[小区]`：由目标小区上下文确定服务小区。邻区限制不删除物理干扰。参数实质变化才重置TTT；移除进行中目标产生管理性取消。
 - `steering_hysteresis_db` 复用旧HYS消费者，和事件偏移、切换代价及原切换margin分别处理。

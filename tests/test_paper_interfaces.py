@@ -298,3 +298,30 @@ def test_group_power_expansion_and_group_cqi_mapping(tmp_path):
     u=sim.state.paper.published['ue']['ue_0']
     assert len(u['subband_cqi'])==groups
     assert sum(u['subband_prb_groups'],[])==list(range(n))
+
+
+def test_power_profile_validates_post_sleep_budget_and_cap(tmp_path):
+    from phy.rt_sys.paper_controls import proposed_power_budget
+    sim=make_sim(tmp_path,cells=1);cell=sim.state.cell;n=sim.state.resource_grid.n_prbs_total
+    sim._apply_rt_config_action(ConfigAction(prb_power_w=[.4/n]*n),0)
+    before=deepcopy(cell)
+    action=ConfigAction(cell_sleep_mode='light_sleep')
+    assert proposed_power_budget(cell,action)<.4
+    sim._apply_rt_config_action(action,0)
+    assert sim.state.control.actuation_outcomes[-1]['reason']=='prb_power_exceeds_cell_budget'
+    assert cell.tx_power_dbm==before.tx_power_dbm and cell.cell_sleep_mode==before.cell_sleep_mode
+    # Explicit clearing allows the original scalar sleep behavior.
+    sim._apply_rt_config_action(ConfigAction(clear_prb_power=True,power_group_size_prbs=4,cell_sleep_mode='light_sleep'),0)
+    assert cell.prb_power_w is None and cell.cell_sleep_mode=='light_sleep'
+    sim._apply_rt_config_action(ConfigAction(power_cap_dbm=20,cell_sleep_mode='micro_sleep',prb_power_w=[.05/(n//4)]*(n//4)),0)
+    assert cell.tx_power_dbm<=20
+    for _ in range(3):sim.step()
+    assert sim.phy_adapter.trace['cells']['cell_0']['average_used_w']<=.05+1e-9
+    # A deep-sleep transaction cannot retain a nonzero absolute profile.
+    sim._apply_rt_config_action(ConfigAction(cell_sleep_mode='deep_sleep'),sim.state.slot_id)
+    assert sim.state.control.actuation_outcomes[-1]['reason']=='prb_power_exceeds_cell_budget'
+    sim._apply_rt_config_action(ConfigAction(clear_prb_power=True,cell_sleep_mode='deep_sleep'),sim.state.slot_id)
+    decodes=sim.phy_adapter.abstraction.decode_trials
+    sim.step()
+    assert sim.phy_adapter.abstraction.decode_trials==decodes
+    assert sim.phy_adapter.trace['cells']['cell_0']['average_used_w']==0

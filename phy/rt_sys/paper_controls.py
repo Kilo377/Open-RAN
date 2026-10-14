@@ -10,6 +10,34 @@ DEFAULTS=dict(prb_power_w=None,power_group_size_prbs=1,ue_prb_limits={},neighbor
               cio_offsets_db={},ret_enabled=False,ret_tilt_deg=0.,ret_codebook_id=0,time_to_trigger_ms=40.)
 
 
+def proposed_power_budget(cell,action):
+    """Mirror LocalExecutor's cap -> sleep -> explicit-power order without mutation.
+
+    The opt-in backend also enforces a persistent cap after sleep transitions.
+    Validation must use this resulting budget, rather than the pre-action value.
+    """
+    tx=float(cell.tx_power_dbm);cap=cell.power_cap_dbm
+    mode=str(cell.cell_sleep_mode);nominal=float(getattr(cell,'nominal_tx_power_dbm',tx))
+    if action.power_cap_dbm is not None:
+        cap=float(action.power_cap_dbm);tx=cap
+        if mode=='active':nominal=tx
+    if action.cell_sleep_mode is not None:
+        requested=str(action.cell_sleep_mode).strip().lower()
+        if requested:
+            if requested not in {'active','micro_sleep','light_sleep','deep_sleep'}:requested='active'
+            if mode=='active':nominal=tx
+            mode=requested
+            if mode=='active':
+                if cap is not None and cap<=0:cap=None
+                tx=min(nominal,cap) if cap is not None else nominal
+            elif mode=='micro_sleep':tx=min(nominal,max(12.,nominal-3.))
+            elif mode=='light_sleep':tx=min(nominal,max(6.,nominal-8.))
+            else:tx=0.
+    if action.tx_power_dbm is not None:tx=float(action.tx_power_dbm)
+    if cap is not None:tx=min(tx,float(cap))
+    return 0. if mode=='deep_sleep' else 10**((tx-30)/10)
+
+
 def requested(action):
     return {k:deepcopy(getattr(action,k)) for k in FIELDS if getattr(action,k,None) is not None}
 
@@ -32,7 +60,7 @@ def validate_transaction(state,action,targets):
                 a=np.asarray(action.prb_power_w,float)
                 if a.shape!=(math.ceil(n/group),):raise ValueError('power_vector_length')
                 values['prb_power_w']=[float(a[i//group])/min(group,n-(i//group)*group) for i in range(n)]
-            elif action.power_group_size_prbs is not None and getattr(c,'prb_power_w',None) is not None:
+            elif action.power_group_size_prbs is not None and getattr(c,'prb_power_w',None) is not None and not action.clear_prb_power:
                 raise ValueError('group_change_requires_power_vector')
             if not isinstance(values['ret_enabled'],bool):raise ValueError('invalid_ret_enabled')
             for val in (action.tx_power_dbm,action.power_cap_dbm):
@@ -45,10 +73,9 @@ def validate_transaction(state,action,targets):
             if v is not None:
                 a=np.asarray(v,float)
                 if a.shape!=(n,) or not np.isfinite(a).all() or np.any(a<0):raise ValueError('invalid_prb_power')
-                tx=action.tx_power_dbm if action.tx_power_dbm is not None else c.tx_power_dbm
-                cap=action.power_cap_dbm if action.power_cap_dbm is not None else c.power_cap_dbm
-                if not np.isfinite(tx) or (cap is not None and not np.isfinite(cap)):raise ValueError('invalid_power_budget')
-                if a.sum()>10**(((min(tx,cap) if cap is not None else tx)-30)/10)+1e-9:raise ValueError('prb_power_exceeds_cell_budget')
+                budget=proposed_power_budget(c,action)
+                if not np.isfinite(budget):raise ValueError('invalid_power_budget')
+                if a.sum()>budget+1e-9:raise ValueError('prb_power_exceeds_cell_budget')
             limits=values['ue_prb_limits']
             if not isinstance(limits,dict) or any(u not in uids or type(v) is not int or not 0<=v<=n for u,v in limits.items()):raise ValueError('invalid_ue_prb_limit')
             if (limits or values['prb_power_w'] is not None) and cells[cid].scheduler.packing_strategy!='frequency_first':raise ValueError('prb_limits_require_frequency_first')
@@ -65,6 +92,7 @@ def validate_transaction(state,action,targets):
 def apply_values(state,action,targets):
     for cid in targets:
         c=state.managed_cells[cid].cell;n=state.managed_cells[cid].resource_grid.n_prbs_total
+        if c.power_cap_dbm is not None:c.tx_power_dbm=min(c.tx_power_dbm,c.power_cap_dbm)
         changed=False
         for key,value in requested(action).items():
             old=deepcopy(getattr(c,key,None))
