@@ -52,3 +52,9 @@ CQI阈值默认 `[-7,-5,...,21] dB`，16级；不读取MCS，不调用链路探�
 完整有限验收：`scripts/validation/validate_paper_interfaces.py --output outputs/<new_directory>`。先本地/Spark单元回归，再两地图8-slot成本与128-slot门禁、RET成对验证、短移动轨迹、6个4000-slot闭环和4个24UE/1000-slot资源压力用例。长闭环采用静态部署与预设控制时间线，移动RT单列；不以过载零积压作为通过条件。
 
 结果尚须以实际运行的 `pipeline_status.json`、源码指纹和SHA256清单为准；本文不预先声明Spark验收通过。
+
+逐项字段来源、实验量/概念量/派生量分类和适配差异见 [完整追踪表](PAPER_FIELD_TRACEABILITY.md)。
+机器可读目录由 `scripts/validation/export_paper_catalog.py` 生成；目录存在不代表某次报告有效，必须检查 validity、来源、样本数及年龄。
+
+`validate_paper_handover_rt.py` 另以重叠覆盖的受控部署验证真实RT/NR切换成功、目标失效及邻区删除取消；该部署不用于承载结论。
+运行后可用 `export_paper_runtime_fingerprints.py` 对实际trace中的生效配置生成SHA256，连同RET模拟权重目录保存；动态数字RZF权重保留在原逐资源预编码trace。

@@ -477,3 +477,9 @@ Spark 完整接入验收已完成（冻结源码 `4f28cb753220`）：
 18/18 矩阵用例完成不代表所有负载 QoS 达标；24 UE 正常负载仍有明显溢出与超期。
 原始数据在 `outputs/rt_contract_20261014/final_v7/`，源码归档与两端校验回执在
 `outputs/rt_contract_20261014/local_validation_v7/`。
+
+四篇论文控制/观测接口使用专用配置显式启用，见
+[接口与运行说明](docs/PAPER_INTERFACES.md)、
+[逐项文献追踪和适配差异](docs/PAPER_FIELD_TRACEABILITY.md)、
+[机器可读动作/KPI目录](docs/paper_interface_catalog.json)。
+固定测试动作入口为 `--control-timeline`，不包含论文决策算法。

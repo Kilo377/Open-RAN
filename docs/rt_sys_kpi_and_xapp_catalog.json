@@ -97,6 +97,139 @@
       "source": "completed_slot_RF_energy_counter",
       "window": "one_completed_slot",
       "sample_count": null
+    },
+    "association": {
+      "entity": "ue",
+      "unit": "identity",
+      "source": "paper:association:reference_or_executed_event_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "resource_allocation": {
+      "entity": "ue",
+      "unit": "PRB/symbol/layer",
+      "source": "paper:resource_allocation:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "wideband_cqi": {
+      "entity": "ue",
+      "unit": "index",
+      "source": "paper:wideband_cqi:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "subband_cqi": {
+      "entity": "ue",
+      "unit": "index",
+      "source": "paper:subband_cqi:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "subband_prb_groups": {
+      "entity": "ue",
+      "unit": "PRB index",
+      "source": "paper:subband_prb_groups:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "candidate_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "paper:candidate_sinr_db:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "goodput_utility": {
+      "entity": "ue",
+      "unit": "ln(bit/s / 1 bit/s)",
+      "source": "paper:goodput_utility:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "offered_rate_bps": {
+      "entity": "ue",
+      "unit": "bit/s",
+      "source": "paper:offered_rate_bps:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "requested_dl_rate_bps": {
+      "entity": "ue",
+      "unit": "bit/s",
+      "source": "paper:requested_dl_rate_bps:reference_or_executed_event_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "sla_status": {
+      "entity": "ue",
+      "unit": "record",
+      "source": "paper:sla_status:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "handover_rate_per_s": {
+      "entity": "ue",
+      "unit": "1/s",
+      "source": "paper:handover_rate_per_s:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "handover_failure_rate": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "paper:handover_failure_rate:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "connection_drop_fraction": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "paper:connection_drop_fraction:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "mobility_counts": {
+      "entity": "ue",
+      "unit": "record",
+      "source": "paper:mobility_counts:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "rf_energy_j": {
+      "entity": "cell",
+      "unit": "J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_energy_total_j": {
+      "entity": "cell",
+      "unit": "J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_efficiency_bit_per_j": {
+      "entity": "cell",
+      "unit": "bit/J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "whole_device_power_w": {
+      "entity": "cell",
+      "unit": "W",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "whole_device_efficiency_bit_per_j": {
+      "entity": "cell",
+      "unit": "bit/J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
     }
   },
   "xapps": [
@@ -145,7 +278,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_aggressive",
@@ -200,7 +335,9 @@
         "sleep_threshold": 0.4,
         "wake_up_threshold": 0.55,
         "dwell_time_slots": 45
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_balanced",
@@ -255,7 +392,9 @@
         "sleep_threshold": 0.28,
         "wake_up_threshold": 0.42,
         "dwell_time_slots": 30
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_cluster_saver",
@@ -307,7 +446,9 @@
         "light_sleep_load_threshold": 0.24,
         "deep_sleep_load_threshold": 0.12,
         "max_queue_bytes_for_sleep": 4500
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_deep_saver",
@@ -359,7 +500,9 @@
         "light_sleep_load_threshold": 0.34,
         "deep_sleep_load_threshold": 0.2,
         "max_queue_bytes_for_sleep": 8000
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_macro_guarded",
@@ -411,7 +554,9 @@
         "light_sleep_load_threshold": 0.12,
         "deep_sleep_load_threshold": 0.04,
         "max_queue_bytes_for_sleep": 2500
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_micro_trim",
@@ -466,7 +611,9 @@
         "sleep_threshold": 0.34,
         "wake_up_threshold": 0.46,
         "dwell_time_slots": 20
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_mmwave_hotspot",
@@ -518,7 +665,9 @@
         "light_sleep_load_threshold": 0.22,
         "deep_sleep_load_threshold": 0.12,
         "max_queue_bytes_for_sleep": 3500
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_night_mode",
@@ -570,7 +719,9 @@
         "light_sleep_load_threshold": 0.3,
         "deep_sleep_load_threshold": 0.18,
         "max_queue_bytes_for_sleep": 7000
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_queue_strict",
@@ -622,7 +773,9 @@
         "light_sleep_load_threshold": 0.16,
         "deep_sleep_load_threshold": 0.08,
         "max_queue_bytes_for_sleep": 1200
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "cell_sleep_xapp_urlcc_safe",
@@ -674,7 +827,9 @@
         "light_sleep_load_threshold": 0.14,
         "deep_sleep_load_threshold": 0.06,
         "max_queue_bytes_for_sleep": 1800
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp",
@@ -721,7 +876,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_backlog_relief",
@@ -770,7 +927,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 1500
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_balanced",
@@ -822,7 +981,9 @@
         "prb_weight": 1.0,
         "priority_coefficient": 1.4,
         "delay_threshold_ms": 20.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_control_plane",
@@ -871,7 +1032,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 1200
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_edge_safe",
@@ -920,7 +1083,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 1600
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_embb_friendly",
@@ -969,7 +1134,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 4200
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_extreme",
@@ -1018,7 +1185,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 700
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_harq_rescue",
@@ -1067,7 +1236,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 1000
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_service_gap",
@@ -1116,7 +1287,9 @@
       "is_variant": true,
       "variant_params": {
         "queue_threshold_bytes": 2200
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_tail_guard",
@@ -1168,7 +1341,9 @@
         "prb_weight": 1.25,
         "priority_coefficient": 1.8,
         "delay_threshold_ms": 15.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "latency_scheduler_xapp_urllc_fastpath",
@@ -1220,7 +1395,9 @@
         "prb_weight": 1.45,
         "priority_coefficient": 2.2,
         "delay_threshold_ms": 10.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp",
@@ -1264,7 +1441,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_balanced",
@@ -1311,7 +1490,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.5,
         "coverage_sinr_threshold_db": 7.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_capacity_push",
@@ -1358,7 +1539,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.62,
         "coverage_sinr_threshold_db": 5.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_coverage_boost",
@@ -1405,7 +1588,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.35,
         "coverage_sinr_threshold_db": 9.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_edge_rescue",
@@ -1452,7 +1637,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.3,
         "coverage_sinr_threshold_db": 10.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_macro_capacity",
@@ -1499,7 +1686,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.58,
         "coverage_sinr_threshold_db": 6.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_mmwave_guard",
@@ -1546,7 +1735,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.28,
         "coverage_sinr_threshold_db": 8.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_mu_dense",
@@ -1593,7 +1784,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.55,
         "coverage_sinr_threshold_db": 6.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_precoder_safe",
@@ -1640,7 +1833,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.4,
         "coverage_sinr_threshold_db": 7.8
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_sinr_max",
@@ -1687,7 +1882,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.33,
         "coverage_sinr_threshold_db": 9.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "massive_mimo_beamformer_xapp_spatial_gain",
@@ -1734,7 +1931,9 @@
       "variant_params": {
         "beam_risk_threshold": 0.6,
         "coverage_sinr_threshold_db": 5.8
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "mobility_predictor_xapp",
@@ -1753,11 +1952,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -1780,7 +1979,11 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
+      }
     },
     {
       "xapp_name": "mobility_predictor_xapp_balanced",
@@ -1799,11 +2002,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -1830,6 +2033,10 @@
         "risk_threshold": 0.35,
         "time_to_trigger_ms": 120.0,
         "mobility_margin_db": 2.0
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -1849,11 +2056,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -1880,6 +2087,10 @@
         "risk_threshold": 0.3,
         "time_to_trigger_ms": 100.0,
         "mobility_margin_db": 2.5
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -1899,11 +2110,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -1928,6 +2139,10 @@
       "is_variant": true,
       "variant_params": {
         "risk_threshold": 0.5
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -1947,11 +2162,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -1976,6 +2191,10 @@
       "is_variant": true,
       "variant_params": {
         "risk_threshold": 0.32
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -1995,11 +2214,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2026,6 +2245,10 @@
         "risk_threshold": 0.25,
         "time_to_trigger_ms": 80.0,
         "mobility_margin_db": 1.5
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2045,11 +2268,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2074,6 +2297,10 @@
       "is_variant": true,
       "variant_params": {
         "risk_threshold": 0.2
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2093,11 +2320,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2124,6 +2351,10 @@
         "risk_threshold": 0.22,
         "time_to_trigger_ms": 60.0,
         "mobility_margin_db": 1.2
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2143,11 +2374,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2174,6 +2405,10 @@
         "risk_threshold": 0.4,
         "time_to_trigger_ms": 180.0,
         "mobility_margin_db": 3.2
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2193,11 +2428,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2222,6 +2457,10 @@
       "is_variant": true,
       "variant_params": {
         "risk_threshold": 0.27
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2241,11 +2480,11 @@
       "writable_actions": [
         "measurement_event_offset_db",
         "mobility_bias_db",
-        "steering_hysteresis_db"
+        "steering_hysteresis_db",
+        "time_to_trigger_ms"
       ],
       "unavailable_actions": [
-        "mobility_margin_db",
-        "time_to_trigger_ms"
+        "mobility_margin_db"
       ],
       "available": false,
       "missing_kpi_sources": [
@@ -2272,6 +2511,10 @@
         "risk_threshold": 0.28,
         "time_to_trigger_ms": 70.0,
         "mobility_margin_db": 2.8
+      },
+      "writable_commands": [],
+      "feature_requirements": {
+        "time_to_trigger_ms": "paper_interfaces.enabled"
       }
     },
     {
@@ -2313,7 +2556,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_balanced",
@@ -2358,7 +2603,9 @@
         "low_load_threshold": 0.4,
         "queue_threshold_bytes": 5000,
         "min_power_cap_dbm": 26.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_beam_balanced",
@@ -2403,7 +2650,9 @@
         "low_load_threshold": 0.36,
         "queue_threshold_bytes": 4500,
         "min_power_cap_dbm": 24.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_energy_max",
@@ -2448,7 +2697,9 @@
         "low_load_threshold": 0.18,
         "queue_threshold_bytes": 1200,
         "min_power_cap_dbm": 18.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_macro_trim",
@@ -2493,7 +2744,9 @@
         "low_load_threshold": 0.44,
         "queue_threshold_bytes": 6000,
         "min_power_cap_dbm": 27.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_micro_trim",
@@ -2538,7 +2791,9 @@
         "low_load_threshold": 0.48,
         "queue_threshold_bytes": 7000,
         "min_power_cap_dbm": 27.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_mmwave_trim",
@@ -2583,7 +2838,9 @@
         "low_load_threshold": 0.34,
         "queue_threshold_bytes": 3500,
         "min_power_cap_dbm": 23.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_night_mode",
@@ -2628,7 +2885,9 @@
         "low_load_threshold": 0.22,
         "queue_threshold_bytes": 2000,
         "min_power_cap_dbm": 20.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_queue_sensitive",
@@ -2673,7 +2932,9 @@
         "low_load_threshold": 0.3,
         "queue_threshold_bytes": 1500,
         "min_power_cap_dbm": 25.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_sleepy",
@@ -2718,7 +2979,9 @@
         "low_load_threshold": 0.28,
         "queue_threshold_bytes": 2500,
         "min_power_cap_dbm": 22.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "power_saving_xapp_urlcc_safe",
@@ -2763,7 +3026,9 @@
         "low_load_threshold": 0.52,
         "queue_threshold_bytes": 9000,
         "min_power_cap_dbm": 28.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp",
@@ -2805,7 +3070,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_balanced",
@@ -2849,7 +3116,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.45
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_congestion",
@@ -2893,7 +3162,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.32
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_embb_bias",
@@ -2937,7 +3208,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.52
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_fairness",
@@ -2981,7 +3254,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.6
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_guarded",
@@ -3025,7 +3300,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.68
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_hotspot",
@@ -3069,7 +3346,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.38
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_macro_mix",
@@ -3113,7 +3392,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_mmtc_safe",
@@ -3157,7 +3438,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.4
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_sla_strict",
@@ -3201,7 +3484,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.3
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "ran_slicing_manager_xapp_urllc_bias",
@@ -3245,7 +3530,9 @@
       "is_variant": true,
       "variant_params": {
         "slice_dominance_threshold": 0.35
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp",
@@ -3294,7 +3581,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_aggressive",
@@ -3346,7 +3635,9 @@
       "variant_params": {
         "utilization_threshold": 0.45,
         "interference_threshold_db": 3.8
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_balanced",
@@ -3400,7 +3691,9 @@
         "interference_threshold_db": 2.5,
         "coordination_threshold": 2.5,
         "muting_ratio": 0.08
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_dense_packing",
@@ -3454,7 +3747,9 @@
         "interference_threshold_db": 3.0,
         "coordination_threshold": 3.0,
         "muting_ratio": 0.04
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_guarded",
@@ -3506,7 +3801,9 @@
       "variant_params": {
         "utilization_threshold": 0.78,
         "interference_threshold_db": 1.2
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_interference_averse",
@@ -3560,7 +3857,9 @@
         "interference_threshold_db": 1.5,
         "coordination_threshold": 1.5,
         "muting_ratio": 0.18
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_latency_mix",
@@ -3612,7 +3911,9 @@
       "variant_params": {
         "utilization_threshold": 0.62,
         "interference_threshold_db": 2.2
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_mu_friendly",
@@ -3664,7 +3965,9 @@
       "variant_params": {
         "utilization_threshold": 0.6,
         "interference_threshold_db": 3.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_prb_efficiency",
@@ -3716,7 +4019,9 @@
       "variant_params": {
         "utilization_threshold": 0.58,
         "interference_threshold_db": 2.8
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_slice_bias",
@@ -3768,7 +4073,9 @@
       "variant_params": {
         "utilization_threshold": 0.5,
         "interference_threshold_db": 2.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "spectrum_optimizer_xapp_stable",
@@ -3820,7 +4127,9 @@
       "variant_params": {
         "utilization_threshold": 0.75,
         "interference_threshold_db": 2.7
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp",
@@ -3869,7 +4178,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_balanced",
@@ -3923,7 +4234,9 @@
         "edge_sinr_threshold_db": 5.0,
         "steering_aggressiveness": 0.55,
         "cio_bias_db": 1.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_dense_cluster",
@@ -3975,7 +4288,9 @@
       "variant_params": {
         "load_threshold": 0.58,
         "edge_sinr_threshold_db": 5.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_edge_rescue",
@@ -4029,7 +4344,9 @@
         "edge_sinr_threshold_db": 8.5,
         "steering_aggressiveness": 0.62,
         "cio_bias_db": 2.2
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_hotspot_relief",
@@ -4083,7 +4400,9 @@
         "edge_sinr_threshold_db": 7.0,
         "steering_aggressiveness": 0.82,
         "cio_bias_db": 3.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_load_first",
@@ -4135,7 +4454,9 @@
       "variant_params": {
         "load_threshold": 0.5,
         "edge_sinr_threshold_db": 3.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_macro_anchor",
@@ -4187,7 +4508,9 @@
       "variant_params": {
         "load_threshold": 0.82,
         "edge_sinr_threshold_db": 3.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_mmwave_prefer",
@@ -4239,7 +4562,9 @@
       "variant_params": {
         "load_threshold": 0.78,
         "edge_sinr_threshold_db": 4.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_quality_first",
@@ -4291,7 +4616,9 @@
       "variant_params": {
         "load_threshold": 0.74,
         "edge_sinr_threshold_db": 9.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_sticky",
@@ -4343,7 +4670,9 @@
       "variant_params": {
         "load_threshold": 0.88,
         "edge_sinr_threshold_db": 2.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "traffic_steering_xapp_urlcc_safe",
@@ -4395,7 +4724,9 @@
       "variant_params": {
         "load_threshold": 0.6,
         "edge_sinr_threshold_db": 6.5
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp",
@@ -4446,7 +4777,9 @@
       ],
       "tuning_mode": "heuristic_parameter",
       "is_variant": false,
-      "variant_params": {}
+      "variant_params": {},
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_balanced",
@@ -4501,7 +4834,9 @@
         "queue_threshold_bytes": 1200,
         "bler_threshold": 0.12,
         "latency_budget_threshold_ms": 20.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_cluster_guard",
@@ -4556,7 +4891,9 @@
         "queue_threshold_bytes": 1100,
         "bler_threshold": 0.11,
         "latency_budget_threshold_ms": 17.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_conservative",
@@ -4611,7 +4948,9 @@
         "queue_threshold_bytes": 1800,
         "bler_threshold": 0.16,
         "latency_budget_threshold_ms": 24.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_edge_safe",
@@ -4666,7 +5005,9 @@
         "queue_threshold_bytes": 1000,
         "bler_threshold": 0.11,
         "latency_budget_threshold_ms": 18.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_emergency",
@@ -4721,7 +5062,9 @@
         "queue_threshold_bytes": 600,
         "bler_threshold": 0.07,
         "latency_budget_threshold_ms": 10.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_harq_safe",
@@ -4776,7 +5119,9 @@
         "queue_threshold_bytes": 800,
         "bler_threshold": 0.09,
         "latency_budget_threshold_ms": 14.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_mmwave",
@@ -4831,7 +5176,9 @@
         "queue_threshold_bytes": 850,
         "bler_threshold": 0.09,
         "latency_budget_threshold_ms": 13.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_strict",
@@ -4886,7 +5233,9 @@
         "queue_threshold_bytes": 700,
         "bler_threshold": 0.08,
         "latency_budget_threshold_ms": 12.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_tail_safe",
@@ -4941,7 +5290,9 @@
         "queue_threshold_bytes": 900,
         "bler_threshold": 0.1,
         "latency_budget_threshold_ms": 16.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     },
     {
       "xapp_name": "urllc_guard_xapp_voice_safe",
@@ -4996,7 +5347,15 @@
         "queue_threshold_bytes": 950,
         "bler_threshold": 0.1,
         "latency_budget_threshold_ms": 15.0
-      }
+      },
+      "writable_commands": [],
+      "feature_requirements": {}
     }
+  ],
+  "notes": [
+    "Registry membership does not imply a valid sample; inspect per-record validity and age.",
+    "Paper controls and reports require paper_interfaces.enabled; connection rates additionally require connection_model.enabled.",
+    "Existing xApp algorithms and required KPI declarations are not changed by this export.",
+    "whole_device_* models are unavailable; reported CQI is RT reference SINR quantization, not calibrated NR CSI."
   ]
 }

@@ -1,0 +1,595 @@
+{
+  "config_actions": {
+    "codebook_id": {
+      "type": "Optional[int]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "tx_power_dbm": {
+      "type": "Optional[float]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "beam_profile_id": {
+      "type": "Optional[int]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "scheduler_mode": {
+      "type": "Optional[str]",
+      "consumers": [
+        "scheduler"
+      ],
+      "feature_gate": null
+    },
+    "prb_power_w": {
+      "type": "Optional[list[float]]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "clear_prb_power": {
+      "type": "Optional[bool]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "power_group_size_prbs": {
+      "type": "Optional[int]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "ue_prb_limits": {
+      "type": "Optional[dict[str, int]]",
+      "consumers": [
+        "scheduler"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "neighbor_cell_ids": {
+      "type": "Optional[list[str]]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "cio_offsets_db": {
+      "type": "Optional[dict[str, float]]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "ret_enabled": {
+      "type": "Optional[bool]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "ret_tilt_deg": {
+      "type": "Optional[float]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "ret_codebook_id": {
+      "type": "Optional[int]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "scheduler_policy_hint": {
+      "type": "Optional[str]",
+      "consumers": [
+        "scheduler"
+      ],
+      "feature_gate": null
+    },
+    "latency_bias": {
+      "type": "Optional[float]",
+      "consumers": [
+        "scheduler"
+      ],
+      "feature_gate": null
+    },
+    "slice_weight_adjustment": {
+      "type": "dict[str, float]",
+      "consumers": [
+        "scheduler"
+      ],
+      "feature_gate": null
+    },
+    "beam_candidate_preference": {
+      "type": "Optional[str]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "power_cap_dbm": {
+      "type": "Optional[float]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "cell_sleep_mode": {
+      "type": "Optional[str]",
+      "consumers": [
+        "phy"
+      ],
+      "feature_gate": null
+    },
+    "traffic_steering_preference": {
+      "type": "Optional[str]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "steering_aggressiveness": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "load_threshold": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "cio_bias_db": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "mobility_bias_db": {
+      "type": "Optional[float]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "handover_cost_db": {
+      "type": "Optional[float]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "handover_interruption_slots": {
+      "type": "Optional[int]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "steering_hysteresis_db": {
+      "type": "Optional[float]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "time_to_trigger_ms": {
+      "type": "Optional[float]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": "paper_interfaces.enabled"
+    },
+    "mobility_margin_db": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "measurement_event_trigger": {
+      "type": "Optional[str]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "measurement_event_offset_db": {
+      "type": "Optional[float]",
+      "consumers": [
+        "association"
+      ],
+      "feature_gate": null
+    },
+    "prb_weight": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "priority_coefficient": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "delay_threshold_ms": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "power_offset_db": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "muting_ratio": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "coordination_threshold": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "sleep_threshold": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "wake_up_threshold": {
+      "type": "Optional[float]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "dwell_time_slots": {
+      "type": "Optional[int]",
+      "consumers": [],
+      "feature_gate": null
+    },
+    "apply_scope": {
+      "type": "str",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "target_cell_id": {
+      "type": "Optional[str]",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "control_request_id": {
+      "type": "Optional[str]",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "effective_from_slot": {
+      "type": "Optional[int]",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "effective_until_slot": {
+      "type": "Optional[int]",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "source_name": {
+      "type": "str",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    },
+    "metadata": {
+      "type": "ControlMetadata",
+      "consumers": [
+        "administrative"
+      ],
+      "feature_gate": null
+    }
+  },
+  "commands": {
+    "disconnect": {
+      "feature_gate": "paper_interfaces.enabled",
+      "consumer": "PaperEnvironment.consume_commands",
+      "fields": {
+        "command_type": "str",
+        "target_ue_id": "Optional[str]",
+        "delta_priority": "float",
+        "target_cell_id": "Optional[str]",
+        "valid_from_slot": "Optional[int]",
+        "valid_until_slot": "Optional[int]",
+        "control_request_id": "Optional[str]",
+        "source_name": "str",
+        "metadata": "ControlMetadata"
+      }
+    },
+    "reconnect": {
+      "feature_gate": "paper_interfaces.enabled",
+      "consumer": "PaperEnvironment.consume_commands",
+      "fields": {
+        "command_type": "str",
+        "target_ue_id": "Optional[str]",
+        "delta_priority": "float",
+        "target_cell_id": "Optional[str]",
+        "valid_from_slot": "Optional[int]",
+        "valid_until_slot": "Optional[int]",
+        "control_request_id": "Optional[str]",
+        "source_name": "str",
+        "metadata": "ControlMetadata"
+      }
+    },
+    "request_handover": {
+      "feature_gate": "paper_interfaces.enabled",
+      "consumer": "PaperEnvironment.consume_commands",
+      "fields": {
+        "command_type": "str",
+        "target_ue_id": "Optional[str]",
+        "delta_priority": "float",
+        "target_cell_id": "Optional[str]",
+        "valid_from_slot": "Optional[int]",
+        "valid_until_slot": "Optional[int]",
+        "control_request_id": "Optional[str]",
+        "source_name": "str",
+        "metadata": "ControlMetadata"
+      }
+    }
+  },
+  "kpis": {
+    "candidate_rsrp_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "RT_candidate_reference_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "queue_bytes": {
+      "entity": "ue",
+      "unit": "byte",
+      "source": "delivered_queue_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "hol_delay_ms": {
+      "entity": "ue",
+      "unit": "ms",
+      "source": "delivered_packet_hol_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "reference_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "RT_reference_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "rsrp_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "RT_reference_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "data_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "RT_data_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "throughput_mbps": {
+      "entity": "ue",
+      "unit": "Mbit/s",
+      "source": "delivered_goodput_report",
+      "window": "throughput_window_slots",
+      "sample_count": "throughput_window_slots"
+    },
+    "retx_fraction": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_actual_attempt_counter",
+      "window": "bler_window_tbs",
+      "sample_count": "retx_sample_count"
+    },
+    "reference_noise_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "configured_receiver_noise_report",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "first_tx_bler": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_first_tx_actual_crc_window",
+      "window": "bler_window_tbs",
+      "sample_count": "first_tx_sample_count"
+    },
+    "deadline_miss_rate": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_packet_deadline_counter",
+      "window": "since_start",
+      "sample_count": "deadline_sample_count"
+    },
+    "bler": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_actual_crc_window_all_attempts",
+      "window": "bler_window_tbs",
+      "sample_count": "bler_sample_count"
+    },
+    "resource_grid_utilization": {
+      "entity": "cell",
+      "unit": "ratio",
+      "source": "completed_slot_resource_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_tx_power_w": {
+      "entity": "cell",
+      "unit": "W",
+      "source": "completed_slot_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "association": {
+      "entity": "ue",
+      "unit": "identity",
+      "source": "paper:association:reference_or_executed_event_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "resource_allocation": {
+      "entity": "ue",
+      "unit": "PRB/symbol/layer",
+      "source": "paper:resource_allocation:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "wideband_cqi": {
+      "entity": "ue",
+      "unit": "index",
+      "source": "paper:wideband_cqi:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "subband_cqi": {
+      "entity": "ue",
+      "unit": "index",
+      "source": "paper:subband_cqi:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "subband_prb_groups": {
+      "entity": "ue",
+      "unit": "PRB index",
+      "source": "paper:subband_prb_groups:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "candidate_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "paper:candidate_sinr_db:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "goodput_utility": {
+      "entity": "ue",
+      "unit": "ln(bit/s / 1 bit/s)",
+      "source": "paper:goodput_utility:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "offered_rate_bps": {
+      "entity": "ue",
+      "unit": "bit/s",
+      "source": "paper:offered_rate_bps:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "requested_dl_rate_bps": {
+      "entity": "ue",
+      "unit": "bit/s",
+      "source": "paper:requested_dl_rate_bps:reference_or_executed_event_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "sla_status": {
+      "entity": "ue",
+      "unit": "record",
+      "source": "paper:sla_status:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "handover_rate_per_s": {
+      "entity": "ue",
+      "unit": "1/s",
+      "source": "paper:handover_rate_per_s:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "handover_failure_rate": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "paper:handover_failure_rate:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "connection_drop_fraction": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "paper:connection_drop_fraction:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "mobility_counts": {
+      "entity": "ue",
+      "unit": "record",
+      "source": "paper:mobility_counts:reference_or_executed_event_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "rf_energy_j": {
+      "entity": "cell",
+      "unit": "J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_energy_total_j": {
+      "entity": "cell",
+      "unit": "J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_efficiency_bit_per_j": {
+      "entity": "cell",
+      "unit": "bit/J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "whole_device_power_w": {
+      "entity": "cell",
+      "unit": "W",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "whole_device_efficiency_bit_per_j": {
+      "entity": "cell",
+      "unit": "bit/J",
+      "source": "paper:executed_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    }
+  },
+  "notes": [
+    "Registry membership does not imply a valid sample; inspect per-record validity and age.",
+    "Paper controls and reports require paper_interfaces.enabled; connection rates additionally require connection_model.enabled.",
+    "Existing xApp algorithms and required KPI declarations are not changed by this export.",
+    "whole_device_* models are unavailable; reported CQI is RT reference SINR quantization, not calibrated NR CSI."
+  ],
+  "semantics_document": "docs/PAPER_INTERFACES.md",
+  "paper_traceability": "docs/PAPER_FIELD_TRACEABILITY.md"
+}

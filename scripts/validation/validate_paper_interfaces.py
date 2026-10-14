@@ -51,9 +51,10 @@ def audit(folder,expected_slots):
     assert status['completed'] and status['spark_verified'] and status['source_sha256']==source_fingerprint(ROOT)
     stats=final['link_reference_statistics']
     assert all(stats.get(k,0)==0 for k in ('amc_probe_trials','bler_probe_trials','calibration_decode_trials','incompatible_no_tb','unsupported_no_tb'))
-    counters=Counter();power_error=0.;contracts={};acked=set();last_energy={};decoded=0;refs=[];outcomes=[];last_slot=0
+    counters=Counter();power_error=0.;contracts={};acked=set();last_energy={};decoded=0;refs=[];outcomes=[];last_slot=0;power_vector_applied=False
     for line in (folder/'rt_sys_trace.jsonl').open():
         r=json.loads(line);last_slot=r['slot_id'];paper=r['paper_interfaces'];used_prbs={c:set() for c in r['cells']}
+        power_vector_applied |= paper['runtime_config']['cell_0']['prb_power_w'] is not None
         outcomes.extend(paper['config_outcomes']);counters.update(e['kind'] for e in paper['events'])
         for u in r['ues']:
             assert not u.get('mac_capacity_guard')
@@ -76,6 +77,11 @@ def audit(folder,expected_slots):
             power_error=max(power_error,abs(delta-t['average_used_w']*snapshot['manifest']['slot_duration_ms']/1000));last_energy[cid]=energy
         if last_slot in (10,50,70,128):refs.append(dict(slot=last_slot,ues=paper['reports']['ue']))
     assert last_slot==expected_slots and power_error<1e-8
+    stimuli=json.loads((folder/'timeline.json').read_text())
+    if any('prb_power_w' in e.get('config',{}) for e in stimuli):
+        assert power_vector_applied,'Normal power-vector transaction never reached its consumer'
+        assert any(o.get('reason')=='prb_power_exceeds_cell_budget' for o in outcomes),'Over-budget transaction was not rejected by the budget check'
+        assert not any(o.get('reason')=='power_vector_length' for o in outcomes),'Fixture used a grid incompatible with the actual NR numerology'
     assert decoded==stats['actual_tb_decodes']
     delivered_ranges={}
     for line in (folder/'packet_events.jsonl').open():
@@ -108,8 +114,10 @@ def execute(out,scene,ues,seed,slots,load=1.,speed=0.,ret=None):
     from phy.rt_sys.scenario import build_case
     if out.exists():raise FileExistsError(out)
     out.mkdir(parents=True)
-    _,c,_=build_case(scene,num_cells=3,num_ues=ues,total_slots=slots)
-    actions=out/'timeline.json';actions.write_text(json.dumps(timeline(slots,c['sim']['scheduler_total_prbs_per_slot'],ues,ret),indent=2))
+    manifest,_,_=build_case(scene,num_cells=3,num_ues=ues,total_slots=slots,config_path=ROOT/'configs/rt_sys/paper_interfaces.json')
+    from phy.nr_reference import lookup_nr_max_prbs
+    nprb,_=lookup_nr_max_prbs(bandwidth_hz=manifest['bandwidth_hz'],subcarrier_spacing_hz=manifest['subcarrier_spacing_hz'],carrier_frequency_hz=manifest['carrier_frequency_hz'])
+    actions=out/'timeline.json';actions.write_text(json.dumps(timeline(slots,nprb,ues,ret),indent=2))
     argv=['experiments/run_rt_sys.py','--config','configs/rt_sys/paper_interfaces.json','--control-timeline',str(actions),
         '--scene',scene,'--cells','3','--ues',str(ues),'--seed',str(seed),'--slots',str(slots),'--initial-queue-bytes','0',
         '--ue-speed-mps',str(speed),'--traffic-load',str(load),'--warmup-ms',str(200 if slots>=1000 else 0),
