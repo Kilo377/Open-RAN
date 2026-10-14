@@ -58,6 +58,8 @@ def worker(args):
                 '--slots', str(args.slots), '--seed', '512', '--initial-queue-bytes', '1000',
                 '--ue-speed-mps', '0', '--traffic-load', '1', '--feedback-mode', args.mode,
                 '--control-mode', 'baseline', '--output', str(args.output)]
+    if args.config:
+        sys.argv.extend(['--config', str(args.config)])
     start = time.perf_counter()
     run_case(parse_args())
     torch.cuda.synchronize()
@@ -89,6 +91,8 @@ def main(args):
             folder.mkdir()
             cmd = [sys.executable, str(Path(__file__).resolve()), '--worker', '--scene', scene,
                    '--mode', mode, '--slots', str(args.slots), '--output', str(folder)]
+            if args.config:
+                cmd.extend(['--config', str(args.config)])
             with (folder / 'process.log').open('w') as log:
                 subprocess.run(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
             reports.append(json.loads((folder / 'cost_profile.json').read_text()))
@@ -100,7 +104,7 @@ def main(args):
             file = args.output / f'{scene}_{mode}' / 'packet_events.jsonl'
             events.append([json.loads(line) for line in file.read_text().splitlines()
                            if json.loads(line).get('kind') == 'arrival'])
-        assert events[0] == events[1]
+        assert events[0] and events[0] == events[1]
     final = dict(completed=True, cases=reports, clocks_unchanged=True,
                  scope='Serial short fixture comparison; no new offline probability table, no throughput-equivalence claim')
     (args.output / 'comparison.json').write_text(json.dumps(final, indent=2))
@@ -112,9 +116,12 @@ if __name__ == '__main__':
     parser.add_argument('--scene', choices=['simple_street_canyon', 'munich'])
     parser.add_argument('--mode', choices=['nr_tb_reference', 'nr_bler_bank'])
     parser.add_argument('--slots', type=int, default=8)
+    parser.add_argument('--config', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output = args.output.resolve()
+    if args.config:
+        args.config = args.config.resolve()
     if not args.output.is_relative_to(ROOT / 'outputs') or args.slots < 1:
         parser.error('Use a new outputs/ directory and positive slots')
     worker(args) if args.worker else main(args)

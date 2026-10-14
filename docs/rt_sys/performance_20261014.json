@@ -1,0 +1,203 @@
+{
+  "status": "profiling_completed_opt_in_screening_verified_on_short_fixtures",
+  "groups": [
+    {
+      "scene": "simple_street_canyon",
+      "reference_s": 57.97766602411866,
+      "bank_s": 85.55104931001551,
+      "screened_reference_s": 38.12914808909409,
+      "speedup": 1.5205602257004467,
+      "original_decode_trials": 33200,
+      "screened_decode_trials": 21744,
+      "original_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.23033608123660088
+        },
+        "waveform_lookup_or_build": {
+          "calls": 405,
+          "inclusive_s": 8.114103235537186
+        },
+        "amc_and_bler_probes": {
+          "calls": 517,
+          "inclusive_s": 44.89010200696066
+        },
+        "transmitted_tb_feedback": {
+          "calls": 112,
+          "inclusive_s": 0.6851045282091945
+        },
+        "link_total": {
+          "calls": 112,
+          "inclusive_s": 53.94117084844038
+        }
+      },
+      "bank_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.037939467933028936
+        },
+        "waveform_lookup_or_build": {
+          "calls": 215,
+          "inclusive_s": 5.43411841802299
+        },
+        "amc_and_bler_probes": {
+          "calls": 327,
+          "inclusive_s": 76.03055912698619
+        },
+        "transmitted_tb_feedback": {
+          "calls": 112,
+          "inclusive_s": 0.0011372945737093687
+        },
+        "link_total": {
+          "calls": 112,
+          "inclusive_s": 81.83169648377225
+        }
+      },
+      "screened_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.038889868184924126
+        },
+        "waveform_lookup_or_build": {
+          "calls": 226,
+          "inclusive_s": 6.507026102393866
+        },
+        "amc_and_bler_probes": {
+          "calls": 338,
+          "inclusive_s": 26.794462646124884
+        },
+        "transmitted_tb_feedback": {
+          "calls": 112,
+          "inclusive_s": 0.6911373946350068
+        },
+        "link_total": {
+          "calls": 112,
+          "inclusive_s": 34.37550285225734
+        }
+      },
+      "payload_audits_passed": true,
+      "row_differences": {
+        "slot_id": 0,
+        "ue_id": 0,
+        "cell_id": 0,
+        "scheduled": 0,
+        "mcs": 0,
+        "ack": 0,
+        "tb_bytes": 0,
+        "delivered_bytes": 0,
+        "ack_source": 0
+      },
+      "arrival_events": 393,
+      "environment_sha256": "64351fad5ed1bee8c9a65b62971f16ab8baa69c7ca9072e6c685e219e995bc1b",
+      "original_source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254",
+      "screened_source_sha256": "395e790661516a2ae457822515909290e4aa034f0bb1348478fb60b06723b496"
+    },
+    {
+      "scene": "munich",
+      "reference_s": 172.26583490497433,
+      "bank_s": 274.48458534502424,
+      "screened_reference_s": 85.20280863600783,
+      "speedup": 2.0218328205693976,
+      "original_decode_trials": 79406,
+      "screened_decode_trials": 34286,
+      "original_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.20989840710535645
+        },
+        "waveform_lookup_or_build": {
+          "calls": 1129,
+          "inclusive_s": 14.419918458675966
+        },
+        "amc_and_bler_probes": {
+          "calls": 1239,
+          "inclusive_s": 152.30575100402348
+        },
+        "transmitted_tb_feedback": {
+          "calls": 110,
+          "inclusive_s": 0.6677195488009602
+        },
+        "link_total": {
+          "calls": 110,
+          "inclusive_s": 167.64896866655909
+        }
+      },
+      "bank_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.03643086738884449
+        },
+        "waveform_lookup_or_build": {
+          "calls": 429,
+          "inclusive_s": 10.86174643295817
+        },
+        "amc_and_bler_probes": {
+          "calls": 538,
+          "inclusive_s": 258.6618205283303
+        },
+        "transmitted_tb_feedback": {
+          "calls": 110,
+          "inclusive_s": 0.0012221985962241888
+        },
+        "link_total": {
+          "calls": 110,
+          "inclusive_s": 270.01845668419264
+        }
+      },
+      "screened_stages": {
+        "channel_snapshot": {
+          "calls": 9,
+          "inclusive_s": 0.036578333703801036
+        },
+        "waveform_lookup_or_build": {
+          "calls": 424,
+          "inclusive_s": 9.948207643115893
+        },
+        "amc_and_bler_probes": {
+          "calls": 534,
+          "inclusive_s": 69.55246521253139
+        },
+        "transmitted_tb_feedback": {
+          "calls": 110,
+          "inclusive_s": 0.6932959228288382
+        },
+        "link_total": {
+          "calls": 110,
+          "inclusive_s": 80.68290011235513
+        }
+      },
+      "payload_audits_passed": true,
+      "row_differences": {
+        "slot_id": 0,
+        "ue_id": 0,
+        "cell_id": 0,
+        "scheduled": 0,
+        "mcs": 0,
+        "ack": 0,
+        "tb_bytes": 0,
+        "delivered_bytes": 0,
+        "ack_source": 0
+      },
+      "arrival_events": 393,
+      "environment_sha256": "b3837a8e0ffde18b8a8d0e3b48c3d789dddc5fc159fc446fe6ca10eaa7693367",
+      "original_source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254",
+      "screened_source_sha256": "b7e768dfb25bd283e4a55449e36222948cb21c0388f73a5e19f14edd670af254"
+    }
+  ],
+  "source_sha256": "395e790661516a2ae457822515909290e4aa034f0bb1348478fb60b06723b496",
+  "config": "configs/rt_sys/nr_reference_screened.json",
+  "config_sha256": "23bd1ec30ad9a44fc0b6624148982be720a223ad6c9514b51cb6cd0343c14b34",
+  "regression": {
+    "local_passed": 252,
+    "skipped": 1,
+    "subtests": 2
+  },
+  "scope": "Serial GPU 3-cell 24-UE stationary 8-slot prefilled fixtures, not long-run throughput or full scale speed acceptance",
+  "remaining": [
+    "Monte Carlo AMC and post-selection BLER probes remain enabled",
+    "A causal actual-TB-only feedback path with measured CQI/ACK-based AMC is not implemented by this change",
+    "No claim that seconds of simulation can yet run at large scale",
+    "Default configuration and previous acceptance outputs remain unchanged"
+  ],
+  "provenance": "The screened configuration enables the existing Gaussian/Fano necessary-condition candidate rejection. No decoder iteration, sample budget, RT fidelity, or actual TB feedback is reduced. Added configuration changes the broad source fingerprint; numerical Python implementations were unchanged."
+}
