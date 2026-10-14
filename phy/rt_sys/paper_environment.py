@@ -37,6 +37,8 @@ class PaperEnvironment:
             ue.paper_requested_dl_rate_bps=None if value is None else float(value)
         for runtime in self.state.managed_cells.values():
             for k,v in DEFAULTS.items():setattr(runtime.cell,k,deepcopy(v))
+            runtime.cell.time_to_trigger_ms=float(self.adapter.config.get('mobility',{}).get('time_to_trigger_ms',40))
+            if not np.isfinite(runtime.cell.time_to_trigger_ms) or runtime.cell.time_to_trigger_ms<0:raise ValueError('Invalid initial TTT')
         self.layer_caps={cid:(r.scheduler.max_total_spatial_layers or self.sim.scheduler.max_total_spatial_layers) for cid,r in self.state.managed_cells.items()}
         self.model=dict(bad_rsrp_dbm=-110.,bad_sinr_db=-6.,good_rsrp_dbm=-107.,good_sinr_db=-3.,bad_ms=200.,good_ms=40.,handover_timeout_ms=200.)
         self.model.update(config.get('connection_model',{}))
@@ -153,6 +155,7 @@ class PaperEnvironment:
                 if reason is None and cmd.command_type=='request_handover':
                     if uid in self.manual or c.connection_state!='connected':reason='ue_not_connected'
                     elif uid in self.pending:reason='handover_in_progress'
+                    elif c.last_handover_slot is not None and (self.state.slot_id-c.last_handover_slot)*self.dt<float(self.adapter.config.get('mobility',{}).get('min_dwell_ms',100)):reason='minimum_dwell_time'
                     elif target not in self.neighbors(c.serving_cell_id):reason='target_not_eligible'
                     elif not self.good(self.raw[uid].get(target)):reason='target_not_available'
                 elif cmd.command_type=='reconnect' and (uid in self.sessions and uid not in self.manual):reason='already_connected'

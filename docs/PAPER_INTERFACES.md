@@ -17,11 +17,11 @@
 
 - `prb_power_w: list[float] | None`：每组绝对W，时隙平均；组大小 `power_group_size_prbs` 默认1。组内按静态成员均分。全向量之和受 `tx_power_dbm`/`power_cap_dbm` 预算约束；超限整条配置拒绝。显式 `clear_prb_power=True` 切回原模式。空闲份额不转移。预算检查包含同一事务的功率上限、休眠、显式功率的最终结果；已有向量超过休眠后的预算时整条事务拒绝，应显式清除或降低向量。新模式持续遵守功率上限，旧默认路径保持原行为。
 - `ue_prb_limits: dict[UE,int] | None`：每UE上限；0暂停，空字典清除。预算/功率模式要求frequency_first；重传原格式放不下合法等待，不改码字、不计NACK/轮次。MU按每UE检查，功率和物理占用按共享网格记账。
-- `time_to_trigger_ms`、`cio_offsets_db: dict[候选小区,dB]`、`neighbor_cell_ids: list[小区]`：由目标小区上下文确定服务小区。邻区限制不删除物理干扰。参数实质变化才重置TTT；移除进行中目标产生管理性取消。
+- `time_to_trigger_ms`、`cio_offsets_db: dict[候选小区,dB]`、`neighbor_cell_ids: list[小区]`：由目标小区上下文确定服务小区。邻区限制不删除物理干扰。初始TTT继承mobility配置，参数实质变化才重置TTT；移除进行中目标产生管理性取消。
 - `steering_hysteresis_db` 复用旧HYS消费者，和事件偏移、切换代价及原切换margin分别处理。
 - `ret_enabled`、`ret_tilt_deg`(0–15°)、`ret_codebook_id`(0全水平DFT、1单水平波束)：以向下为正，固定垂直模拟权重约束数字RZF。RET下不接受旧码本/波束配置写入，不允许与已有HARQ层数冲突。关闭后恢复原空间层预算。零倾角回归针对RET模式内的未倾斜解析阵列；启用受约束模拟子空间不要求等同于原全数字预编码。
 
-一次性 `CommandAction`：`request_handover`、`disconnect`、`reconnect`，有 `target_ue_id`、可选 `target_cell_id` 和必需的请求标识。优先级高者先处理，同级按签发时间(新优先)、来源、请求ID排序；重复请求不重复执行。定向HO经过目标确认/延迟/中断状态；主动断开保持到重连、保留业务数据，不算异常掉线。
+一次性 `CommandAction`：`request_handover`、`disconnect`、`reconnect`，有 `target_ue_id`、可选 `target_cell_id` 和必需的请求标识。优先级高者先处理，同级按签发时间(新优先)、来源、请求ID排序；重复请求不重复执行。定向HO经过目标确认/延迟/中断状态，并遵守切换后的最小驻留时间；主动断开保持到重连、保留业务数据，不算异常掉线。
 
 所有动作走原RIC授权/仲裁/生效延迟；执行前按目标小区验证整个事务。回执包含请求字段、前后实际值、拒绝原因和应用时间。配置有效期限制接受时间，不自动回滚已生效目标状态。
 

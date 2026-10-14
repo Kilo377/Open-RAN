@@ -31,7 +31,9 @@ def run(args):
     results = []
     for mode in ('success', 'target_failure', 'management_cancel'):
         timeline = [dict(slot=20, commands=[dict(command_type='request_handover', target_ue_id='ue_0', target_cell_id='cell_1')])]
-        if mode == 'target_failure':
+        if mode == 'success':
+            timeline.append(dict(slot=120,commands=[dict(command_type='request_handover',target_ue_id='ue_0',target_cell_id='cell_0')]))
+        elif mode == 'target_failure':
             timeline.append(dict(slot=40, config=dict(target_cell_id='cell_1', tx_power_dbm=-100)))
         elif mode == 'management_cancel':
             timeline.append(dict(slot=40, config=dict(target_cell_id='cell_0', neighbor_cell_ids=[])))
@@ -54,14 +56,16 @@ def run(args):
         assert kinds.count(expected) == 1, kinds
         if mode != 'target_failure':
             assert 'handover_failure' not in kinds
-        decoded_cells = set()
+        decoded_cells = set();dwell_rejected=False
         for line in (root / mode / 'rt_sys_trace.jsonl').open():
             trace = json.loads(line)
+            dwell_rejected |= any(r.get('reason')=='minimum_dwell_time' for r in trace['paper_interfaces']['command_receipts'])
             for u in trace['ues']:
                 if u['actual_decode']:
                     decoded_cells.add(u['cell_id'])
         if mode == 'success':
             assert decoded_cells == {'cell_0', 'cell_1'}
+            assert dwell_rejected
         stats = final['link_reference_statistics']
         assert stats['actual_tb_decodes'] > 0
         assert all(stats.get(k, 0) == 0 for k in ('amc_probe_trials', 'bler_probe_trials', 'calibration_decode_trials', 'incompatible_no_tb', 'unsupported_no_tb'))

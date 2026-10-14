@@ -157,6 +157,11 @@ def test_handover_success_failure_timeout_and_nack_not_rlf(tmp_path,monkeypatch)
     _tick_model(sim,4)
     assert sim.state.connections['ue_0'].serving_cell_id=='cell_1'
     assert any(e['kind']=='handover_success' for e in p.all_events)
+    p.prepare_reference();p.consume_commands([command('request_handover',target='cell_0',rid='too_soon')])
+    assert p.receipts[-1]['reason']=='minimum_dwell_time'
+    assert sum(e['kind']=='handover_attempt' for e in p.all_events)==1
+    # Independent failure/timeout fixtures do not spend wall time in a dwell.
+    p.adapter.config['mobility']['min_dwell_ms']=0
     p.prepare_reference();p.consume_commands([command('request_handover',target='cell_0',rid='fail')])
     raw['ue_0']['cell_0']['no_path']=True
     _tick_model(sim,1)
