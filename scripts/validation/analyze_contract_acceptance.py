@@ -35,9 +35,17 @@ def analyze(root,output):
     output.with_suffix('.json').write_text(json.dumps(summary,indent=2))
     lines=['# 无探针 O-RAN 接入验收','',f'源码指纹：`{status["source_sha256"]}`。',
         '', '发送契约、载荷预留、固定 OLLA 与 KPI/动作权限接口已接入。以下为有限接入验收，不作为论文泛化或所有负载的 QoS 结论。',
+        '', f'完整验收耗时 {status["elapsed_s"]/60:.1f} 分钟；矩阵实际解码 {summary["actual_matrix_decode_attempts"]} 次。',
+        '', '## 本轮结果与限制', '',
+        '连续数据 NACK 不再被当作无线链路失步，避免 UE 永久退出调度；单小区与多小区均启用相同发送契约。独立 RLM/RLF 协议仍未建模。',
+        '', '两地图 4 UE 正常负载和 24 UE 0.1 倍负载的全部种子均无溢出、无超期。24 UE 正常负载存在明显承载不足、溢出与超期；结构验收通过不代表这些负载的 QoS 达标。',
+        '', '固定链路 OLLA 通过目标跟踪验收；动态 RT 用例不承诺每个 UE 均达到目标 BLER。实际 NR 解码仍有运行开销，短时成本检查通过不代表已适合大规模训练。',
         '', '## 完成的验证','', '| 项目 | 结果 |','|---|---|']
     for c in reports['gate']['cases']:
-        lines.append(f'| {c["case"]} | {c["elapsed_s"]:.2f} s，{c["actual_decode_attempts"]} 次实际解码，容量保护与重传不兼容为 0 |')
+        elapsed=c['elapsed_s']
+        if c['case'].endswith('_timing8'):
+            elapsed=json.loads((root/'gate'/c['case']/'cost_profile.json').read_text())['total_s']
+        lines.append(f'| {c["case"]} | {elapsed:.2f} s，{c["actual_decode_attempts"]} 次实际解码，容量保护与重传不兼容为 0 |')
     for c in reports['olla']['cases']:
         ci=c['wilson_95'];lines.append(f'| OLLA {c["case"]} | {c["first_samples"]} 个预热后首传；BLER {c["first_bler"]:.4f}，95% CI [{ci[0]:.4f}, {ci[1]:.4f}]；饱和 {c["saturated_fraction"]:.1%} |')
     lines.extend(['| KPI/动作、A1 策略/仲裁 | 两地图固定测试策略通过 |',
@@ -52,8 +60,24 @@ def analyze(root,output):
         lines.append(f'| {c["case"]} | {c["offered_mbps"]:.3f}/{c["delivered_mbps"]:.3f} | {c["overflow_bytes"]} | {c["deadline_misses"]} | {c["pending_bytes"]} | {rate} | {c["retx_deferred_resource"]} |')
     lines.extend(['', '动态 RT 矩阵中每个 UE 的目标跟踪状态、MCS 边界比例和样本数见各用例 `contract_validation.json`。固定链路 OLLA 验收通过，不意味着任意 RT 链路、过载或饱和 MCS 都达到目标。',
         '', '## 数据与边界','',
-        '逐 UE/小区 CSV、原始 RT/NR trace、分组和 HARQ 事件、控制回执、配置、设备版本、缓存标识与 SHA256 清单保存在本报告记录的验收目录。所有合法资源等待、过载、弱覆盖和 HARQ 清理分别记录。',
+        f'原始目录：`outputs/rt_contract_20261014/{root.name}/`。逐 UE/小区 CSV、原始 RT/NR trace、分组和 HARQ 事件、控制回执、配置、设备版本、缓存标识与 SHA256 清单保存在本报告记录的验收目录。所有合法资源等待、过载、弱覆盖和 HARQ 清理分别记录。',
         '', 'A1/E2 仍为语义仿真，PHY 使用理想 CSI 和等效 NR 资源；未实现完整 OFDM/信道估计或 IR。OLLA/HARQ 不向 xApp 开放。没有整机能耗模型，不把 RF 发射功率解释为设备节能。依赖独立 CQI/precoder 测量的两个内置 xApp 明确不可用，其余已接入参数消费者可供符合契约的 xApp 使用。'])
+    evidence=root.parent/('local_validation_'+root.name.removeprefix('final_'))
+    receipts=[]
+    for name in ('spark_artifact_verification.json','mac_artifact_verification.json'):
+        path=evidence/name
+        if path.exists():
+            receipt=json.loads(path.read_text())
+            assert receipt['verified'] and receipt['source_sha256']==status['source_sha256']
+            receipts.append(receipt)
+    if len(receipts)==2:
+        a,b=receipts
+        assert all(a[k]==b[k] for k in ('manifest_sha256','files','bytes','matrix_trace_slots','out_of_sync_observations'))
+        summary['artifact_verification']=dict(files=a['files'],bytes=a['bytes'],manifest_sha256=a['manifest_sha256'],both_hosts_verified=True,matrix_trace_slots=a['matrix_trace_slots'],out_of_sync_observations=a['out_of_sync_observations'])
+        lines.extend(['', '## 保存与校验', '',
+            f"Mac 与 Spark 均完成逐文件 SHA256 核验：{a['files']} 个文件，共 {a['bytes']} B；矩阵 {a['matrix_trace_slots']} 个时隙的失步观测为 {a['out_of_sync_observations']}。",
+            '', f"清单 SHA256：`{a['manifest_sha256']}`。源码归档、本地测试和两端校验回执位于 `outputs/rt_contract_20261014/{evidence.name}/`。"])
+        output.with_suffix('.json').write_text(json.dumps(summary,indent=2))
     output.write_text('\n'.join(lines)+'\n')
     return summary
 

@@ -471,3 +471,9 @@ Recent local verification status:
 [接入说明](docs/NO_PROBE_DU_CONTRACTS_20261014.md)。公共字段与后端能力目录见
 [生成的 KPI/xApp 目录](docs/rt_sys_kpi_and_xapp_catalog.json)。完整有限验收入口为
 `scripts/validation/run_contract_acceptance.py`；测试默认只收集 `tests/`，避免历史结果里的源码副本被重复收集。
+
+Spark 完整接入验收已完成（冻结源码 `4f28cb753220`）：
+[验收报告与承载限制](docs/NO_PROBE_ACCEPTANCE_20261014.md)。
+18/18 矩阵用例完成不代表所有负载 QoS 达标；24 UE 正常负载仍有明显溢出与超期。
+原始数据在 `outputs/rt_contract_20261014/final_v7/`，源码归档与两端校验回执在
+`outputs/rt_contract_20261014/local_validation_v7/`。
