@@ -10,6 +10,7 @@ dict-style state.ues containers.
 from __future__ import annotations
 
 from copy import deepcopy
+from collections import Counter
 from typing import Any, Dict, List, Optional
 
 from core.debug import debug_print
@@ -3487,32 +3488,18 @@ class StateUpdater:
             "e2_control_request_count": int(len(e2_control_requests)),
             "e2_control_outcome_count": int(len(e2_control_outcomes)),
             "e2_control_request_status_counts": {
-                str(status_name): int(status_count)
-                for status_name, status_count in sorted(
-                    {
-                        str(getattr(request, "status", "unknown")): sum(
-                            1
-                            for candidate in e2_control_requests
-                            if str(getattr(candidate, "status", "unknown")) == str(getattr(request, "status", "unknown"))
-                        )
-                        for request in e2_control_requests
-                    }.items(),
-                    key=lambda item: item[0],
-                )
+                str(name): int(count)
+                for name, count in sorted(Counter(
+                    str(getattr(request, "status", "unknown"))
+                    for request in e2_control_requests
+                ).items())
             },
             "e2_control_outcome_status_counts": {
-                str(status_name): int(status_count)
-                for status_name, status_count in sorted(
-                    {
-                        str(getattr(outcome, "status", "unknown")): sum(
-                            1
-                            for candidate in e2_control_outcomes
-                            if str(getattr(candidate, "status", "unknown")) == str(getattr(outcome, "status", "unknown"))
-                        )
-                        for outcome in e2_control_outcomes
-                    }.items(),
-                    key=lambda item: item[0],
-                )
+                str(name): int(count)
+                for name, count in sorted(Counter(
+                    str(getattr(outcome, "status", "unknown"))
+                    for outcome in e2_control_outcomes
+                ).items())
             },
             "effective_control_profile": effective_control_profile,
         }

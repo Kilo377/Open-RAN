@@ -1,0 +1,54 @@
+[
+  {
+    "slot": 5,
+    "config": {
+      "target_cell_id": "cell_0",
+      "power_group_size_prbs": 4,
+      "prb_power_w": [0.05, 0.05, 0.05, 0.05, 0.05, 0.05],
+      "ue_prb_limits": {"ue_0": 4, "ue_1": 0}
+    }
+  },
+  {
+    "slot": 20,
+    "config": {
+      "target_cell_id": "cell_0",
+      "time_to_trigger_ms": 40,
+      "cio_offsets_db": {"cell_1": 3},
+      "neighbor_cell_ids": ["cell_1"],
+      "steering_hysteresis_db": 1
+    }
+  },
+  {
+    "slot": 40,
+    "config": {
+      "target_cell_id": "cell_0",
+      "ret_enabled": true,
+      "ret_tilt_deg": 5,
+      "ret_codebook_id": 0
+    }
+  },
+  {
+    "slot": 100,
+    "commands": [{"command_type": "disconnect", "target_ue_id": "ue_0"}]
+  },
+  {
+    "slot": 120,
+    "commands": [{"command_type": "reconnect", "target_ue_id": "ue_0"}]
+  },
+  {
+    "slot": 250,
+    "commands": [{"command_type": "request_handover", "target_ue_id": "ue_0", "target_cell_id": "cell_1"}]
+  },
+  {
+    "slot": 300,
+    "config": {
+      "target_cell_id": "cell_0",
+      "clear_prb_power": true,
+      "power_group_size_prbs": 1,
+      "ue_prb_limits": {},
+      "cio_offsets_db": {},
+      "neighbor_cell_ids": ["cell_1", "cell_2"],
+      "ret_enabled": false
+    }
+  }
+]

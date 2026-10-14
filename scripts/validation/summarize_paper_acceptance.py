@@ -73,7 +73,7 @@ def summarize(root, destination, local_validation):
         f"原始结果目录：`{root}`。清单包含 {report['artifact_files']} 个文件、{report['artifact_bytes']} bytes；清单SHA256为 `{report['manifest_sha256']}`。两端逐文件核对回执单独保存，不能仅凭目录复制成功宣称校验通过。", '',
         '字段语义见 [接口说明](PAPER_INTERFACES.md)、[逐项文献追踪](PAPER_FIELD_TRACEABILITY.md)、[机器可读目录](paper_interface_catalog.json)。默认配置仍不启用新增接口；专用入口为 `configs/rt_sys/paper_interfaces.json`。', '',
         'CQI 是参考 SINR 量化，失步/恢复阈值是可配置工程假设，掉线率是无线连接会话口径。能量仅含已建模 RF 数据/导频；整机指标不可用。保留 A1/E2 语义仿真、理想 CSI、等效干扰接收及 none/Chase HARQ 边界。RET 零倾角针对受约束模拟阵列模型回归，不要求等同旧全数字 RZF。', '',
-        f'早期 spark_v1/v2/v3/v4 运行已主动停止并保留，不计为完整验收；本报告只统计 {root.name} 的冻结源码结果。spark_v2 的固定功率测试使用了旧调度配置PRB数，导致正常向量按长度拒绝；最终时间线使用实际NR网格并检查正常动作确实生效。随后补上了功率向量与休眠/上限组合的原子预算检查。',
+        f'早期 spark_v1/v2/v3/v4/v5 运行已主动停止并保留，不计为完整验收；本报告只统计 {root.name} 的冻结源码结果。spark_v2 的固定功率测试使用了旧调度配置PRB数，导致正常向量按长度拒绝；最终时间线使用实际NR网格并检查正常动作确实生效。随后补上了功率向量与休眠/上限组合的原子预算检查、定向切换驻留保护，以及不改变统计结果的线性E2状态计数。',
     ]
     destination.with_suffix('.md').write_text('\n'.join(lines) + '\n')
     return report

@@ -58,3 +58,7 @@ CQI阈值默认 `[-7,-5,...,21] dB`，16级；不读取MCS，不调用链路探�
 
 `validate_paper_handover_rt.py` 另以重叠覆盖的受控部署验证真实RT/NR切换成功、目标失效及邻区删除取消；该部署不用于承载结论。
 运行后可用 `export_paper_runtime_fingerprints.py` 对实际trace中的生效配置生成SHA256，连同RET模拟权重目录保存；动态数字RZF权重保留在原逐资源预编码trace。
+
+可直接审阅的固定动作示例为 [paper_control_timeline.example.json](paper_control_timeline.example.json)，用于当前专用配置、3小区/4UE、至少320slots。该10MHz/30kHz配置的实际NR网格为24PRB，4PRB/组时向量长度为6；其他带宽必须依据 `lookup_nr_max_prbs` 重新生成，不能使用旧调度配置中的96。命令请求ID由时间线适配器稳定生成。定向切换可能因目标与服务小区相同、无线不可用或驻留保护而明确拒绝；需要确定成功的物理专项使用 `validate_paper_handover_rt.py` 的受控重叠部署。
+
+长闭环性能修复：E2请求/回执状态的聚合改为一次遍历计数，避免每条历史记录再次扫描全部历史。128-slot固定动作重放逐项核对了PHY/队列/资源/KPI及状态计数，结果相同；这项改动不跳过NR解码、不改变控制动作，也不引入探针或查表。
