@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 
-def summarize(root, destination, local_validation):
+def summarize(root, destination, local_validation, handover_root=None):
     status = json.loads((root / 'pipeline_status.json').read_text())
     validation = json.loads((root / 'validation.json').read_text())
     manifest = json.loads((root / 'data_manifest.json').read_text())
@@ -14,7 +14,7 @@ def summarize(root, destination, local_validation):
     assert status['source_sha256'] == validation['source_sha256'] == manifest['source_sha256']
     local_log=(local_validation/'pytest_local.log').read_text().strip().splitlines()[-1]
     spark_log=(root/'pytest.log').read_text().strip().splitlines()[-1]
-    cases = []
+    cases = [];pressure=[]
     total_events = Counter()
     for result in validation['results']:
         name = result['case']
@@ -37,6 +37,18 @@ def summarize(root, destination, local_validation):
             max_energy_error_j=result['max_energy_error_j'], config_rejections=result['config_rejections'],
             peak_rss_bytes=runtime.get('peak_rss_bytes'), peak_cuda_bytes=runtime.get('peak_cuda_bytes'),
         ))
+        if snapshot['manifest']['total_slots']==1000:
+            steady=final['steady_state']['per_ue'];packets=final['packet_metrics']
+            connected={e['ue_id'] for e in events if e['kind']=='connection_started'}
+            missing=sorted(set(packets)-connected)
+            pressure.append(dict(case=name,evaluated_ms=final['steady_state']['evaluated_ms'],
+                offered_mbps=sum(u['offered_mbps'] for u in steady.values()),goodput_mbps=sum(u['delivered_mbps'] for u in steady.values()),
+                queue_growth_bytes=sum(u['queue_growth_bytes'] for u in steady.values()),overflow_bytes=sum(u['overflow_bytes'] for u in steady.values()),
+                deadline_misses=sum(u['deadline_misses'] for u in steady.values()),never_connected=missing,
+                zero_delivery=[uid for uid,p in packets.items() if not p['delivered_bytes']],
+                retx_deferred_resource=sum(u['retx_deferred_resource'] for u in final['tb_outcomes'].values()),
+                recovery_rsrp_dbm=final['paper_interfaces']['model']['good_rsrp_dbm'],
+                last_reference={uid:final['paper_interfaces']['final_reports']['ue'][uid] for uid in missing}))
     timings = {scene: json.loads((root / (scene + '_timing8') / 'cost_profile.json').read_text())['total_s']
                for scene in ('simple_street_canyon', 'munich')}
     report = dict(
@@ -46,8 +58,14 @@ def summarize(root, destination, local_validation):
         ret_pairs=validation['ret_pairs'], events=dict(total_events),
         artifact_files=len(manifest['files']), artifact_bytes=sum(f['bytes'] for f in manifest['files']),
         manifest_sha256=hashlib.sha256((root / 'data_manifest.json').read_bytes()).hexdigest(),
-        scope='Fixed control/observation integration; forced outages included; not an algorithm comparison or capacity/SLA guarantee',
+        pressure=pressure,scope='Fixed control/observation integration; forced outages included; not an algorithm comparison or capacity/SLA guarantee',
     )
+    if handover_root:
+        extra=json.loads((handover_root/'integration_audit.json').read_text())
+        assert extra['passed'] and len(extra['results'])==3
+        assert all(r['passed'] and r['source_sha256']==report['source_sha256'] for r in extra['results'])
+        report['supplemental_handover']=dict(root=str(handover_root),cases=3,slots=480,
+            actual_decodes=sum(r['actual_decodes'] for r in extra['results']),results=extra['results'])
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.with_suffix('.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     lines = [
@@ -69,6 +87,22 @@ def summarize(root, destination, local_validation):
     lines += ['', 'RET 使用相同部署、业务随机流和传播缓存成对检查；阵元布局另由真实 Sionna 阵列验证：', '']
     for pair in report['ret_pairs']:
         lines.append(f"- {pair['scene']}：最大候选/服务参考 RSRP 差 {pair['max_reference_difference_db']:.4f}dB；缓存 `{pair['cache_key']}`。")
+    if handover_root:
+        lines += ['',f"另有3个受控重叠覆盖的真实RT/NR切换专项通过共同守恒审计，共480slots、{report['supplemental_handover']['actual_decodes']}次实际解码：成功切换、执行中目标失效、邻区删除管理取消。成功用例验证了新服务小区实际解码，以及驻留期间反向命令被拒绝。该受控部署不作为真实部署容量结论。"]
+    lines += ['', '## 资源压力与保留的问题', '',
+        '以下仅为本轮固定动作下200ms预热后的300ms窗口，不是无控制基线容量，也不是长期稳定性或SLA通过结论。', '',
+        '| 24UE用例 | 到达/交付 Mbit/s | 队列增长 byte | 溢出 byte | 新增超期分组 | 从未接入 UE | 合法重传等待 |',
+        '|---|---:|---:|---:|---:|---|---:|']
+    for p in pressure:
+        lines.append(f"| {p['case']} | {p['offered_mbps']:.3f}/{p['goodput_mbps']:.3f} | {p['queue_growth_bytes']} | {p['overflow_bytes']} | {p['deadline_misses']} | {','.join(p['never_connected']) or '无'} | {p['retx_deferred_resource']} |")
+    lines.append('')
+    for p in pressure:
+        for uid,r in p['last_reference'].items():
+            best=max(r['candidate_rsrp_dbm'].values())
+            lines.append(f"- {p['case']}：{uid}全程未建立连接；最终最佳候选RSRP {best:.2f}dBm，工程恢复门槛 {p['recovery_rsrp_dbm']:.2f}dBm。其零交付、未接入及排队数据均保留。")
+        if p['goodput_mbps']>p['offered_mbps']:
+            lines.append(f"- {p['case']}：窗口交付略高于同期到达，同时队列增长为{p['queue_growth_bytes']}byte，表示在清理预热期遗留队列，字节账本仍守恒。")
+    lines += ['', '正常负载下的积压、溢出和超期，以及低负载下仍有的业务时延问题，均如实保留。合法资源等待不计NACK或资源不兼容。上述结果不生成冲突标签，也不对联合时间线做单变量因果归因。RF能效只反映射频，不能推导整机节能。内存记录为进程RSS及PyTorch CUDA分配峰值，后者不代表Mitsuba/驱动的完整GPU峰值。']
     lines += ['', '## 数据与边界', '',
         f"原始结果目录：`{root}`。清单包含 {report['artifact_files']} 个文件、{report['artifact_bytes']} bytes；清单SHA256为 `{report['manifest_sha256']}`。两端逐文件核对回执单独保存，不能仅凭目录复制成功宣称校验通过。", '',
         '字段语义见 [接口说明](PAPER_INTERFACES.md)、[逐项文献追踪](PAPER_FIELD_TRACEABILITY.md)、[机器可读目录](paper_interface_catalog.json)。默认配置仍不启用新增接口；专用入口为 `configs/rt_sys/paper_interfaces.json`。', '',
@@ -84,6 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--local-validation', type=Path, required=True)
+    parser.add_argument('--handover-root', type=Path)
     args = parser.parse_args()
-    result = summarize(args.root, args.output, args.local_validation)
+    result = summarize(args.root, args.output, args.local_validation,args.handover_root)
     print(json.dumps({k: result[k] for k in ('passed', 'audited_closed_loop_cases', 'closed_loop_slots', 'actual_decodes')}))

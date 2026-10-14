@@ -483,3 +483,8 @@ Spark 完整接入验收已完成（冻结源码 `4f28cb753220`）：
 [逐项文献追踪和适配差异](docs/PAPER_FIELD_TRACEABILITY.md)、
 [机器可读动作/KPI目录](docs/paper_interface_catalog.json)。
 固定测试动作入口为 `--control-timeline`，不包含论文决策算法。
+
+四篇论文控制/观测接口的最终Spark接入验收已完成（源码 `44d60d126ded`）：
+[验收结果、压力测试与弱覆盖记录](docs/PAPER_INTERFACE_ACCEPTANCE_20261014.md)。
+18个闭环用例及3个真实切换专项通过；原始数据已在Mac/Spark逐文件校验。
+该结论不表示所有UE覆盖或SLA达标，不包含论文xApp决策算法。
