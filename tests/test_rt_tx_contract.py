@@ -116,3 +116,44 @@ def test_codec_preflight_handles_multidimensional_multicb_lengths():
     assert codec_format_supported('qam64',20,count)
     wave=NRWaveform(1,20,count,'cpu')
     assert wave.num_cb>1
+
+
+def test_data_nack_burst_does_not_permanently_disable_nr_service(tmp_path, monkeypatch):
+    from test_rt_sys import FakeTracer
+    from phy.rt_sys.scenario import build_case
+    from phy.rt_sys.channel import RtChannelProvider
+    from phy.rt_sys.adapter import RtSysPhyAdapter
+    from phy.rt_sys.nr_harq import NrHarqReceiver
+    from core.simulator import Simulator
+    from core.factory import build_controller_registry, build_scheduler
+    from experiments.scenario_scan_utils import build_runtime_scenario_config
+    original = NrHarqReceiver.transmit
+    attempts = {}
+
+    def burst(receiver, wave, values, seed, slot, uid, context):
+        result = original(receiver, wave, values, seed, slot, uid, context)
+        if not result['no_tb']:
+            attempts[uid] = attempts.get(uid, 0) + 1
+            if attempts[uid] <= 12:
+                result.update(ack=False, errors=1)
+        return result
+
+    monkeypatch.setattr(NrHarqReceiver, 'transmit', burst)
+    m, c, _ = build_case(num_cells=1, num_ues=4, total_slots=60)
+    c['ric'].update(rapps=[], xapps=[])
+    provider = RtChannelProvider(m, tmp_path/'cache', backend=FakeTracer(m))
+    adapter = RtSysPhyAdapter({**c['phy']['rt_sys'], 'device':'cpu', 'feedback_mode':'nr_direct'}, channel_provider=provider)
+    runtime = build_runtime_scenario_config(scenario_name='nack_burst', scenario_type='rt_scene', sim_config=c['sim'], cell_config=c['cell'], ric_config=c['ric'])
+    sim = Simulator(runtime, build_controller_registry(c['ric']), build_scheduler(c['sim']), adapter, c['cell'], c['ue'], c['beamforming'], str(tmp_path))
+    peak = 0
+    for _ in range(60):
+        sim.step()
+        for connection in sim.state.connections.values():
+            peak = max(peak, connection.consecutive_nack_count)
+            assert connection.connection_state != 'out_of_sync', (sim.state.slot_id, [(u['ue_id'],u.get('tx_contract'),u.get('actual_decode')) for u in adapter.trace['ues']])
+    assert peak >= 8
+    assert max(attempts.values()) > 12
+    assert sum(ue.packet_ledger.stats['delivered_bytes'] for ue in sim.state.ues) > 0
+    for ue in sim.state.ues:
+        ledger = ue.packet_ledger
+        assert ledger.stats['initial_bytes'] + ledger.stats['offered_bytes'] == ledger.stats['delivered_bytes'] + ledger.stats['overflow_bytes'] + sum(lc.queue_bytes for lc in ue.logical_channels)

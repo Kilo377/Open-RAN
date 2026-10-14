@@ -2656,16 +2656,22 @@ class StateUpdater:
                 self._safe_set(connection, "rank_indicator", max(1, int(rank)))
                 self._safe_set(connection, "pmi", int(pmi))
                 self._safe_set(connection, "cqi", int(cqi))
-                if ack:
+                # PDSCH CRC is HARQ feedback, not an independent RLM/RLF indication.
+                # Contract-backed NR transmissions retain NACK diagnostics without
+                # disabling future scheduling. No-TB outcomes are not feedback.
+                contract_feedback_mode = bool(getattr(state, 'rt_tx_contracts', False))
+                actual_feedback = (not contract_feedback_mode or (
+                    scheduled_bytes > 0 and getattr(ue_result, 'reference_tb_ack', None) is not None))
+                if actual_feedback and ack:
                     self._safe_set(connection, "last_ack_slot", slot_id_value)
                     self._safe_set(connection, "consecutive_nack_count", 0)
                     self._safe_set(connection, "out_of_sync_reason", None)
                     if str(self._safe_get(connection, "connection_state", "connected")) != "handover_pending":
                         self._safe_set(connection, "connection_state", "connected")
-                else:
+                elif actual_feedback:
                     next_nack_count = int(self._safe_get(connection, "consecutive_nack_count", 0)) + 1
                     self._safe_set(connection, "consecutive_nack_count", next_nack_count)
-                    if next_nack_count >= 8:
+                    if not contract_feedback_mode and next_nack_count >= 8:
                         self._safe_set(connection, "connection_state", "out_of_sync")
                         self._safe_set(connection, "out_of_sync_reason", "consecutive_nack_threshold")
 

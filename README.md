@@ -466,3 +466,8 @@ Recent local verification status:
 
 - `pyright`: 0 errors, 0 warnings, 0 informations
 - `unittest`: 76 tests passing
+
+无探针 DU 的发送资源契约、分组字节预留、固定 OLLA 和 xApp KPI/动作接口见
+[接入说明](docs/NO_PROBE_DU_CONTRACTS_20261014.md)。公共字段与后端能力目录见
+[生成的 KPI/xApp 目录](docs/rt_sys_kpi_and_xapp_catalog.json)。完整有限验收入口为
+`scripts/validation/run_contract_acceptance.py`；测试默认只收集 `tests/`，避免历史结果里的源码副本被重复收集。

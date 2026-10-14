@@ -183,6 +183,8 @@ class Simulator:
         self.slot_records = []
         self.state = self._build_initial_state()
         self._rt_sys_mode = bool(getattr(self.phy_adapter, "cluster_execution", False))
+        self.state.rt_tx_contracts = self._rt_sys_mode and getattr(
+            getattr(self.phy_adapter, 'abstraction', None), 'feedback_mode', None) == 'nr_direct'
         if self._rt_sys_mode:
             from phy.rt_sys.mobility import RtMobilityManager
             self.traffic_engine.enable_packet_tracking(self.state)

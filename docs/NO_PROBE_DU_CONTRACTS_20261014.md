@@ -43,3 +43,38 @@ OLLA/HARQ 参数不在 xApp 动作面。整机功耗模型尚未建立；`rf_tx_
 - `scripts/validation/validate_control_lifecycle.py --feedback-mode nr_direct`：A1 策略、优先级、作用小区、生效/过期窗口与回执。
 
 新版本的承载与 BLER 结论只采用本轮数据，不继承历史 bank/启发式版本。过载、弱覆盖、样本不足、MCS 饱和必须单独报告。实际 GPU 与长期矩阵结果见本轮最终验收报告；此说明不把待运行用例标为已通过。
+
+## 一个最小接口示例
+
+下面只演示受限小区、输入声明和动作写入，不作为论文算法。运行前管理器检查必需 KPI；`run` 收到的队列为已交付报告。
+
+```python
+from models.action import ConfigAction, ControlDecision
+from ric.near_rt.xapp_base import XAppBase
+from ric.xapp_contract import XAppContract
+
+class QueuePowerExample(XAppBase):
+    def __init__(self):
+        super().__init__(
+            "queue_power_example", 10, ["power_cap_dbm"],
+            contract=XAppContract(
+                required_kpis=("queue_bytes", "rf_tx_power_w"),
+                actions=frozenset({"power_cap_dbm"}),
+                max_age_slots=20,
+                cell_ids=("cell_1",),
+            ),
+        )
+
+    def run(self, observation, policy_snapshot):
+        cell = next(c for c in observation.cell_observations if c.cell_id == "cell_1")
+        return ControlDecision(config_action=ConfigAction(
+            target_cell_id="cell_1", source_name=self.name,
+            power_cap_dbm=26.0 if cell.total_queue_bytes < 3000 else 30.0,
+        ))
+```
+
+### 数据反馈与连接状态边界
+
+长期矩阵发现旧逻辑把连续 8 次 PDSCH NACK 当作失步，导致 UE 永久退出调度。实际 NR 契约模式现在仅将真实 CRC 结果用于 HARQ/OLLA 和连续 NACK 诊断，不再从数据 NACK 推断 RLM/RLF；未发送、无 TB、无传播路径不计入该诊断。独立参考信号 RLM/RLF 与重建协议仍未建模，不宣称实现真实失步恢复。关联与切换继续使用 RT 参考测量。单小区与多小区入口均启用相同契约。
+
+增加真实 NR 编解码的连续 12 次 NACK 故障注入回归，检查超过旧阈值后仍可调度、恢复 ACK/业务交付和分组字节守恒。旧版本 final_v6 的结构验收通过不能覆盖此业务缺陷，其承载结果不作为最终验收。

@@ -47,7 +47,7 @@
       "unit": "Mbit/s",
       "source": "delivered_goodput_report",
       "window": "throughput_window_slots",
-      "sample_count": null
+      "sample_count": "throughput_window_slots"
     },
     "retx_fraction": {
       "entity": "ue",
