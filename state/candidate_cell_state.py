@@ -8,6 +8,9 @@ from dataclasses import dataclass
 @dataclass
 class CandidateCellState:
     cell_id: str
+    measurement_produced_at_slot: int | None = None
+    measurement_delivered_at_slot: int | None = None
+    measurement_window_slots: int | None = None
     cell_type: str = "macro"
     x_m: float = 0.0
     y_m: float = 0.0

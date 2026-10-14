@@ -97,6 +97,7 @@ class PhyUeInput:
     allocated_subcarrier_indices: List[int] = field(default_factory=list)
     allocated_symbol_indices: List[int] = field(default_factory=list)
     resource_grid_slice: PhyResourceGridSlice | None = None
+    tx_contract: object | None = None
     is_retx: bool = False
     requested_bytes: int = 0
     grant_bytes_budget: int = 0

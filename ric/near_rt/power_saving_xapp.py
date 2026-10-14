@@ -110,9 +110,9 @@ class PowerSavingXApp(XAppBase):
                 beam_candidate_preference=(
                     preferred_beam if preferred_beam != "coverage" else "balanced"
                 ),
-                sleep_threshold=sleep_threshold,
-                wake_up_threshold=wake_up_threshold,
-                dwell_time_slots=dwell_time_slots,
+                sleep_threshold=(sleep_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                wake_up_threshold=(wake_up_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                dwell_time_slots=(dwell_time_slots if not getattr(observation, 'rt_public_projection', False) else None),
                 source_name=self.name,
             )
             energy_mode = "saving"
@@ -130,9 +130,9 @@ class PowerSavingXApp(XAppBase):
                     base_power_cap_dbm,
                 ),
                 beam_candidate_preference="balanced",
-                sleep_threshold=sleep_threshold,
-                wake_up_threshold=wake_up_threshold,
-                dwell_time_slots=dwell_time_slots,
+                sleep_threshold=(sleep_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                wake_up_threshold=(wake_up_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                dwell_time_slots=(dwell_time_slots if not getattr(observation, 'rt_public_projection', False) else None),
                 source_name=self.name,
             )
             energy_mode = "mild_saving"

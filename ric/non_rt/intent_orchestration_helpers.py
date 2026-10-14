@@ -17,6 +17,7 @@ from models.intent_orchestration import (
     ValidatedIntentTemplate,
     XAppCandidateScore,
 )
+from ric.xapp_contract import capability_record
 from models.observation import Observation
 from ric.near_rt.xapp_variant_catalog import (
     BASE_XAPP_CAPABILITIES,
@@ -325,15 +326,17 @@ def _xapp_allowed_for_filter(
 
 def available_xapp_catalog_for_llm(
     available_xapp_names: list[str] | tuple[str, ...] | set[str] | None = None,
+    backend: str | None = None,
 ) -> list[dict[str, object]]:
     available_filter = _normalize_available_xapp_filter(available_xapp_names)
     return [
         {
+            **capability_record(name, spec.get('tunable_fields', [])),
             "xapp_name": name,
             "xapp_category": canonical_xapp_category(name),
             "description": str(spec.get("description", "")),
-            "kpis": _string_list(spec.get("kpis", [])),
-            "tunable_fields": _string_list(spec.get("tunable_fields", [])),
+            "kpis": (capability_record(name,spec.get("tunable_fields",[]))["required_kpis"] if backend=="sionna_rt_sys" else _string_list(spec.get("kpis", []))),
+            "tunable_fields": (capability_record(name,spec.get("tunable_fields",[]))["writable_actions"] if backend=="sionna_rt_sys" else _string_list(spec.get("tunable_fields", []))),
             "tuning_mode": str(spec.get("tuning_mode", "heuristic_parameter")),
             "is_variant": bool(canonical_xapp_category(name) != name),
             "variant_params": to_llm_serializable(XAPP_VARIANT_PARAMS_CATALOG.get(name, {})),
@@ -345,6 +348,7 @@ def available_xapp_catalog_for_llm(
 
 def available_xapp_category_catalog_for_llm(
     available_xapp_names: list[str] | tuple[str, ...] | set[str] | None = None,
+    backend: str | None = None,
 ) -> list[dict[str, object]]:
     available_filter = _normalize_available_xapp_filter(available_xapp_names)
     catalog: list[dict[str, object]] = []
@@ -364,8 +368,8 @@ def available_xapp_category_catalog_for_llm(
             {
                 "xapp_category": name,
                 "description": str(spec.get("description", "")),
-                "kpis": _string_list(spec.get("kpis", [])),
-                "tunable_fields": _string_list(spec.get("tunable_fields", [])),
+                "kpis": (capability_record(name,spec.get("tunable_fields",[]))["required_kpis"] if backend=="sionna_rt_sys" else _string_list(spec.get("kpis", []))),
+                "tunable_fields": (capability_record(name,spec.get("tunable_fields",[]))["writable_actions"] if backend=="sionna_rt_sys" else _string_list(spec.get("tunable_fields", []))),
                 "variant_count": int(len(variant_names)),
                 "example_variants": variant_names[:4],
             }

@@ -38,6 +38,7 @@ class XAppBase(ABC):
         name: str,
         priority: int,
         controlled_fields: List[str],
+        contract=None,
     ) -> None:
         """
         Initializes the xApp with a given name, priority, and field ownership.
@@ -55,6 +56,8 @@ class XAppBase(ABC):
         self.name = name
         self.priority = priority
         self.controlled_fields = controlled_fields
+        from ric.xapp_contract import contract_for
+        self.contract = contract or contract_for(controlled_fields,name)
 
     @abstractmethod
     def run(

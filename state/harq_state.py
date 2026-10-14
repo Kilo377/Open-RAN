@@ -55,6 +55,7 @@ class HarqProcessState:
     reserved_at_slot: int | None = None
     last_tx_slot: int | None = None
     pending_logical_channels: list[HarqLogicalChannelState] = field(default_factory=list)
+    tx_contract: object | None = None
     mcs_index: int | None = None
     mcs_table_id: str | None = None
 

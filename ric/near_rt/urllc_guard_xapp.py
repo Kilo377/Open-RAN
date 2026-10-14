@@ -74,9 +74,9 @@ class URLLCGuardXApp(XAppBase):
                 scheduler_policy_hint="latency_bias",
                 latency_bias=clamp(base_latency_bias + 0.60 * max_guard_pressure, 0.9, 2.0),
                 power_cap_dbm=max(30.0, base_power_cap_dbm),
-                prb_weight=clamp(1.0 + 0.35 * max_guard_pressure, 1.0, 1.8),
-                priority_coefficient=clamp(1.5 + 0.75 * max_guard_pressure, 1.2, 3.0),
-                delay_threshold_ms=clamp(
+                prb_weight=(clamp(1.0 + 0.35 * max_guard_pressure, 1.0, 1.8) if not getattr(observation, 'rt_public_projection', False) else None),
+                priority_coefficient=(clamp(1.5 + 0.75 * max_guard_pressure, 1.2, 3.0) if not getattr(observation, 'rt_public_projection', False) else None),
+                delay_threshold_ms=(clamp(
                     min(
                         self.latency_budget_threshold_ms,
                         float(getattr(policy_snapshot, "preferred_delay_threshold_ms", self.latency_budget_threshold_ms) or self.latency_budget_threshold_ms),
@@ -84,7 +84,7 @@ class URLLCGuardXApp(XAppBase):
                     - 3.0 * clamp(max_guard_pressure, 0.0, 1.0),
                     5.0,
                     self.latency_budget_threshold_ms,
-                ),
+                ) if not getattr(observation, 'rt_public_projection', False) else None),
                 source_name=self.name,
             )
 

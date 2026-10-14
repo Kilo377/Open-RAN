@@ -14,6 +14,9 @@ from typing import List
 @dataclass
 class CandidateCellObservation:
     cell_id: str
+    measurement_produced_at_slot: int | None = None
+    measurement_delivered_at_slot: int | None = None
+    measurement_window_slots: int | None = None
     cell_type: str = "macro"
     distance_2d_m: float = 0.0
     carrier_frequency_hz: float = 3.5e9
@@ -81,6 +84,8 @@ class CellObservation:
     measurement_event_offset_db: float | None = None
     connected_ue_count: int = 0
     scheduled_ue_count: int = 0
+    rf_tx_power_w: float | None = None
+    rf_power_produced_at_slot: int | None = None
     total_queue_bytes: int = 0
     resource_grid_total_re: int = 0
     resource_grid_allocated_re: int = 0
@@ -176,6 +181,13 @@ class UeObservation:
     traffic_type: str
     latency_budget_ms: float
     priority: int
+    retx_fraction: float | None = None
+    retx_sample_count: int = 0
+    reference_noise_dbm: float | None = None
+    first_tx_bler: float | None = None
+    first_tx_sample_count: int = 0
+    deadline_miss_rate: float | None = None
+    deadline_sample_count: int = 0
     demand_true_backlog_bytes: int | None = None
     demand_observed_backlog_bytes: int | None = None
     demand_bytes: int | None = None

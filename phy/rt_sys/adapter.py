@@ -1,5 +1,5 @@
 """Cluster-wide downlink RT/SYS executor, retaining legacy PhyResult contracts."""
-from dataclasses import fields,replace
+from dataclasses import fields, asdict,replace
 import math
 import numpy as np
 from models.phy_result import PhyResult, PhyUeResult
@@ -54,9 +54,21 @@ class RtSysPhyAdapter:
     def run_slot(self, phy_input):
         raise RuntimeError('RT/SYS requires run_cluster_slot with all managed-cell grants')
 
+    def release_inactive_contexts(self,state):
+        receiver=getattr(self.abstraction,'harq',None)
+        if receiver is not None:
+            valid={(u.ue_id,p.process_id): (p.ndi,str(state.connections[u.ue_id].serving_cell_id))
+                for u in state.ues for p in u.harq.processes if p.tx_contract is not None}
+            for key,context in list(receiver.pending.items()):
+                sig=context['signature']
+                if key not in valid or valid[key]!=(sig[0],sig[4]):
+                    receiver.pending.pop(key)
+                    receiver.stats['lifecycle_context_cleanup']+=1
+
     def bind_state(self, state):
         if self.channel_provider is None:
             raise RuntimeError('No RT channel provider configured')
+        self.release_inactive_contexts(state)
         self.current_snapshot = self.channel_provider.snapshot(int(state.slot_id))
         self.current_snapshot.validate()
         self.scheduler_snapshot=replace(self.current_snapshot,
@@ -124,6 +136,12 @@ class RtSysPhyAdapter:
                 all_seen.add(ue.ue_id)
                 if not ue.is_scheduled:
                     continue
+                contract=getattr(ue,'tx_contract',None)
+                if contract is not None:
+                    contract.validate(ue,p.cell_id)
+                    receiver=getattr(self.abstraction,'harq',None)
+                    if ue.is_retx and (ue.ue_id,int(ue.harq_process_id)) not in receiver.pending:
+                        raise ValueError('Retransmission missing physical codeword before transmission')
                 layers = int(ue.layer_count or 1)
                 if not 1 <= layers <= min(nr,nt):
                     raise ValueError('Requested layer count exceeds antenna capability')
@@ -238,13 +256,8 @@ class RtSysPhyAdapter:
                 result.queue_bytes = ue.queue_bytes
                 result.phy_mode = 'rt_sys'; result.waveform_backend = 'sionna_rt_sys'
                 if e is not None:
-                    data = e['mask'].copy()
-                    # Deterministic comb pilots, dense pattern uses two combs.
-                    pilot_symbol = int(np.flatnonzero(data.any(axis=1))[0])
-                    data[pilot_symbol,::2] = False
-                    if ue.dmrs_pattern_id and 'dense' in ue.dmrs_pattern_id:
-                        pilot_last = int(np.flatnonzero(e['mask'].any(axis=1))[-1])
-                        data[pilot_last,::2] = False
+                    from phy.rt_sys.tx_contract import data_mask
+                    data = data_mask(e['mask'],ue.dmrs_pattern_id)
                     values = e['sinr'].copy(); values[~data,:] = 0
                     result.resource_grid_re_count = int(e['mask'].sum())
                     result.effective_data_re_count = int(data.sum())
@@ -270,8 +283,10 @@ class RtSysPhyAdapter:
                         metrics = self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
                             self.seed,p.slot_id,ue.ue_id,fixed=fixed,**context)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
-                        result.link_adaptation_reason = metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
+                        result.link_adaptation_reason = ue.link_adaptation_reason or metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
                         physical_capacity=metrics['capacity_bytes']
+                        if getattr(ue,'tx_contract',None) is not None and physical_capacity != ue.tx_contract.nr_tbs_bits//8:
+                            raise RuntimeError('Actual codec differs from planned TB contract')
                         result.mcs_index = metrics['mcs']; result.modulation_order = metrics['qm']
                         result.reference_tb_ack = metrics.get('reference_tb_ack')
                         result.code_rate = metrics['rate']; result.bler = metrics['tbler']
@@ -312,6 +327,11 @@ class RtSysPhyAdapter:
                         'precoder_column_norm_mean':0.0,'beam_subspace_codebook':p.current_codebook_id,
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
+                contract=getattr(ue,'tx_contract',None)
+                trace_ues[-1].update(tb_id=contract.tb_id if contract else None,is_retx=bool(ue.is_retx),
+                    actual_decode=metrics.get('reference_tb_ack') is not None,
+                    mcs_table=ue.mcs_table_id,tx_contract=asdict(contract) if contract else None,
+                    link_adaptation_reason=ue.link_adaptation_reason)
                 outputs.append(result)
                 if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
                     defaults={'ack_source':'no_path' if e is not None else 'not_scheduled','bler_probe_errors':0,'bler_probe_samples':0,
@@ -319,7 +339,7 @@ class RtSysPhyAdapter:
                         'bler_probe_seed':None,'ack_seed':None,'reference_tb_errors':None,'reference_tb_ack':False,
                         'effective_sinr_kind':'arithmetic_mean_diagnostic_only'}
                     trace_ues[-1].update({key:metrics.get(key,value) for key,value in defaults.items()})
-                    trace_ues[-1]['mac_capacity_guard']=bool(ue.is_retx and result.tb_size_bytes<ue.requested_bytes) if e is not None else False
+                    trace_ues[-1]['mac_capacity_guard']=bool(ue.is_retx and metrics.get('ack_source')=='actual_nr_crc_and_bit_check' and result.tb_size_bytes<ue.requested_bytes) if e is not None else False
                     trace_ues[-1]['reference_rv']=0
                     trace_ues[-1]['mac_requested_rv']=ue.harq_redundancy_version
                     trace_ues[-1]['amc_selection_target_met']=metrics.get('amc_selection_target_met')

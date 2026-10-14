@@ -132,14 +132,14 @@ class LatencySchedulerXApp(XAppBase):
                     2.5,
                 ),
                 slice_weight_adjustment=preferred_slice_weight_adjustment,
-                prb_weight=clamp(0.70 + 0.45 * pressure, 0.4, 1.8),
-                priority_coefficient=clamp(1.0 + 0.65 * pressure, 1.0, 3.0),
-                delay_threshold_ms=clamp(
+                prb_weight=(clamp(0.70 + 0.45 * pressure, 0.4, 1.8) if not getattr(observation, 'rt_public_projection', False) else None),
+                priority_coefficient=(clamp(1.0 + 0.65 * pressure, 1.0, 3.0) if not getattr(observation, 'rt_public_projection', False) else None),
+                delay_threshold_ms=(clamp(
                     float(getattr(policy_snapshot, "preferred_delay_threshold_ms", 20.0) or 20.0)
                     - 5.0 * clamp(pressure, 0.0, 1.0),
                     5.0,
                     80.0,
-                ),
+                ) if not getattr(observation, 'rt_public_projection', False) else None),
                 source_name=self.name,
             )
             return ControlDecision(

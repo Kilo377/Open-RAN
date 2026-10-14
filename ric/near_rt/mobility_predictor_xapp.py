@@ -120,8 +120,8 @@ class MobilityPredictorXApp(XAppBase):
             action = ConfigAction(
                 mobility_bias_db=mobility_bias_db,
                 steering_hysteresis_db=steering_hysteresis_db,
-                time_to_trigger_ms=time_to_trigger_ms,
-                mobility_margin_db=clamp(base_margin_db + 2.5 * robust_guard - 1.2 * max_risk, 0.5, 8.0),
+                time_to_trigger_ms=(time_to_trigger_ms if not getattr(observation, 'rt_public_projection', False) else None),
+                mobility_margin_db=(clamp(base_margin_db + 2.5 * robust_guard - 1.2 * max_risk, 0.5, 8.0) if not getattr(observation, 'rt_public_projection', False) else None),
                 measurement_event_offset_db=measurement_event_offset_db,
                 apply_scope="cluster",
                 source_name=self.name,

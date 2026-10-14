@@ -1,0 +1,5002 @@
+{
+  "kpis": {
+    "candidate_rsrp_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "RT_candidate_reference_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "queue_bytes": {
+      "entity": "ue",
+      "unit": "byte",
+      "source": "delivered_queue_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "hol_delay_ms": {
+      "entity": "ue",
+      "unit": "ms",
+      "source": "delivered_packet_hol_report",
+      "window": "single_report",
+      "sample_count": null
+    },
+    "reference_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "RT_reference_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "rsrp_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "RT_reference_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "data_sinr_db": {
+      "entity": "ue",
+      "unit": "dB",
+      "source": "RT_data_measurement_filtered_noisy_delayed",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "throughput_mbps": {
+      "entity": "ue",
+      "unit": "Mbit/s",
+      "source": "delivered_goodput_report",
+      "window": "throughput_window_slots",
+      "sample_count": null
+    },
+    "retx_fraction": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_actual_attempt_counter",
+      "window": "bler_window_tbs",
+      "sample_count": "retx_sample_count"
+    },
+    "reference_noise_dbm": {
+      "entity": "ue",
+      "unit": "dBm",
+      "source": "configured_receiver_noise_report",
+      "window": "sinr_window_slots",
+      "sample_count": "sinr_effective_sample_count"
+    },
+    "first_tx_bler": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_first_tx_actual_crc_window",
+      "window": "bler_window_tbs",
+      "sample_count": "first_tx_sample_count"
+    },
+    "deadline_miss_rate": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_packet_deadline_counter",
+      "window": "since_start",
+      "sample_count": "deadline_sample_count"
+    },
+    "bler": {
+      "entity": "ue",
+      "unit": "ratio",
+      "source": "delivered_actual_crc_window_all_attempts",
+      "window": "bler_window_tbs",
+      "sample_count": "bler_sample_count"
+    },
+    "resource_grid_utilization": {
+      "entity": "cell",
+      "unit": "ratio",
+      "source": "completed_slot_resource_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    },
+    "rf_tx_power_w": {
+      "entity": "cell",
+      "unit": "W",
+      "source": "completed_slot_RF_energy_counter",
+      "window": "one_completed_slot",
+      "sample_count": null
+    }
+  },
+  "xapps": [
+    {
+      "xapp_name": "cell_sleep_xapp",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_aggressive",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Aggressive sleep transition profile.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.4,
+        "light_sleep_load_threshold": 0.26,
+        "deep_sleep_load_threshold": 0.14,
+        "max_queue_bytes_for_sleep": 6000,
+        "sleep_threshold": 0.4,
+        "wake_up_threshold": 0.55,
+        "dwell_time_slots": 45
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_balanced",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Balanced cell-sleep policy.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.28,
+        "light_sleep_load_threshold": 0.18,
+        "deep_sleep_load_threshold": 0.08,
+        "max_queue_bytes_for_sleep": 4000,
+        "sleep_threshold": 0.28,
+        "wake_up_threshold": 0.42,
+        "dwell_time_slots": 30
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_cluster_saver",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Cluster-wide energy saver.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.36,
+        "light_sleep_load_threshold": 0.24,
+        "deep_sleep_load_threshold": 0.12,
+        "max_queue_bytes_for_sleep": 4500
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_deep_saver",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Deep sleep maximizing profile.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.48,
+        "light_sleep_load_threshold": 0.34,
+        "deep_sleep_load_threshold": 0.2,
+        "max_queue_bytes_for_sleep": 8000
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_macro_guarded",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Conservative macro sleep policy.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.2,
+        "light_sleep_load_threshold": 0.12,
+        "deep_sleep_load_threshold": 0.04,
+        "max_queue_bytes_for_sleep": 2500
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_micro_trim",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Mild micro-sleep preference.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.34,
+        "light_sleep_load_threshold": 0.2,
+        "deep_sleep_load_threshold": 0.1,
+        "max_queue_bytes_for_sleep": 5000,
+        "sleep_threshold": 0.34,
+        "wake_up_threshold": 0.46,
+        "dwell_time_slots": 20
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_mmwave_hotspot",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Sleep profile for dense small cells.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.3,
+        "light_sleep_load_threshold": 0.22,
+        "deep_sleep_load_threshold": 0.12,
+        "max_queue_bytes_for_sleep": 3500
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_night_mode",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Night-time deep sleep preference.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.45,
+        "light_sleep_load_threshold": 0.3,
+        "deep_sleep_load_threshold": 0.18,
+        "max_queue_bytes_for_sleep": 7000
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_queue_strict",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Queue-sensitive sleep controller.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.26,
+        "light_sleep_load_threshold": 0.16,
+        "deep_sleep_load_threshold": 0.08,
+        "max_queue_bytes_for_sleep": 1200
+      }
+    },
+    {
+      "xapp_name": "cell_sleep_xapp_urlcc_safe",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "cell_sleep_xapp",
+      "description": "Transitions lightly loaded cells into sleep modes to reduce energy cost. Sleep only when URLLC risk is low.",
+      "kpis": [
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rf_tx_power_w",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "cell_sleep_mode",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "micro_sleep_load_threshold": 0.22,
+        "light_sleep_load_threshold": 0.14,
+        "deep_sleep_load_threshold": 0.06,
+        "max_queue_bytes_for_sleep": 1800
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_backlog_relief",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Trigger sooner under rising backlog.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1500
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_balanced",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Balanced latency-sensitive scheduling.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 2500,
+        "prb_weight": 1.0,
+        "priority_coefficient": 1.4,
+        "delay_threshold_ms": 20.0
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_control_plane",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Prioritize control-plane latency.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1200
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_edge_safe",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Edge-user latency protection profile.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1600
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_embb_friendly",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Latency-aware but less aggressive.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 4200
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_extreme",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Highly aggressive low-latency scheduler.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 700
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_harq_rescue",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Favors latency under HARQ stress.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1000
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_service_gap",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Targets service-gap reduction.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 2200
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_tail_guard",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Focus on tail-latency containment.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1800,
+        "prb_weight": 1.25,
+        "priority_coefficient": 1.8,
+        "delay_threshold_ms": 15.0
+      }
+    },
+    {
+      "xapp_name": "latency_scheduler_xapp_urllc_fastpath",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "latency_scheduler_xapp",
+      "description": "Biases scheduling toward low-delay traffic and queue urgency. Aggressive URLLC latency profile.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 900,
+        "prb_weight": 1.45,
+        "priority_coefficient": 2.2,
+        "delay_threshold_ms": 10.0
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_balanced",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Balanced beam/capacity profile.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.5,
+        "coverage_sinr_threshold_db": 7.0
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_capacity_push",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Aggressive capacity profile.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.62,
+        "coverage_sinr_threshold_db": 5.5
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_coverage_boost",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Strong coverage-oriented beam control.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.35,
+        "coverage_sinr_threshold_db": 9.0
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_edge_rescue",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Target cell-edge beam rescue.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.3,
+        "coverage_sinr_threshold_db": 10.5
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_macro_capacity",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Macro-capacity oriented beam profile.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.58,
+        "coverage_sinr_threshold_db": 6.5
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_mmwave_guard",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Conservative mmWave beam protection.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.28,
+        "coverage_sinr_threshold_db": 8.5
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_mu_dense",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Beam profile for denser MU opportunities.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.55,
+        "coverage_sinr_threshold_db": 6.0
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_precoder_safe",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Safer precoder choice under uncertainty.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.4,
+        "coverage_sinr_threshold_db": 7.8
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_sinr_max",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. SINR-maximizing beam choice.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.33,
+        "coverage_sinr_threshold_db": 9.5
+      }
+    },
+    {
+      "xapp_name": "massive_mimo_beamformer_xapp_spatial_gain",
+      "required_kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "power_offset_db"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "measured_precoder_match_score"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "massive_mimo_beamformer_xapp",
+      "description": "Tunes beam preference and capacity-vs-coverage tradeoff for MIMO gain. Spatial-gain oriented beamformer.",
+      "kpis": [
+        "measured_precoder_match_score",
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "beam_risk_threshold": 0.6,
+        "coverage_sinr_threshold_db": 5.8
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_balanced",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Balanced mobility forecaster.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.35,
+        "time_to_trigger_ms": 120.0,
+        "mobility_margin_db": 2.0
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_cell_edge",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Focus on edge mobility instability.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.3,
+        "time_to_trigger_ms": 100.0,
+        "mobility_margin_db": 2.5
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_conservative",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Only raises strong mobility warnings.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.5
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_dense_urban",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Urban mobility-sensitive profile.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.32
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_early_warning",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Early handover-risk detector.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.25,
+        "time_to_trigger_ms": 80.0,
+        "mobility_margin_db": 1.5
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_handover_push",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Aggressive handover preparation profile.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.2
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_high_speed",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. More sensitive for fast-moving users.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.22,
+        "time_to_trigger_ms": 60.0,
+        "mobility_margin_db": 1.2
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_hysteresis_guard",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Bias toward stable serving-cell retention.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.4,
+        "time_to_trigger_ms": 180.0,
+        "mobility_margin_db": 3.2
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_low_stale_csi",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Acts earlier when mobility risk rises.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.27
+      }
+    },
+    {
+      "xapp_name": "mobility_predictor_xapp_mmwave_guard",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "unavailable_actions": [
+        "mobility_margin_db",
+        "time_to_trigger_ms"
+      ],
+      "available": false,
+      "missing_kpi_sources": [
+        "independent_reported_cqi"
+      ],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "mobility_predictor_xapp",
+      "description": "Predicts mobility, handover risk, and future serving-cell degradation. Prepared for mmWave fragility.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "independent_reported_cqi",
+        "queue_bytes",
+        "reference_sinr_db",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "steering_hysteresis_db"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "risk_threshold": 0.28,
+        "time_to_trigger_ms": 70.0,
+        "mobility_margin_db": 2.8
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "power_saving_xapp_balanced",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Balanced energy saving profile.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.4,
+        "queue_threshold_bytes": 5000,
+        "min_power_cap_dbm": 26.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_beam_balanced",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Leans toward balanced beams while saving power.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.36,
+        "queue_threshold_bytes": 4500,
+        "min_power_cap_dbm": 24.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_energy_max",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Maximum energy-saving pressure.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.18,
+        "queue_threshold_bytes": 1200,
+        "min_power_cap_dbm": 18.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_macro_trim",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Conservative macro energy profile.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.44,
+        "queue_threshold_bytes": 6000,
+        "min_power_cap_dbm": 27.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_micro_trim",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Tiny power trim without quality risk.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.48,
+        "queue_threshold_bytes": 7000,
+        "min_power_cap_dbm": 27.5
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_mmwave_trim",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Power trim for dense mmWave small cells.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.34,
+        "queue_threshold_bytes": 3500,
+        "min_power_cap_dbm": 23.5
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_night_mode",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Night-time energy policy.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.22,
+        "queue_threshold_bytes": 2000,
+        "min_power_cap_dbm": 20.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_queue_sensitive",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Backs off when queues begin to rise.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.3,
+        "queue_threshold_bytes": 1500,
+        "min_power_cap_dbm": 25.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_sleepy",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Aggressive power reduction under light load.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.28,
+        "queue_threshold_bytes": 2500,
+        "min_power_cap_dbm": 22.0
+      }
+    },
+    {
+      "xapp_name": "power_saving_xapp_urlcc_safe",
+      "required_kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "unavailable_actions": [
+        "dwell_time_slots",
+        "sleep_threshold",
+        "wake_up_threshold"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "power_saving_xapp",
+      "description": "Caps power and shifts beam preference to reduce energy cost while preserving service. Gentle energy saving that preserves reliability.",
+      "kpis": [
+        "queue_bytes",
+        "reference_sinr_db",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "beam_candidate_preference",
+        "power_cap_dbm"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "low_load_threshold": 0.52,
+        "queue_threshold_bytes": 9000,
+        "min_power_cap_dbm": 28.0
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_balanced",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Balanced slicing manager.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.45
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_congestion",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Acts faster under slice congestion.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.32
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_embb_bias",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. eMBB-preserving slicing profile.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.52
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_fairness",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Fairness-oriented slicing profile.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.6
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_guarded",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Conservative slice reweighting.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.68
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_hotspot",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Hotspot-aware slicing emphasis.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.38
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_macro_mix",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Macro mix slicing profile.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.5
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_mmtc_safe",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Prevents mMTC starvation.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.4
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_sla_strict",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. Stricter SLA-enforcement slicer.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.3
+      }
+    },
+    {
+      "xapp_name": "ran_slicing_manager_xapp_urllc_bias",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "ran_slicing_manager_xapp",
+      "description": "Adjusts slice resource emphasis to honor SLA priorities. URLLC-biased slicing policy.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "slice_dominance_threshold": 0.35
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_aggressive",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Aggressive spectrum pressure under congestion.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.45,
+        "interference_threshold_db": 3.8
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_balanced",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Balanced spectrum-efficiency optimizer.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.65,
+        "interference_threshold_db": 2.5,
+        "coordination_threshold": 2.5,
+        "muting_ratio": 0.08
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_dense_packing",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. More eager to pack resources.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.55,
+        "interference_threshold_db": 3.0,
+        "coordination_threshold": 3.0,
+        "muting_ratio": 0.04
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_guarded",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Conservative optimizer for stressed cells.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.78,
+        "interference_threshold_db": 1.2
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_interference_averse",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Avoids aggressive packing under interference.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.72,
+        "interference_threshold_db": 1.5,
+        "coordination_threshold": 1.5,
+        "muting_ratio": 0.18
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_latency_mix",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Balances latency and packing.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.62,
+        "interference_threshold_db": 2.2
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_mu_friendly",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Favors higher multiplexing opportunity.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.6,
+        "interference_threshold_db": 3.5
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_prb_efficiency",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. PRB-efficiency focused profile.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.58,
+        "interference_threshold_db": 2.8
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_slice_bias",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. More ready to switch into slice-aware mode.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.5,
+        "interference_threshold_db": 2.0
+      }
+    },
+    {
+      "xapp_name": "spectrum_optimizer_xapp_stable",
+      "required_kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "unavailable_actions": [
+        "coordination_threshold",
+        "muting_ratio",
+        "power_offset_db"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "spectrum_optimizer_xapp",
+      "description": "Optimizes scheduler policy and slice weights for better spectrum efficiency. Stable spectrum policy with fewer flips.",
+      "kpis": [
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "scheduler_policy_hint",
+        "slice_weight_adjustment"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "utilization_threshold": 0.75,
+        "interference_threshold_db": 2.7
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_balanced",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Balanced steering between load and quality.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.7,
+        "edge_sinr_threshold_db": 5.0,
+        "steering_aggressiveness": 0.55,
+        "cio_bias_db": 1.0
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_dense_cluster",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Dense-cluster steering behavior.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.58,
+        "edge_sinr_threshold_db": 5.5
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_edge_rescue",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Favor edge users with better alternatives.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.68,
+        "edge_sinr_threshold_db": 8.5,
+        "steering_aggressiveness": 0.62,
+        "cio_bias_db": 2.2
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_hotspot_relief",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Aggressive overload offload for hotspot cells.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.55,
+        "edge_sinr_threshold_db": 7.0,
+        "steering_aggressiveness": 0.82,
+        "cio_bias_db": 3.0
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_load_first",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Prioritize load balancing over signal margin.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.5,
+        "edge_sinr_threshold_db": 3.0
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_macro_anchor",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. More cautious about leaving macro coverage.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.82,
+        "edge_sinr_threshold_db": 3.5
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_mmwave_prefer",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. More willing to move users toward mmWave cells.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.78,
+        "edge_sinr_threshold_db": 4.0
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_quality_first",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Require stronger signal advantage before steering.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.74,
+        "edge_sinr_threshold_db": 9.0
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_sticky",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Sticky steering with fewer moves.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.88,
+        "edge_sinr_threshold_db": 2.5
+      }
+    },
+    {
+      "xapp_name": "traffic_steering_xapp_urlcc_safe",
+      "required_kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "unavailable_actions": [
+        "cio_bias_db",
+        "load_threshold",
+        "steering_aggressiveness"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "traffic_steering_xapp",
+      "description": "Steers users across serving/candidate cells to improve load and edge performance. Conservative steering for sensitive traffic.",
+      "kpis": [
+        "candidate_rsrp_dbm",
+        "queue_bytes",
+        "reference_noise_dbm",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "rsrp_dbm",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "measurement_event_offset_db",
+        "mobility_bias_db",
+        "traffic_steering_preference"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "load_threshold": 0.6,
+        "edge_sinr_threshold_db": 6.5
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": false,
+      "variant_params": {}
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_balanced",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Balanced URLLC guard.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1200,
+        "bler_threshold": 0.12,
+        "latency_budget_threshold_ms": 20.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_cluster_guard",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Cluster-wide URLLC shield.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1100,
+        "bler_threshold": 0.11,
+        "latency_budget_threshold_ms": 17.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_conservative",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Guard only severe URLLC risk.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1800,
+        "bler_threshold": 0.16,
+        "latency_budget_threshold_ms": 24.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_edge_safe",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Protect weak-edge URLLC users.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 1000,
+        "bler_threshold": 0.11,
+        "latency_budget_threshold_ms": 18.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_emergency",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Emergency URLLC guard rail.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 600,
+        "bler_threshold": 0.07,
+        "latency_budget_threshold_ms": 10.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_harq_safe",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Acts sooner under retransmission stress.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 800,
+        "bler_threshold": 0.09,
+        "latency_budget_threshold_ms": 14.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_mmwave",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. URLLC guard for fragile mmWave cells.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 850,
+        "bler_threshold": 0.09,
+        "latency_budget_threshold_ms": 13.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_strict",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Strict URLLC protection guard.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 700,
+        "bler_threshold": 0.08,
+        "latency_budget_threshold_ms": 12.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_tail_safe",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Tail-latency protective guard.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 900,
+        "bler_threshold": 0.1,
+        "latency_budget_threshold_ms": 16.0
+      }
+    },
+    {
+      "xapp_name": "urllc_guard_xapp_voice_safe",
+      "required_kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "entities": [
+        "ue",
+        "cell",
+        "cluster"
+      ],
+      "writable_actions": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "unavailable_actions": [
+        "delay_threshold_ms",
+        "prb_weight",
+        "priority_coefficient"
+      ],
+      "available": true,
+      "missing_kpi_sources": [],
+      "max_age_slots": "configured_report_delay_plus_window_plus_xapp_interval",
+      "xapp_category": "urllc_guard_xapp",
+      "description": "Acts as a guardrail to protect URLLC reliability and latency. Telephony/control protection profile.",
+      "kpis": [
+        "bler",
+        "hol_delay_ms",
+        "queue_bytes",
+        "reference_sinr_db",
+        "resource_grid_utilization",
+        "retx_fraction",
+        "rf_tx_power_w",
+        "throughput_mbps"
+      ],
+      "tunable_fields": [
+        "latency_bias",
+        "power_cap_dbm",
+        "scheduler_policy_hint"
+      ],
+      "tuning_mode": "heuristic_parameter",
+      "is_variant": true,
+      "variant_params": {
+        "queue_threshold_bytes": 950,
+        "bler_threshold": 0.1,
+        "latency_budget_threshold_ms": 15.0
+      }
+    }
+  ]
+}

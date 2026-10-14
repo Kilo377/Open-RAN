@@ -105,6 +105,7 @@ class RtMobilityManager(MobilityManager):
                 values[uid][cid]=(filtered,gain,best)
         self.history.append(values)
         self.observed=self.history[max(0,len(self.history)-1-self.delay)]
+        self.observed_slot=int(snapshot.slot_id)-min(self.delay,len(self.history)-1)
         previous={uid:(c.serving_cell_id,c.handover_count) for uid,c in state.connections.items()}
         super().update(state,scoped_cell_policy=True)
         self.events=[]
@@ -136,7 +137,8 @@ class RtMobilityManager(MobilityManager):
                 preference=policy.traffic_steering_preference; bias=policy.mobility_bias_db
                 score+=bias if preference=='edge_offload' else -abs(bias) if preference=='stay_put' else 0
             dx=link.x_m-position['x_m']; dy=link.y_m-position['y_m']; dz=link.z_m-position['z_m']
-            candidates.append(CandidateCellState(cell_id=cid,x_m=position['x_m'],y_m=position['y_m'],z_m=position['z_m'],
+            candidates.append(CandidateCellState(measurement_produced_at_slot=self.observed_slot,
+                measurement_delivered_at_slot=int(state.slot_id),measurement_window_slots=max(1,math.ceil(self.filter_ms/(self.slot_duration_s*1000))),cell_id=cid,x_m=position['x_m'],y_m=position['y_m'],z_m=position['z_m'],
                 distance_2d_m=math.hypot(dx,dy),distance_3d_m=math.sqrt(dx*dx+dy*dy+dz*dz),
                 carrier_frequency_hz=profile['carrier_frequency_hz'],bandwidth_hz=profile['bandwidth_hz'],
                 subcarrier_spacing_hz=profile['subcarrier_spacing_hz'],tx_power_dbm=runtime.cell.tx_power_dbm,

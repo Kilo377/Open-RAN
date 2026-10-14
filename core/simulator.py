@@ -874,6 +874,8 @@ class Simulator:
             beamforming=scoped_beamforming,
             runtime_mode=str(getattr(state, "runtime_mode", "single_active_cell")),
             managed_cells=getattr(state, "managed_cells", {}),
+            rt_du_observation=getattr(state,'rt_du_observation',None),
+            rt_tx_contracts=self._rt_sys_mode and getattr(self.phy_adapter.abstraction,'feedback_mode',None)=='nr_direct',
             rt_channel_snapshot=self.phy_adapter.scheduler_snapshot if self._rt_sys_mode else None,
             rt_harq_combining=self.phy_adapter.config.get('harq_combining','none') if self._rt_sys_mode else 'none',
         )
@@ -1436,6 +1438,8 @@ class Simulator:
             runtime_state.last_shadow_phy_result = shadow_phy_result
             self.state_updater.apply_phy_result(scoped_state, phy_result)
             if self._rt_sys_mode:
+                runtime_state.cell.rf_tx_power_w = self.phy_adapter.trace['cells'][runtime_state.cell_id]['average_used_w']
+                runtime_state.cell.rf_power_produced_at_slot = state.slot_id
                 # StateUpdater replaces the scoped grid after PHY accounting.
                 # Publish that grid to the views used by telemetry and the RIC.
                 runtime_state.resource_grid = scoped_state.resource_grid
@@ -1451,6 +1455,7 @@ class Simulator:
             if shadow_phy_result is not None:
                 per_cell_shadow_results.append(shadow_phy_result)
 
+        if self._rt_sys_mode:self.phy_adapter.release_inactive_contexts(state)
         combined_phy_result = self._combine_phy_results(
             slot_id=int(getattr(state, "slot_id", -1)),
             phy_results=per_cell_phy_results,
@@ -2430,6 +2435,7 @@ class Simulator:
                     allocated_symbol_indices=list(resource_grid_slice.allocated_symbol_indices),
                     resource_grid_slice=resource_grid_slice,
                     is_retx=bool(getattr(grant, "is_retx", False)) if grant is not None else False,
+                    tx_contract=getattr(grant, "tx_contract", None),
                     requested_bytes=int(getattr(grant, "requested_bytes", 0)) if grant is not None else 0,
                     grant_bytes_budget=int(getattr(grant, "grant_bytes_budget", 0)) if grant is not None else 0,
                     priority_score=float(getattr(grant, "priority_score", 0.0)) if grant is not None else 0.0,
@@ -2535,8 +2541,9 @@ class Simulator:
                     ),
                     rank_indicator=int(getattr(beamforming_state, "rank", getattr(ue, "rank", 1)))
                     if beamforming_state is not None else int(getattr(ue, "rank", 1)),
-                    layer_count=int(getattr(beamforming_state, "layer_count", getattr(ue, "ri", 1)))
-                    if beamforming_state is not None else int(getattr(ue, "ri", 1)),
+                    layer_count=(grant.tx_contract.layers if getattr(grant, 'tx_contract', None) is not None else
+                        (int(getattr(beamforming_state, "layer_count", getattr(ue, "ri", 1)))
+                         if beamforming_state is not None else int(getattr(ue, "ri", 1)))) ,
                     precoder_id=int(getattr(beamforming_state, "precoder_id", state.cell.current_codebook_id))
                     if beamforming_state is not None else int(state.cell.current_codebook_id),
                     combiner_id=int(getattr(beamforming_state, "combiner_id", getattr(ue, "pmi", 0)))
@@ -2579,6 +2586,7 @@ class Simulator:
 
         if observation.produced_at_slot is None:
             observation.produced_at_slot = observation.measurement_produced_at_slot
+        observation.report_delay_slots = self._obs_delay_slots
         observation.delivered_at_slot = delivered_slot
 
         if observation.measurement_produced_at_slot is None:
@@ -2595,6 +2603,8 @@ class Simulator:
             if ue_observation.measurement_produced_at_slot is None:
                 ue_observation.measurement_produced_at_slot = observation.measurement_produced_at_slot
             ue_observation.measurement_delivered_at_slot = delivered_slot
+            for candidate in ue_observation.candidate_cell_observations:
+                candidate.measurement_delivered_at_slot = delivered_slot
             if ue_observation.measurement_produced_at_slot is not None:
                 ue_observation.measurement_age_slots = max(
                     0,
@@ -3180,6 +3190,7 @@ class Simulator:
                     delivered_at_slot=int(self.state.slot_id),
                 )
 
+        self.state.rt_du_observation = delivered_observation
         control_decision = self.controller_manager.update(
             slot_id=self.state.slot_id,
             observation=delivered_observation,

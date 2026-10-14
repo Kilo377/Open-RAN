@@ -30,6 +30,14 @@ class UeMeasurement:
     reference_beam_gain_db: float | None = None
     sinr_kind: str = 'legacy_empirical'
     no_path: bool = False
+    retx_fraction: float | None = None
+    retx_sample_count: int = 0
+    reference_noise_dbm: float | None = None
+    first_tx_bler: float | None = None
+    first_tx_sample_count: int = 0
+    first_tx_nacks: int = 0
+    deadline_miss_rate: float | None = None
+    deadline_sample_count: int = 0
     bler_window_nacks: int = 0
 
     # Measurement quality / provenance.

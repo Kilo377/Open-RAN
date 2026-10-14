@@ -114,9 +114,9 @@ class TrafficSteeringXApp(XAppBase):
                 traffic_steering_preference=(
                     preferred_steering if preferred_steering != "balanced" else "edge_offload"
                 ),
-                steering_aggressiveness=steering_aggressiveness,
-                load_threshold=configured_load_threshold,
-                cio_bias_db=clamp(base_cio_bias_db + 4.5 * steering_pressure, -6.0, 6.0),
+                steering_aggressiveness=(steering_aggressiveness if not getattr(observation, 'rt_public_projection', False) else None),
+                load_threshold=(configured_load_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                cio_bias_db=(clamp(base_cio_bias_db + 4.5 * steering_pressure, -6.0, 6.0) if not getattr(observation, 'rt_public_projection', False) else None),
                 mobility_bias_db=clamp(
                     base_mobility_bias_db + 3.5 * steering_aggressiveness * max(highest_load, edge_ratio),
                     -8.0,
@@ -133,9 +133,9 @@ class TrafficSteeringXApp(XAppBase):
         elif mean_interference > 3.0:
             action = ConfigAction(
                 traffic_steering_preference="stay_put",
-                steering_aggressiveness=clamp(0.20 + 0.20 * base_aggressiveness, 0.05, 0.45),
-                load_threshold=configured_load_threshold,
-                cio_bias_db=clamp(base_cio_bias_db - 1.0, -6.0, 6.0),
+                steering_aggressiveness=(clamp(0.20 + 0.20 * base_aggressiveness, 0.05, 0.45) if not getattr(observation, 'rt_public_projection', False) else None),
+                load_threshold=(configured_load_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+                cio_bias_db=(clamp(base_cio_bias_db - 1.0, -6.0, 6.0) if not getattr(observation, 'rt_public_projection', False) else None),
                 mobility_bias_db=min(0.0, base_mobility_bias_db - 1.0),
                 measurement_event_offset_db=clamp(base_event_offset_db + 0.5, 0.5, 8.0),
                 apply_scope="cluster",

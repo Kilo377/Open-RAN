@@ -78,8 +78,8 @@ class RANSlicingManagerXApp(XAppBase):
             action = ConfigAction(
                 scheduler_policy_hint="slice_bias",
                 slice_weight_adjustment=base_weights,
-                prb_weight=clamp(0.85 + 0.35 * dominant_share, 0.5, 1.8),
-                priority_coefficient=clamp(1.0 + 0.75 * dominant_share, 1.0, 3.0),
+                prb_weight=(clamp(0.85 + 0.35 * dominant_share, 0.5, 1.8) if not getattr(observation, 'rt_public_projection', False) else None),
+                priority_coefficient=(clamp(1.0 + 0.75 * dominant_share, 1.0, 3.0) if not getattr(observation, 'rt_public_projection', False) else None),
                 apply_scope="cluster",
                 source_name=self.name,
             )

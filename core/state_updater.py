@@ -485,6 +485,7 @@ class StateUpdater:
                     list(getattr(base, "pending_logical_channels", []) or []),
                 )
             ),
+            tx_contract=getattr(base, 'tx_contract', None),
             mcs_index=applied_overrides.get('mcs_index', getattr(base, 'mcs_index', None)),
             mcs_table_id=applied_overrides.get('mcs_table_id', getattr(base, 'mcs_table_id', None)),
         )
@@ -639,6 +640,17 @@ class StateUpdater:
         delivered_bytes: int,
         slot_id: int,
     ) -> None:
+        contract = getattr(ue, '_delivery_contract', None)
+        if contract is not None:
+            if delivered_bytes != contract.payload_bytes:
+                raise ValueError('Partial ACK violates TB payload contract')
+            delivered = ue.packet_ledger.acknowledge(contract.tb_id, slot_id)
+            for lc in ue.logical_channels:
+                lc.delivered_bytes = delivered.get(lc.logical_channel_id, 0)
+                if lc.delivered_bytes:
+                    lc.last_delivered_slot = slot_id
+            self._recompute_logical_channel_groups(ue, slot_id=slot_id)
+            return
         remaining_bytes = max(0, int(delivered_bytes))
         if remaining_bytes <= 0:
             return
@@ -2304,6 +2316,7 @@ class StateUpdater:
                 inter_cell_interference_source_count,
             )
 
+            ue._delivery_contract = getattr(grant, 'tx_contract', None)
             harq = self._safe_get(ue, "harq", None)
             if harq is not None and is_scheduled:
                 try:
@@ -2617,6 +2630,17 @@ class StateUpdater:
                     if phy_mode == 'rt_sys':
                         raise
                     pass
+
+            contract = getattr(grant, 'tx_contract', None)
+            if contract is not None and scheduled_bytes > 0 and getattr(ue_result, 'reference_tb_ack', None) is not None:
+                from phy.rt_sys.olla import HarqFeedbackEvent
+                ue.du_olla.pending.append(HarqFeedbackEvent(contract.tb_id, contract.cell_id,
+                    contract.table, mcs_index, ack, is_retx, slot_id_value+1,
+                    max_mcs=16 if ue.latency_budget_ms<=20 else 27))
+            if contract is not None:
+                active_ids={p.tb_id for p in ue.harq.processes}
+                for tb in list(ue.packet_ledger.reservations):
+                    if tb not in active_ids:ue.packet_ledger.release(tb)
 
             connection = self._get_connection(state, str(ue_id))
             link = self._get_link(state, str(ue_id))

@@ -143,13 +143,13 @@ class SpectrumOptimizerXApp(XAppBase):
             target_cell_id=str(target_cell.cell_id),
             scheduler_policy_hint=scheduler_policy_hint,
             slice_weight_adjustment=slice_weights,
-            power_offset_db=power_offset_db,
-            muting_ratio=muting_ratio,
-            coordination_threshold=clamp(
+            power_offset_db=(power_offset_db if not getattr(observation, 'rt_public_projection', False) else None),
+            muting_ratio=(muting_ratio if not getattr(observation, 'rt_public_projection', False) else None),
+            coordination_threshold=(clamp(
                 float(getattr(policy_snapshot, "preferred_coordination_threshold", self.interference_threshold_db) or self.interference_threshold_db),
                 0.5,
                 8.0,
-            ),
+            ) if not getattr(observation, 'rt_public_projection', False) else None),
             source_name=self.name,
         )
         analysis_constraint = make_analysis_constraint(

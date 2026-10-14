@@ -104,9 +104,9 @@ class CellSleepXApp(XAppBase):
             target_cell_id=str(getattr(target_cell, "cell_id", getattr(observation, "cell_id", "cell_0"))),
             cell_sleep_mode=sleep_mode,
             power_cap_dbm=power_cap_dbm,
-            sleep_threshold=sleep_threshold,
-            wake_up_threshold=wake_up_threshold,
-            dwell_time_slots=dwell_time_slots,
+            sleep_threshold=(sleep_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+            wake_up_threshold=(wake_up_threshold if not getattr(observation, 'rt_public_projection', False) else None),
+            dwell_time_slots=(dwell_time_slots if not getattr(observation, 'rt_public_projection', False) else None),
             source_name=self.name,
         )
         analysis_constraint = make_analysis_constraint(

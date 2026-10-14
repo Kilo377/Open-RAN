@@ -60,6 +60,11 @@ def iter_cell_observations(observation: Observation | None) -> list[CellObservat
 
 
 def ue_channel_quality_confidence(ue: UeObservation) -> float:
+    if hasattr(ue,'kpi_metadata'):
+        sample=ue.kpi_metadata['reference_sinr_db']
+        if not sample['valid']:raise ValueError('Missing measured reference SINR')
+        window=max(1,getattr(ue,'sinr_window_slots',1) or 1)
+        return min(1.,sample['sample_count']/window)/(1+sample['age_slots']/window)
     confidence = getattr(ue, "grant_channel_quality_confidence", None)
     if confidence is None:
         confidence = getattr(ue, "demand_channel_quality_confidence", None)
@@ -332,6 +337,10 @@ def mobility_risk_score(ue: UeObservation) -> float:
 
 
 def beam_misalignment_risk_score(ue: UeObservation) -> float:
+    if hasattr(ue,'kpi_metadata'):
+        # No independent RT precoder/CQI estimate is claimed by this score.
+        return clamp(.6*max(0.,(10.-ue.reference_sinr_db)/10.)
+            +.4*(1.-ue_channel_quality_confidence(ue)),0.,1.)
     low_gain = max(0.0, (6.0 - float(getattr(ue, "beamforming_gain_db", 0.0) or 0.0)) / 8.0)
     low_post_eq = max(
         0.0,

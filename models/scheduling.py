@@ -25,6 +25,7 @@ class LogicalChannelGrant:
     packet_delay_budget_ms: float = 0.0
     slice_id: str = ""
     traffic_type: str = ""
+    tx_contract: object | None = None
     is_retx: bool = False
     prioritized_bytes: int = 0
     best_effort_bytes: int = 0

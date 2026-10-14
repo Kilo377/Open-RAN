@@ -1136,8 +1136,12 @@ class ControllerManager:
 
         for a1_interface in self.a1_interfaces:
             current_policy_snapshot = self.policy_store.get_snapshot()
+            from ric.xapp_contract import is_rt, project, XAppContract
+            rapp_observation = project(observation,XAppContract((),frozenset()),now_slot=slot_id)[0] if is_rt(observation) else observation
+            from copy import deepcopy
+            rapp_observation = deepcopy(rapp_observation)
             policy_update = a1_interface.send_observation(
-                observation,
+                rapp_observation,
                 policy_snapshot=current_policy_snapshot,
             )
             self.policy_store.register_ei_delivery(
@@ -1273,7 +1277,28 @@ class ControllerManager:
                 observation=observation,
                 slot_id=int(slot_id),
             )
-            xapp_decision = e2_interface.send_context(observation, policy_snapshot)
+            from ric.xapp_contract import is_rt, project, validate_action, contract_for
+            rt_contract = is_rt(observation)
+            projected = observation
+            contract = getattr(xapp, 'contract', contract_for(xapp.controlled_fields,xapp.name))
+            if rt_contract:
+                projected, failures = project(observation, contract, self.xapp_interval_slots, slot_id)
+                if not contract.available:
+                    failures.append('no_supported_rt_actions')
+                if failures:
+                    dropped_items.append(DroppedControlItem(kind='xapp', source=str(xapp.name),
+                        reason='kpi_contract_rejected:' + ';'.join(failures)))
+                    continue
+            from copy import deepcopy
+            xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
+            if rt_contract:
+                failures = validate_action(xapp_decision.config_action, contract, observation)
+                if xapp_decision.commands:
+                    failures.append('undeclared_command_surface')
+                if failures:
+                    dropped_items.append(DroppedControlItem(kind='xapp_action',source=str(xapp.name),
+                        reason='action_contract_rejected:' + ';'.join(failures)))
+                    continue
             xapp_action = xapp_decision.config_action
 
             self._stamp_metadata(
@@ -1516,6 +1541,15 @@ class ControllerManager:
         EXAMPLE OUTPUT
         Action(codebook_id=2, tx_power_dbm=31.0, beam_profile_id=1)
         """
+        from ric.xapp_contract import is_rt, capability_record
+        if is_rt(observation):
+            catalog = [capability_record(i.xapp.name, i.xapp.controlled_fields) for i in self.e2_interfaces]
+            available = [item['xapp_name'] for item in catalog if item['available']]
+            for interface in self.a1_interfaces:
+                interface.rapp.rt_xapp_capabilities = catalog
+                interface.rapp.rt_backend = 'sionna_rt_sys'
+                if hasattr(interface.rapp, 'available_xapp_names'):
+                    interface.rapp.available_xapp_names = available
         self._run_rapps_if_needed(slot_id, observation)
         (
             field_winners_by_scope,

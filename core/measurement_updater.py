@@ -48,6 +48,8 @@ class MeasurementUpdater:
         self._sinr_ewma: dict[str, float] = {}
         self._sinr_sample_count: dict[str, int] = {}
         self._tx_ack_hist: dict[str, deque[bool]] = {}
+        self._first_tx_ack_hist = {}
+        self._retx_hist = {}
         self._acked_bytes_hist: dict[str, deque[int]] = {}
         self._bler_estimate: dict[str, float] = {}
         self._hol_hist = {}
@@ -208,6 +210,8 @@ class MeasurementUpdater:
                 noise = rt_rng.gauss(0., self._sinr_noise_std_db) if self._sinr_noise_std_db else 0.
                 raw_sinr_db = rt_sample['reference_sinr_db'] + noise
                 if self._serving_cells.get(ue_id) != serving_cell_id:
+                    self._first_tx_ack_hist.pop(ue_id,None)
+                    self._retx_hist.pop(ue_id,None)
                     self._sinr_ewma.pop(ue_id, None)
                     self._rsrp_ewma.pop(ue_id, None)
                     self._data_sinr_ewma.pop(ue_id, None)
@@ -272,7 +276,24 @@ class MeasurementUpdater:
                 data_sinr = alpha*sample + (1-alpha)*self._data_sinr_ewma.get(ue_id, sample)
                 self._data_sinr_ewma[ue_id] = data_sinr
 
+            retx_hist=self._retx_hist.setdefault(ue_id,deque(maxlen=self._bler_window_tbs))
+            if is_scheduled and int(getattr(ue,'scheduled_bytes',0))>0 and getattr(ue,'reference_tb_ack',None) is not None:
+                retx_hist.append(bool(getattr(ue,'is_retx',False)))
+            first_hist=self._first_tx_ack_hist.setdefault(ue_id,deque(maxlen=self._bler_window_tbs))
+            if is_scheduled and int(getattr(ue,'scheduled_bytes',0))>0 and not getattr(ue,'is_retx',False):
+                crc=getattr(ue,'reference_tb_ack',None)
+                if crc is not None:first_hist.append(bool(crc))
+            ledger=getattr(ue,'packet_ledger',None)
+            packet_stats=ledger.stats if ledger is not None else {}
+            packet_samples=packet_stats.get('admitted_packets',0)
             measurement.ue_measurements[ue_id] = UeMeasurement(
+                retx_fraction=sum(retx_hist)/len(retx_hist) if retx_hist else None,
+                retx_sample_count=len(retx_hist),
+                reference_noise_dbm=(10*math.log10(rt_sample['noise_per_subcarrier_w'])+30) if rt_sample is not None else None,
+                first_tx_bler=sum(not ack for ack in first_hist)/len(first_hist) if first_hist else None,
+                first_tx_sample_count=len(first_hist),first_tx_nacks=sum(not ack for ack in first_hist),
+                deadline_miss_rate=packet_stats.get('deadline_missed_packets',0)/packet_samples if packet_samples else None,
+                deadline_sample_count=packet_samples,
                 ue_id=ue_id,
                 queue_bytes=int(measured_queue),
                 throughput_mbps=float(measured_throughput_mbps),

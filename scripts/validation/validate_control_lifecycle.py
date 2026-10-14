@@ -47,6 +47,7 @@ class SchedulerProbe(XAppBase):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--slots',type=int,default=25)
+    parser.add_argument('--feedback-mode',default='nr_direct')
     parser.add_argument('--output',type=Path,default=ROOT/'outputs/rt_research_readiness_20261013/final_ran/control_lifecycle_verified')
     args=parser.parse_args()
     if args.slots<25:raise ValueError('Control lifecycle requires at least 25 slots')
@@ -60,7 +61,7 @@ def main():
         folder.mkdir()
         m,c,_=build_case(scene,num_cells=3,num_ues=4,total_slots=args.slots,initial_queue_bytes=1000,ue_speed_mps=0)
         c['ric'].update(rapps=[],xapps=[],run_rapps_on_start=False)
-        c['phy']['rt_sys']['feedback_mode']='nr_bler_bank'
+        c['phy']['rt_sys']['feedback_mode']=args.feedback_mode
         provider=RtChannelProvider(m,ROOT/'channel_cache',device='cuda')
         adapter=RtSysPhyAdapter(c['phy']['rt_sys'],channel_provider=provider)
         registry=ControllerRegistry();rapp=PolicyProbe();registry.register_rapp(rapp)
@@ -96,7 +97,7 @@ def main():
         report=dict(scene=scene,passed=True,source_sha256=source_fingerprint(ROOT),policy_updates=rapp.calls,
             total_slots=args.slots,simulated_ms=args.slots*.5,
             clocks={'xapp_interval_slots':5,'rapp_interval_slots':10},states=states,outcomes=outcomes,dropped=dropped,
-            scope='Actual RT/SYS GPU with validated statistical feedback; verifies policy, arbitration and actuation, not algorithm performance')
+            scope='Actual RT/SYS GPU with selected NR feedback mode; verifies policy, arbitration and actuation, not algorithm performance')
         (folder/'validation.json').write_text(json.dumps(report,indent=2));reports.append(report)
     (out/'validation.json').write_text(json.dumps(dict(passed=True,cases=reports,source_sha256=source_fingerprint(ROOT)),indent=2))
     print(json.dumps(dict(passed=True,scenes=[r['scene'] for r in reports])))

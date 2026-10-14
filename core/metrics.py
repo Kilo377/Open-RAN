@@ -185,6 +185,9 @@ def build_observation(state: GlobalState) -> Observation:
         )
         candidate_cell_observations = [
             CandidateCellObservation(
+                measurement_produced_at_slot=getattr(candidate,'measurement_produced_at_slot',None),
+                measurement_delivered_at_slot=getattr(candidate,'measurement_delivered_at_slot',None),
+                measurement_window_slots=getattr(candidate,'measurement_window_slots',None),
                 cell_id=str(getattr(candidate, "cell_id", "")),
                 cell_type=str(getattr(candidate, "cell_type", "macro")),
                 distance_2d_m=float(getattr(candidate, "distance_2d_m", 0.0)),
@@ -768,6 +771,13 @@ def build_observation(state: GlobalState) -> Observation:
                 combiner_id=(int(combiner_id) if combiner_id is not None else None),
                 precoding_matrix_label=(str(precoding_matrix_label) if precoding_matrix_label is not None else None),
                 post_eq_sinr_db=(float(post_eq_sinr_db) if post_eq_sinr_db is not None else None),
+                retx_fraction=getattr(measurement.ue_measurements.get(ue_id),'retx_fraction',None) if measurement is not None else None,
+                retx_sample_count=getattr(measurement.ue_measurements.get(ue_id),'retx_sample_count',0) if measurement is not None else 0,
+                reference_noise_dbm=getattr(measurement.ue_measurements.get(ue_id),'reference_noise_dbm',None) if measurement is not None else None,
+                first_tx_bler=getattr(measurement.ue_measurements.get(ue_id),'first_tx_bler',None) if measurement is not None else None,
+                first_tx_sample_count=getattr(measurement.ue_measurements.get(ue_id),'first_tx_sample_count',0) if measurement is not None else 0,
+                deadline_miss_rate=getattr(measurement.ue_measurements.get(ue_id),'deadline_miss_rate',None) if measurement is not None else None,
+                deadline_sample_count=getattr(measurement.ue_measurements.get(ue_id),'deadline_sample_count',0) if measurement is not None else 0,
                 hol_delay_ms=getattr(measurement.ue_measurements.get(ue_id), 'hol_delay_ms', None) if measurement is not None else None,
                 rsrp_dbm=getattr(measurement.ue_measurements.get(ue_id), 'rsrp_dbm', None) if measurement is not None else None,
                 reference_sinr_db=getattr(measurement.ue_measurements.get(ue_id), 'reference_sinr_db', None) if measurement is not None else None,
@@ -1013,6 +1023,8 @@ def build_observation(state: GlobalState) -> Observation:
             ]
             cell_observations.append(
                 CellObservation(
+                    rf_tx_power_w=getattr(runtime_state.cell,'rf_tx_power_w',None),
+                    rf_power_produced_at_slot=getattr(runtime_state.cell,'rf_power_produced_at_slot',None),
                     cell_id=str(managed_cell_id),
                     cell_type=str(radio_profile.get("cell_type", "macro")),
                     is_primary=bool(getattr(runtime_state, "is_primary", False)),

@@ -103,8 +103,8 @@ class MassiveMIMOBeamformerXApp(XAppBase):
             target_cell_id=str(target_cell.cell_id),
             beam_candidate_preference=beam_preference,
             power_cap_dbm=power_cap_dbm,
-            power_offset_db=power_offset_db,
-            coordination_threshold=coordination_threshold,
+            power_offset_db=(power_offset_db if not getattr(observation, 'rt_public_projection', False) else None),
+            coordination_threshold=(coordination_threshold if not getattr(observation, 'rt_public_projection', False) else None),
             source_name=self.name,
         )
         analysis_constraint = make_analysis_constraint(

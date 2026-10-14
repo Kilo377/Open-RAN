@@ -1043,10 +1043,10 @@ class XAppSelectionRApp(RAppBase):
         )
 
     def _available_xapp_catalog(self) -> list[dict[str, object]]:
-        return available_xapp_catalog_for_llm(self.available_xapp_names)
+        return available_xapp_catalog_for_llm(self.available_xapp_names,backend=getattr(self,"rt_backend",None))
 
     def _available_xapp_category_catalog(self) -> list[dict[str, object]]:
-        return available_xapp_category_catalog_for_llm(self.available_xapp_names)
+        return available_xapp_category_catalog_for_llm(self.available_xapp_names,backend=getattr(self,"rt_backend",None))
 
     def _all_known_xapps(self) -> list[str]:
         all_known_xapps: list[str] = [
