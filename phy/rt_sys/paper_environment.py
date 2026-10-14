@@ -76,10 +76,13 @@ class PaperEnvironment:
 
     def cleanup(self,uid,reason):
         ue=next(u for u in self.state.ues if u.ue_id==uid)
+        self.reset_good_timer(uid)
+        self.triggers={k:v for k,v in self.triggers.items() if k[0]!=uid}
         for p in ue.harq.processes:
             self.sim.scheduler._record_harq_process_flush(ue.harq,reason=reason,slot_id=self.state.slot_id,process=p)
             ue.packet_ledger.release(p.tb_id)
         ue.harq.processes.clear();ue.harq.pending_retx_bytes=0;ue.harq.pending_retx_logical_channels=[]
+        self.state.connections[uid].active_harq_processes=[]
         receiver=getattr(self.adapter.abstraction,'harq',None)
         if receiver:
             for key in list(receiver.pending):
@@ -97,13 +100,16 @@ class PaperEnvironment:
             self.session_events.append(dict(kind=kind,slot=self.state.slot_id,uid=uid,session_id=s['session_id']))
             self.event('connection_'+kind,uid,session_id=s['session_id'],cell_id=self.state.connections[uid].serving_cell_id)
 
+    def reset_good_timer(self,uid):
+        self.good_since={k:v for k,v in self.good_since.items() if k!=uid and not (isinstance(k,tuple) and k[0]==uid)}
+
     def attach(self,uid,cid,reason):
         c=self.state.connections[uid];ue=next(u for u in self.state.ues if u.ue_id==uid)
         candidate=next(x for x in c.candidate_cells if x.cell_id==cid)
         self.sim.mobility_manager._apply_serving_candidate(ue,self.state.links[uid],c,candidate)
         c.connection_state='connected';c.out_of_sync_reason=None;c.consecutive_nack_count=0
         if uid not in self.sessions:self.open_session(uid,cid)
-        self.bad_since.pop(uid,None);self.good_since.pop(uid,None)
+        self.bad_since.pop(uid,None);self.reset_good_timer(uid)
 
     def start_handover(self,uid,target,manual):
         c=self.state.connections[uid]
@@ -159,7 +165,7 @@ class PaperEnvironment:
                     self.close_session(uid,'normal_end');self.manual.add(uid);self.state.connections[uid].connection_state='disconnected'
                 elif cmd.command_type=='reconnect':
                     self.manual.discard(uid);self.state.connections[uid].connection_state='out_of_sync'
-                    self.good_since.pop(uid,None)
+                    self.reset_good_timer(uid)
                     self.state.connections[uid]._paper_reconnect_target=cmd.target_cell_id
                 else:self.start_handover(uid,cmd.target_cell_id,True)
             receipt=dict(kind='command',control_request_id=rid,source=cmd.source_name,target_ue_id=uid,target_cell_id=cmd.target_cell_id,
@@ -286,9 +292,12 @@ class PaperEnvironment:
             drops=sum(x['kind']=='connection_drop' for x in e)
             trace=next((x for x in self.adapter.trace['ues'] if x['ue_id']==uid),{})
             alloc=deepcopy(trace.get('resource_allocation',{}))
-            reports['ue'][uid]=dict(reference_sinr_db=r['reference_sinr_db'],rsrp_dbm=r['rsrp_dbm'],association=dict(cell_id=c.serving_cell_id,connection_state=c.connection_state),
+            group=int(self.state.managed_cells[c.serving_cell_id].cell.power_group_size_prbs)
+            subbands=[list(range(i,min(i+group,len(r['prb_sinr_db'])))) for i in range(0,len(r['prb_sinr_db']),group)]
+            group_cqi=[quantify_cqi(10*math.log10(float(np.mean(10**(np.asarray(r['prb_sinr_db'])[indices]/10)))),self.thresholds) for indices in subbands]
+            reports['ue'][uid]=dict(subband_prb_groups=subbands,reference_sinr_db=r['reference_sinr_db'],rsrp_dbm=r['rsrp_dbm'],association=dict(cell_id=c.serving_cell_id,connection_state=c.connection_state),
                 resource_allocation=alloc,wideband_cqi=quantify_cqi(r['reference_sinr_db'],self.thresholds) if not r['no_path'] else None,
-                subband_cqi=[quantify_cqi(v,self.thresholds) for v in r['prb_sinr_db']] if not r['no_path'] else None,
+                subband_cqi=group_cqi if not r['no_path'] else None,
                 candidate_sinr_db={cid:x['reference_sinr_db'] for cid,x in self.observed[uid].items()},
                 candidate_rsrp_dbm={cid:x['rsrp_dbm'] for cid,x in self.observed[uid].items()},goodput_utility=math.log(max(rate,1e-6)),
                 offered_rate_bps=arrival,requested_dl_rate_bps=demand,sla_status=dict(target_bps=demand,goodput_bps=rate,violated=unmet,duration_ms=(slot-self.sla_since[uid]+1)*self.dt if uid in self.sla_since else 0) if demand is not None else None,

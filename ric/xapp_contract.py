@@ -269,7 +269,7 @@ def capability_record(name,actions,contract=None):
 # registry is not evidence that a sample exists or its model is enabled.
 _PAPER_UE={
  'association':'identity','resource_allocation':'PRB/symbol/layer',
- 'wideband_cqi':'index','subband_cqi':'index','candidate_sinr_db':'dB',
+ 'wideband_cqi':'index','subband_cqi':'index','subband_prb_groups':'PRB index','candidate_sinr_db':'dB',
  'candidate_rsrp_dbm':'dBm','goodput_utility':'ln(bit/s / 1 bit/s)',
  'offered_rate_bps':'bit/s','requested_dl_rate_bps':'bit/s','sla_status':'record',
  'handover_rate_per_s':'1/s','handover_failure_rate':'ratio',

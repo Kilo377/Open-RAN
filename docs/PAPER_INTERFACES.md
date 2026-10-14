@@ -19,7 +19,7 @@
 - `ue_prb_limits: dict[UE,int] | None`：每UE上限；0暂停，空字典清除。预算/功率模式要求frequency_first；重传原格式放不下合法等待，不改码字、不计NACK/轮次。MU按每UE检查，功率和物理占用按共享网格记账。
 - `time_to_trigger_ms`、`cio_offsets_db: dict[候选小区,dB]`、`neighbor_cell_ids: list[小区]`：由目标小区上下文确定服务小区。邻区限制不删除物理干扰。参数实质变化才重置TTT；移除进行中目标产生管理性取消。
 - `steering_hysteresis_db` 复用旧HYS消费者，和事件偏移、切换代价及原切换margin分别处理。
-- `ret_enabled`、`ret_tilt_deg`(0–15°)、`ret_codebook_id`(0全水平DFT、1单水平波束)：以向下为正，固定垂直模拟权重约束数字RZF。RET下不接受旧码本/波束配置写入，不允许与已有HARQ层数冲突。关闭后恢复原空间层预算。
+- `ret_enabled`、`ret_tilt_deg`(0–15°)、`ret_codebook_id`(0全水平DFT、1单水平波束)：以向下为正，固定垂直模拟权重约束数字RZF。RET下不接受旧码本/波束配置写入，不允许与已有HARQ层数冲突。关闭后恢复原空间层预算。零倾角回归针对RET模式内的未倾斜解析阵列；启用受约束模拟子空间不要求等同于原全数字预编码。
 
 一次性 `CommandAction`：`request_handover`、`disconnect`、`reconnect`，有 `target_ue_id`、可选 `target_cell_id` 和必需的请求标识。优先级高者先处理，同级按签发时间(新优先)、来源、请求ID排序；重复请求不重复执行。定向HO经过目标确认/延迟/中断状态；主动断开保持到重连、保留业务数据，不算异常掉线。
 
@@ -27,7 +27,7 @@
 
 ## 公共报告
 
-`ric/xapp_contract.py` 的注册表与投影增加关联、已执行PRB/符号/层数、宽带/每PRB CQI、候选SINR/RSRP、业务到达率、声明服务目标、效用、SLA状态、RF能量/能效、切换和连接事件计数。每条记录包含来源、单位、窗口、产生/交付时间、样本数和有效性；控制器不获得CFR、真值队列或仿真状态引用。
+`ric/xapp_contract.py` 的注册表与投影增加关联、已执行PRB/符号/层数、宽带/资源组 CQI及其PRB成员映射、候选SINR/RSRP、业务到达率、声明服务目标、效用、SLA状态、RF能量/能效、切换和连接事件计数。每条记录包含来源、单位、窗口、产生/交付时间、样本数和有效性；控制器不获得CFR、真值队列或仿真状态引用。
 
 参考测量统一使用RT阵列响应及当前功率/RET约束，经噪声与EWMA，再通过独立报告延迟和既有E2观测队列。参考干扰是全频参考发送假设，实际数据SINR独立；参考假设不意味着实现了常发参考波形或将其虚构能量计入账本。
 

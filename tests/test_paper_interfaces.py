@@ -270,3 +270,31 @@ def test_energy_utility_and_missing_models_have_honest_validity(tmp_path):
     assert ue.handover_failure_rate is None and ue.kpi_metadata['handover_failure_rate']['reason']=='model_disabled'
     assert ue.requested_dl_rate_bps is None and ue.kpi_metadata['requested_dl_rate_bps']['reason']=='service_requirement_not_configured'
     assert not view.cell_observations[0].kpi_metadata['whole_device_power_w']['valid']
+
+
+def test_second_recovery_requires_fresh_continuous_good_interval(tmp_path,monkeypatch):
+    sim=make_sim(tmp_path,cells=1,events=True,config={'connection_model':{'bad_ms':1,'good_ms':2}})
+    p=sim.state.paper;raw=_reference_fixture(sim,monkeypatch)
+    def bad():raw['ue_0']['cell_0'].update(no_path=True,rsrp_dbm=-200,reference_sinr_db=-200)
+    def good():raw['ue_0']['cell_0'].update(no_path=False,rsrp_dbm=-70,reference_sinr_db=10)
+    bad();_tick_model(sim,4);assert 'ue_0' not in p.sessions
+    good();_tick_model(sim,6);assert 'ue_0' in p.sessions
+    bad();_tick_model(sim,4);assert 'ue_0' not in p.sessions
+    good();_tick_model(sim,2);assert 'ue_0' not in p.sessions
+    _tick_model(sim,4);assert 'ue_0' in p.sessions
+    p.consume_commands([command('disconnect',rid='manual_after_recovery')])
+    _tick_model(sim,1)
+    p.consume_commands([command('reconnect',rid='reconnect_after_recovery')])
+    _tick_model(sim,2);assert 'ue_0' not in p.sessions
+    _tick_model(sim,4);assert 'ue_0' in p.sessions
+
+
+def test_group_power_expansion_and_group_cqi_mapping(tmp_path):
+    sim=make_sim(tmp_path,cells=1);n=sim.state.resource_grid.n_prbs_total
+    groups=math.ceil(n/4)
+    sim._apply_rt_config_action(ConfigAction(power_group_size_prbs=4,prb_power_w=[.4/groups]*groups),0)
+    assert sum(sim.state.cell.prb_power_w)==pytest.approx(.4)
+    for _ in range(3):sim.step()
+    u=sim.state.paper.published['ue']['ue_0']
+    assert len(u['subband_cqi'])==groups
+    assert sum(u['subband_prb_groups'],[])==list(range(n))

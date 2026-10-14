@@ -51,7 +51,8 @@
       "service_requirements_by_slice_bps": {
         "embb": 6000000,
         "urllc": 1000000,
-        "mmtc": 100000
+        "mmtc": 100000,
+        "voice": 100000
       }
     }
   },
