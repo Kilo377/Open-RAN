@@ -134,7 +134,7 @@ def worker(args):
 
 
 def run_one(out,root,scene,ues,slots,label,repeat=0):
-    folder=(root/'outputs/efficiency_reference'/f'{scene}_u{ues}_{slots}_{label}_r{repeat}') if label=='reference' else out/f'{scene}_u{ues}_{slots}_{label}_r{repeat}'
+    folder=(root/'outputs/efficiency_reference'/f'{scene}_u{ues}_{slots}_{label}_r{repeat}{"_primed" if slots==512 else ""}') if label=='reference' else out/f'{scene}_u{ues}_{slots}_{label}_r{repeat}'
     if folder.exists():
         if (folder/'serial_timing.json').exists():
             assert read(folder/'run_status.json')['source_sha256']==source_fingerprint(root),'Refusing mixed source versions'
@@ -152,6 +152,16 @@ def run_one(out,root,scene,ues,slots,label,repeat=0):
 def main(args):
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True);sha=source_fingerprint(ROOT)
     report=dict(stage=args.stage,source_sha256=sha,completed=False,cases=[],comparisons=[])
+    if args.stage=='performance':
+        report['channel_preparation']=[]
+        for scene in ('simple_street_canyon','munich'):
+            for ues in (4,24):
+                folder=out/'channel_preparation'/f'{scene}_u{ues}'
+                if not (folder/'preparation.json').exists():
+                    subprocess.run([sys.executable,str(ROOT/'scripts/validation/prepare_rt_channels.py'),
+                        '--scene',scene,'--ues',str(ues),'--output',str(folder)],cwd=ROOT,check=True)
+                preparation=read(folder/'preparation.json');assert preparation['primed']
+                report['channel_preparation'].append(preparation)
     choices=['audit_scalar','audit_batched','experiment_scalar','experiment_batched']
     for scene in ('simple_street_canyon','munich'):
         for ues in (4,24):

@@ -28,4 +28,4 @@
 
 原始数据仅保存在 `~/oran_slot_sim_sionna/outputs/efficiency_baseline_20261015/`。参考源码与原始 profile 已冻结；完整长验收由 `scripts/validation/run_efficiency_acceptance.py` 顺序执行，阶段之间检查源码指纹，失败保留现场并停止扩展。历史结果不覆盖。
 
-当前状态：实现和本地回归已完成，Spark 分级验收进行中。未完成的性能复测、无故障矩阵和动态专项不能标为通过。最终状态以 Spark 的 `pipeline_status.json`、各阶段 `validation.json`、源文件/验证脚本归档与 SHA256 清单为准。Mac 不接收完整日志、信道缓存和实验数据。
+当前状态：数值源码指纹 `68cc0490e438442e20222af99381c4e6bf0fd6dfd12042365262a943a5f2cf02`；Spark 完整回归 299 项通过，32 组短门禁对照全部通过。正式性能复测显式预生成信道，并独立保存冷/热缓存计时；未显式预生成的初版性能试跑已停止并保留，不作为速度验收。Spark 分级验收进行中。未完成的性能复测、无故障矩阵和动态专项不能标为通过。最终状态以 Spark 的 `pipeline_status.json`、各阶段 `validation.json`、源文件/验证脚本归档与 SHA256 清单为准。Mac 不接收完整日志、信道缓存和实验数据。
