@@ -11,6 +11,14 @@ from .catalog import CATALOG, DEFAULTS
 
 def clip(x,lo,hi):return max(lo,min(hi,x))
 def finite(x):return isinstance(x,(int,float)) and math.isfinite(x)
+def rsrp_map(u):
+    value=getattr(u,'candidate_rsrp_dbm',None)
+    if isinstance(value,dict):return value
+    if isinstance(value,(tuple,list)):
+        try:return dict(value)
+        except (ValueError,TypeError):return None
+    return None
+
 def mean(xs,default=None):
     xs=[x for x in xs if finite(x)]
     return sum(xs)/len(xs) if xs else default
@@ -47,6 +55,10 @@ class RuleXApp(XAppBase):
 
     @staticmethod
     def _validate_parameters(p):
+        if any(not finite(v) for v in p.values()):raise ValueError('Nonfinite rule parameter')
+        if any(v<0 for k,v in p.items() if k.endswith('_ms')):raise ValueError('Negative timing')
+        for k in ('target_max_load','sleep_low_load','wake_high_load','protected_outer_fraction'):
+            if not 0<=p[k]<=1:raise ValueError(f'Invalid ratio: {k}')
         for lo,hi in [('min_power_dbm','max_power_dbm'),('ret_min_deg','ret_max_deg'),('slice_min_weight','slice_max_weight')]:
             if p[lo]>p[hi]:raise ValueError(f'Inverted bounds: {lo}/{hi}')
         if not 0<=p['ret_min_deg']<=p['ret_max_deg']<=15 or not 0<=p['protected_outer_fraction']<=1:raise ValueError('Invalid physical bounds')
@@ -77,7 +89,7 @@ class RuleXApp(XAppBase):
         return True
 
     def _candidate(self,u,cells,source):
-        rs=getattr(u,'candidate_rsrp_dbm',None);sn=getattr(u,'candidate_sinr_db',None)
+        rs=rsrp_map(u);sn=getattr(u,'candidate_sinr_db',None)
         if not isinstance(rs,dict) or not isinstance(sn,dict):return []
         neighbors=source.get('neighbor_cell_ids')
         return [cid for cid in sorted(cells) if cid!=u.serving_cell_id and
@@ -100,7 +112,12 @@ class RuleXApp(XAppBase):
 
     def run(self,observation,policy_snapshot):
         started=time.perf_counter();o=observation;self.last_decisions=[];actions=[];commands=[]
-        original=self.parameters;self.parameters=self._policy(policy_snapshot)
+        original=self.parameters
+        try:self.parameters=self._policy(policy_snapshot)
+        except (ValueError,TypeError) as error:
+            self._reason(None,'nonrt_policy_rejected',detail=str(error))
+            self.decision_seconds+=time.perf_counter()-started
+            return ControlDecision(config_action=ConfigAction(source_name=self.name))
         try:
             cells={c.cell_id:c for c in o.cell_observations}
             if self.kind=='ret_coverage' and self.last_action and (o.slot_id-max(self.last_action.values()))*self.dt<self.min_ms:
@@ -189,7 +206,7 @@ class RuleXApp(XAppBase):
             for u in ues:
                 demand=getattr(u,'requested_dl_rate_bps',None)
                 poor=u.hol_delay_ms>getattr(u,'latency_budget_ms',100)*.5 or (finite(demand) and u.throughput_mbps*1e6<demand)
-                rs=u.candidate_rsrp_dbm;sn=u.candidate_sinr_db
+                rs=rsrp_map(u);sn=u.candidate_sinr_db
                 def score(t):return (clip((sn[t]+10)/40,0,1)+clip((rs[t]+120)/60,0,1)+(1-cells[t].resource_grid_utilization))/3
                 targets=self._candidate(u,cells,cfg)
                 target=max(targets,key=lambda t:(score(t),t)) if targets else None
@@ -222,7 +239,7 @@ class RuleXApp(XAppBase):
                 return False
             # No served users and no hidden/unconnected user relying on this cell.
             for u in o.ue_observations:
-                rs=getattr(u,'candidate_rsrp_dbm',None);sn=getattr(u,'candidate_sinr_db',None)
+                rs=rsrp_map(u);sn=getattr(u,'candidate_sinr_db',None)
                 if not isinstance(rs,dict) or not isinstance(sn,dict):return False
                 alternatives=[t for t in cells if t!=cid and cells[t].cell_sleep_mode=='active' and rs.get(t,-999)>p['good_rsrp_dbm'] and sn.get(t,-999)>p['good_sinr_db']]
                 if not alternatives:return False
@@ -272,7 +289,7 @@ class RuleXApp(XAppBase):
         if kind=='interference_coordination':
             ordered=sorted(cells);edges={x:set() for x in ordered}
             for u in o.ue_observations:
-                rs=getattr(u,'candidate_rsrp_dbm',None)
+                rs=rsrp_map(u)
                 if not isinstance(rs,dict):continue
                 source=u.serving_cell_id
                 if source not in edges:continue

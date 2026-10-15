@@ -215,3 +215,22 @@ def test_ret_suppresses_held_beam_requests_before_and_after_actuation():
     assert winners['cell:a']['ret_enabled'][1]
     winners={};leases.reconcile(manager,o,winners,scopes,[])
     assert 'codebook_id' not in winners['cell:a']
+
+
+@pytest.mark.parametrize('kind',['traffic_steering','load_balancing','interference_coordination','cell_sleep'])
+def test_real_projection_legacy_candidate_pairs_are_accepted(kind):
+    a=RuleXApp(kind)
+    for slot in [1000,1005,1010]:
+        o=view(slot)
+        for u in o.ue_observations:u.candidate_rsrp_dbm=tuple(u.candidate_rsrp_dbm.items())
+        d=a.run(o,PolicySnapshot())
+    if kind=='traffic_steering':assert d.commands
+    if kind=='load_balancing':assert a.statistics['action_requested']
+    if kind=='interference_coordination':assert a.statistics['action_requested']
+
+
+def test_invalid_nonrt_update_is_rejected_without_state_mutation():
+    app=RuleXApp('rf_energy');policy=PolicySnapshot(rule_based_parameters={'rf_energy':{'max_power_dbm':-100}})
+    result=app.run(view(),policy)
+    assert result.config_action.tx_power_dbm is None and app.last_decisions[0]['reason']=='nonrt_policy_rejected'
+    assert app.parameters['max_power_dbm']==30
