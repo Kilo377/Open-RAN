@@ -14,6 +14,10 @@ class RtSysPhyAdapter:
 
     def __init__(self, config, *, abstraction=None, channel_provider=None):
         self.config = dict(config)
+        self.nr_execution=self.config.get('nr_execution','scalar')
+        if self.nr_execution not in ('scalar','batched'):raise ValueError('Unknown NR execution mode')
+        if self.nr_execution=='batched' and self.config.get('feedback_mode')!='nr_direct':
+            raise ValueError('Batched NR requires nr_direct')
         self.device = self.config.get('device', 'cuda')
         if abstraction is None and self.device == 'numpy':
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
@@ -179,11 +183,8 @@ class RtSysPhyAdapter:
         # Batch all REs with the same transmitter/stream set across symbols.
         # Each RE retains its true channel and the original per-symbol ridge.
         def at(e,s,f):return e['power'][s,f] if isinstance(e['power'],np.ndarray) else e['power']
-        patterns={}
-        for symbol in range(ns):
-            for f in range(nf):
-                pattern=tuple(i for i,e in enumerate(entries) if e['mask'][symbol,f] and at(e,symbol,f)>0)
-                if pattern:patterns.setdefault(pattern,[]).append((symbol,f))
+        from phy.rt_sys.efficiency import resource_patterns
+        patterns=resource_patterns(entries,ns,nf)
         for pattern,coordinates in patterns.items():
             symbols,frequencies=map(list,zip(*coordinates))
             tx = []
@@ -260,6 +261,24 @@ class RtSysPhyAdapter:
                     if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
                 e['sinr'][symbols,frequencies,k] = values
                 e['inter'].extend(inter_power.tolist())
+        batch_metrics={}
+        if self.nr_execution=='batched':
+            from phy.rt_sys.tx_contract import data_mask
+            jobs=[];owners=[]
+            for e in entries:
+                ue=e['ue'];p=e['p'];data=data_mask(e['mask'],ue.dmrs_pattern_id)
+                values=e['sinr'].copy();values[~data,:]=0
+                if not np.any(values[data,:]>0):continue
+                values[data,:]=np.maximum(values[data,:],1e-30)
+                maximum=int(ue.mcs_cap if ue.mcs_cap is not None else 27)
+                mcs=int(ue.target_mcs) if ue.target_mcs is not None else int(select_mcs_index_from_sinr(
+                    10*math.log10(float(values[values>0].mean())),mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
+                if mcs>maximum:raise ValueError('MCS target exceeds cap')
+                jobs.append(dict(sinr=values,table=ue.mcs_table_id,mcs=mcs,seed=self.seed,slot=p.slot_id,
+                    ue_id=ue.ue_id,fixed=ue.is_retx,harq_context=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,
+                        ndi=ue.harq_ndi if ue.harq_ndi is not None else 0,is_retx=ue.is_retx,cell_id=p.cell_id)))
+                owners.append(id(e))
+            batch_metrics=dict(zip(owners,self.abstraction.evaluate_many(jobs)))
         results = {}
         trace_ues = []
         for p in phy_inputs:
@@ -297,7 +316,7 @@ class RtSysPhyAdapter:
                         context={}
                         if getattr(self.abstraction,'supports_harq_context',False):
                             context['harq_context']=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,ndi=ue.harq_ndi if ue.harq_ndi is not None else 0,is_retx=ue.is_retx,cell_id=p.cell_id)
-                        metrics = self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
+                        metrics = batch_metrics[id(e)] if self.nr_execution=='batched' else self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
                             self.seed,p.slot_id,ue.ue_id,fixed=fixed,**context)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
                         result.link_adaptation_reason = ue.link_adaptation_reason or metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')

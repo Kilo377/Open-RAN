@@ -45,6 +45,9 @@ def parse_args():
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
+    p.add_argument('--recording-mode',choices=['audit','experiment'])
+    p.add_argument('--nr-execution',choices=['scalar','batched'])
+    p.add_argument('--diagnostic-window-slots',type=int,default=200)
     return p.parse_args()
 
 
@@ -79,6 +82,12 @@ def run_case(args):
         for rapp in configs['ric'].get('rapps',[]):
             if rapp['type']=='xapp_selection_rapp':rapp.update(persistent_memory_enabled=True,memory_store_path=str(model_path))
     configs['phy']['rt_sys'].update(csi_error_nmse_db=getattr(args,'csi_error_nmse_db',None),harq_combining=getattr(args,'harq_combining','none'))
+    recording=getattr(args,'recording_mode',None) or configs['phy']['rt_sys'].get('recording_mode','audit')
+    execution=getattr(args,'nr_execution',None) or configs['phy']['rt_sys'].get('nr_execution','scalar')
+    configs['phy']['rt_sys'].update(recording_mode=recording,nr_execution=execution)
+    if recording not in ('audit','experiment'):raise ValueError('Unknown recording mode')
+    window_slots=getattr(args,'diagnostic_window_slots',200)
+    if window_slots<1:raise ValueError('Positive diagnostic window required')
     name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}'
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
@@ -96,10 +105,15 @@ def run_case(args):
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
     def write_status(): (output/'run_status.json').write_text(json.dumps(status,indent=2))
     write_status(); started=time.perf_counter()
+    from phy.rt_sys.efficiency import StageTimings
+    timings=StageTimings();simulation_started=None;steady_started=None;steady_decodes=0
     try:
         from phy.rt_sys.channel import RtChannelProvider
         from phy.rt_sys.adapter import RtSysPhyAdapter
         provider=RtChannelProvider(manifest,ROOT/'channel_cache',device=args.device)
+        timings.wrap(provider,'snapshot','channel_snapshot_including_io_and_cfr')
+        for method in ('generate_paths','generate'):
+            if hasattr(provider.backend,method):timings.wrap(provider.backend,method,'rt_generation')
         if args.generate_only:
             provider.pregenerate(); status.update(completed=True,stage='channels_generated',cache_key=provider.key)
             return
@@ -121,6 +135,15 @@ def run_case(args):
         registry.active_intent_manager=ActiveIntentManager(initial_intent_text=intent)
         runtime=build_runtime_scenario_config(scenario_name=name,scenario_type='rt_scene',sim_config=configs['sim'],cell_config=configs['cell'],ric_config=configs['ric'])
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
+        for obj,method,label in ((simulator,'step','slot_total'),
+            (simulator,'_run_managed_cell_schedulers','scheduling'),
+            (adapter,'run_cluster_slot','precoding_interference_and_tb_inclusive'),
+            (simulator.measurement_updater,'update','measurement_update'),
+            (simulator.state_updater,'apply_phy_result','state_update'),
+            (simulator.controller_manager,'run_near_rt','near_rt_control')):
+            if hasattr(obj,method):timings.wrap(obj,method,label)
+        for method,label in (('waveform','codec_lookup_or_build'),('_transmitted_feedback','actual_tb_feedback'),('evaluate_many','batch_feedback_inclusive')):
+            if hasattr(adapter.abstraction,method):timings.wrap(adapter.abstraction,method,label)
         initial={'seed':args.seed,'cache_key':provider.key,'deployment':manifest,'business':configs['ue'],
             'ues':[{"ue_id":u.ue_id,"serving_cell_id":simulator.state.connections[u.ue_id].serving_cell_id,"beam_id":u.serving_beam_id,"queue_bytes":u.queue_bytes} for u in simulator.state.ues]}
         from phy.rt_sys.contracts import digest
@@ -130,13 +153,29 @@ def run_case(args):
         status.update(stage='simulating',cache_key=provider.key); write_status()
         from experiments.steady_state import SteadyStateMonitor
         steady=SteadyStateMonitor(simulator.state.ues,warmup,manifest['slot_duration_ms'])
+        from experiments.rt_diagnostics import RuntimeDiagnostics,compact_trace
+        diagnostics=RuntimeDiagnostics(simulator.state.ues,manifest['slot_duration_ms'],warmup,window_slots*manifest['slot_duration_ms'])
+        from contextlib import ExitStack
+        stack=ExitStack()
+        auxiliary={name:stack.enter_context((output/f'{name}.jsonl').open('w'))
+            for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace')}
+        simulation_started=time.perf_counter();io_s=0.;diagnostic_until=-1
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
         with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
             import csv
             with (output/'ue_metrics.csv').open('w',newline='') as ufile, (output/'cell_metrics.csv').open('w',newline='') as cfile:
                 uw=cw=None
                 for _ in range(args.slots):
+                    if steady_started is None and simulator.state.sim_time_ms>=warmup:
+                        steady_started=time.perf_counter();steady_decodes=adapter.abstraction.decode_trials
                     simulator.step()
+                    feedback,decisions=diagnostics.observe(simulator.state,adapter.trace)
+                    io_start=time.perf_counter()
+                    for name,events in (('olla_feedback',feedback),('olla_decisions',decisions),
+                        ('control_receipts',simulator.state.control.actuation_outcomes)):
+                        for event in events:auxiliary[name].write(json.dumps({'slot_id':simulator.state.slot_id,**event},allow_nan=False)+'\n')
+                    if recording=='audit':auxiliary['state_snapshots'].write(json.dumps(simulator.state.snapshots[-1],allow_nan=False)+'\n')
+                    simulator.state.snapshots[:]=simulator.state.snapshots[-1:]
                     slot_packet_events=[]
                     ue_by_id={u.ue_id:u for u in simulator.state.ues}
                     for row in adapter.trace['ues']:
@@ -158,15 +197,29 @@ def run_case(args):
                     if simulator.state.sim_time_ms>warmup:
                         completed_handovers+=sum(e['handover_completed'] for e in simulator.mobility_manager.events)
                         evaluated_bytes+=sum(u['delivered_bytes'] for u in adapter.trace['ues']);evaluated_slots+=1
-                    trace.write(json.dumps(simulator.slot_records[-1]['rt_sys'],allow_nan=False)+'\n')
+                    full=simulator.slot_records[-1]['rt_sys']
+                    if any(r.get('ack_source') in ('harq_incompatible_no_tb','unsupported_nr_code_no_tb') for r in adapter.trace['ues']) or any(e.get('status')=='rejected' for e in simulator.state.control.actuation_outcomes) or any(e.get('kind') in ('connection_drop','handover_failure') for e in getattr(getattr(simulator.state,'paper',None),'events',[])):
+                        diagnostic_until=simulator.state.slot_id+window_slots
+                    # Full audit output is a single stream, not duplicated in
+                    # every historical scalar-metrics record and CSV column.
+                    trace.write(json.dumps(full if recording=='audit' else compact_trace(full),allow_nan=False)+'\n')
+                    if recording=='experiment' and simulator.state.slot_id<=diagnostic_until:
+                        auxiliary['diagnostic_trace'].write(json.dumps(full,allow_nan=False)+'\n')
+                    simulator.slot_records[-1].pop('rt_sys')
                     for row in adapter.trace['ues']:
+                        if recording=='experiment' and simulator.state.slot_id%window_slots and simulator.state.slot_id!=args.slots:continue
                         row={'slot_id':simulator.state.slot_id,**row}
                         if uw is None: uw=csv.DictWriter(ufile,fieldnames=list(row)); uw.writeheader()
                         uw.writerow(row)
                     for cid,row in adapter.trace['cells'].items():
+                        if recording=='experiment' and simulator.state.slot_id%window_slots and simulator.state.slot_id!=args.slots:continue
                         row={'slot_id':simulator.state.slot_id,'cell_id':cid,**row}
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
+                    io_s+=time.perf_counter()-io_start
+        simulation_elapsed=time.perf_counter()-simulation_started
+        steady_elapsed=time.perf_counter()-steady_started if steady_started is not None else 0.
+        stack.close()
         summary=simulator._build_final_summary()
         if getattr(simulator.state,'paper',None):
             paper=simulator.state.paper
@@ -178,6 +231,8 @@ def run_case(args):
         if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})
         summary['steady_state']=steady.summary()
+        summary['runtime_diagnostics']=diagnostics.summary(summary['steady_state'])
+        (output/'runtime_diagnostics.json').write_text(json.dumps(summary['runtime_diagnostics'],indent=2,allow_nan=False))
         (output/'steady_state.json').write_text(json.dumps(summary['steady_state'],indent=2))
         summary['packet_metrics']={u.ue_id:u.packet_ledger.summary() for u in simulator.state.ues}
         summary['du_olla']={u.ue_id:u.du_olla.summary() for u in simulator.state.ues if hasattr(u,'du_olla')}
@@ -206,15 +261,27 @@ def run_case(args):
         status.update(completed=True,stage='completed',runtime_environment=environment,
             spark_verified=args.device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
+        performance=dict(**timings.report(),recording_mode=recording,nr_execution=execution,
+            initialization_s=simulation_started-started,simulation_s=simulation_elapsed,
+            output_and_telemetry_s=io_s,steady_wall_s=steady_elapsed,
+            steady_slots=evaluated_slots,steady_slots_per_s=evaluated_slots/max(steady_elapsed,1e-12),
+            steady_actual_tbs_per_s=(adapter.abstraction.decode_trials-steady_decodes)/max(steady_elapsed,1e-12),
+            actual_decodes=adapter.abstraction.decode_trials,codec_statistics=adapter.abstraction.statistics,
+            source_sha256=source_hash,cache_key=provider.key,
+            numerical_fidelity='actual_nr_20_decoder_iterations_no_online_probes',
+            csv_semantics='audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries')
+        (output/'performance.json').write_text(json.dumps(performance,indent=2))
     except Exception as exc:
         status.update(stage='failed',error=f'{type(exc).__name__}: {exc}'); raise
     finally:
+        if 'stack' in locals():stack.close()
         status.update(elapsed_s=time.perf_counter()-started,peak_rss_native=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         status['peak_rss_bytes']=status['peak_rss_native'] if platform.system()=='Darwin' else status['peak_rss_native']*1024
         try:
             import torch
             status['peak_cuda_bytes']=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0
         except ImportError: pass
+        status['output_bytes']=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())
         write_status()
 
 

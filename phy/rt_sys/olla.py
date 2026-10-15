@@ -4,7 +4,7 @@ Algorithm reference: OCUDU b78d09a77ab060cda752f32483e551f1e9132f66,
 lib/scheduler/support/outer_loop_link_adaptation.h (BSD-3-Clause-Open-MPI).
 This independently written adapter uses measured SINR dB, not OCUDU DL CQI.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from collections import Counter
 
 
@@ -31,10 +31,14 @@ class OllaState:
     target: float = .1
     ack_step_db: float = .01
     limit_db: float = 10.
+    consumed_events: list = field(default_factory=list)
+    segment: int = 0
 
     def consume(self, slot, cell_id):
         cell_id=str(cell_id)
+        self.consumed_events=[]
         if self.cell_id != cell_id:
+            self.segment+=1
             self.offsets.clear()
             self.cell_id=cell_id
         remaining=[]
@@ -42,17 +46,22 @@ class OllaState:
             if e.available_slot>slot:
                 remaining.append(e);continue
             key=(e.tb_id,e.is_retx,e.available_slot)
-            if key in self.seen:continue
+            record=dict(**asdict(e),consumed_slot=slot,segment=self.segment,updated=False)
+            if key in self.seen:
+                self.consumed_events.append(dict(record,reason='duplicate_feedback'));continue
             self.seen.add(key)
             if e.cell_id != cell_id:
-                self.stats['stale_cell_feedback']+=1;continue
+                self.stats['stale_cell_feedback']+=1
+                self.consumed_events.append(dict(record,reason='stale_cell_feedback'));continue
             if e.is_retx:
                 self.stats['retx_samples']+=1
                 self.stats['retx_errors']+=not e.ack
+                self.consumed_events.append(dict(record,reason='retransmission_not_first_bler'))
                 continue
             # A first-TB feedback can only update once even if delivered twice.
             first_key=('first',e.tb_id)
-            if first_key in self.seen:continue
+            if first_key in self.seen:
+                self.consumed_events.append(dict(record,reason='duplicate_first_tb'));continue
             self.seen.add(first_key)
             self.stats['first_samples']+=1;self.stats['first_errors']+=not e.ack
             offset=self.offsets.get(e.table,0.)
@@ -60,6 +69,10 @@ class OllaState:
             if (e.ack and e.mcs>=e.max_mcs) or (not e.ack and e.mcs<=e.min_mcs):
                 self.stats['boundary_protected']+=1;delta=0.
             self.offsets[e.table]=max(-self.limit_db,min(self.limit_db,offset+delta))
+            self.consumed_events.append(dict(record,updated=True,
+                reason='boundary_protected' if delta==0 else 'first_feedback',
+                offset_before_db=offset,offset_after_db=self.offsets[e.table],
+                limit_hit=abs(offset+delta)>=self.limit_db))
         self.pending=remaining
 
     def summary(self):

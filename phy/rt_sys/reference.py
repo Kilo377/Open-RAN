@@ -81,6 +81,8 @@ class NrReferenceAbstraction:
 
     def waveform(self,table,mcs,count):
         key=(table,mcs,count)
+        label='codec_cache_hits' if key in self._waveforms else 'codec_cache_misses'
+        self.statistics[label]=self.statistics.get(label,0)+1
         if key in self._unsupported:raise ValueError(self._unsupported[key])
         if key not in self._waveforms:
             try:self._waveforms[key]=NRWaveform(table,mcs,count,self.device)

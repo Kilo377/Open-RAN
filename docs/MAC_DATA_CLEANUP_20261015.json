@@ -1,0 +1,19 @@
+{
+  "cleaned_at": "2026-10-15T09:29:10.570802+08:00",
+  "removed": {
+    "outputs": {
+      "files": 8512,
+      "bytes": 40283758363
+    },
+    "channel_cache": {
+      "files": 86,
+      "bytes": 979236492
+    }
+  },
+  "bytes_removed": 41262994855,
+  "spark_host": "njupt@192.168.1.202",
+  "remote_canonical": "/home/njupt/oran_slot_sim_sionna/",
+  "remote_archive": "/home/njupt/oran_slot_sim_sionna/mac_sync_archive_20261015/",
+  "verification": "rsync --checksum exit 0 and remote file counts/bytes match; remote original datasets preserved",
+  "retention": "Experiment outputs and channel cache stay on Spark; do not download full data to Mac unless requested."
+}

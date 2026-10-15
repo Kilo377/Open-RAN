@@ -63,7 +63,21 @@ class PaperEnvironment:
         slot=self.state.slot_id
         if self.sample_slot!=slot:
             self.events=[];self.receipts=[];self.sample_slot=slot
+        # Mobility and scheduling ask for the same hypothesis within a slot.
+        # Runtime RF changes invalidate it; association/queue changes do not
+        # enter references(), which calculates every UE/candidate independently.
+        snapshot=self.adapter.current_snapshot
+        radio=tuple((cid,r.resource_grid.n_prbs_total,
+            r.cell.tx_power_dbm,r.cell.cell_sleep_mode,r.cell.current_codebook_id,
+            r.cell.current_beam_profile_id,getattr(r.cell,'ret_enabled',False),
+            getattr(r.cell,'ret_tilt_deg',0),getattr(r.cell,'ret_codebook_id',0),
+            tuple(r.cell.prb_power_w) if getattr(r.cell,'prb_power_w',None) is not None else None)
+            for cid,r in self.state.managed_cells.items())
+        key=(slot,id(snapshot),radio,snapshot.metadata.get('tx_rows'),snapshot.metadata.get('tx_cols'),
+             self.adapter.config.get('noise_figure_db',7))
+        if self.adapter.config.get('reuse_reference_within_slot',False) and getattr(self,'_reference_key',None)==key:return
         self.raw=references(self.adapter.current_snapshot,self.state,self.adapter.config.get('noise_figure_db',7))
+        self._reference_key=key
 
     def serving_references(self):
         if not self.raw:self.prepare_reference()

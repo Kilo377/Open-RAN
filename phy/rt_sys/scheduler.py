@@ -269,10 +269,18 @@ class RtSysScheduler(SimpleScheduler):
             maximum=16 if ue.latency_budget_ms<=20 else 27
             age=self._rt_state.slot_id-(getattr(measured,'measurement_produced_at_slot',0) or 0)
             max_age=max(1,getattr(measured,'sinr_window_slots',1)+getattr(measured,'queue_delay_slots_applied',0)+5)
+            ue.olla_selection=dict(slot_id=self._rt_state.slot_id,cell_id=str(self._rt_state.cell.cell_id),
+                table=table,min_mcs=0,max_mcs=maximum,measurement_age_slots=age,
+                measurement_produced_at_slot=getattr(measured,'measurement_produced_at_slot',None),
+                measurement_delivered_at_slot=getattr(measured,'measurement_delivered_at_slot',None),
+                reference_sinr_db=getattr(measured,'reference_sinr_db',None),max_age_slots=max_age,
+                offset_db=ue.du_olla.offsets.get(table,0.))
             if measured is None or measured.reference_sinr_db is None or measured.measurement_delivered_at_slot is None or measured.serving_cell_id!=str(self._rt_state.cell.cell_id) or age>max_age:
                 ue.olla_selection_reason='missing_or_stale_reference_measurement'
+                ue.olla_selection['reason']=ue.olla_selection_reason
                 return 0
             ue.olla_selection_reason='delivered_reference_sinr_plus_du_olla'
+            ue.olla_selection['reason']=ue.olla_selection_reason
             return select_mcs_index_from_sinr(measured.reference_sinr_db+ue.du_olla.offsets.get(table,0.),
                 mcs_table_id=table,max_mcs_index=maximum)
         if getattr(ue,'rt_feedback_mode',None)=='nr_direct':

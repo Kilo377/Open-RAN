@@ -22,6 +22,29 @@ class DirectNrAbstraction(NrReferenceAbstraction):
     def _probe(self, *args, **kwargs):
         raise RuntimeError('nr_direct must never run a Monte Carlo probe')
 
+    def evaluate_many(self, requests):
+        if getattr(self,'_batch_feedback',None) is not None:
+            raise RuntimeError('NR batch is not reentrant')
+        if any(not r.get('harq_context') for r in requests):
+            raise ValueError('Batched actual NR requires explicit HARQ context')
+        jobs=[]
+        for r in requests:
+            index={'qam64':1,'qam256':2,'qam64_low_se':3}[r['table']]
+            values=np.asarray(r['sinr']);values=values[values>0].astype(float)
+            if not len(values) or not np.isfinite(values).all():raise ValueError('Invalid batch SINR')
+            wave=self.waveform(index,int(r['mcs']),len(values))
+            jobs.append((wave,values,r['seed'],r['slot'],r['ue_id'],r['harq_context']))
+        feedback=self.harq.transmit_many(jobs)
+        self._batch_feedback={r['ue_id']:info for r,info in zip(requests,feedback)}
+        try:return [self.evaluate(**r) for r in requests]
+        finally:self._batch_feedback=None
+
+    def _transmitted_feedback(self,wave,values,seed,slot,ue_id,ack_seed,harq_context,estimate_probe):
+        if getattr(self,'_batch_feedback',None) is not None:
+            info=self._batch_feedback.pop(ue_id)
+            return (None if info['no_tb'] else info['errors']),info
+        return super()._transmitted_feedback(wave,values,seed,slot,ue_id,ack_seed,harq_context,estimate_probe)
+
     def evaluate(self, sinr, table, mcs, seed, slot, ue_id, fixed=False, harq_context=None):
         index = {'qam64': 1, 'qam256': 2, 'qam64_low_se': 3}.get(table)
         if index is None or not 0 <= int(mcs) <= (27 if index == 2 else 28):
@@ -49,11 +72,9 @@ class DirectNrAbstraction(NrReferenceAbstraction):
             return dict(result, ack_source='unsupported_nr_code_no_tb',
                         unsupported_nr_mcs=[dict(mcs=int(mcs), reason=str(exc))])
         # Retain the SYS transport-block-size contract, without asking SYS for BLER.
-        t = self.torch
-        m = t.tensor([[int(mcs)]], dtype=t.int32, device=self.device)
-        q, r = self.phy._mcs_decoder_fun(m, index, 1)
-        bits, _, _ = self.phy._transport_block_info(q, r, q * len(values))
-        if int(bits) != wave.bits:
+        from phy.rt_sys.tx_contract import nr_budget
+        q, coded, bits = nr_budget(table, int(mcs), len(values))
+        if bits != wave.bits or q != wave.q or coded != wave.q * wave.data_re:
             raise RuntimeError('Direct NR/SYS transport block sizes disagree')
         draw = reference_seed(seed, slot, ue_id, index, int(mcs), len(values), 'transmitted_tb')
         failed, info = self._transmitted_feedback(wave, values, seed, slot, ue_id, draw,
