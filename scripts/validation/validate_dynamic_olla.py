@@ -111,4 +111,6 @@ def main(a):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--device',default='cuda');p.add_argument('--warmup',type=int,default=1500);p.add_argument('--samples',type=int,default=3000)
-    a=p.parse_args();main(a)
+    a=p.parse_args()
+    if a.warmup<1500 or a.samples<2000:p.error("Formal target acceptance requires >=1500 warmup and >=2000 first-TB evaluation samples")
+    main(a)

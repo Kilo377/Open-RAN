@@ -26,8 +26,13 @@ def execute(out,scene,ues,load,seed,slots,warmup,speed,execution):
     assert not (folder/'control_timeline.json').exists()
     assert config['configs']['phy']['rt_sys']['paper_interfaces']['connection_events']
     assert all(v['initial_bytes']==0 for v in final['packet_metrics'].values())
+    noops=0
     for line in (folder/'control_receipts.jsonl').open():
-        raise AssertionError('No-fault baseline emitted a control actuation: '+line[:100])
+        receipt=json.loads(line)
+        assert (receipt.get('kind')=='config' and not receipt.get('fields')
+            and receipt.get('before')==receipt.get('after') and receipt.get('status')=='applied'
+            and receipt.get('source')=='controller_manager'),('No-fault baseline changed control parameters',receipt)
+        noops+=1
     diag=final['runtime_diagnostics'];zero=[u for u,m in diag['per_ue'].items() if not m['steady_state']['delivered_bytes']]
     weak=diag['per_ue'].get('ue_18')
     result.update(case=name,source_sha256=config['source_sha256'],scene=scene,ues=ues,seed=seed,load=load,speed_mps=speed,
@@ -36,7 +41,7 @@ def execute(out,scene,ues,load,seed,slots,warmup,speed,execution):
         delivered_mbps=sum(m['delivered_mbps'] for m in final['steady_state']['per_ue'].values()),
         overflow_bytes=sum(m['overflow_bytes'] for m in final['steady_state']['per_ue'].values()),
         deadline_misses=sum(m['deadline_misses'] for m in final['steady_state']['per_ue'].values()),
-        diagnoses={u:m['diagnoses'] for u,m in diag['per_ue'].items()},
+        diagnoses={u:m['diagnoses'] for u,m in diag['per_ue'].items()},baseline_noop_receipts=noops,
         munich_ue18=weak if scene=='munich' else None,
         scope='Finite no-fault environment evidence; weak coverage/overload are retained, not structural failures.')
     (folder/'acceptance.json').write_text(json.dumps(result,indent=2));return result

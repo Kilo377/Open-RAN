@@ -30,6 +30,7 @@ def main(a):
             with (out/f'{label}.log').open('w') as log:
                 subprocess.run([sys.executable,str(ROOT/script),*argv,'--output',str(target)],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True)
             report=read(target/'validation.json')
+        assert all(report.get(key,True) for key in ('completed','passed','structural_passed','equivalence_passed')),(label,'Refusing a failed/incomplete stage')
         state['stages'].append(dict(stage=label,path=str(target),completed=True));save();return report
     try:
         gate=read(a.gate/'validation.json')
