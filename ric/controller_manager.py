@@ -1230,6 +1230,7 @@ class ControllerManager:
             "codebook_id": (20, 2, "beam_xapp")
         }
         """
+        self.rule_decisions=[]
         field_winners_by_scope: Dict[str, Dict[str, Tuple[int, object, str]]] = {}
         scope_specs_by_key: Dict[str, tuple[str, str | None]] = {}
         collected_commands: list[CommandAction] = []
@@ -1294,8 +1295,10 @@ class ControllerManager:
                     continue
             from copy import deepcopy
             xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
+            if getattr(xapp,'rule_based_v1',False):
+                self.rule_decisions=getattr(self,'rule_decisions',[])+deepcopy(xapp.last_decisions)
             if rt_contract:
-                failures = validate_action(xapp_decision.config_action, contract, observation)
+                failures = [problem for item in xapp_decision.config_actions for problem in validate_action(item, contract, observation)]
                 from ric.xapp_contract import validate_commands
                 failures.extend(validate_commands(xapp_decision.commands,contract,observation))
                 for command in xapp_decision.commands:command._paper_allowed_cells=contract.cell_ids
@@ -1303,135 +1306,140 @@ class ControllerManager:
                     dropped_items.append(DroppedControlItem(kind='xapp_action',source=str(xapp.name),
                         reason='action_contract_rejected:' + ';'.join(failures)))
                     continue
-            xapp_action = xapp_decision.config_action
+            for action_index,item_action in enumerate(xapp_decision.config_actions):
+                xapp_action = item_action
 
-            self._stamp_metadata(
-                xapp_action,
-                source=str(xapp.name),
-                slot_id=slot_id,
-                priority=int(xapp.priority),
-                reason="xapp_config_action",
-                decision_id_prefix="xapp_config",
-            )
-            received_config_actions.append(xapp_action)
-            if not hasattr(self,'_field_validities'):self._field_validities={}
-            validity=(xapp_action.effective_from_slot,xapp_action.effective_until_slot)
-            scope_key, apply_scope, target_cell_id = self._normalize_scope_key(xapp_action)
-            scope_specs_by_key[scope_key] = (apply_scope, target_cell_id)
-            scope_field_winners = field_winners_by_scope.setdefault(scope_key, {})
-
-            raw_commands = list(getattr(xapp_decision, "commands", []))
-            for command in raw_commands:
                 self._stamp_metadata(
-                    command,
+                    xapp_action,
                     source=str(xapp.name),
                     slot_id=slot_id,
                     priority=int(xapp.priority),
-                    reason="xapp_command",
-                    decision_id_prefix="xapp_cmd",
+                    reason="xapp_config_action",
+                    decision_id_prefix="xapp_config",
                 )
-                self._record_e2_control_request_for_command(
-                    command=command,
-                    source_name=str(xapp.name),
-                    slot_id=int(slot_id),
-                )
-            collected_commands.extend(raw_commands)
+                received_config_actions.append(xapp_action)
+                if not hasattr(self,'_field_validities'):self._field_validities={}
+                validity=(xapp_action.effective_from_slot,xapp_action.effective_until_slot)
+                scope_key, apply_scope, target_cell_id = self._normalize_scope_key(xapp_action)
+                scope_specs_by_key[scope_key] = (apply_scope, target_cell_id)
+                scope_field_winners = field_winners_by_scope.setdefault(scope_key, {})
 
-            raw_constraints = list(getattr(xapp_decision, "policy_constraints", []))
-            for constraint in raw_constraints:
-                self._stamp_metadata(
-                    constraint,
-                    source=str(xapp.name),
-                    slot_id=slot_id,
-                    priority=int(xapp.priority),
-                    reason="xapp_policy_constraint",
-                    decision_id_prefix="xapp_constraint",
-                )
-            collected_constraints.extend(raw_constraints)
-
-            debug_print(
-                f"xApp triggered at slot {slot_id}. "
-                f"name={xapp.name}, "
-                f"priority={xapp.priority}, "
-                f"codebook_id={xapp_action.codebook_id}, "
-                f"beam_profile_id={xapp_action.beam_profile_id}, "
-                f"tx_power_dbm={xapp_action.tx_power_dbm}, "
-                f"scheduler_mode={xapp_action.scheduler_mode}, "
-                f"scheduler_policy_hint={xapp_action.scheduler_policy_hint}, "
-                f"latency_bias={xapp_action.latency_bias}, "
-                f"slice_weight_adjustment={xapp_action.slice_weight_adjustment}, "
-                f"beam_candidate_preference={xapp_action.beam_candidate_preference}, "
-                f"power_cap_dbm={xapp_action.power_cap_dbm}, "
-                f"cell_sleep_mode={xapp_action.cell_sleep_mode}, "
-                f"traffic_steering_preference={xapp_action.traffic_steering_preference}, "
-                f"mobility_bias_db={xapp_action.mobility_bias_db}, "
-                f"handover_cost_db={xapp_action.handover_cost_db}, "
-                f"handover_interruption_slots={xapp_action.handover_interruption_slots}, "
-                f"steering_hysteresis_db={xapp_action.steering_hysteresis_db}, "
-                f"measurement_event_trigger={xapp_action.measurement_event_trigger}, "
-                f"measurement_event_offset_db={xapp_action.measurement_event_offset_db}, "
-                f"commands={len(getattr(xapp_decision, 'commands', []))}, "
-                f"constraints={len(getattr(xapp_decision, 'policy_constraints', []))}."
-            )
-
-            for field_name in self.ACTION_FIELDS:
-                field_value = getattr(xapp_action, field_name)
-
-                if not self._action_field_has_value(field_name, field_value):
-                    continue
-
-                if field_name not in xapp.controlled_fields:
-                    debug_print(
-                        f"xApp {xapp.name} tried to write undeclared field "
-                        f"{field_name} at slot {slot_id}. This write is ignored."
+                raw_commands = list(getattr(xapp_decision, "commands", [])) if action_index==0 else []
+                for command in raw_commands:
+                    self._stamp_metadata(
+                        command,
+                        source=str(xapp.name),
+                        slot_id=slot_id,
+                        priority=int(xapp.priority),
+                        reason="xapp_command",
+                        decision_id_prefix="xapp_cmd",
                     )
-                    dropped_items.append(
-                        DroppedControlItem(
-                            kind="field_write",
-                            source=str(xapp.name),
-                            reason="field_not_owned",
-                            field_name=str(field_name),
-                            value=self._copy_action_field_value(field_value),
+                    self._record_e2_control_request_for_command(
+                        command=command,
+                        source_name=str(xapp.name),
+                        slot_id=int(slot_id),
+                    )
+                collected_commands.extend(raw_commands)
+
+                raw_constraints = list(getattr(xapp_decision, "policy_constraints", [])) if action_index==0 else []
+                for constraint in raw_constraints:
+                    self._stamp_metadata(
+                        constraint,
+                        source=str(xapp.name),
+                        slot_id=slot_id,
+                        priority=int(xapp.priority),
+                        reason="xapp_policy_constraint",
+                        decision_id_prefix="xapp_constraint",
+                    )
+                collected_constraints.extend(raw_constraints)
+
+                debug_print(
+                    f"xApp triggered at slot {slot_id}. "
+                    f"name={xapp.name}, "
+                    f"priority={xapp.priority}, "
+                    f"codebook_id={xapp_action.codebook_id}, "
+                    f"beam_profile_id={xapp_action.beam_profile_id}, "
+                    f"tx_power_dbm={xapp_action.tx_power_dbm}, "
+                    f"scheduler_mode={xapp_action.scheduler_mode}, "
+                    f"scheduler_policy_hint={xapp_action.scheduler_policy_hint}, "
+                    f"latency_bias={xapp_action.latency_bias}, "
+                    f"slice_weight_adjustment={xapp_action.slice_weight_adjustment}, "
+                    f"beam_candidate_preference={xapp_action.beam_candidate_preference}, "
+                    f"power_cap_dbm={xapp_action.power_cap_dbm}, "
+                    f"cell_sleep_mode={xapp_action.cell_sleep_mode}, "
+                    f"traffic_steering_preference={xapp_action.traffic_steering_preference}, "
+                    f"mobility_bias_db={xapp_action.mobility_bias_db}, "
+                    f"handover_cost_db={xapp_action.handover_cost_db}, "
+                    f"handover_interruption_slots={xapp_action.handover_interruption_slots}, "
+                    f"steering_hysteresis_db={xapp_action.steering_hysteresis_db}, "
+                    f"measurement_event_trigger={xapp_action.measurement_event_trigger}, "
+                    f"measurement_event_offset_db={xapp_action.measurement_event_offset_db}, "
+                    f"commands={len(getattr(xapp_decision, 'commands', []))}, "
+                    f"constraints={len(getattr(xapp_decision, 'policy_constraints', []))}."
+                )
+
+                for field_name in self.ACTION_FIELDS:
+                    field_value = getattr(xapp_action, field_name)
+
+                    if not self._action_field_has_value(field_name, field_value):
+                        continue
+
+                    if field_name not in xapp.controlled_fields:
+                        debug_print(
+                            f"xApp {xapp.name} tried to write undeclared field "
+                            f"{field_name} at slot {slot_id}. This write is ignored."
                         )
-                    )
-                    continue
-
-                if field_name not in scope_field_winners:
-                    scope_field_winners[field_name] = (
-                        xapp.priority,
-                        self._copy_action_field_value(field_value),
-                        xapp.name,
-                    )
-                    self._field_validities[(scope_key,field_name)]=validity
-                    continue
-
-                current_priority, current_value, current_owner = scope_field_winners[field_name]
-                if xapp.priority > current_priority:
-                    dropped_items.append(DroppedControlItem(kind='field_write',source=str(current_owner),
-                        reason='superseded_by_higher_priority',field_name=str(field_name),
-                        value=self._copy_action_field_value(current_value)))
-                    debug_print(
-                        f"Field conflict at slot {slot_id}: "
-                        f"{scope_key}.{field_name} reassigned from {current_owner} "
-                        f"to {xapp.name} due to higher priority."
-                    )
-                    scope_field_winners[field_name] = (
-                        xapp.priority,
-                        self._copy_action_field_value(field_value),
-                        xapp.name,
-                    )
-                    self._field_validities[(scope_key,field_name)]=validity
-                else:
-                    dropped_items.append(
-                        DroppedControlItem(
-                            kind="field_write",
-                            source=str(xapp.name),
-                            reason="lower_priority_than_current_winner",
-                            field_name=str(field_name),
-                            value=self._copy_action_field_value(field_value),
+                        dropped_items.append(
+                            DroppedControlItem(
+                                kind="field_write",
+                                source=str(xapp.name),
+                                reason="field_not_owned",
+                                field_name=str(field_name),
+                                value=self._copy_action_field_value(field_value),
+                            )
                         )
-                    )
+                        continue
 
+                    if field_name not in scope_field_winners:
+                        scope_field_winners[field_name] = (
+                            xapp.priority,
+                            self._copy_action_field_value(field_value),
+                            xapp.name,
+                        )
+                        self._field_validities[(scope_key,field_name)]=validity
+                        continue
+
+                    current_priority, current_value, current_owner = scope_field_winners[field_name]
+                    if xapp.priority > current_priority:
+                        dropped_items.append(DroppedControlItem(kind='field_write',source=str(current_owner),
+                            reason='superseded_by_higher_priority',field_name=str(field_name),
+                            value=self._copy_action_field_value(current_value)))
+                        debug_print(
+                            f"Field conflict at slot {slot_id}: "
+                            f"{scope_key}.{field_name} reassigned from {current_owner} "
+                            f"to {xapp.name} due to higher priority."
+                        )
+                        scope_field_winners[field_name] = (
+                            xapp.priority,
+                            self._copy_action_field_value(field_value),
+                            xapp.name,
+                        )
+                        self._field_validities[(scope_key,field_name)]=validity
+                    else:
+                        dropped_items.append(
+                            DroppedControlItem(
+                                kind="field_write",
+                                source=str(xapp.name),
+                                reason="lower_priority_than_current_winner",
+                                field_name=str(field_name),
+                                value=self._copy_action_field_value(field_value),
+                            )
+                        )
+
+        if any(getattr(i.xapp,'rule_based_v1',False) for i in self.e2_interfaces):
+            from ric.near_rt.rule_based_v1.leases import RuleLeases
+            if not hasattr(self,'rule_leases'):self.rule_leases=RuleLeases()
+            self.rule_leases.reconcile(self,observation,field_winners_by_scope,scope_specs_by_key,received_config_actions)
         return (
             field_winners_by_scope,
             scope_specs_by_key,
@@ -1674,6 +1682,10 @@ class ControllerManager:
                 source_name="controller_manager",
                 slot_id=int(slot_id),
             )
+            if hasattr(self,'rule_leases'):
+                scope='cell:'+str(stamped_scope_action.target_cell_id)
+                stamped_scope_action._rule_owners=tuple(sorted({owner for (cid,field),owner in self.rule_leases.owned.items()
+                    if cid==stamped_scope_action.target_cell_id and getattr(stamped_scope_action,field,None) is not None}))
             stamped_config_actions.append(stamped_scope_action)
 
         decision_metadata = ControlMetadata(

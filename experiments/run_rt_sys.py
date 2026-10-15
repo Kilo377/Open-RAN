@@ -158,7 +158,7 @@ def run_case(args):
         from contextlib import ExitStack
         stack=ExitStack()
         auxiliary={name:stack.enter_context((output/f'{name}.jsonl').open('w'))
-            for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace')}
+            for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace','rule_decisions')}
         simulation_started=time.perf_counter();io_s=0.;diagnostic_until=-1
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
         with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
@@ -171,6 +171,8 @@ def run_case(args):
                     simulator.step()
                     feedback,decisions=diagnostics.observe(simulator.state,adapter.trace)
                     io_start=time.perf_counter()
+                    for event in getattr(simulator.controller_manager,'rule_decisions',[]):
+                        auxiliary['rule_decisions'].write(json.dumps({'slot_id':simulator.state.slot_id,**event},allow_nan=False)+'\n')
                     for name,events in (('olla_feedback',feedback),('olla_decisions',decisions),
                         ('control_receipts',simulator.state.control.actuation_outcomes)):
                         for event in events:auxiliary[name].write(json.dumps({'slot_id':simulator.state.slot_id,**event},allow_nan=False)+'\n')
@@ -227,6 +229,9 @@ def run_case(args):
             (output/'connection_events.json').write_text(json.dumps(paper.all_events,indent=2))
             for app in registry.xapps:
                 if app.name=='fixed_control_timeline':(output/'public_kpi_inputs.json').write_text(json.dumps(app.inputs,indent=2))
+        if any(getattr(app,'rule_based_v1',False) for app in registry.xapps):
+            summary['rule_based_v1']={app.name:dict(statistics=dict(app.statistics),decision_seconds=getattr(app,'decision_seconds',0.),
+                last_decisions=app.last_decisions,kind=getattr(app,'kind','monitor')) for app in registry.xapps if getattr(app,'rule_based_v1',False)}
         if hasattr(adapter.abstraction,'bank'):adapter.abstraction.bank.save()
         if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})

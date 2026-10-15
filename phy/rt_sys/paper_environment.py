@@ -166,6 +166,7 @@ class PaperEnvironment:
                 c=self.state.connections[uid];target=cmd.target_cell_id
                 allowed=getattr(cmd,'_paper_allowed_cells',())
                 if allowed and (c.serving_cell_id not in allowed or (target is not None and target not in allowed)):reason='command_execution_scope'
+                if cmd.source_name.startswith('rule_') and not self.sim.controller_manager._is_xapp_enabled(cmd.source_name):reason='rule_withdrawn_before_actuation'
                 if reason is None and cmd.command_type=='request_handover':
                     if uid in self.manual or c.connection_state!='connected':reason='ue_not_connected'
                     elif uid in self.pending:reason='handover_in_progress'
@@ -209,6 +210,11 @@ class PaperEnvironment:
                     value=r[k]+noise;new[k]=value if old is None else old[k]+alpha*(value-old[k])
                 value=np.asarray(r['prb_sinr_db'])+noise
                 new['prb_sinr_db']=(value if old is None else np.asarray(old['prb_sinr_db'])+alpha*(value-np.asarray(old['prb_sinr_db']))).tolist()
+                if 'beam_reference_reports' in r:
+                    previous={(x['codebook_id'],x['beam_profile_id']):x for x in (old or {}).get('beam_reference_reports',[])}
+                    for report in new['beam_reference_reports']:
+                        key=(report['codebook_id'],report['beam_profile_id']);value=report['reference_sinr_db']+noise
+                        report['reference_sinr_db']=value if key not in previous else previous[key]['reference_sinr_db']+alpha*(value-previous[key]['reference_sinr_db'])
                 self.filtered[uid,cid]=new
         self.observed={uid:{cid:self.filtered[uid,cid] for cid in cells} for uid,cells in self.raw.items()}
         for ue in self.state.ues:
@@ -279,7 +285,7 @@ class PaperEnvironment:
         for ue in self.state.ues:
             stats=dict(ue.packet_ledger.stats);prev=self.previous[ue.ue_id]
             delivered=stats['delivered_bytes']-prev.get('delivered_bytes',0);arrived=stats['offered_bytes']-prev.get('offered_bytes',0)
-            self.ue_samples[ue.ue_id].append((delivered,arrived));self.previous[ue.ue_id]=stats
+            self.ue_samples[ue.ue_id].append((delivered,arrived,stats.get('deadline_missed_packets',0)-prev.get('deadline_missed_packets',0),stats.get('admitted_packets',0)-prev.get('admitted_packets',0)));self.previous[ue.ue_id]=stats
             cell_bytes[self.state.connections[ue.ue_id].serving_cell_id]+=delivered
         powers={c:float(t['average_used_w']) for c,t in self.adapter.trace['cells'].items()}
         for c,p in powers.items():self.rf_energy[c]+=p*dt
@@ -324,6 +330,9 @@ class PaperEnvironment:
         for cid in self.state.managed_cells:
             energy=sum(s['energy'][cid] for s in self.samples);bits=sum(s['bits'][cid] for s in self.samples)
             reports['cell'][cid]=dict(rf_energy_j=energy,rf_energy_total_j=self.rf_energy[cid],rf_efficiency_bit_per_j=bits/energy if energy>0 else None,whole_device_power_w=None,whole_device_efficiency_bit_per_j=None)
+        if self.config.get('rule_observations',False):
+            from ric.near_rt.rule_based_v1.telemetry import augment
+            augment(self,reports)
         return reports
 
     def attach_observation(self,observation):

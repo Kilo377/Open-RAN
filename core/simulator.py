@@ -2230,6 +2230,11 @@ class Simulator:
         self._refresh_managed_cell_runtime_views(self.state)
 
     def _apply_rt_config_action(self, action, apply_slot):
+        owners=getattr(action,'_rule_owners',())
+        if owners and any(not self.controller_manager._is_xapp_enabled(owner) for owner in owners):
+            self.state.control.actuation_outcomes.append(dict(kind='config',status='rejected',reason='rule_withdrawn_before_actuation',
+                slot_id=self.state.slot_id,source=action.source_name,owners=list(owners)))
+            return
         from phy.rt_sys.control import audit_action,runtime_control_values
         fields=audit_action(action)
         scope=str(getattr(action,'apply_scope','cell')).lower()

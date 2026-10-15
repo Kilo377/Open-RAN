@@ -55,12 +55,14 @@ class XAppContract:
     cell_ids: tuple[str,...]=()  # empty means all managed cells
 
     commands: frozenset[str]=frozenset()
+    partial_entities: bool=False
+    read_only: bool=False
 
     @property
     def writable_actions(self):return self.actions & SUPPORTED_ACTIONS
 
     @property
-    def available(self):return bool(self.writable_actions or (self.commands & PAPER_COMMANDS)) and all(k in KPI_REGISTRY and k not in {'whole_device_power_w','whole_device_efficiency_bit_per_j'} for k in self.required_kpis)
+    def available(self):return bool(self.read_only or self.writable_actions or (self.commands & PAPER_COMMANDS)) and all(k in KPI_REGISTRY and k not in {'whole_device_power_w','whole_device_efficiency_bit_per_j'} for k in self.required_kpis)
 
 
 def contract_for(actions,name=None):
@@ -157,7 +159,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             if getattr(observation,'paper_report',None) and name in ('reference_sinr_db','rsrp_dbm','candidate_rsrp_dbm'):
                 record['source']='paper:RT_reference_EWMA_report'
             v.kpi_metadata[name]=record;result.kpi_records.append(record)
-            if name in contract.required_kpis and not valid:errors.append(f'{u.ue_id}:{name}:{reason}')
+            if name in contract.required_kpis and not valid and not contract.partial_entities:errors.append(f'{u.ue_id}:{name}:{reason}')
         # Compatibility aliases have explicit measured sources, never DU truth.
         v.sinr_db=v.reference_sinr_db
         if all(getattr(v,k) is not None for k in ('rsrp_dbm','reference_sinr_db','reference_noise_dbm')):
@@ -214,7 +216,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 window=dict(kind='cumulative' if name=='rf_energy_total_j' else 'slots',size=None if name=='rf_energy_total_j' else (paper.get('window_slots') if spec.source.startswith('paper:') else 1)),window_tbs=None,window_slots=None if name=='rf_energy_total_j' else (paper.get('window_slots') if spec.source.startswith('paper:') else 1),produced_at_slot=produced,delivered_at_slot=now,sample_count=1 if reason is None else 0,
                 valid=reason is None,reason=reason,age_slots=now-produced if produced is not None else None)
             c.kpi_metadata[name]=record;result.kpi_records.append(record)
-            if name in contract.required_kpis and reason:errors.append(f'{cell.cell_id}:{name}:{reason}')
+            if name in contract.required_kpis and reason and not contract.partial_entities:errors.append(f'{cell.cell_id}:{name}:{reason}')
         result.cell_observations.append(c)
     ues=result.ue_observations
     result.total_queue_bytes=sum(u.queue_bytes for u in ues) if all(u.queue_bytes is not None for u in ues) else None
@@ -228,8 +230,11 @@ def project(observation,contract,interval_slots=5,now_slot=None):
     result.num_scheduled_ues=len(result.scheduled_ue_ids)
     result.xapp_capabilities={'writable_actions':sorted(contract.writable_actions),
         'unavailable_actions':sorted(contract.actions-SUPPORTED_ACTIONS)}
-    if not ues and any(KPI_REGISTRY.get(k,KpiSpec('','','','')).entity=='ue' for k in contract.required_kpis):
+    if not contract.partial_entities and not ues and any(KPI_REGISTRY.get(k,KpiSpec('','','','')).entity=='ue' for k in contract.required_kpis):
         errors.append('no_ue_measurement_entities')
+    if getattr(observation,'paper_report',None):
+        result.rule_report_produced_at_slot=observation.paper_report['produced_at_slot']
+        result.executed_configs={c.cell_id:deepcopy(getattr(c,'executed_config',None)) for c in result.cell_observations}
     return result,errors
 
 
@@ -312,3 +317,11 @@ def validate_commands(commands,contract,observation):
         elif contract.cell_ids and uids[c.target_ue_id] not in contract.cell_ids:errors.append('command_source_scope')
         if c.target_cell_id is not None and (c.target_cell_id not in cells or (contract.cell_ids and c.target_cell_id not in contract.cell_ids)):errors.append('command_target_scope')
     return errors
+
+# Opt-in rule-library telemetry. Generated before the existing report delay queue.
+for _k,_unit in {'mobility_events':'event record','beam_reference_reports':'dB/configuration',
+ 'delivered_bits_window':'bit','arrival_bits_window':'bit','deadline_misses_window':'packet',
+ 'deadline_packets_window':'packet','business_window_s':'s'}.items():
+    KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:rule_v1_executed_or_reference_report','throughput_window_slots')
+KPI_REGISTRY['executed_config']=KpiSpec('cell','configuration','paper:executed_configuration_report','single_report')
+CELL_CONFIG.extend(['executed_config','config_fingerprint','config_produced_at_slot'])

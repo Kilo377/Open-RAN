@@ -329,7 +329,7 @@ def available_xapp_catalog_for_llm(
     backend: str | None = None,
 ) -> list[dict[str, object]]:
     available_filter = _normalize_available_xapp_filter(available_xapp_names)
-    return [
+    catalog = [
         {
             **capability_record(name, spec.get('tunable_fields', [])),
             "xapp_name": name,
@@ -344,6 +344,19 @@ def available_xapp_catalog_for_llm(
         for name, spec in sorted(XAPP_CAPABILITY_CATALOG.items())
         if _xapp_allowed_for_filter(name, available_filter=available_filter)
     ]
+
+    # The rule namespace is opt-in: do not alter the legacy unfiltered catalog.
+    if available_filter and any(n.startswith('rule_') for n in available_filter):
+        from ric.near_rt.rule_based_v1 import CATALOG,RuleXApp
+        for kind,spec in sorted(CATALOG.items()):
+            name='rule_'+kind
+            if name not in available_filter:continue
+            app=RuleXApp(kind)
+            catalog.append({**capability_record(name,app.controlled_fields,app.contract),
+                'xapp_category':name,'description':spec[6],'kpis':list(app.contract.required_kpis),
+                'tunable_fields':sorted(app.contract.writable_actions),'tuning_mode':'deterministic_rule_parameters',
+                'training_required':False,'is_variant':False,'variant_params':{}})
+    return catalog
 
 
 def available_xapp_category_catalog_for_llm(

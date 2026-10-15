@@ -265,7 +265,16 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
     for xapp_item in expanded_xapp_items:
         xapp_type = xapp_item["type"]
 
-        if xapp_type == "beam_xapp":
+        if xapp_type == "rule_based_v1":
+            from ric.near_rt.rule_based_v1 import RuleXApp
+            controller_registry.register_xapp(RuleXApp(
+                xapp_item['kind'],name=xapp_item.get('name'),priority=xapp_item.get('priority'),
+                parameters=xapp_item.get('parameters'),cell_ids=xapp_item.get('cell_ids',()),
+                slot_duration_ms=xapp_item.get('slot_duration_ms',.5)))
+        elif xapp_type == "rule_kpi_monitor":
+            from ric.near_rt.rule_based_v1 import KpiMonitor
+            controller_registry.register_xapp(KpiMonitor())
+        elif xapp_type == "beam_xapp":
             controller_registry.register_xapp(
                 BeamXApp(
                     name=xapp_item["name"],

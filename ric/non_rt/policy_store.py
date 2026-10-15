@@ -242,6 +242,8 @@ class PolicyStore:
         return job
 
     def apply_update(self, policy_update: PolicyUpdate, *, slot_id: int | None = None) -> None:
+        from copy import deepcopy
+        self.snapshot.rule_based_parameters.update(deepcopy(policy_update.rule_based_parameters))
         source_name = str(getattr(policy_update, "source_name", "unknown_rapp"))
         policy_type = self._get_or_create_policy_type(
             name=str(getattr(policy_update, "policy_type_name", "") or source_name),
@@ -484,6 +486,7 @@ class PolicyStore:
     def get_snapshot(self) -> PolicySnapshot:
         return PolicySnapshot(
             policy_epoch_id=int(self.snapshot.policy_epoch_id),
+            rule_based_parameters=__import__("copy").deepcopy(self.snapshot.rule_based_parameters),
             preferred_codebook_id=self.snapshot.preferred_codebook_id,
             preferred_tx_power_dbm=self.snapshot.preferred_tx_power_dbm,
             preferred_beam_profile_id=self.snapshot.preferred_beam_profile_id,

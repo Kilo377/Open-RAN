@@ -79,6 +79,7 @@ class PolicyUpdate:
     safety_constraint_set: SafetyConstraintSet | None = None
     memory_state: OrchestrationMemoryState | None = None
 
+    rule_based_parameters: dict[str, dict[str, float]] = field(default_factory=dict)
     enabled_xapps: List[str] = field(default_factory=list)
     disabled_xapps: List[str] = field(default_factory=list)
     policy_constraints: List[PolicyConstraint] = field(default_factory=list)
@@ -141,6 +142,7 @@ class PolicySnapshot:
     safety_constraint_set: SafetyConstraintSet | None = None
     memory_state: OrchestrationMemoryState | None = None
 
+    rule_based_parameters: dict[str, dict[str, float]] = field(default_factory=dict)
     enabled_xapps: List[str] = field(default_factory=list)
     disabled_xapps: List[str] = field(default_factory=list)
     policy_constraints: List[PolicyConstraint] = field(default_factory=list)

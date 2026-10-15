@@ -50,7 +50,7 @@ def references(snapshot,state,noise_figure_db=7):
     result={};spacing=snapshot.metadata.get('subcarrier_spacing_hz',30000)
     noise=10**((-174+10*math.log10(spacing)+noise_figure_db-30)/10)
     for ui,uid in enumerate(snapshot.ue_ids):
-        powers={};beams={}
+        powers={};beams={};alternatives={}
         for ci,cid in enumerate(snapshot.cell_ids):
             runtime=state.managed_cells[cid];cell=runtime.cell;nprb=runtime.resource_grid.n_prbs_total
             h=snapshot.cfr[ui,ci];offset=(h.shape[-1]-nprb*12)//2;h=h[...,offset:offset+nprb*12]
@@ -65,6 +65,17 @@ def references(snapshot,state,noise_figure_db=7):
             p=prb_powers(cell,nprb)*gain/12
             if cell.cell_sleep_mode=='deep_sleep':p=np.zeros(nprb)
             powers[cid]=p;beams[cid]=best
+            if state.paper.config.get('beam_reports',False):
+                alternatives[cid]=[]
+                # Reference hypotheses use current UE beam identity and legal DFT subspaces.
+                from phy.rt_sys.numerics import beam_subspace
+                beam_id=state.connections[uid].serving_beam_id
+                for cb in (0,1,2):
+                    for profile in (0,1):
+                        b=beam_subspace(h.shape[1],cb,profile,beam_id)
+                        field=np.einsum('rtsf,tk->rksf',h,b)
+                        g=np.mean(np.sum(abs(field)**2,axis=(0,1))/b.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
+                        alternatives[cid].append((cb,profile,prb_powers(cell,nprb)*g/12))
         result[uid]={}
         for cid,p in powers.items():
             inter=sum((v for c,v in powers.items() if c!=cid),np.zeros_like(p));ratio=p/(inter+noise)
@@ -73,4 +84,9 @@ def references(snapshot,state,noise_figure_db=7):
                 prb_sinr_db=(10*np.log10(np.maximum(ratio,1e-30))).tolist(),
                 reference_interference_w=float(inter.mean()),noise_per_subcarrier_w=noise,
                 no_path=not bool(np.any(p>0)),candidate_beam_id=beams[cid])
+            if cid in alternatives:
+                result[uid][cid]['beam_reference_reports']=[dict(cell_id=cid,codebook_id=cb,beam_profile_id=profile,
+                    reference_sinr_db=10*math.log10(max(float((signal/(inter+noise)).mean()),1e-30)),
+                    valid=bool(np.any(signal>0)) and state.managed_cells[cid].cell.cell_sleep_mode=='active')
+                    for cb,profile,signal in alternatives[cid]]
     return result

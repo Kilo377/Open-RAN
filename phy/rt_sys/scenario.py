@@ -64,6 +64,16 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         if override.exists(): configs[name]=deep_merge_dict(configs[name],load_yaml_file(str(override)))
     configs['sim'].update(base['simulation']); configs['sim']['scheduler_type']='rt_sys_scheduler'; configs['sim'].update(total_slots=total_slots,slot_duration_ms=dt,rng_seed=seed)
     configs['ric']['run_forever']=False
+    rule=base.get('rule_based_v1',{})
+    if rule.get('enabled'):
+        from ric.near_rt.rule_based_v1 import CATALOG
+        kinds=rule.get('applications',[])
+        if len(set(kinds))!=len(kinds) or any(k not in CATALOG for k in kinds):raise ValueError('Invalid/duplicate rule applications')
+        configs['ric'].update(rapps=[],xapps=[dict(type='rule_based_v1',kind=k,name='rule_'+k,
+            parameters={**rule.get('parameters',{}).get('common',{}),**rule.get('parameters',{}).get(k,{})},
+            cell_ids=rule.get('cell_ids',[]),slot_duration_ms=dt) for k in kinds],
+            run_rapps_on_start=False,freeze_learning=True)
+        if rule.get('monitor',True):configs['ric']['xapps'].append(dict(type='rule_kpi_monitor',name='rule_kpi_monitor',priority=0))
     for rapp in configs['ric'].get('rapps',[]):
         rapp['llm_enabled']=False
         rapp['persistent_memory_enabled']=False
@@ -104,4 +114,7 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     configs['beamforming']['antenna'].update({**radio,'gnb_num_tx_ant':radio['tx_rows']*radio['tx_cols'],
         'default_ue_num_rx_ant':radio['num_rx_ant'],'gnb_panel_layout':f'{radio["tx_rows"]}x{radio["tx_cols"]}'})
     configs['phy']={'phy_type':'sionna_rt_sys','rt_sys':{**base['rt_sys'],'initial_association':'strongest_rt_reference','device':device,'rng_seed':seed,**radio}}
+    if rule.get('enabled'):
+        configs['phy']['rt_sys'].setdefault('paper_interfaces',{}).update(enabled=True,rule_observations=True,
+            beam_reports='beam_management' in rule.get('applications',[]))
     return manifest,configs,base['intent']

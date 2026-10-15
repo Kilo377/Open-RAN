@@ -1,0 +1,105 @@
+{
+  "initial_queue_bytes": 0,
+  "phy_type": "sionna_rt_sys",
+  "rt_sys": {
+    "device": "cuda",
+    "feedback_mode": "nr_direct",
+    "reference": {
+      "selection_samples": 64,
+      "selection_criterion": "wilson_upper",
+      "bler_samples": 64,
+      "decoder_cache_size": 128
+    },
+    "bler_target": 0.1,
+    "noise_figure_db": 7,
+    "rzf_relative_regularization": 0.01,
+    "mobility": {
+      "measurement_filter_ms": 20,
+      "load_filter_ms": 50,
+      "time_to_trigger_ms": 40,
+      "min_dwell_ms": 100
+    },
+    "paper_interfaces": {
+      "enabled": true,
+      "connection_events": true,
+      "cqi_thresholds_db": [
+        -7,
+        -5,
+        -3,
+        -1,
+        1,
+        3,
+        5,
+        7,
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21
+      ],
+      "connection_model": {
+        "bad_rsrp_dbm": -110,
+        "bad_sinr_db": -6,
+        "good_rsrp_dbm": -107,
+        "good_sinr_db": -3,
+        "bad_ms": 200,
+        "good_ms": 40,
+        "handover_timeout_ms": 200
+      },
+      "service_requirements_by_slice_bps": {
+        "embb": 6000000,
+        "urllc": 1000000,
+        "mmtc": 100000,
+        "voice": 100000
+      }
+    },
+    "recording_mode": "experiment",
+    "nr_execution": "scalar",
+    "reuse_reference_within_slot": true
+  },
+  "radio": {
+    "carrier_frequency_hz": 3500000000,
+    "bandwidth_hz": 10000000,
+    "subcarrier_spacing_hz": 30000,
+    "slot_duration_ms": 0.5,
+    "tx_rows": 2,
+    "tx_cols": 2,
+    "num_rx_ant": 2
+  },
+  "ray_solver": {
+    "max_depth": 3,
+    "samples_per_src": 100000,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": false,
+    "refraction": false,
+    "synthetic_array": true
+  },
+  "path_update_ms": 0.5,
+  "max_geometry_displacement_m": 0.01,
+  "chunk_slots": 4,
+  "cache_format": "paths_v2",
+  "simulation": {
+    "obs_delay_slots": 2,
+    "config_actuation_delay_slots": 1,
+    "measurement_queue_delay_slots": 2,
+    "measurement_sinr_noise_std_db": 2,
+    "scheduler_max_ues_per_slot": 8,
+    "scheduler_enable_spatial_multiplexing": true,
+    "scheduler_max_mu_users_per_group": 2,
+    "scheduler_min_mu_beam_separation_deg": 0,
+    "scheduler_max_total_spatial_layers": 2
+  },
+  "intent": "Improve throughput while protecting URLLC latency and maintaining coverage",
+  "rule_based_v1": {
+    "enabled": true,
+    "monitor": true,
+    "applications": [
+      "rf_energy"
+    ],
+    "parameters": {},
+    "cell_ids": []
+  }
+}
