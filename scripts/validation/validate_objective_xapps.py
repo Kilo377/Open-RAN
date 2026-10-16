@@ -123,7 +123,11 @@ def single(out,scene,ident):
 
 
 def combination(out,scene,pair):
- left,right=PAIRS[pair];n=max(duration(left),duration(right));results=[]
+ left,right=PAIRS[pair];n=max(duration(left),duration(right))
+ # Joint gates need an executed candidate/ownership handoff, not another full search.
+ if any(IMPLEMENTATIONS[i]['algorithm'] in SEARCH_ALGORITHMS for i in (left,right)):
+  n=2100 if IMPLEMENTATIONS[left]['category_id']=='ret_coverage' else 1100
+ results=[]
  for arm in ('left','right','both','swap','withdraw'):results.append(execute(out,scene,left,arm,n,pair))
  evidence={};ids=[left.replace(':','__'),right.replace(':','__')]
  for result in results:
