@@ -22,8 +22,12 @@ def executed_configs(state):
 
 def augment(paper,reports):
     cfg=executed_configs(paper.state);slot=paper.state.slot_id
+    if not hasattr(paper,'config_revisions'):paper.config_revisions={}
     for cid,values in cfg.items():
-        reports['cell'][cid].update(executed_config=values,config_fingerprint=digest(values),config_produced_at_slot=slot)
+        fingerprint=digest(values);old=paper.config_revisions.get(cid)
+        revision=0 if old is None else old[1]+int(fingerprint!=old[0])
+        paper.config_revisions[cid]=(fingerprint,revision)
+        reports['cell'][cid].update(executed_config=values,config_fingerprint=fingerprint,config_revision=revision,config_produced_at_slot=slot)
     for u in paper.state.ues:
         uid=u.ue_id;seq=paper.ue_samples[uid];dt=paper.dt/1000
         counter=paper.resource_counters[uid];window=list(counter['window'])

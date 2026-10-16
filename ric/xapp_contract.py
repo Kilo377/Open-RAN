@@ -336,4 +336,5 @@ for _k,_unit in {'executed_prb_slots_total':'PRB*slot','executed_prb_slots_windo
     'resource_counter_epoch':'identity','resource_counter_start_slot':'slot','resource_window_start_slot':'slot','resource_window_end_slot':'slot',
     'resource_window_sample_count':'count','delivered_bits_total':'bit'}.items():
     KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:actual_transmission_and_packet_counter','throughput_window_slots')
-CELL_CONFIG.extend(['executed_config','config_fingerprint','config_produced_at_slot'])
+KPI_REGISTRY['config_revision']=KpiSpec('cell','counter','paper:executed_configuration_change_counter','single_report')
+CELL_CONFIG.extend(['executed_config','config_fingerprint','config_produced_at_slot','config_revision'])

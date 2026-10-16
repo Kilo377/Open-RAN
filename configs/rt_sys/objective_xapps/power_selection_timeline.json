@@ -1,0 +1,26 @@
+[
+  {
+    "slot": 80,
+    "xapp_active_sets": {
+      "cell_0": {
+        "throughput_power": [
+          "throughput_power__weak_user_power"
+        ]
+      },
+      "cell_1": {
+        "throughput_power": [
+          "throughput_power__weak_user_power"
+        ]
+      },
+      "cell_2": {
+        "throughput_power": [
+          "throughput_power__weak_user_power"
+        ]
+      }
+    }
+  },
+  {
+    "slot": 120,
+    "xapp_active_sets": {}
+  }
+]

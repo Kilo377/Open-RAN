@@ -20,7 +20,10 @@ for _name in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS'):os.env
 STOP=Event();CHILDREN=set();LOCK=Lock()
 
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
-from ric.near_rt.xapp_library import IMPLEMENTATIONS
+from ric.near_rt.xapp_library import IMPLEMENTATIONS as ALL_IMPLEMENTATIONS
+from ric.near_rt.xapp_library.objectives import OBJECTIVE_ALGORITHMS
+# Preserve the accepted 28-implementation gate and its legacy launch contract.
+IMPLEMENTATIONS={k:v for k,v in ALL_IMPLEMENTATIONS.items() if v["algorithm"] not in OBJECTIVE_ALGORITHMS}
 from ric.near_rt.rule_based_v1.catalog import PROFILES
 from scripts.validation.validate_rule_based import inventory,write
 from scripts.validation.validate_efficiency import audit,read,equivalent

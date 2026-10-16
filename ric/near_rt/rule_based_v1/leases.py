@@ -88,3 +88,12 @@ class RuleLeases:
                 if dropped is not None and value:
                     dropped.append(DroppedControlItem(kind='field_write',source=owner,
                         reason='inactive_scheduler_family:'+str(mode),field_name=field,value=deepcopy(value)))
+        if getattr(getattr(manager,'instance_selection',None),'mode','exclusive')=='conflict_experiment':
+            for (name,cid,field),(priority,value,_) in self.requests.items():
+                winner=winners.get('cell:'+cid,{}).get(field)
+                app=apps[name]
+                row=dict(reason='request_arbitrated',field=field,requested_value=deepcopy(value),
+                    winner=winner[2] if winner else None,arbitrated_value=deepcopy(winner[1]) if winner else None,
+                    status='selected' if winner and winner[2]==name else 'overridden' if winner else 'suppressed',
+                    slot_id=observation.slot_id,**app.identity(cid))
+                manager.rule_decisions=getattr(manager,'rule_decisions',[])+[row]

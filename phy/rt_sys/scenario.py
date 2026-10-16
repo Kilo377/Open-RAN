@@ -68,6 +68,10 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     if library.get('enabled'):
         if base.get('rule_based_v1',{}).get('enabled'):raise ValueError('Select one library config format')
         known=[c['cell_id'] for c in manifest['cells']]
+        mode=library.get('selection_mode','exclusive')
+        active_sets=library.get('active_sets')
+        if mode=='conflict_experiment' and ('bindings' in library or 'initial_selection' in library):raise ValueError('Concurrent mode requires active_sets only')
+        if mode=='exclusive' and active_sets is not None:raise ValueError('active_sets requires conflict_experiment')
         bindings=library.get('bindings')
         if bindings is None and 'initial_selection' in library:
             bindings={cid:deepcopy(library['initial_selection']) for cid in known}
@@ -75,8 +79,8 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         for item in library.get('instances',[]):
             scope=item.get('cell_ids',known)
             if not scope or any(cid not in known for cid in scope):raise ValueError('Invalid instance cell scope')
-            configs['ric']['xapps'].append(dict(type='xapp_instance',**item,cell_ids=scope,
-                initial_bindings=bindings,slot_duration_ms=dt,context_cell_ids=known))
+            configs['ric']['xapps'].append({**item,'type':'xapp_instance','cell_ids':scope,
+                'initial_bindings':bindings,'slot_duration_ms':dt,'context_cell_ids':known,'selection_mode':mode,'initial_active_sets':active_sets})
         if library.get('monitor',True):configs['ric']['xapps'].append(dict(type='rule_kpi_monitor'))
     rule=base.get('rule_based_v1',{})
     if rule.get('enabled'):

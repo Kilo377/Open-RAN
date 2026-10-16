@@ -1,0 +1,26 @@
+[
+  {
+    "slot": 80,
+    "xapp_active_sets": {
+      "cell_0": {
+        "traffic_steering": [
+          "traffic_steering__continuity_first_steering"
+        ]
+      },
+      "cell_1": {
+        "traffic_steering": [
+          "traffic_steering__continuity_first_steering"
+        ]
+      },
+      "cell_2": {
+        "traffic_steering": [
+          "traffic_steering__continuity_first_steering"
+        ]
+      }
+    }
+  },
+  {
+    "slot": 120,
+    "xapp_active_sets": {}
+  }
+]

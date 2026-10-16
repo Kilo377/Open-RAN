@@ -182,6 +182,7 @@ class PolicyStore:
         persistent_disabled_xapps = list(self.snapshot.disabled_xapps)
         from copy import deepcopy
         persistent_bindings=deepcopy(self.snapshot.xapp_bindings)
+        persistent_sets=deepcopy(self.snapshot.xapp_active_sets)
         persistent_selection_version=self.snapshot.xapp_selection_version
         persistent_rule_parameters=deepcopy(self.snapshot.rule_based_parameters) if self.binding_validator else {}
         self.snapshot = PolicySnapshot(policy_epoch_id=self.current_epoch)
@@ -201,6 +202,7 @@ class PolicyStore:
         self.snapshot.enabled_xapps = persistent_enabled_xapps
         self.snapshot.disabled_xapps = persistent_disabled_xapps
         self.snapshot.xapp_bindings=persistent_bindings
+        self.snapshot.xapp_active_sets=persistent_sets
         self.snapshot.xapp_selection_version=persistent_selection_version
         self.snapshot.rule_based_parameters=persistent_rule_parameters
         for instance_id, instance in self.policy_instances_by_id.items():
@@ -253,17 +255,23 @@ class PolicyStore:
     def apply_update(self, policy_update: PolicyUpdate, *, slot_id: int | None = None) -> None:
         from copy import deepcopy
         legacy_names=list(policy_update.enabled_xapps or [])+list(policy_update.disabled_xapps or [])
-        if policy_update.xapp_bindings is not None or (self.binding_validator and (policy_update.rule_based_parameters or legacy_names)):
+        if policy_update.xapp_active_sets is not None or policy_update.xapp_bindings is not None or (self.binding_validator and (policy_update.rule_based_parameters or legacy_names)):
             try:
                 if self.binding_validator is None:raise ValueError('No instance library configured')
                 candidate=self.snapshot.xapp_bindings if policy_update.xapp_bindings is None else policy_update.xapp_bindings
-                self.binding_validator(candidate or {},policy_update.rule_based_parameters,legacy_names)
+                active_sets=self.snapshot.xapp_active_sets if policy_update.xapp_active_sets is None else policy_update.xapp_active_sets
+                if self.binding_validator.__self__.mode=='exclusive':candidate=candidate or {}
+                elif active_sets is None:active_sets={}
+                self.binding_validator(candidate,policy_update.rule_based_parameters,legacy_names,active_sets=active_sets)
             except (ValueError,TypeError) as error:
                 self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='rejected',reason=str(error),source=policy_update.source_name))
                 return False
         if policy_update.xapp_bindings is not None:
             self.snapshot.xapp_bindings=deepcopy(policy_update.xapp_bindings)
             self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='admitted',reason='valid_pending_near_rt',source=policy_update.source_name))
+        if policy_update.xapp_active_sets is not None:
+            self.snapshot.xapp_active_sets=deepcopy(policy_update.xapp_active_sets)
+            self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='admitted',reason='valid_active_sets_pending_near_rt',source=policy_update.source_name))
         self.snapshot.rule_based_parameters.update(deepcopy(policy_update.rule_based_parameters))
         source_name = str(getattr(policy_update, "source_name", "unknown_rapp"))
         policy_type = self._get_or_create_policy_type(
@@ -508,6 +516,7 @@ class PolicyStore:
         return PolicySnapshot(
             policy_epoch_id=int(self.snapshot.policy_epoch_id),
             xapp_bindings=__import__('copy').deepcopy(self.snapshot.xapp_bindings),
+            xapp_active_sets=__import__('copy').deepcopy(self.snapshot.xapp_active_sets),
             xapp_selection_version=self.snapshot.xapp_selection_version,
             rule_based_parameters=__import__("copy").deepcopy(self.snapshot.rule_based_parameters),
             preferred_codebook_id=self.snapshot.preferred_codebook_id,

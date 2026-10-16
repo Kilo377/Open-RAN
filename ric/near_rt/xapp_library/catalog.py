@@ -16,6 +16,10 @@ VARIANTS={
  'ret_coverage':{'coverage_grid':'Executed tilt-grid lower-quantile reference search'},
  'beam_management':{'max_min_reference':'Worst-user legal-codebook reference maximization'},
 }
+from .objectives import OBJECTIVES, OBJECTIVE_DEFAULTS, SEARCH_ALGORITHMS, objective_metadata
+for category,algorithm,goal,_,_,_ in OBJECTIVES:
+    VARIANTS[category][algorithm]=goal
+
 EXTRA_DEFAULTS=dict(pi_kp=.2,pi_ki=.1,hol_target=.5,delay_quantile=.95,
     ret_window_ms=400.,mro_evaluation_ms=1000.,deficit_horizon_ms=1000.,sfr_cqi_threshold=7.,association_settle_ms=100.)
 EXTRA_KPIS={
@@ -43,6 +47,13 @@ def implementation_catalog():
                 sources=[SOURCES[x] for x in spec[5]],
                 source_classification='existing_functional_adaptation' if algorithm=='legacy_v1' else 'local_deterministic_baseline',
                 acceptance_status='requires_version_specific_evidence',training_required=False)
+    for row in OBJECTIVES:
+        category,algorithm,_,_,_,extra=row
+        spec=result[category+':'+algorithm]
+        spec['defaults'].update(OBJECTIVE_DEFAULTS)
+        spec['required_kpis']=list(dict.fromkeys(spec['required_kpis']+extra+(['config_revision'] if algorithm in SEARCH_ALGORITHMS else [])))
+    for ident,spec in result.items():
+        spec.update(objective_metadata(ident,spec['algorithm'],spec['description']))
     return result
 
 

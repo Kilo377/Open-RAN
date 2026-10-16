@@ -32,6 +32,7 @@ class PolicyUpdate:
     """
     policy_epoch_id: Optional[int] = None
     xapp_bindings: dict[str, dict[str, str]] | None = None
+    xapp_active_sets: dict[str, dict[str, list[str]]] | None = None
     preferred_codebook_id: Optional[int] = None
     preferred_tx_power_dbm: Optional[float] = None
     preferred_beam_profile_id: Optional[int] = None
@@ -97,6 +98,7 @@ class PolicySnapshot:
     """
     policy_epoch_id: int = 0
     xapp_bindings: dict[str, dict[str, str]] | None = None
+    xapp_active_sets: dict[str, dict[str, list[str]]] | None = None
     xapp_selection_version: int = 0
     preferred_codebook_id: Optional[int] = None
     preferred_tx_power_dbm: Optional[float] = None

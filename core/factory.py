@@ -270,7 +270,7 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
             controller_registry.register_xapp(XAppInstance(
                 xapp_item['instance_id'],xapp_item['implementation_id'],xapp_item['cell_ids'],
                 parameters=xapp_item.get('parameters'),priority=xapp_item.get('priority'),
-                slot_duration_ms=xapp_item.get('slot_duration_ms',.5),initial_bindings=xapp_item.get('initial_bindings'),context_cell_ids=xapp_item.get('context_cell_ids')))
+                slot_duration_ms=xapp_item.get('slot_duration_ms',.5),initial_bindings=xapp_item.get('initial_bindings'),context_cell_ids=xapp_item.get('context_cell_ids'),selection_mode=xapp_item.get('selection_mode','exclusive'),initial_active_sets=xapp_item.get('initial_active_sets')))
         elif xapp_type == "rule_based_v1":
             from ric.near_rt.rule_based_v1 import RuleXApp
             controller_registry.register_xapp(RuleXApp(

@@ -14,7 +14,7 @@ class XAppInstance(XAppBase):
     library_instance=True
     rule_based_v1=True  # Reuse scoped arbitration/leases, not legacy selection.
 
-    def __init__(self,instance_id,implementation_id,cell_ids,parameters=None,priority=None,slot_duration_ms=.5,initial_bindings=None,context_cell_ids=None):
+    def __init__(self,instance_id,implementation_id,cell_ids,parameters=None,priority=None,slot_duration_ms=.5,initial_bindings=None,context_cell_ids=None,selection_mode="exclusive",initial_active_sets=None):
         if not isinstance(instance_id,str) or not instance_id.strip():raise ValueError('Nonempty instance_id required')
         if implementation_id not in IMPLEMENTATIONS:raise ValueError('Unknown implementation: '+str(implementation_id))
         if not cell_ids or len(set(cell_ids))!=len(cell_ids):raise ValueError('Explicit unique allowed cells required')
@@ -24,6 +24,8 @@ class XAppInstance(XAppBase):
         self.initial_bindings=deepcopy(initial_bindings);self.children={};self.active_cells=set();self.tokens={}
         self.statistics=Counter();self.last_decisions=[];self.decision_seconds=0.
         self.ret_last_action=None
+        if selection_mode not in ("exclusive","conflict_experiment"):raise ValueError("Invalid selection_mode")
+        self.selection_mode=selection_mode;self.initial_active_sets=deepcopy(initial_active_sets)
         contract=XAppContract(tuple(self.spec['required_kpis']),frozenset(self.spec['writable_actions']),
             commands=frozenset(self.spec['commands']),cell_ids=self.allowed_cells,partial_entities=True,
             include_context_entities=True,command_target_cell_ids=tuple(context_cell_ids or self.allowed_cells),
@@ -32,10 +34,16 @@ class XAppInstance(XAppBase):
         self.validate_parameters(self.parameters)
 
     def new_child(self,cid,parameters=None):
-        child=Algorithm(self.category_id,self.spec['algorithm'],name=self.name,priority=self.priority,
+        from .objectives import OBJECTIVE_ALGORITHMS
+        from .objective_algorithms import ObjectiveAlgorithm
+        cls=ObjectiveAlgorithm if self.spec["algorithm"] in OBJECTIVE_ALGORITHMS else Algorithm
+        child=cls(self.category_id,self.spec['algorithm'],name=self.name,priority=self.priority,
             parameters=self.parameters if parameters is None else parameters,cell_ids=(cid,),slot_duration_ms=self.dt)
         from dataclasses import replace
-        child.contract=replace(child.contract,required_kpis=tuple(self.spec['required_kpis']))
+        from ric.xapp_contract import KPI_REGISTRY
+        required=self.spec['required_kpis']
+        if self.spec['algorithm'] in OBJECTIVE_ALGORITHMS:required=[k for k in required if KPI_REGISTRY[k].entity=='ue']
+        child.contract=replace(child.contract,required_kpis=tuple(required))
         return child
 
     def validate_parameters(self,overrides):
@@ -102,8 +110,8 @@ class XAppInstance(XAppBase):
 
     def identity(self,cid):
         return dict(instance_id=self.name,implementation_id=self.implementation_id,category_id=self.category_id,
-            implementation_version=self.version,cell_id=cid,selection_version=self.tokens.get(cid,0))
+            objective_id=self.spec['objective_id'],implementation_version=self.version,cell_id=cid,selection_version=self.tokens.get(cid,0))
 
     def descriptor(self):
-        return {**deepcopy(self.spec),'instance_id':self.name,'allowed_cell_ids':list(self.allowed_cells),
+        return {**deepcopy(self.spec),'instance_id':self.name,'selection_mode':self.selection_mode,'allowed_cell_ids':list(self.allowed_cells),
             'parameters':deepcopy(self.parameters),'active_cell_ids':sorted(self.active_cells)}

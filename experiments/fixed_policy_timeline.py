@@ -14,7 +14,7 @@ class FixedPolicyTimeline(RAppBase):
         for row in rows:
             slot=row['slot']
             if type(slot) is not int or slot<1 or slot%interval or slot in self.entries:raise ValueError('Unique policy slots must align with rApp period')
-            if set(row)-{'slot','xapp_bindings','rule_based_parameters'}:raise ValueError('Unknown policy timeline field')
+            if set(row)-{'slot','xapp_bindings','xapp_active_sets','rule_based_parameters'}:raise ValueError('Unknown policy timeline field')
             self.entries[slot]=row
 
     def run(self,observation,policy_snapshot=None):

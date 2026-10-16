@@ -21,8 +21,8 @@ def instance(ident,name='instance',cells=('a','b'),bindings=None,parameters=None
     return XAppInstance(name,ident,cells,initial_bindings=bindings,parameters=parameters)
 
 
-def test_catalog_has_twelve_categories_twenty_eight_distinct_implementations():
-    assert len(category_catalog())==12 and len(IMPLEMENTATIONS)==28
+def test_catalog_has_twelve_categories_forty_six_distinct_implementations():
+    assert len(category_catalog())==12 and len(IMPLEMENTATIONS)==46
     assert sum(s['algorithm']=='legacy_v1' for s in IMPLEMENTATIONS.values())==12
     assert all(s['training_required'] is False for s in IMPLEMENTATIONS.values())
 

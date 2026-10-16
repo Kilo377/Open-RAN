@@ -1265,7 +1265,10 @@ class ControllerManager:
         self.instance_selection.sync(slot_id,observation)
         policy_snapshot = self.policy_store.get_snapshot()
 
-        for e2_interface in self.e2_interfaces:
+        interfaces=self.e2_interfaces
+        if self.instance_selection.mode=='conflict_experiment':
+            interfaces=sorted(interfaces,key=lambda i:i.xapp.name,reverse=True)
+        for e2_interface in interfaces:
             xapp = e2_interface.xapp
 
             if not self._is_xapp_enabled(xapp.name):
@@ -1300,6 +1303,11 @@ class ControllerManager:
                         reason='kpi_contract_rejected:' + ';'.join(failures)))
                     continue
             from copy import deepcopy
+            if getattr(xapp,'library_instance',False):
+                # Independent control-plane receipt, never a simulation state reference.
+                projected.control_ownership={}
+                for (cell,field),owner in getattr(getattr(self,'rule_leases',None),'owned',{}).items():
+                    projected.control_ownership.setdefault(cell,{})[field]=str(owner)
             xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
             if getattr(xapp,'rule_based_v1',False):
                 self.rule_decisions=getattr(self,'rule_decisions',[])+deepcopy(xapp.last_decisions)
