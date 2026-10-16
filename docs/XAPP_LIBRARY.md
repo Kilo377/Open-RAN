@@ -45,7 +45,9 @@ transmitted PRB×slot**, while service deficits debit actual delivered bits.
 Caps are not scheduling guarantees, and slice weights are not hard isolation.
 
 A3-like selection uses delivered RSRP, configured CIO/hysteresis and continuous
-produced-report time for TTT. SINR steering retains SLA checks and repeated-report
+produced-report time for TTT. Changes to CIO/HYS/TTT/neighbors restart that
+continuity timer, and invalid/missing reports break continuity; command cooldown
+history is retained. SINR steering retains SLA checks and repeated-report
 guards. Neither predicts unobserved target throughput. Empty-only sleep never
 migrates UEs; coverage checks, dwell and wake protection still apply.
 
@@ -104,6 +106,8 @@ means no replacement. Unknown instances, category/scope mismatches, unavailable
 capabilities or invalid instance parameters reject the entire update before
 mutating the snapshot. Parameters follow defaults → instance → non-RT instance
 override; non-RT targets instance IDs through `rule_based_parameters`.
+Using legacy enabled/disabled lists to address a new instance is explicitly
+rejected; it cannot silently override or bypass the binding table.
 
 Binding changes take effect atomically at the next 5-slot near-RT invocation.
 Per-cell/category generation tokens invalidate old queued actions, including an
