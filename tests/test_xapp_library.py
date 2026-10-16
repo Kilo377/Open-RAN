@@ -122,6 +122,25 @@ def test_legacy_activation_lists_cannot_silently_override_library_bindings():
     assert 'require xapp_bindings' in m.policy_store.binding_receipts[-1]['reason']
 
 
+def test_runtime_observation_age_and_minimum_action_interval_are_consumed():
+    app=instance('rf_energy:sinr_pi',parameters={'max_age_ms':7})
+    assert app.contract.max_age_slots==14
+    policy=PolicySnapshot(rule_based_parameters={app.name:{'max_age_ms':1.1,'min_action_ms':100}})
+    assert app.runtime_contract(policy).max_age_slots==3
+    app.select({'a'},{'a':1})
+    assert app.run(observed(1000),policy).config_action.tx_power_dbm is not None
+    assert app.run(observed(1040),policy).config_action.tx_power_dbm is None
+    assert app.run(observed(1200),policy).config_action.tx_power_dbm is not None
+
+
+def test_invalid_direct_policy_parameters_hold_instead_of_mutating_state():
+    app=instance('ret_coverage:coverage_grid');app.select({'a'},{'a':1})
+    app.run(observed(),PolicySnapshot());before=deepcopy(app.children['a'].state)
+    result=app.run(observed(1500),PolicySnapshot(rule_based_parameters={app.name:{'ret_window_ms':1}}))
+    assert result.config_action.ret_tilt_deg is None
+    assert app.children['a'].state==before and app.last_decisions[0]['reason']=='nonrt_policy_rejected'
+
+
 def test_fairness_uses_executed_counters_not_requested_limits():
     app=instance('ue_fairness:deficit_airtime');app.select({'a'},{'a':1})
     o=observed();second=deepcopy(o.ue_observations[0]);second.ue_id='extra';o.ue_observations.append(second)

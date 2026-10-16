@@ -1290,6 +1290,7 @@ class ControllerManager:
             rt_contract = is_rt(observation)
             projected = observation
             contract = getattr(xapp, 'contract', contract_for(xapp.controlled_fields,xapp.name))
+            if getattr(xapp,'library_instance',False):contract=xapp.runtime_contract(policy_snapshot)
             if rt_contract:
                 projected, failures = project(observation, contract, self.xapp_interval_slots, slot_id)
                 if not contract.available:

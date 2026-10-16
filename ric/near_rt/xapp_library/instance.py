@@ -2,6 +2,7 @@
 from collections import Counter
 from copy import deepcopy
 import time
+import math
 from models.action import ConfigAction,ControlDecision
 from ric.near_rt.xapp_base import XAppBase
 from ric.xapp_contract import XAppContract
@@ -26,7 +27,7 @@ class XAppInstance(XAppBase):
         contract=XAppContract(tuple(self.spec['required_kpis']),frozenset(self.spec['writable_actions']),
             commands=frozenset(self.spec['commands']),cell_ids=self.allowed_cells,partial_entities=True,
             include_context_entities=True,command_target_cell_ids=tuple(context_cell_ids or self.allowed_cells),
-            max_age_slots=int(self.spec['defaults']['max_age_ms']/slot_duration_ms))
+            max_age_slots=math.ceil(self.parameters.get('max_age_ms',self.spec['defaults']['max_age_ms'])/slot_duration_ms))
         super().__init__(instance_id,self.spec['priority'] if priority is None else priority,self.spec['writable_actions'],contract)
         self.validate_parameters(self.parameters)
 
@@ -41,6 +42,12 @@ class XAppInstance(XAppBase):
         if not isinstance(overrides,dict):raise ValueError('Instance parameters must be a mapping')
         self.new_child(self.allowed_cells[0],{**self.parameters,**overrides})
 
+    def runtime_contract(self,policy):
+        from dataclasses import replace
+        overrides=(getattr(policy,'rule_based_parameters',{}) or {}).get(self.name,{})
+        age=overrides.get('max_age_ms',self.parameters.get('max_age_ms',self.spec['defaults']['max_age_ms']))
+        return replace(self.contract,max_age_slots=math.ceil(age/self.dt))
+
     def select(self,cells,tokens):
         cells=set(cells)
         for cid in self.active_cells ^ cells:self.children.pop(cid,None)
@@ -54,10 +61,18 @@ class XAppInstance(XAppBase):
         started=time.perf_counter()
         self.last_decisions=[];actions=[];commands=[]
         cells=sorted(self.active_cells)
-        for cid in cells:
-            if cid in self.children:self.children[cid].capture_reports(observation)
+        try:
+            overrides=(getattr(policy_snapshot,'rule_based_parameters',{}) or {}).get(self.name,{})
+            if overrides:self.validate_parameters(overrides)
+            for cid in cells:
+                if cid in self.children:self.children[cid].capture_reports(observation,policy_snapshot)
+        except (ValueError,TypeError) as error:
+            self.last_decisions=[dict(reason='nonrt_policy_rejected',detail=str(error),**self.identity(cells[0]))]
+            self.statistics['nonrt_policy_rejected']+=1;self.decision_seconds+=time.perf_counter()-started
+            return ControlDecision(config_action=ConfigAction(source_name=self.name,target_cell_id=cells[0]))
         if self.category_id=='ret_coverage' and cells:
-            interval=self.parameters.get('min_action_ms',self.spec['min_action_ms'])
+            overrides=(getattr(policy_snapshot,'rule_based_parameters',{}) or {}).get(self.name,{})
+            interval=overrides.get('min_action_ms',self.parameters.get('min_action_ms',self.spec['min_action_ms']))
             if self.ret_last_action is not None and (observation.slot_id-self.ret_last_action)*self.dt<interval:
                 self.last_decisions=[dict(reason='action_dwell',**self.identity(cells[0]))]
                 self.statistics['action_dwell']+=1

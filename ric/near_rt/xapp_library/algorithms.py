@@ -15,12 +15,13 @@ class Algorithm(RuleXApp):
         if set(params)-allowed:raise ValueError('Unknown implementation parameters: '+str(sorted(set(params)-allowed)))
         super().__init__(category,parameters={k:v for k,v in params.items() if k in DEFAULTS or k=='min_action_ms'},**kwargs)
         self.algorithm=algorithm
-        self.search_samples=deque(maxlen=5000)
+        self.search_samples=deque()
         self.search_seen={};self.search_events={}
         if algorithm!='legacy_v1':self.parameters.update({**EXTRA_DEFAULTS,**params})
         self.validate(self.parameters)
 
-    def capture_reports(self,observation):
+    def capture_reports(self,observation,policy_snapshot=None):
+        params=self._policy(policy_snapshot) if policy_snapshot is not None else self.parameters
         if self.algorithm=='a3_rsrp':
             for c in observation.cell_observations:
                 if c.cell_id not in self.contract.cell_ids or not getattr(c,'executed_config',None):continue
@@ -43,14 +44,21 @@ class Algorithm(RuleXApp):
                 if produced>self.search_seen.get(u.ue_id,-1):
                     self.search_samples.append((produced,u.ue_id,u.reference_sinr_db))
                     self.search_seen[u.ue_id]=produced
+            retention=max(1000.,params['ret_window_ms']+1000.)
+            while self.search_samples and (observation.slot_id-self.search_samples[0][0])*self.dt>retention:self.search_samples.popleft()
         if self.algorithm=='window_search':
             for u in observation.ue_observations:
                 if not self._valid(u,'mobility_events'):continue
                 for e in u.mobility_events:self.search_events[(e['slot_id'],e['ue_id'],e['kind'])]=deepcopy(e)
-            self.search_events={key:e for key,e in self.search_events.items() if (observation.slot_id-e['slot_id'])*self.dt<=3000}
+            retention=max(3000.,params['mro_evaluation_ms']+1000.)
+            self.search_events={key:e for key,e in self.search_events.items() if (observation.slot_id-e['slot_id'])*self.dt<=retention}
 
     def run(self,observation,policy_snapshot):
-        self.capture_reports(observation)
+        try:self.capture_reports(observation,policy_snapshot)
+        except (ValueError,TypeError) as error:
+            from models.action import ConfigAction,ControlDecision
+            self.last_decisions=[];self._reason(None,'nonrt_policy_rejected',detail=str(error))
+            return ControlDecision(config_action=ConfigAction(source_name=self.name))
         if self.algorithm!='window_search':return super().run(observation,policy_snapshot)
         # A mobility evaluation includes recently departed UEs. Otherwise the
         # very handover being evaluated would erase its source-cell cohort.
@@ -71,7 +79,7 @@ class Algorithm(RuleXApp):
                 if not report.get('valid') or produced<=self.last_report.get(cid,-1):continue
                 self.last_report[cid]=produced
                 if not members:self._reason(cid,'no_valid_ue_samples');continue
-                if (observation.slot_id-self.last_action.get(cid,-10**12))*self.dt<self.min_ms:continue
+                if (observation.slot_id-self.last_action.get(cid,-10**12))*self.dt<self.parameters.get('min_action_ms',self.min_ms):continue
                 a=ConfigAction(target_cell_id=cid,source_name=self.name)
                 if self.search(observation,c,c.executed_config,members,a):
                     actions.append(a);self.last_action[cid]=observation.slot_id
@@ -90,7 +98,7 @@ class Algorithm(RuleXApp):
 
     def _policy(self,policy):
         values=(getattr(policy,'rule_based_parameters',{}) or {}).get(self.name,{})
-        if not isinstance(values,dict) or set(values)-set(self.parameters):raise ValueError('Invalid instance parameter update')
+        if not isinstance(values,dict) or set(values)-set(self.parameters)-{'min_action_ms'}:raise ValueError('Invalid instance parameter update')
         result={**self.parameters,**values}
         if getattr(policy,'preferred_power_cap_dbm',None) is not None:
             result['max_power_dbm']=min(result['max_power_dbm'],float(policy.preferred_power_cap_dbm))
@@ -260,11 +268,12 @@ class Algorithm(RuleXApp):
         signature=deepcopy(getattr(o,'executed_configs',{}))
         for values in signature.values():
             for f in fields:values.pop(f,None)
-        signature=(signature,tuple(sorted(u.ue_id for u in (ues if ret else o.ue_observations))))
+        window=p['ret_window_ms'] if ret else p['mro_evaluation_ms']
+        signature=(signature,tuple(sorted(u.ue_id for u in (ues if ret else o.ue_observations))),window)
         if s.get('signature')!=signature:
             if 'signature' in s:self._reason(cid,'search_context_changed')
             s.clear();s['signature']=signature;s['index']=0;s['scores']=[]
-        pending=s.get('pending');window=p['ret_window_ms'] if ret else p['mro_evaluation_ms']
+        pending=s.get('pending')
         produced=[u.kpi_metadata['reference_sinr_db']['produced_at_slot'] for u in ues]
         if pending:
             if any(abs(float(cfg[f])-v)>1e-8 for f,v in pending['target'].items()):
