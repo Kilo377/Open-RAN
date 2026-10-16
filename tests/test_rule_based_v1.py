@@ -171,21 +171,32 @@ def test_public_rule_report_truth_isolation_and_partial_contract():
     assert o.paper_report['values']['cell']['c']['executed_config']['n_prbs']==8
 
 
-@pytest.mark.parametrize('kind',['throughput_power','ue_fairness','slice_sla','beam_management','ret_coverage'])
+@pytest.mark.parametrize('kind',['throughput_power','ue_fairness','slice_sla','latency_guard','beam_management','ret_coverage'])
 def test_known_channel_closed_loop_and_multicell_consumers(tmp_path,kind):
     from test_paper_interfaces import make_sim
     from ric.interfaces.e2_like import E2LikeInterface
     sim=make_sim(tmp_path,cells=2,slots=12,config={'rule_observations':True,'beam_reports':True})
     app=RuleXApp(kind,parameters={'min_action_ms':1})
+    if kind=='latency_guard':
+        for ue in sim.state.ues:ue.latency_budget_ms=.1
     sim.controller_manager.e2_interfaces=[E2LikeInterface(app)]
     sim.controller_manager._initial_rapp_run_completed=True
-    scopes=set()
+    scopes=set();requests={}
     for _ in range(12):
         sim.step()
         scopes.update(a.target_cell_id for a in sim.state.control.arbitration_trace.received_config_actions if a.target_cell_id)
+        for a in sim.state.control.arbitration_trace.received_config_actions:
+            if a.target_cell_id:requests[a.target_cell_id]=deepcopy(a)
     assert app.statistics['action_requested']>0,(kind,app.statistics)
     assert scopes
     if kind=='slice_sla':assert any(r.scheduler.scheduler_mode=='slice_aware' for r in sim.state.managed_cells.values())
+    if kind in ('slice_sla','latency_guard'):
+        for cid,a in requests.items():
+            consumer=sim.state.managed_cells[cid].scheduler
+            assert consumer.scheduler_mode==a.scheduler_mode
+            assert consumer.scheduler_policy_hint==a.scheduler_policy_hint
+            if kind=='slice_sla':assert consumer.slice_weight_adjustment==a.slice_weight_adjustment and a.slice_weight_adjustment
+            else:assert consumer.latency_bias==a.latency_bias and a.latency_bias>1
     if kind=='throughput_power':assert any(r.cell.prb_power_w is not None for r in sim.state.managed_cells.values())
     for row in sim.phy_adapter.trace['cells'].values():assert row['average_used_w']<=row['budget_w']+1e-10
     for ue in sim.state.ues:
@@ -234,3 +245,45 @@ def test_invalid_nonrt_update_is_rejected_without_state_mutation():
     result=app.run(view(),policy)
     assert result.config_action.tx_power_dbm is None and app.last_decisions[0]['reason']=='nonrt_policy_rejected'
     assert app.parameters['max_power_dbm']==30
+
+
+def test_latency_guard_restores_first_observed_mode_after_initial_urgency():
+    app=RuleXApp('latency_guard')
+    d=app.run(view(),PolicySnapshot())
+    assert all(a.scheduler_policy_hint=='latency_bias' and a.latency_bias>1 and not a.slice_weight_adjustment for a in d.config_actions)
+    o=view(1100)
+    for c in o.cell_observations:c.executed_config['scheduler_mode']='latency_aware'
+    for u in o.ue_observations:u.hol_delay_ms=0;u.deadline_misses_window=0
+    d=app.run(o,PolicySnapshot())
+    assert all(a.scheduler_mode=='round_robin' and a.scheduler_policy_hint=='balanced' and a.latency_bias is None for a in d.config_actions)
+
+
+def test_scheduler_family_arbitration_and_withdrawal_reach_final_consumer(tmp_path):
+    from test_paper_interfaces import make_sim
+    from ric.interfaces.e2_like import E2LikeInterface
+    sim=make_sim(tmp_path,cells=1,slots=22,config={'rule_observations':True})
+    for ue in sim.state.ues:ue.latency_budget_ms=.1
+    slicing=RuleXApp('slice_sla',parameters={'min_action_ms':1})
+    latency=RuleXApp('latency_guard',parameters={'min_action_ms':1})
+    manager=sim.controller_manager
+    manager.e2_interfaces=[E2LikeInterface(slicing),E2LikeInterface(latency)]
+    manager._initial_rapp_run_completed=True
+    enabled={slicing.name,latency.name}
+    manager._is_xapp_enabled=lambda name:name in enabled
+    drops=[]
+    for _ in range(12):
+        sim.step()
+        drops.extend(sim.state.control.arbitration_trace.dropped_items_with_reason)
+    consumer=sim.state.managed_cells['cell_0'].scheduler
+    assert consumer.scheduler_mode=='latency_aware' and consumer.latency_bias>1
+    assert consumer.scheduler_policy_hint=='latency_bias' and consumer.slice_weight_adjustment=={}
+    assert any(x.reason=='inactive_scheduler_family:latency_aware' and x.field_name=='slice_weight_adjustment'
+        for x in drops)
+    enabled.remove(latency.name)
+    for _ in range(5):sim.step()
+    assert consumer.scheduler_mode=='slice_aware' and consumer.slice_weight_adjustment
+    assert consumer.scheduler_policy_hint=='slice_bias' and consumer.latency_bias is None
+    enabled.clear()
+    for _ in range(5):sim.step()
+    assert consumer.scheduler_mode=='round_robin' and consumer.scheduler_policy_hint=='balanced'
+    assert consumer.slice_weight_adjustment=={} and consumer.latency_bias is None

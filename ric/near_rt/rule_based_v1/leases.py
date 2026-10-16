@@ -1,13 +1,13 @@
 """Re-arbitrate live rule requests and restore only their owned fields on withdrawal."""
 from copy import deepcopy
-from models.action import ConfigAction
+from models.action import ConfigAction,DroppedControlItem
 
 
 class RuleLeases:
     def __init__(self):
         self.requests={};self.baseline={};self.owned={};self.was_enabled={}
 
-    def reconcile(self,manager,observation,winners,scopes,received):
+    def reconcile(self,manager,observation,winners,scopes,received,dropped=None):
         apps={i.xapp.name:i.xapp for i in manager.e2_interfaces if getattr(i.xapp,'rule_based_v1',False)}
         paper=getattr(observation,'paper_report',None) or {}
         for cid,item in paper.get('values',{}).get('cell',{}).items():
@@ -22,6 +22,10 @@ class RuleLeases:
             name=action.source_name
             if name not in enabled or action.target_cell_id is None:continue
             for field in apps[name].controlled_fields:
+                family={'slice_weight_adjustment':'slice_aware','latency_bias':'latency_aware'}.get(field)
+                if family and action.scheduler_mode is not None and action.scheduler_mode!=family:
+                    self.requests.pop((name,action.target_cell_id,field),None)
+                    continue
                 value=getattr(action,field,None)
                 if value is not None:self.requests[name,action.target_cell_id,field]=(apps[name].priority,deepcopy(value),name)
         live={}
@@ -67,3 +71,18 @@ class RuleLeases:
                 if current:current.prb_power_w=None
             elif base is not None:values[field]=(0,base,'rule_withdrawal')
             del self.owned[cid,field]
+        # Keep held requests for later re-arbitration, but do not report a
+        # parameter as executable under a scheduler family that ignores it.
+        for scope,values in winners.items():
+            if 'scheduler_mode' not in values:continue
+            mode=values['scheduler_mode'][1]
+            for field,required in (('slice_weight_adjustment','slice_aware'),('latency_bias','latency_aware')):
+                if mode==required or field not in values:continue
+                _,value,owner=values[field]
+                if owner not in apps:continue
+                del values[field]
+                cached=manager.current_action_by_scope.get(scope)
+                if cached:setattr(cached,field,{} if field=='slice_weight_adjustment' else None)
+                if dropped is not None and value:
+                    dropped.append(DroppedControlItem(kind='field_write',source=owner,
+                        reason='inactive_scheduler_family:'+str(mode),field_name=field,value=deepcopy(value)))

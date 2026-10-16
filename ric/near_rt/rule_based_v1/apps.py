@@ -280,11 +280,15 @@ class RuleXApp(XAppBase):
                 deadline=miss/count if finite(miss) and finite(count) and count>0 else 0.
                 pressure[sid]=max(pressure.get(sid,0.),hol+deficit+deadline);urgent=max(urgent,hol+deadline)
             weights={s:clip(1+x,p['slice_min_weight'],p['slice_max_weight']) for s,x in pressure.items()}
-            a.slice_weight_adjustment=weights
             if kind=='slice_sla':a.scheduler_mode='slice_aware'
             if kind=='latency_guard':
-                a.scheduler_mode='latency_aware' if urgent>.7 else state.setdefault('baseline_scheduler',cfg['scheduler_mode'])
-                a.latency_bias=clip(1+urgent,.1,4.) if urgent>.7 else 1.
+                baseline=state.setdefault('baseline_scheduler',cfg['scheduler_mode'])
+                a.scheduler_mode='latency_aware' if urgent>.7 else baseline
+            # The manager normalizes by hint and the executor by mode. Submit
+            # both consistently, and only parameters consumed by that family.
+            a.scheduler_policy_hint={'slice_aware':'slice_bias','latency_aware':'latency_bias','round_robin':'balanced'}[a.scheduler_mode]
+            if a.scheduler_mode=='slice_aware':a.slice_weight_adjustment=weights
+            if a.scheduler_mode=='latency_aware':a.latency_bias=clip(1+urgent,.1,4.)
             return True
         if kind=='interference_coordination':
             ordered=sorted(cells);edges={x:set() for x in ordered}

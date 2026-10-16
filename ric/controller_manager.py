@@ -1439,7 +1439,7 @@ class ControllerManager:
         if any(getattr(i.xapp,'rule_based_v1',False) for i in self.e2_interfaces):
             from ric.near_rt.rule_based_v1.leases import RuleLeases
             if not hasattr(self,'rule_leases'):self.rule_leases=RuleLeases()
-            self.rule_leases.reconcile(self,observation,field_winners_by_scope,scope_specs_by_key,received_config_actions)
+            self.rule_leases.reconcile(self,observation,field_winners_by_scope,scope_specs_by_key,received_config_actions,dropped_items)
         return (
             field_winners_by_scope,
             scope_specs_by_key,

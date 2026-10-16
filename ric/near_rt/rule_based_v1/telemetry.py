@@ -14,7 +14,7 @@ def executed_configs(state):
         values={k:deepcopy(getattr(r.cell,k,None)) for k in CONFIG_FIELDS}
         values['codebook_id']=values.pop('current_codebook_id');values['beam_profile_id']=values.pop('current_beam_profile_id')
         values.update(n_prbs=r.resource_grid.n_prbs_total,
-            scheduler_mode=r.scheduler.scheduler_mode,latency_bias=r.scheduler.latency_bias,
+            scheduler_mode=r.scheduler.scheduler_mode,scheduler_policy_hint=r.scheduler.scheduler_policy_hint,latency_bias=r.scheduler.latency_bias,
             slice_weight_adjustment=deepcopy(r.scheduler.slice_weight_adjustment))
         result[cid]=values
     return result

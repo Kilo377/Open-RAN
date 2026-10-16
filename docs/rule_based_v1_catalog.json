@@ -159,7 +159,8 @@
       ],
       "actions": [
         "slice_weight_adjustment",
-        "scheduler_mode"
+        "scheduler_mode",
+        "scheduler_policy_hint"
       ],
       "commands": [],
       "sources": [
@@ -180,6 +181,7 @@
       ],
       "actions": [
         "scheduler_mode",
+        "scheduler_policy_hint",
         "latency_bias",
         "slice_weight_adjustment"
       ],

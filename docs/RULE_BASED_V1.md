@@ -76,6 +76,28 @@ Slice control also selects `slice_aware` so that its weights have a real consume
 the latency application can supersede that policy. Soft weights are not hard
 slice quotas, and UE PRB caps do not guarantee allocation.
 
+The 2026-10-16 repair submits matching `scheduler_policy_hint` and
+`scheduler_mode` together: slice weights use `slice_bias`/`slice_aware`, while
+latency bias uses `latency_bias`/`latency_aware`. The latency application emits
+weights only when restoring a previously observed slice-aware mode; the latency
+scheduler does not consume slice weights. Its baseline mode is captured before
+the first intervention, including when its first observation is already urgent.
+Executed reports include the actual hint so withdrawal restores a consistent
+mode/hint pair. Inactive family requests remain available for re-arbitration,
+but are excluded from execution with `inactive_scheduler_family:<mode>` in the
+arbitration trace. Default empty dictionaries are not treated as ownership of
+weights under another scheduler family.
+
+`scripts/validation/validate_scheduler_action_response.py` exercises two maps
+with four isolated parameter pairs and four actual rule-controller cases, each
+128 slots. The pairs keep the same scheduler mode, channel, business and random
+streams, changing only weights or bias at slot 20 (actuation at slot 21). The
+controlled fixture keeps both original base stations, co-locates two UEs at an
+existing route position, selects at most one SU UE and caps each at two PRBs.
+It demonstrates consumer/KPI response, not original-deployment capacity or
+improved fairness/latency. Use a fresh Spark `outputs/` directory; raw evidence
+and the frozen source archive stay there.
+
 The read-only KPI monitor reports validity and declared SLA breaches, not causal
 conflicts. `PolicyUpdate.rule_based_parameters` carries explicit per-kind or
 per-name numeric overrides and survives `PolicyStore` snapshot copying. Existing

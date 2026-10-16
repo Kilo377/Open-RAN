@@ -103,3 +103,79 @@ Detailed review and compact zero-delivery evidence were saved only on Spark as
 `outputs/rule_based_20261015/long_v1_postrun_review.json`, outside the immutable
 long-run manifest. No additional simulation, automatic retry or tuning was
 started during this review. Mac retains only this lightweight documentation.
+
+## Acceptance clarification — action-to-KPI response
+
+The operator's primary acceptance criterion is that an executed control reaches
+its real consumer and changes a relevant KPI under suitable conditions; the KPI
+need not improve. Policy benefit, starvation mitigation, optimality and SLA
+satisfaction are separate algorithm questions and are not environment blockers
+unless execution or accounting is wrong.
+
+A post-run paired analysis reused the saved 128-slot disabled/single-app cases
+with identical initial-condition fingerprints, propagation cache and business
+seed. It compared actual configuration transitions with radio/resource/delivery
+outputs using rtol 1e-6 / atol 1e-4 for numeric comparisons:
+
+- Throughput power, UE PRB caps, frequency interference coordination, RET and
+  beam control each changed executed configuration and relevant KPIs in both maps.
+- RF energy power control did so in street; Munich issued no effective change
+  in that short fixture. These six functional categories have direct paired
+  short-run response evidence, not evidence of improvement.
+- CIO/load balancing changed configuration in Munich without a downstream KPI
+  difference within 128 slots. Slice control changed scheduler configuration
+  without a downstream difference in either short fixture. These require
+  suitable mobility/resource-contention fixtures, not forced KPI changes.
+- Sleep, TS, MRO and latency guard had no actual configuration/association change
+  in those paired short fixtures. Longer runs contain some sleep/TS requests,
+  but request counts or unmatched before/after trajectories do not establish
+  an isolated causal KPI response for all four functions.
+
+Therefore all twelve are implemented, but all-twelve GPU action-to-KPI response
+acceptance is not yet established. Controlled fixed-action paired fixtures
+should fill the gaps without requiring learned or scenario-optimal decisions.
+Raw paired-analysis records remain on Spark at
+`outputs/rule_based_20261015/action_kpi_response_short_pairs.json`.
+
+### Long-run field-level follow-up
+
+The long data supplies additional executed-control evidence: in the Munich
+24-UE mobility combination, TS commands for ue_13 and ue_22 were accepted at
+slot 15 and both completed their requested handovers to cell_0 at slot 95.
+The third TS command was rejected before an accepted attempt. In street
+coverage/sleep combinations, each seed has seven actual active/deep_sleep
+transitions (not merely seven requests). These are execution/state-response
+evidence; independent throughput/energy attribution still requires a suitable
+paired fixture.
+
+A real interface defect was found by comparing requested fields with actual
+before/after values: `ControllerManager._normalize_current_action_surface`
+clears `slice_weight_adjustment` unless the action hint is `slice_bias`, and
+clears `latency_bias` unless the hint is `latency_bias`. New rule applications
+write modes and weights/bias but do not declare/write those matching hints.
+Consequently the long single slice cases show scheduler-mode changes only,
+and Munich latency guard shows mode transitions at slots 406 and 3166;
+no applied slice-weight or latency-bias changes were found in those cases or
+combination receipts. These two applications are only partially integrated.
+The earlier tests asserted mode selection/ownership but not the final consumer
+values of these fields, so the 48-case structural pass does not establish
+complete action-response acceptance. This is an execution adaptation defect,
+not evidence that the algorithms merely fail to suit the scenario.
+
+MRO issued no changes; CIO/load balancing issued actual changes, but the long
+runs do not isolate its effect from normal mobility. Existing six paired
+response categories remain supported by the short comparisons. Repair the
+normalization/hint adaptation and add final-consumer value tests, then fill
+response gaps with focused paired fixed-action tests rather than rerunning
+all 48 policy runs. No source modification or new simulation was performed
+in this field-level review.
+
+### 2026-10-16 repair follow-up
+
+The scheduler hint/mode adaptation defect is repaired. Final-consumer regression
+tests and focused Spark RT/NR pairs now demonstrate slice-weight and latency-bias
+effects on resources, actual delivery and queues in both maps. Actual rule
+controller cases also verify requested values reach the final consumer. See
+[the repair report](RULE_SCHEDULER_REPAIR_20261016.md). This new evidence does not
+retroactively change the frozen long-run source/results or establish isolated
+responses for the other previously uncovered categories.
