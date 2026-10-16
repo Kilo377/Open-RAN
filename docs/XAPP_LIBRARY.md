@@ -1,11 +1,16 @@
 # Three-level training-free xApp library
 
-The opt-in `xapp_library` format separates **12 functional categories**, **28
-versioned implementations** and independently named **runtime instances**. The
+The opt-in `xapp_library` format now separates **12 functional categories**, **46
+versioned implementations** (28 original + 18 objective-driven additions) and independently named **runtime instances**. The
 old `rule_based_v1` format remains a compatibility path, not 12 additional
 algorithms. A read-only KPI monitor is not counted as a control implementation.
 
-## Implementations
+The objective-driven additions and opt-in concurrent selection mode are described in
+[OBJECTIVE_XAPPS.md](OBJECTIVE_XAPPS.md). The table below records the original 28-method
+subset; its prior acceptance and long-run tooling remain version-specific. This
+round runs short acceptance only.
+
+## Original implementations
 
 Each category retains `legacy_v1`, the prior measured-feedback implementation.
 New methods are local deterministic functional baselines, not claims of an
