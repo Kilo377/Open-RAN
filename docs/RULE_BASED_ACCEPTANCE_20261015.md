@@ -60,3 +60,46 @@ case exit/status logs, validation and SHA256 inventory. Completed process and
 accepted results are different states. The driver checks each case, records
 failure and stops remaining cases on serious errors. Raw results/cache/logs
 stay on Spark; this document is only a lightweight handoff summary.
+
+## Post-run review — 2026-10-16
+
+The detached job exited 0. All 48 cases completed and passed structural audits.
+Actual interval: **2026-10-15 17:02:23--19:23:45 CST**, 8482.15 s
+(2 h 21 min 22 s). The initial 4--7 h estimate was conservative; it is not a
+measured runtime claim. Two-worker case elapsed ranges were 223.9--463.5 s
+for 4 UEs/4000 slots and 296.7--600.1 s for 24 UEs/1000 slots.
+
+Post-run integrity verification read and hashed all **1157 files / 5,193,689,638
+bytes** in the long manifest: no mismatch, missing or unexpected files.
+There were **514,776 actual TB decodes**, zero AMC/BLER/calibration decoder
+probes, zero incompatible-resource/unsupported no-TB attempts, and the existing
+post-send capacity, resource, RF energy and packet/HARQ byte audits passed.
+One target-not-available command rejection was retained; it is not an accepted
+handover attempt. Aggregate events contain 87 handover attempts and 84 successes;
+these totals alone must not classify the three remaining attempts as failures.
+
+Remaining functional/performance evidence gaps:
+
+- MRO issued no parameter changes in natural RT runs. Controlled tests cover
+  its rule branches, but this matrix does not establish natural activation or
+  mobility improvement under its minimum sample requirement.
+- RET issued 30 requests; 10 feedback evaluations were flagged unattributable
+  because other configuration changed. This does not establish RET convergence.
+- Sleep issued 14 requests and TS issued 3 handover commands. Request counts
+  are not counts of unique applied changes or proof of optimization benefit.
+- In the business/resources combination, street `ue_3` and Munich `ue_21`
+  remained connected for all 600 post-warmup slots, but had no scheduled slots.
+  Final PRB caps were 1 and the active scheduler was latency-aware. Street
+  `ue_3` ended at RSRP -76.59 dBm / reference SINR 9.74 dB. This requires
+  inspection of priority, PRB-cap/TBS feasibility and competing traffic; it
+  must not be explained solely as weak coverage or called long-term starvation
+  from this finite 0.5-s run.
+- Munich `ue_18` remained unconnected in all four pressure combinations, with
+  weak reference RSRP. In the power/energy combination `ue_0` and `ue_6` were
+  also unconnected. Coverage protection and the effect of power coordination
+  need separate comparison; implementation integrity does not imply SLA success.
+
+Detailed review and compact zero-delivery evidence were saved only on Spark as
+`outputs/rule_based_20261015/long_v1_postrun_review.json`, outside the immutable
+long-run manifest. No additional simulation, automatic retry or tuning was
+started during this review. Mac retains only this lightweight documentation.
