@@ -21,6 +21,15 @@ class Algorithm(RuleXApp):
         self.validate(self.parameters)
 
     def capture_reports(self,observation):
+        if self.algorithm=='a3_rsrp':
+            for c in observation.cell_observations:
+                if c.cell_id not in self.contract.cell_ids or not getattr(c,'executed_config',None):continue
+                cfg=c.executed_config;s=self.state.setdefault(c.cell_id,{})
+                signature=(cfg['time_to_trigger_ms'],cfg['steering_hysteresis_db'],tuple(sorted(cfg['cio_offsets_db'].items())),
+                    tuple(sorted(cfg.get('neighbor_cell_ids') or [cell.cell_id for cell in observation.cell_observations])))
+                if s.get('a3_configuration')!=signature:s.clear();s['a3_configuration']=signature
+                for u in observation.ue_observations:
+                    if u.serving_cell_id==c.cell_id and not all(self._valid(u,key) for key in self.contract.required_kpis if key!='resource_grid_utilization'):s.pop(u.ue_id,None)
         for c in observation.cell_observations:
             pending=self.state.get(c.cell_id,{}).get('pending')
             if pending and 'target' in pending and getattr(c,'config_produced_at_slot',-1)>pending['issued']:
@@ -149,8 +158,8 @@ class Algorithm(RuleXApp):
         if k in ('a3_rsrp','sla_max_sinr'):
             for u in ues:
                 targets=self._candidate(u,cells,cfg);rs=rsrp_map(u)
-                if not targets or not rs or cid not in rs:continue
-                target=max(targets,key=lambda t:((rs[t] if k=='a3_rsrp' else u.candidate_sinr_db[t]),t))
+                if not targets or not rs or cid not in rs:s.pop(u.ue_id,None);continue
+                target=max(targets,key=lambda t:((rs[t]+cfg['cio_offsets_db'].get(t,0) if k=='a3_rsrp' else u.candidate_sinr_db[t]),t))
                 if k=='sla_max_sinr':
                     demand=getattr(u,'requested_dl_rate_bps',None)
                     poor=u.hol_delay_ms>u.latency_budget_ms*.5 or (finite(demand) and demand>u.throughput_mbps*1e6 and u.queue_bytes>0)
@@ -161,7 +170,7 @@ class Algorithm(RuleXApp):
                 previous=s.get(u.ue_id)
                 if not good:s.pop(u.ue_id,None);continue
                 # A stale gap breaks continuity; time comes from produced reports.
-                if not previous or previous[0]!=target or (produced-previous[2])*self.dt>max(self.min_ms*2,self.dt*5):
+                if not previous or previous[0]!=target or (produced-previous[2])*self.dt>self.dt*5:
                     previous=(target,produced,produced,0)
                 count=previous[3]+1;s[u.ue_id]=(target,previous[1],produced,count)
                 ready=(produced-previous[1])*self.dt>=cfg['time_to_trigger_ms'] if k=='a3_rsrp' else count>=p['ts_samples']
@@ -253,6 +262,7 @@ class Algorithm(RuleXApp):
             for f in fields:values.pop(f,None)
         signature=(signature,tuple(sorted(u.ue_id for u in (ues if ret else o.ue_observations))))
         if s.get('signature')!=signature:
+            if 'signature' in s:self._reason(cid,'search_context_changed')
             s.clear();s['signature']=signature;s['index']=0;s['scores']=[]
         pending=s.get('pending');window=p['ret_window_ms'] if ret else p['mro_evaluation_ms']
         produced=[u.kpi_metadata['reference_sinr_db']['produced_at_slot'] for u in ues]

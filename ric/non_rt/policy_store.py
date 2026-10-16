@@ -252,11 +252,12 @@ class PolicyStore:
 
     def apply_update(self, policy_update: PolicyUpdate, *, slot_id: int | None = None) -> None:
         from copy import deepcopy
-        if policy_update.xapp_bindings is not None or (self.binding_validator and policy_update.rule_based_parameters):
+        legacy_names=list(policy_update.enabled_xapps or [])+list(policy_update.disabled_xapps or [])
+        if policy_update.xapp_bindings is not None or (self.binding_validator and (policy_update.rule_based_parameters or legacy_names)):
             try:
                 if self.binding_validator is None:raise ValueError('No instance library configured')
                 candidate=self.snapshot.xapp_bindings if policy_update.xapp_bindings is None else policy_update.xapp_bindings
-                self.binding_validator(candidate or {},policy_update.rule_based_parameters)
+                self.binding_validator(candidate or {},policy_update.rule_based_parameters,legacy_names)
             except (ValueError,TypeError) as error:
                 self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='rejected',reason=str(error),source=policy_update.source_name))
                 return False

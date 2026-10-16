@@ -113,6 +113,15 @@ def test_parameter_update_transaction_and_immutable_defaults():
     assert IMPLEMENTATIONS[app.implementation_id]['defaults']['pi_kp']==.2
 
 
+def test_legacy_activation_lists_cannot_silently_override_library_bindings():
+    app=instance('rf_energy:sinr_pi');m=manager([app])
+    m.policy_store.apply_update(PolicyUpdate(xapp_bindings={'a':{'rf_energy':app.name}}))
+    before=m.policy_store.get_snapshot()
+    assert m.policy_store.apply_update(PolicyUpdate(disabled_xapps=[app.name])) is False
+    assert m.policy_store.get_snapshot()==before
+    assert 'require xapp_bindings' in m.policy_store.binding_receipts[-1]['reason']
+
+
 def test_fairness_uses_executed_counters_not_requested_limits():
     app=instance('ue_fairness:deficit_airtime');app.select({'a'},{'a':1})
     o=observed();second=deepcopy(o.ue_observations[0]);second.ue_id='extra';o.ue_observations.append(second)
@@ -135,12 +144,34 @@ def test_pi_direction_saturation_and_stale_report():
 def test_a3_continuity_and_ttt():
     app=instance('traffic_steering:a3_rsrp');app.select({'a'},{'a':1})
     assert not app.run(observed(1000),PolicySnapshot()).commands
-    assert not app.run(observed(1040),PolicySnapshot()).commands
+    for slot in range(1005,1080,5):assert not app.run(observed(slot),PolicySnapshot()).commands
     assert app.run(observed(1080),PolicySnapshot()).commands
     # A gap beyond the reporting continuity guard restarts the trigger.
     fresh=instance('traffic_steering:a3_rsrp');fresh.select({'a'},{'a':1})
     fresh.run(observed(1000),PolicySnapshot())
     assert not fresh.run(observed(1200),PolicySnapshot()).commands
+
+
+def test_a3_configuration_change_restarts_continuity_without_clearing_cooldown():
+    app=instance('traffic_steering:a3_rsrp');app.select({'a'},{'a':1})
+    for slot in range(1000,1200,5):
+        o=observed(slot)
+        if slot>=1040:o.cell_observations[0].executed_config['time_to_trigger_ms']=80.
+        assert not app.run(o,PolicySnapshot()).commands
+    o=observed(1200);o.cell_observations[0].executed_config['time_to_trigger_ms']=80.
+    assert app.run(o,PolicySnapshot()).commands
+    o=observed(1205);o.cell_observations[0].executed_config['time_to_trigger_ms']=0.
+    assert not app.run(o,PolicySnapshot()).commands
+
+
+def test_a3_invalid_report_breaks_the_timer():
+    app=instance('traffic_steering:a3_rsrp');app.select({'a'},{'a':1})
+    emitted=[]
+    for slot in range(1000,1130,5):
+        o=observed(slot)
+        if slot==1040:o.ue_observations[0].kpi_metadata['candidate_rsrp_dbm']['valid']=False
+        if app.run(o,PolicySnapshot()).commands:emitted.append(slot)
+    assert emitted==[1125]
 
 
 def test_read_context_does_not_grant_write_access_and_handover_target_is_separate():

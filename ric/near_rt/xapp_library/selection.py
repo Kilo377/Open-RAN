@@ -9,8 +9,9 @@ class InstanceSelection:
     def apps(self):
         return {i.xapp.name:i.xapp for i in self.manager.e2_interfaces if getattr(i.xapp,'library_instance',False)}
 
-    def validate(self,bindings,parameters=None):
+    def validate(self,bindings,parameters=None,legacy_names=()):
         apps=self.apps();known=set(cid for a in apps.values() for cid in a.allowed_cells)
+        if any(name in apps for name in legacy_names):raise ValueError('Library instances require xapp_bindings, not legacy enabled/disabled lists')
         if not isinstance(bindings,dict):raise ValueError('xapp_bindings must be a complete mapping')
         for cid,categories in bindings.items():
             if cid not in known or not isinstance(categories,dict):raise ValueError('Unknown cell or malformed category bindings: '+str(cid))
