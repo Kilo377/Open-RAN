@@ -46,6 +46,8 @@ def parse_args():
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
     p.add_argument('--recording-mode',choices=['audit','experiment'])
+    p.add_argument('--policy-timeline',type=Path)
+    p.add_argument('--channel-cache-root',type=Path)
     p.add_argument('--nr-execution',choices=['scalar','batched'])
     p.add_argument('--diagnostic-window-slots',type=int,default=200)
     return p.parse_args()
@@ -110,7 +112,9 @@ def run_case(args):
     try:
         from phy.rt_sys.channel import RtChannelProvider
         from phy.rt_sys.adapter import RtSysPhyAdapter
-        provider=RtChannelProvider(manifest,ROOT/'channel_cache',device=args.device)
+        cache_root=(getattr(args,'channel_cache_root',None) or ROOT/'channel_cache').resolve()
+        if not cache_root.is_relative_to(ROOT):raise ValueError('Channel caches must stay in the independent copy')
+        provider=RtChannelProvider(manifest,cache_root,device=args.device)
         timings.wrap(provider,'snapshot','channel_snapshot_including_io_and_cfr')
         for method in ('generate_paths','generate'):
             if hasattr(provider.backend,method):timings.wrap(provider.backend,method,'rt_generation')
@@ -126,6 +130,10 @@ def run_case(args):
         environment=environment_info()
         adapter=RtSysPhyAdapter(configs['phy']['rt_sys'],channel_provider=provider)
         registry=build_controller_registry(configs['ric'])
+        if getattr(args,'policy_timeline',None):
+            from experiments.fixed_policy_timeline import FixedPolicyTimeline
+            registry.register_rapp(FixedPolicyTimeline(args.policy_timeline))
+            (output/'policy_timeline.json').write_text(args.policy_timeline.read_text())
         timeline_path=getattr(args,'control_timeline',None)
         if timeline_path:
             if not configs['phy']['rt_sys'].get('paper_interfaces',{}).get('enabled'):raise ValueError('Control timeline requires paper interfaces')
@@ -158,7 +166,7 @@ def run_case(args):
         from contextlib import ExitStack
         stack=ExitStack()
         auxiliary={name:stack.enter_context((output/f'{name}.jsonl').open('w'))
-            for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace','rule_decisions')}
+            for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace','rule_decisions','xapp_selection')}
         simulation_started=time.perf_counter();io_s=0.;diagnostic_until=-1
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
         with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
@@ -169,6 +177,11 @@ def run_case(args):
                     if steady_started is None and simulator.state.sim_time_ms>=warmup:
                         steady_started=time.perf_counter();steady_decodes=adapter.abstraction.decode_trials
                     simulator.step()
+                    selection=simulator.controller_manager.instance_selection
+                    for event in selection.receipts:auxiliary['xapp_selection'].write(json.dumps(event)+'\n')
+                    selection.receipts.clear()
+                    for event in simulator.controller_manager.policy_store.binding_receipts:auxiliary['xapp_selection'].write(json.dumps(event)+'\n')
+                    simulator.controller_manager.policy_store.binding_receipts.clear()
                     feedback,decisions=diagnostics.observe(simulator.state,adapter.trace)
                     io_start=time.perf_counter()
                     for event in getattr(simulator.controller_manager,'rule_decisions',[]):
@@ -232,6 +245,9 @@ def run_case(args):
         if any(getattr(app,'rule_based_v1',False) for app in registry.xapps):
             summary['rule_based_v1']={app.name:dict(statistics=dict(app.statistics),decision_seconds=getattr(app,'decision_seconds',0.),
                 last_decisions=app.last_decisions,kind=getattr(app,'kind','monitor')) for app in registry.xapps if getattr(app,'rule_based_v1',False)}
+        if any(getattr(app,'library_instance',False) for app in registry.xapps):
+            summary['xapp_library']=dict(instances=[a.descriptor() for a in registry.xapps if getattr(a,'library_instance',False)],
+                bindings=simulator.controller_manager.instance_selection.bindings)
         if hasattr(adapter.abstraction,'bank'):adapter.abstraction.bank.save()
         if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})

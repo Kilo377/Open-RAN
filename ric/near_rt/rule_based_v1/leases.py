@@ -17,16 +17,18 @@ class RuleLeases:
             if self.was_enabled.get(name,False) and name not in enabled and hasattr(app,'reset'):app.reset()
         self.was_enabled={name:name in enabled for name in apps}
         for key in list(self.requests):
-            if key[0] not in enabled:del self.requests[key]
+            if key[0] not in enabled or (getattr(apps.get(key[0]),'library_instance',False) and not manager.instance_selection.enabled(key[0],key[1])):del self.requests[key]
         for action in received:
             name=action.source_name
             if name not in enabled or action.target_cell_id is None:continue
+            if getattr(apps[name],'library_instance',False):manager.instance_selection.consume_hold(action,apps[name])
             for field in apps[name].controlled_fields:
                 family={'slice_weight_adjustment':'slice_aware','latency_bias':'latency_aware'}.get(field)
                 if family and action.scheduler_mode is not None and action.scheduler_mode!=family:
                     self.requests.pop((name,action.target_cell_id,field),None)
                     continue
                 value=getattr(action,field,None)
+                if getattr(apps[name],'library_instance',False) and field=='slice_weight_adjustment' and not value:continue
                 if value is not None:self.requests[name,action.target_cell_id,field]=(apps[name].priority,deepcopy(value),name)
         live={}
         # A RET request owns the analog subspace, including while waiting for execution.

@@ -51,6 +51,7 @@ class ControllerRegistry:
         EXAMPLE OUTPUT
         registry.register_xapp(BeamXApp())
         """
+        if any(app.name==xapp.name for app in self.xapps):raise ValueError('Duplicate xApp instance name: '+xapp.name)
         self.xapps.append(xapp)
 
     def register_rapp(self, rapp: RAppBase) -> None:

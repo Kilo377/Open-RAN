@@ -29,6 +29,7 @@ class PaperEnvironment:
         self.receipts=[];self.samples=deque(maxlen=self.window);self.ue_samples={u.ue_id:deque(maxlen=self.window) for u in self.state.ues}
         self.previous={u.ue_id:dict(u.packet_ledger.stats) for u in self.state.ues}
         self.rf_energy={c:0. for c in self.state.managed_cells};self.published={};self.sla_since={}
+        self.resource_counters={u.ue_id:dict(cell=None,epoch=0,total=0,start=0,window=deque(maxlen=self.window)) for u in self.state.ues}
         self.delayed=deque(maxlen=max(4,int(getattr(simulator.config,'measurement_queue_delay_slots',0))+3))
         self.last_radio_config=None
         for ue,item in zip(self.state.ues,getattr(simulator,'_paper_ue_config',{}).get('ues',[])):
@@ -165,7 +166,10 @@ class PaperEnvironment:
             else:
                 c=self.state.connections[uid];target=cmd.target_cell_id
                 allowed=getattr(cmd,'_paper_allowed_cells',())
-                if allowed and (c.serving_cell_id not in allowed or (target is not None and target not in allowed)):reason='command_execution_scope'
+                target_allowed=getattr(cmd,'_paper_allowed_target_cells',allowed)
+                provenance=getattr(cmd,'_library_provenance',None)
+                if provenance and c.serving_cell_id!=provenance['cell_id']:reason='selection_source_cell_changed'
+                if (allowed and c.serving_cell_id not in allowed) or (target is not None and target_allowed and target not in target_allowed):reason='command_execution_scope'
                 if cmd.source_name.startswith('rule_') and not self.sim.controller_manager._is_xapp_enabled(cmd.source_name):reason='rule_withdrawn_before_actuation'
                 if reason is None and cmd.command_type=='request_handover':
                     if uid in self.manual or c.connection_state!='connected':reason='ue_not_connected'
@@ -188,6 +192,7 @@ class PaperEnvironment:
                 else:self.start_handover(uid,cmd.target_cell_id,True)
             receipt=dict(kind='command',control_request_id=rid,source=cmd.source_name,target_ue_id=uid,target_cell_id=cmd.target_cell_id,
                 command_type=cmd.command_type,apply_slot=self.state.slot_id,status='rejected' if reason else 'applied',reason=reason)
+            if getattr(cmd,'_library_provenance',None):receipt['provenance']=[deepcopy(cmd._library_provenance)]
             self.receipts.append(receipt)
             for old in self.state.control.actuation_outcomes:
                 if old.get('kind')=='command' and old.get('control_request_id')==rid:old.update(receipt)
@@ -282,6 +287,12 @@ class PaperEnvironment:
 
     def after_phy(self):
         slot=self.state.slot_id;dt=self.dt/1000;cell_bytes={c:0 for c in self.state.managed_cells}
+        for row in self.adapter.trace['ues']:
+            counter=self.resource_counters[row['ue_id']]
+            if counter['cell']!=row['cell_id']:
+                counter.update(cell=row['cell_id'],epoch=counter['epoch']+1,total=0,start=slot);counter['window'].clear()
+            used=len(row.get('resource_allocation',{}).get('prbs',[])) if row.get('actual_decode') else 0
+            counter['total']+=used;counter['window'].append((slot,used))
         for ue in self.state.ues:
             stats=dict(ue.packet_ledger.stats);prev=self.previous[ue.ue_id]
             delivered=stats['delivered_bytes']-prev.get('delivered_bytes',0);arrived=stats['offered_bytes']-prev.get('offered_bytes',0)

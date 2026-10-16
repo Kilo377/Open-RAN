@@ -26,7 +26,13 @@ def augment(paper,reports):
         reports['cell'][cid].update(executed_config=values,config_fingerprint=digest(values),config_produced_at_slot=slot)
     for u in paper.state.ues:
         uid=u.ue_id;seq=paper.ue_samples[uid];dt=paper.dt/1000
+        counter=paper.resource_counters[uid];window=list(counter['window'])
         reports['ue'][uid].update(
+            executed_prb_slots_total=counter['total'],executed_prb_slots_window=sum(x[1] for x in window),
+            resource_counter_epoch=str(counter['cell'])+':'+str(counter['epoch']),
+            resource_counter_start_slot=counter['start'],
+            resource_window_start_slot=window[0][0] if window else slot,resource_window_end_slot=slot,
+            resource_window_sample_count=len(window),delivered_bits_total=u.packet_ledger.stats['delivered_bytes']*8,
             delivered_bits_window=sum(x[0] for x in seq)*8,
             arrival_bits_window=sum(x[1] for x in seq)*8,
             deadline_misses_window=sum(x[2] for x in seq),

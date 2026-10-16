@@ -57,6 +57,8 @@ class XAppContract:
     commands: frozenset[str]=frozenset()
     partial_entities: bool=False
     read_only: bool=False
+    include_context_entities: bool=False
+    command_target_cell_ids: tuple[str,...]=()
 
     @property
     def writable_actions(self):return self.actions & SUPPORTED_ACTIONS
@@ -103,7 +105,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
     result.ue_observations=[];result.cell_observations=[];result.kpi_records=[]
     errors=[f'unknown_required_kpi:{k}' for k in contract.required_kpis if k not in KPI_REGISTRY]
     for u in observation.ue_observations:
-        if contract.cell_ids and u.serving_cell_id not in contract.cell_ids:continue
+        if contract.cell_ids and u.serving_cell_id not in contract.cell_ids and not contract.include_context_entities:continue
         v=SimpleNamespace(**_copy(u,UE_CONFIG+TIMING))
         v.sinr_kind=getattr(u,'sinr_kind',None)
         v.kpi_metadata={}
@@ -132,6 +134,11 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 window=paper.get('window_slots');samples=window if value is not None else 0
                 if name in ('association','requested_dl_rate_bps'):window=1;samples=1
                 if name=='resource_allocation':window=1;samples=1
+                if name in ('executed_prb_slots_total','delivered_bits_total'):
+                    window_kind='cumulative_since_counter_epoch' if name=='executed_prb_slots_total' else 'cumulative'
+                    window=None;samples=1 if value is not None else 0
+                if name=='executed_prb_slots_window':
+                    samples=getattr(u,'resource_window_sample_count',0);window=samples
                 if name=='handover_failure_rate':samples=getattr(u,'mobility_counts',{}).get('success',0)+getattr(u,'mobility_counts',{}).get('failure',0)
                 if name=='connection_drop_fraction':samples=getattr(u,'mobility_counts',{}).get('sessions_at_risk',0)
                 if name in ('wideband_cqi','subband_cqi','candidate_sinr_db','reference_sinr_db','rsrp_dbm','candidate_rsrp_dbm'):
@@ -194,7 +201,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             v.candidate_cell_observations.append(c)
         result.ue_observations.append(v)
     for cell in observation.cell_observations:
-        if contract.cell_ids and cell.cell_id not in contract.cell_ids:continue
+        if contract.cell_ids and cell.cell_id not in contract.cell_ids and not contract.include_context_entities:continue
         c=SimpleNamespace(**_copy(cell,CELL_CONFIG))
         members=[u for u in result.ue_observations if u.serving_cell_id==cell.cell_id]
         c.total_queue_bytes=sum(u.queue_bytes for u in members) if all(u.queue_bytes is not None for u in members) else None
@@ -315,7 +322,8 @@ def validate_commands(commands,contract,observation):
         if c.command_type not in contract.commands or c.command_type not in PAPER_COMMANDS:errors.append('undeclared_command_surface')
         if c.target_ue_id not in uids:errors.append('invalid_target_ue')
         elif contract.cell_ids and uids[c.target_ue_id] not in contract.cell_ids:errors.append('command_source_scope')
-        if c.target_cell_id is not None and (c.target_cell_id not in cells or (contract.cell_ids and c.target_cell_id not in contract.cell_ids)):errors.append('command_target_scope')
+        targets=contract.command_target_cell_ids or contract.cell_ids
+        if c.target_cell_id is not None and (c.target_cell_id not in cells or (targets and c.target_cell_id not in targets)):errors.append('command_target_scope')
     return errors
 
 # Opt-in rule-library telemetry. Generated before the existing report delay queue.
@@ -324,4 +332,8 @@ for _k,_unit in {'mobility_events':'event record','beam_reference_reports':'dB/c
  'deadline_packets_window':'packet','business_window_s':'s'}.items():
     KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:rule_v1_executed_or_reference_report','throughput_window_slots')
 KPI_REGISTRY['executed_config']=KpiSpec('cell','configuration','paper:executed_configuration_report','single_report')
+for _k,_unit in {'executed_prb_slots_total':'PRB*slot','executed_prb_slots_window':'PRB*slot',
+    'resource_counter_epoch':'identity','resource_counter_start_slot':'slot','resource_window_start_slot':'slot','resource_window_end_slot':'slot',
+    'resource_window_sample_count':'count','delivered_bits_total':'bit'}.items():
+    KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:actual_transmission_and_packet_counter','throughput_window_slots')
 CELL_CONFIG.extend(['executed_config','config_fingerprint','config_produced_at_slot'])

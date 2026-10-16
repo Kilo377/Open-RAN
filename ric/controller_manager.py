@@ -145,6 +145,9 @@ class ControllerManager:
             "cell:__default__": ConfigAction(apply_scope="cell", target_cell_id=None)
         }
         self.policy_store = PolicyStore()
+        from ric.near_rt.xapp_library.selection import InstanceSelection
+        self.instance_selection=InstanceSelection(self)
+        if self.instance_selection.apps():self.policy_store.binding_validator=self.instance_selection.validate
         self.policy_store.derive_rl_guidance_when_missing = bool(self.rl_guidance_enabled)
         self._decision_seq = 0
         self._e2_resource_seq = 0
@@ -1193,6 +1196,7 @@ class ControllerManager:
         EXAMPLE OUTPUT
         True
         """
+        if xapp_name in self.instance_selection.apps():return self.instance_selection.enabled(xapp_name)
         policy_snapshot = self.policy_store.get_snapshot()
 
         if xapp_name in policy_snapshot.disabled_xapps:
@@ -1258,6 +1262,7 @@ class ControllerManager:
                 dropped_items,
             )
 
+        self.instance_selection.sync(slot_id,observation)
         policy_snapshot = self.policy_store.get_snapshot()
 
         for e2_interface in self.e2_interfaces:
@@ -1301,7 +1306,9 @@ class ControllerManager:
                 failures = [problem for item in xapp_decision.config_actions for problem in validate_action(item, contract, observation)]
                 from ric.xapp_contract import validate_commands
                 failures.extend(validate_commands(xapp_decision.commands,contract,observation))
-                for command in xapp_decision.commands:command._paper_allowed_cells=contract.cell_ids
+                for command in xapp_decision.commands:
+                    command._paper_allowed_cells=contract.cell_ids
+                    command._paper_allowed_target_cells=contract.command_target_cell_ids or contract.cell_ids
                 if failures:
                     dropped_items.append(DroppedControlItem(kind='xapp_action',source=str(xapp.name),
                         reason='action_contract_rejected:' + ';'.join(failures)))
@@ -1558,9 +1565,16 @@ class ControllerManager:
         from ric.xapp_contract import is_rt, capability_record
         if is_rt(observation):
             catalog = [capability_record(i.xapp.name, i.xapp.controlled_fields,getattr(i.xapp,'contract',None)) for i in self.e2_interfaces]
+            instances=self.instance_selection.apps()
+            for item in catalog:
+                if item['xapp_name'] in instances:item.update(instances[item['xapp_name']].descriptor())
             available = [item['xapp_name'] for item in catalog if item['available']]
             for interface in self.a1_interfaces:
                 interface.rapp.rt_xapp_capabilities = catalog
+                from ric.near_rt.xapp_library import category_catalog,implementation_catalog
+                interface.rapp.rt_xapp_categories=category_catalog()
+                interface.rapp.rt_xapp_implementations=implementation_catalog()
+                interface.rapp.rt_xapp_instances=[app.descriptor() for app in instances.values()]
                 interface.rapp.rt_backend = 'sionna_rt_sys'
                 if hasattr(interface.rapp, 'available_xapp_names'):
                     interface.rapp.available_xapp_names = available
@@ -1685,7 +1699,12 @@ class ControllerManager:
             if hasattr(self,'rule_leases'):
                 scope='cell:'+str(stamped_scope_action.target_cell_id)
                 stamped_scope_action._rule_owners=tuple(sorted({owner for (cid,field),owner in self.rule_leases.owned.items()
-                    if cid==stamped_scope_action.target_cell_id and getattr(stamped_scope_action,field,None) is not None}))
+                    if cid==stamped_scope_action.target_cell_id and self._action_field_has_value(field,getattr(stamped_scope_action,field,None))}))
+                apps=self.instance_selection.apps()
+                stamped_scope_action._library_provenances=[{**apps[name].identity(stamped_scope_action.target_cell_id),
+                    'fields':[field for (cid,field),owner in self.rule_leases.owned.items()
+                        if owner==name and cid==stamped_scope_action.target_cell_id and self._action_field_has_value(field,getattr(stamped_scope_action,field,None))]}
+                    for name in stamped_scope_action._rule_owners if name in apps]
             stamped_config_actions.append(stamped_scope_action)
 
         decision_metadata = ControlMetadata(

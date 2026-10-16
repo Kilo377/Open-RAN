@@ -2230,6 +2230,14 @@ class Simulator:
         self._refresh_managed_cell_runtime_views(self.state)
 
     def _apply_rt_config_action(self, action, apply_slot):
+        provenances=getattr(action,'_library_provenances',[])
+        if any(not self.controller_manager.instance_selection.valid(p) for p in provenances):
+            outcome=self._build_config_actuation_outcome(action=action,apply_slot=int(self.state.slot_id),
+                status='rejected',reason='stale_xapp_selection',target_cell_ids=self._resolve_config_target_cell_ids(action))
+            outcome.update(slot_id=self.state.slot_id,provenance=provenances)
+            self.state.control.actuation_outcomes.append(outcome)
+            self._update_e2_control_request_status(action.control_request_id,status='rejected',reason='stale_xapp_selection')
+            return
         owners=getattr(action,'_rule_owners',())
         if owners and any(not self.controller_manager._is_xapp_enabled(owner) for owner in owners):
             self.state.control.actuation_outcomes.append(dict(kind='config',status='rejected',reason='rule_withdrawn_before_actuation',
@@ -2262,6 +2270,7 @@ class Simulator:
             status='rejected' if reason else 'applied',reason=reason,target_cell_ids=applied if not reason else targets)
         outcome.update(requested_apply_slot=int(apply_slot),fields=fields,before=before,
             after=runtime_control_values(self.state,targets),validity_semantics='Persistent target state; expiry bounds admission, not automatic rollback')
+        if provenances:outcome['provenance']=provenances
         self.state.control.actuation_outcomes.append(outcome)
 
     def _build_config_actuation_outcome(
@@ -3324,6 +3333,12 @@ class Simulator:
         due_commands.sort(key=lambda x: (x[0], x[1]))
 
         for apply_slot, _, command in due_commands:
+            provenance=getattr(command,'_library_provenance',None)
+            if provenance and not self.controller_manager.instance_selection.valid(provenance):
+                self.state.control.actuation_outcomes.append(dict(kind='command',status='rejected',reason='stale_xapp_selection',
+                    slot_id=self.state.slot_id,control_request_id=command.control_request_id,provenance=provenance))
+                self._update_e2_control_request_status(command.control_request_id,status='rejected',reason='stale_xapp_selection')
+                continue
             rejected = self._rng.random() < self._control_reject_prob
             if rejected:
                 self.state.control.actuation_outcomes.append(

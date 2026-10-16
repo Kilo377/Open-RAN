@@ -64,6 +64,20 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         if override.exists(): configs[name]=deep_merge_dict(configs[name],load_yaml_file(str(override)))
     configs['sim'].update(base['simulation']); configs['sim']['scheduler_type']='rt_sys_scheduler'; configs['sim'].update(total_slots=total_slots,slot_duration_ms=dt,rng_seed=seed)
     configs['ric']['run_forever']=False
+    library=base.get('xapp_library',{})
+    if library.get('enabled'):
+        if base.get('rule_based_v1',{}).get('enabled'):raise ValueError('Select one library config format')
+        known=[c['cell_id'] for c in manifest['cells']]
+        bindings=library.get('bindings')
+        if bindings is None and 'initial_selection' in library:
+            bindings={cid:deepcopy(library['initial_selection']) for cid in known}
+        configs['ric'].update(rapps=[],run_rapps_on_start=False,freeze_learning=True,xapps=[])
+        for item in library.get('instances',[]):
+            scope=item.get('cell_ids',known)
+            if not scope or any(cid not in known for cid in scope):raise ValueError('Invalid instance cell scope')
+            configs['ric']['xapps'].append(dict(type='xapp_instance',**item,cell_ids=scope,
+                initial_bindings=bindings,slot_duration_ms=dt,context_cell_ids=known))
+        if library.get('monitor',True):configs['ric']['xapps'].append(dict(type='rule_kpi_monitor'))
     rule=base.get('rule_based_v1',{})
     if rule.get('enabled'):
         from ric.near_rt.rule_based_v1 import CATALOG
@@ -117,4 +131,7 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     if rule.get('enabled'):
         configs['phy']['rt_sys'].setdefault('paper_interfaces',{}).update(enabled=True,rule_observations=True,
             beam_reports='beam_management' in rule.get('applications',[]))
+    if library.get('enabled'):
+        configs['phy']['rt_sys'].setdefault('paper_interfaces',{}).update(enabled=True,rule_observations=True,
+            beam_reports=any(i['implementation_id'].startswith('beam_management:') for i in library.get('instances',[])))
     return manifest,configs,base['intent']

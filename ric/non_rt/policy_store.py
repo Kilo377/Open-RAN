@@ -38,6 +38,8 @@ class PolicyStore:
         self.snapshot = PolicySnapshot(policy_epoch_id=self.current_epoch)
         self._resource_seq = 0
         self.derive_rl_guidance_when_missing = True
+        self.binding_validator=None
+        self.binding_receipts=[]
 
         self.policy_types_by_id: dict[str, A1PolicyType] = {}
         self.policy_type_id_by_name: dict[str, str] = {}
@@ -178,6 +180,10 @@ class PolicyStore:
         persistent_memory_state = self.snapshot.memory_state
         persistent_enabled_xapps = list(self.snapshot.enabled_xapps)
         persistent_disabled_xapps = list(self.snapshot.disabled_xapps)
+        from copy import deepcopy
+        persistent_bindings=deepcopy(self.snapshot.xapp_bindings)
+        persistent_selection_version=self.snapshot.xapp_selection_version
+        persistent_rule_parameters=deepcopy(self.snapshot.rule_based_parameters) if self.binding_validator else {}
         self.snapshot = PolicySnapshot(policy_epoch_id=self.current_epoch)
         self.snapshot.active_intent_text = persistent_active_intent_text
         self.snapshot.active_intent_id = persistent_active_intent_id
@@ -194,6 +200,9 @@ class PolicyStore:
         self.snapshot.memory_state = persistent_memory_state
         self.snapshot.enabled_xapps = persistent_enabled_xapps
         self.snapshot.disabled_xapps = persistent_disabled_xapps
+        self.snapshot.xapp_bindings=persistent_bindings
+        self.snapshot.xapp_selection_version=persistent_selection_version
+        self.snapshot.rule_based_parameters=persistent_rule_parameters
         for instance_id, instance in self.policy_instances_by_id.items():
             if str(instance.status) != "active":
                 continue
@@ -243,6 +252,17 @@ class PolicyStore:
 
     def apply_update(self, policy_update: PolicyUpdate, *, slot_id: int | None = None) -> None:
         from copy import deepcopy
+        if policy_update.xapp_bindings is not None or (self.binding_validator and policy_update.rule_based_parameters):
+            try:
+                if self.binding_validator is None:raise ValueError('No instance library configured')
+                candidate=self.snapshot.xapp_bindings if policy_update.xapp_bindings is None else policy_update.xapp_bindings
+                self.binding_validator(candidate or {},policy_update.rule_based_parameters)
+            except (ValueError,TypeError) as error:
+                self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='rejected',reason=str(error),source=policy_update.source_name))
+                return False
+        if policy_update.xapp_bindings is not None:
+            self.snapshot.xapp_bindings=deepcopy(policy_update.xapp_bindings)
+            self.binding_receipts.append(dict(slot_id=slot_id,kind='xapp_selection',status='admitted',reason='valid_pending_near_rt',source=policy_update.source_name))
         self.snapshot.rule_based_parameters.update(deepcopy(policy_update.rule_based_parameters))
         source_name = str(getattr(policy_update, "source_name", "unknown_rapp"))
         policy_type = self._get_or_create_policy_type(
@@ -486,6 +506,8 @@ class PolicyStore:
     def get_snapshot(self) -> PolicySnapshot:
         return PolicySnapshot(
             policy_epoch_id=int(self.snapshot.policy_epoch_id),
+            xapp_bindings=__import__('copy').deepcopy(self.snapshot.xapp_bindings),
+            xapp_selection_version=self.snapshot.xapp_selection_version,
             rule_based_parameters=__import__("copy").deepcopy(self.snapshot.rule_based_parameters),
             preferred_codebook_id=self.snapshot.preferred_codebook_id,
             preferred_tx_power_dbm=self.snapshot.preferred_tx_power_dbm,
