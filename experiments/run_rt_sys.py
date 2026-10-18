@@ -26,10 +26,18 @@ def parse_args():
     p.add_argument('--cells',type=int,default=2); p.add_argument('--ues',type=int,default=4)
     p.add_argument('--seed',type=int,default=1); p.add_argument('--slots',type=int,default=40)
     p.add_argument('--path-update-ms',type=float)
-    p.add_argument('--device',choices=['cuda','cpu'],default='cuda')
+    p.add_argument('--platform',choices=['dgx','agx'],
+        help='dgx: CUDA/OptiX + PyTorch CUDA; agx: LLVM CPU RT/NR + CuPy CUDA algebra (CPU fallback if unavailable)')
+    p.add_argument('--device',choices=['cuda','cpu'],
+        help='PHY/SYS device; default CUDA without --platform, otherwise selected by platform')
+    p.add_argument('--rt-device',choices=['cuda','cpu'],
+        help='Ray-tracing device; defaults to --device. --device selects PHY/SYS.')
+    p.add_argument('--algebra-backend',choices=['torch','cupy'],
+        help='CuPy executes RZF/LMMSE on CUDA independently of the PHY/SYS device.')
     p.add_argument('--config',type=Path)
     p.add_argument('--control-timeline',type=Path)
     p.add_argument('--output',type=Path)
+    p.add_argument('--live-state',type=Path,help='Atomically publish actual slot state for the read-only live viewer')
     p.add_argument('--dry-run',action='store_true')
     p.add_argument('--generate-only',action='store_true')
     p.add_argument('--deployment-id',type=int,choices=[0,1,2])
@@ -54,6 +62,9 @@ def parse_args():
 
 
 def run_case(args):
+    from phy.rt_sys.platforms import resolve_platform
+    platform_profile=resolve_platform(args)
+    rt_device=getattr(args,'rt_device',None) or args.device
     manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config,
         deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
         initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None))
@@ -73,6 +84,14 @@ def run_case(args):
     configs['ric'].update(selection_mode=mode,freeze_learning=phase in ('validation','test'))
     control_mode=getattr(args,'control_mode','baseline')
     configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
+    configs['phy']['rt_sys']['rt_device']=rt_device
+    if getattr(args,'algebra_backend',None):
+        configs['phy']['rt_sys']['algebra_backend']=args.algebra_backend
+    algebra_backend=configs['phy']['rt_sys'].get('algebra_backend','torch')
+    execution_devices={'rt':rt_device,'phy_sys':args.device,
+        'linear_algebra':'cuda' if algebra_backend=='cupy' else args.device,
+        'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
+    configs['phy']['rt_sys']['channel_array_backend']='cupy' if algebra_backend=='cupy' else 'numpy'
     if getattr(args,'feedback_mode',None):configs['phy']['rt_sys']['feedback_mode']=args.feedback_mode
     if control_mode == 'baseline':
         configs['ric'].update(rapps=[], xapps=[], freeze_learning=True, run_rapps_on_start=False)
@@ -91,30 +110,42 @@ def run_case(args):
     window_slots=getattr(args,'diagnostic_window_slots',200)
     if window_slots<1:raise ValueError('Positive diagnostic window required')
     name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}'
+    if rt_device!=args.device:name+=f'_rt{rt_device}_phy{args.device}'
+    if algebra_backend=='cupy':name+='_cupy'
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
+    live_path=getattr(args,'live_state',None)
+    if live_path is not None and not live_path.resolve().is_relative_to(ROOT/'outputs'):
+        raise ValueError('Live telemetry must stay under project outputs/')
     if args.dry_run:
-        print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy']},indent=2)); return
+        print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy'],
+            'execution_devices':execution_devices,'platform_profile':platform_profile},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
     if configs['phy']['rt_sys']['feedback_mode'] in ('nr_cached_reference','nr_bler_bank'):
         ref=configs['phy']['rt_sys'].setdefault('reference',{})
         bank=ref.setdefault('probability_bank',{})
         bank.setdefault('bank_file',str(output/'link_bler_bank.json'))
     source_hash=source_fingerprint(ROOT)
-    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
+    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
     status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,
+        'platform_profile':platform_profile,
+        'execution_devices':execution_devices,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
     def write_status(): (output/'run_status.json').write_text(json.dumps(status,indent=2))
     write_status(); started=time.perf_counter()
     from phy.rt_sys.efficiency import StageTimings
-    timings=StageTimings();simulation_started=None;steady_started=None;steady_decodes=0
+    timings=StageTimings();simulation_started=None;steady_started=None;steady_decodes=0;live=None
     try:
         from phy.rt_sys.channel import RtChannelProvider
         from phy.rt_sys.adapter import RtSysPhyAdapter
         cache_root=(getattr(args,'channel_cache_root',None) or ROOT/'channel_cache').resolve()
         if not cache_root.is_relative_to(ROOT):raise ValueError('Channel caches must stay in the independent copy')
-        provider=RtChannelProvider(manifest,cache_root,device=args.device)
+        provider=RtChannelProvider(manifest,cache_root,device=rt_device,
+            reconstruction_backend=configs['phy']['rt_sys']['channel_array_backend'])
+        if live_path:
+            from experiments.rt_live import LivePublisher
+            live=LivePublisher(live_path.resolve(),manifest,provider,execution_devices,configs['phy']['rt_sys']['feedback_mode'])
         timings.wrap(provider,'snapshot','channel_snapshot_including_io_and_cfr')
         for method in ('generate_paths','generate'):
             if hasattr(provider.backend,method):timings.wrap(provider.backend,method,'rt_generation')
@@ -128,6 +159,14 @@ def run_case(args):
         from ric.non_rt.active_intent_manager import ActiveIntentManager
         from scripts.spark.preflight import environment_info
         environment=environment_info()
+        environment['platform_profile']=platform_profile
+        environment['execution_devices']=execution_devices
+        environment['algebra_backend']=algebra_backend
+        if algebra_backend=='cupy':
+            import cupy as cp
+            environment['cupy']=cp.__version__
+            environment['algebra_compute_capability']=cp.cuda.Device().compute_capability
+            environment['algebra_gpu_name']=cp.cuda.runtime.getDeviceProperties(0)['name'].decode()
         adapter=RtSysPhyAdapter(configs['phy']['rt_sys'],channel_provider=provider)
         registry=build_controller_registry(configs['ric'])
         if getattr(args,'policy_timeline',None):
@@ -183,6 +222,7 @@ def run_case(args):
                     for event in simulator.controller_manager.policy_store.binding_receipts:auxiliary['xapp_selection'].write(json.dumps(event)+'\n')
                     simulator.controller_manager.policy_store.binding_receipts.clear()
                     feedback,decisions=diagnostics.observe(simulator.state,adapter.trace)
+                    if live:live.publish(simulator,adapter)
                     io_start=time.perf_counter()
                     for event in getattr(simulator.controller_manager,'rule_decisions',[]):
                         auxiliary['rule_decisions'].write(json.dumps({'slot_id':simulator.state.slot_id,**event},allow_nan=False)+'\n')
@@ -280,7 +320,7 @@ def run_case(args):
             'learning_frozen':configs['ric']['freeze_learning']}
         (output/'evaluation_summary.json').write_text(json.dumps(evaluation,indent=2))
         status.update(completed=True,stage='completed',runtime_environment=environment,
-            spark_verified=args.device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
+            spark_verified=args.device=='cuda' and rt_device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
         performance=dict(**timings.report(),recording_mode=recording,nr_execution=execution,
             initialization_s=simulation_started-started,simulation_s=simulation_elapsed,
@@ -292,7 +332,9 @@ def run_case(args):
             numerical_fidelity='actual_nr_20_decoder_iterations_no_online_probes',
             csv_semantics='audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries')
         (output/'performance.json').write_text(json.dumps(performance,indent=2))
+        if live:live.finish('completed')
     except Exception as exc:
+        if live:live.finish('failed',f'{type(exc).__name__}: {exc}')
         status.update(stage='failed',error=f'{type(exc).__name__}: {exc}'); raise
     finally:
         if 'stack' in locals():stack.close()
@@ -302,6 +344,10 @@ def run_case(args):
             import torch
             status['peak_cuda_bytes']=torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0
         except ImportError: pass
+        if algebra_backend=='cupy':
+            import cupy
+            cupy.cuda.Stream.null.synchronize()
+            status['cupy_pool_reserved_bytes']=cupy.get_default_memory_pool().total_bytes()
         status['output_bytes']=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())
         write_status()
 

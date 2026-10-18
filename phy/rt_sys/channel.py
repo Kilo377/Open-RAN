@@ -27,20 +27,25 @@ def combine_complex(value):
     return np.asarray(value)
 
 
-def reconstruct_paths(arrays,manifest,elapsed_s):
+def reconstruct_paths(arrays,manifest,elapsed_s,array_backend='numpy'):
     """Unnormalized absolute CFR from baseband CIR, delays and Doppler."""
-    a=arrays['cir0']; tau=arrays['tau']; doppler=arrays['doppler']
+    if array_backend=='cupy':
+        import cupy as xp
+    elif array_backend=='numpy':xp=np
+    else:raise ValueError(f'Unknown channel array backend: {array_backend}')
+    a=xp.asarray(arrays['cir0']); tau=xp.asarray(arrays['tau']); doppler=xp.asarray(arrays['doppler'])
     if tau.ndim==3:
         tau=tau[:,None,:,None,:]; doppler=doppler[:,None,:,None,:]
     ns=manifest['num_symbols']; nf=manifest['fft_size']
     if a.shape[-1]==0:
         return np.zeros((a.shape[0],a.shape[2],a.shape[1],a.shape[3],ns,nf),np.complex64)
-    times=elapsed_s+np.arange(ns,dtype=np.float32)*manifest['slot_duration_ms']/1000/ns
-    frequencies=(np.arange(nf,dtype=np.float32)-nf//2)*manifest['subcarrier_spacing_hz']
-    at=a[...,None]*np.exp(2j*np.pi*doppler[...,None]*times)
-    frequency_phase=np.exp(-2j*np.pi*tau[...,None]*frequencies)
-    cfr=np.einsum('urctps,urctpf->urctsf',at,frequency_phase,optimize=True)
-    return np.transpose(cfr,(0,2,1,3,4,5)).astype(np.complex64)
+    times=elapsed_s+xp.arange(ns,dtype=np.float32)*manifest['slot_duration_ms']/1000/ns
+    frequencies=(xp.arange(nf,dtype=np.float32)-nf//2)*manifest['subcarrier_spacing_hz']
+    at=a[...,None]*xp.exp(2j*np.pi*doppler[...,None]*times)
+    frequency_phase=xp.exp(-2j*np.pi*tau[...,None]*frequencies)
+    cfr=xp.einsum('urctps,urctpf->urctsf',at,frequency_phase,optimize=True)
+    cfr=xp.transpose(cfr,(0,2,1,3,4,5)).astype(np.complex64)
+    return xp.asnumpy(cfr) if array_backend=='cupy' else cfr
 
 
 def geometry_blocks(manifest):
@@ -69,9 +74,11 @@ def geometry_blocks(manifest):
 
 
 class RtChannelProvider:
-    def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3):
+    def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3,reconstruction_backend='numpy'):
         self.manifest = json.loads(json.dumps(manifest))
         self.device = device
+        if reconstruction_backend not in ('numpy','cupy'):raise ValueError('Unknown channel array backend')
+        self.reconstruction_backend=reconstruction_backend
         self.quota_bytes=int(quota_bytes)
         if self.quota_bytes<=0:raise ValueError('Positive cache quota required')
         self.backend = backend or SionnaRayTracer(manifest,device)
@@ -126,7 +133,7 @@ class RtChannelProvider:
             static=len(self.blocks)==1 and np.all(self.loaded_arrays['doppler']==0)
             if static and hasattr(self,'_static_cfr'):cfr=self._static_cfr
             else:
-                cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt)
+                cfr=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt,self.reconstruction_backend)
                 if static:self._static_cfr=cfr
             positions=np.asarray([position_at(u['trajectory'],slot_id*self.dt)[0] for u in self.manifest['ues']])
         else:
@@ -141,7 +148,7 @@ class RtChannelProvider:
                 'static_geometry_exact_reuse':len(self.blocks)==1,
                 'ray_seed_policy':'fixed_per_trace',
                 'subcarrier_spacing_hz':self.manifest['subcarrier_spacing_hz'],
-                'cache_hits':self.hits,'cache_misses':self.misses})
+                'cache_hits':self.hits,'cache_misses':self.misses,'reconstruction_backend':self.reconstruction_backend})
         return snap.validate()
 
     def pregenerate(self):
@@ -151,8 +158,13 @@ class RtChannelProvider:
 
 class SionnaRayTracer:
     def __init__(self,manifest,device):
-        import sionna.rt as rt
         import mitsuba as mi
+        # Select the backend before Sionna loads variant-specific types.
+        # CUDA availability alone does not imply OptiX support (Jetson).
+        if device=='cpu':mi.set_variant('llvm_ad_mono_polarized')
+        elif device=='cuda':mi.set_variant('cuda_ad_mono_polarized')
+        else:raise ValueError(f'Unknown ray-tracing device: {device}')
+        import sionna.rt as rt
         self.rt,self.mi,self.m = rt,mi,manifest
         if device=='cuda' and not mi.variant().startswith('cuda'):
             raise RuntimeError(f'Sionna RT is not using CUDA: {mi.variant()}')

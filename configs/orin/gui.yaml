@@ -1,0 +1,16 @@
+title: Sionna RT GUI - Orin AGX
+scene_filename: munich
+create_example_scenario: false
+rendering:
+  mode: RASTERIZATION
+  default_resolution: [1280, 800]
+  current_resolution: [1280, 800]
+  use_denoiser: false
+  default_slice_plane_enabled: false
+radio_map:
+  auto_update: false
+  use_direct_update_from_device: false
+paths:
+  auto_update: false
+  samples_per_src: 100000
+  max_depth: 3

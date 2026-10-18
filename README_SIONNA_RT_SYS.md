@@ -2,6 +2,56 @@
 
 第一阶段接入三维传播信道驱动的多小区下行闭环。入口为 `experiments/run_rt_sys.py`，后端为 `sionna_rt_sys`。原目录没有修改；`source_manifest.json` 保存复制时的源码 SHA256，独立 Git 的首个提交保存原始快照。
 
+## 平台开关：DGX / AGX
+
+两台机器使用同一份代码和场景，通过 `--platform` 选择执行后端：
+
+| 参数 | Sionna RT | NR / SYS | CFR、RZF、LMMSE |
+| --- | --- | --- | --- |
+| `--platform dgx` | CUDA / OptiX | PyTorch CUDA | PyTorch CUDA（CFR 保留原有 NumPy 重建） |
+| `--platform agx` | LLVM CPU | CPU | CuPy CUDA；启动检查失败时改用 NumPy / Torch CPU |
+
+DGX 合作者在已有、支持本机 GPU 的 Sionna 2.2 / PyTorch CUDA 环境内运行：
+
+```bash
+python experiments/run_rt_sys.py --platform dgx --scene munich --cells 3 --ues 12 --slots 40
+```
+
+DGX 模式启动时加载驱动提供的 `libnvoptix.so.1`，并实际执行 Torch CUDA
+solve/SVD 检查；仿真仍必须实际执行 CUDA Sionna RT 调用才能成功。
+缺少 OptiX 驱动库、容器未挂载驱动库、GPU wheel 不兼容或后续 CUDA/RT 错误均明确失败，
+不会自动转 CPU。此模式不限制为某个 CPU 架构或 GB10 型号；原有 Spark 专项验收仍单独保留。
+该参数不会安装或切换 Python 环境。DGX Spark 可沿用 `scripts/spark/activate.sh`；
+其他 DGX 机器请使用其已有的 CUDA 环境，不要套用 Orin 的 CPU wheel 或 Spark 专用 ARM64 lock。
+
+本次配置好的 Jetson AGX 上运行：
+
+```bash
+source scripts/orin/activate-gpu.sh
+python experiments/run_rt_sys.py --platform agx --scene munich --cells 3 --ues 12 --slots 40
+# 等价的环境激活与启动封装：
+bash scripts/orin/run.sh --scene munich --cells 3 --ues 12 --slots 40
+# 明确要求全部计算使用 CPU：
+bash scripts/orin/run-cpu.sh --slots 40
+```
+
+AGX 的默认 CuPy 检查实际执行 CUDA solve/SVD；检查失败时，仅在仿真开始前选择 CPU
+后端并记录原因。运行过程中不隐藏异常、不重启为 CPU 重跑。
+`--platform agx --algebra-backend cupy` 是强制 GPU 请求，检查失败会报错；
+`--platform agx --algebra-backend torch` 则直接使用 CPU，不要求安装 CuPy。
+
+`--dry-run` 只显示请求的配置，不加载 OptiX 或执行 GPU 检查，不代表硬件验收通过：
+
+```bash
+python experiments/run_rt_sys.py --platform dgx --dry-run
+python experiments/run_rt_sys.py --platform agx --dry-run
+```
+
+`config_snapshot.json`、`run_status.json` 和最终环境记录保存平台选择、实际执行设备和
+回退原因。不指定 `--platform` 时保留旧的 `--device`、`--rt-device`、
+`--algebra-backend` 行为，默认仍为 CUDA；与所选平台冲突的设备参数会报错。
+两个后端保持同一套物理模型，但 CPU/GPU 数值和抽样结果不保证逐位相同。
+
 2026-10-12：Spark 上修复后完整接入矩阵 12/12 通过，覆盖两地图、3 小区、12/24 UE、3 种子、各 1000 时隙；真实 RT/SYS GPU 控制探针、资源/功率记账和固定种子重放通过。全量回归 193 项通过、4 项原有失败。当前调度矩阵没有自然 MU 组，MU 由专项重叠资源及已知信道测试验证。详见 [完整接入报告](docs/rt_sys/FULL_ACCEPTANCE.md)；这些结果不作为算法跨场景泛化结论。
 
 ## 已实现

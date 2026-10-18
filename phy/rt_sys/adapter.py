@@ -21,7 +21,9 @@ class RtSysPhyAdapter:
         self.device = self.config.get('device', 'cuda')
         if abstraction is None and self.device == 'numpy':
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
-        self.math = Algebra(self.device)
+        self.algebra_backend=self.config.get('algebra_backend','torch')
+        if self.algebra_backend not in ('torch','cupy'):raise ValueError('Unknown algebra backend')
+        self.math = Algebra('cupy' if self.algebra_backend=='cupy' else self.device)
         mode=self.config.get('feedback_mode','sys_abstraction')
         if mode not in ('sys_abstraction','nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
         if abstraction is not None:self.abstraction=abstraction
@@ -48,7 +50,8 @@ class RtSysPhyAdapter:
             if not cache.is_relative_to(root):
                 raise ValueError('RT cache must remain inside the independent copy')
             manifest=json.loads(Path(self.config['manifest_path']).read_text())
-            self.channel_provider=RtChannelProvider(manifest,cache,device=self.device)
+            self.channel_provider=RtChannelProvider(manifest,cache,device=self.config.get('rt_device',self.device),
+                reconstruction_backend=self.config.get('channel_array_backend','numpy'))
         self.seed = int(self.config.get('rng_seed', 1))
         self.trace = {}
         self.current_snapshot = None

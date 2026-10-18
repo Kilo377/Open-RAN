@@ -2,6 +2,23 @@
 
 A slot-driven O-RAN-style RAN simulator prototype in Python.
 
+Choose the execution platform explicitly with the same project entry point:
+
+```bash
+# DGX: activate your CUDA-enabled Sionna 2.2 / PyTorch environment first.
+python experiments/run_rt_sys.py --platform dgx --scene munich --cells 3 --ues 12 --slots 40
+# Jetson AGX: activates the existing Orin environment and selects --platform agx.
+bash scripts/orin/run.sh --scene munich --cells 3 --ues 12 --slots 40
+```
+
+`dgx` uses CUDA/OptiX ray tracing and PyTorch CUDA PHY/algebra. `agx` uses
+LLVM CPU ray tracing and CPU NR feedback, plus CuPy CUDA channel reconstruction
+and RZF/LMMSE algebra; if the initial CuPy kernel check fails, it selects CPU
+algebra and records the reason. DGX mode never silently falls back to CPU.
+Use `--dry-run` to inspect the selected profile without hardware execution.
+Profile selection does not install dependencies or change the radio model.
+See [platform usage and limitations](README_SIONNA_RT_SYS.md#平台开关dgx--agx).
+
 This independent copy now defaults to Sionna 2.2 RT with actual NR-TB reference
 feedback and SYS transport-budget adaptation (`sionna_rt_sys`,
 `feedback_mode: nr_direct`, no online Monte Carlo probes). Geometry updates every 0.5 ms slot; Munich
