@@ -5,6 +5,7 @@ import time
 import numpy as np
 import polyscope as ps
 import polyscope.imgui as ui
+from scripts.orin.live_xapp_status import banner, status_rows
 
 ACCENT = (0.25, 0.85, 0.75, 1.0)
 MUTED = (0.65, 0.73, 0.82, 1.0)
@@ -64,7 +65,7 @@ class Dashboard:
         self.cell_index = 0
         self.state_path = state_path
         self.test_cell = 0
-        self.test_app = 0
+        self.test_app = None
         self.test_message = ''
 
     def window(self, name, xy, size):
@@ -80,7 +81,7 @@ class Dashboard:
         age = time.time() - data['updated_unix_s'] if data.get('updated_unix_s') else None
         stale = stage == 'simulating' and age is not None and age > 10
         self.window('OPEN-RAN  /  Live Network Workspace', (10, 10), (width - 20, 112))
-        access = 'XAPP TEST ENABLED' if data.get('xapp_test') else 'READ ONLY'
+        access = banner({**data, 'stage': stage}) if data.get('xapp_test') else 'READ ONLY'
         ui.TextColored(ACCENT, f'{stage.upper()}   |   {data.get("scene", "loading scene")}   |   {config.get("control_mode", "loading mode")} control   |   {access}')
         slot, sim_ms, wall = data.get('slot', 0), data.get('sim_time_ms', 0), data.get('wall_s', 0)
         ui.TextUnformatted(f'Slot {slot}/{data.get("total_slots", "...")}   Simulation {sim_ms:.3f} ms   Wall {wall:.1f} s   State age {fmt(age, 1, " s")}')
@@ -103,14 +104,14 @@ class Dashboard:
         panel_width = min(720, max(620, width * .37)) if self.view == 'integrated' else width * .65 - 15
         self.window('Network operations', (10, 132), (panel_width, max(250, height - 142)))
         if ui.BeginTabBar('operations-tabs'):
-            tabs = [('Overview', self.overview), ('UEs', self.ues), ('Cells', self.cells),
+            tabs = [('Overview', self.overview), ('KPIs', self.kpis), ('UEs', self.ues), ('Cells', self.cells),
                     ('Config', self.config), ('Control', self.control)]
             if data.get('xapp_test'):
                 tabs.insert(0, ('xApp test', self.xapp_test))
             for label, draw in tabs:
                 active, _ = ui.BeginTabItem(label, True)
                 if active:
-                    draw(data, focus)
+                    draw({**data, 'stage': stage}, focus)
                     ui.EndTabItem()
             ui.EndTabBar()
         ui.End()
@@ -182,6 +183,38 @@ class Dashboard:
             ('Pending HARQ bytes', fmt(user.get('harq', {}).get('pending_retx_bytes'))),
         ])
 
+    def kpis(self, d, focus):
+        ui.TextColored(ACCENT, 'LIVE KPI DETAILS / EXPORTED MEASUREMENTS')
+        ui.TextWrapped('The trend charts show throughput and queue only. More live KPIs are below. This is the live export, not every internal model metric.')
+        packet = d.get('packet_totals', {})
+        users = d.get('ues', [])
+        attempts = d.get('decode_attempts', 0)
+        hol = [u.get('packet', {}).get('hol_delay_ms') for u in users]
+        maximum = [u.get('packet', {}).get('max_completion_latency_ms') for u in users]
+        table('kpi-network', ['Network metric', 'Current value'], [
+            ['Goodput / latest slot Mbps', fmt(d.get('slot_throughput_mbps'), 3)],
+            ['Goodput / run average Mbps', fmt(d.get('throughput_mbps'), 3)],
+            ['MAC queue bytes', fmt(d.get('queue_bytes'))],
+            ['Pending packet bytes', fmt(packet.get('pending_bytes'))],
+            ['Overflow bytes', fmt(packet.get('overflow_bytes'))],
+            ['Completed packets', fmt(packet.get('completed_packets'))],
+            ['Mean completed-packet delay ms', fmt(packet.get('mean_completion_latency_ms'), 3)],
+            ['Max observed completed-packet delay ms', fmt(max((v for v in maximum if v is not None), default=None), 3)],
+            ['Current max UE HOL delay ms', fmt(max((v for v in hol if v is not None), default=None), 3)],
+            ['Late completed fraction', fmt(packet.get('late_completed_fraction'), 4)],
+            ['Packets that missed their deadline', fmt(packet.get('deadline_missed_packets'))],
+            ['NACK / actual NR decode attempts', f'{d.get("nacks", 0)} / {attempts}'],
+            ['Observed cumulative NACK fraction', fmt(d.get('nacks', 0) / attempts if attempts else None, 4)],
+        ])
+        ui.TextWrapped('Delay covers completed packets; pending work is shown separately. NACK fraction includes the observed decode attempts and is not a converged BLER estimate.')
+        table('kpi-cell', ['Cell', 'Mbps', 'Grid %', 'RF W', 'Queue B'], [
+            [c['cell_id'], fmt(c.get('slot_throughput_mbps')), fmt(c.get('grid', {}).get('utilization', 0) * 100),
+             fmt(c.get('phy_power', {}).get('average_used_w'), 4), fmt(c.get('queue_bytes'))] for c in d.get('cell_metrics', [])])
+        tree('All exported network packet counters', packet)
+        tree('Per-UE radio, queue, HOL, HARQ and packet counters', users)
+        tree('Per-cell resources, MU groups and RF power counters', d.get('cell_metrics', []))
+        ui.TextWrapped('Not aggregated in this live export: P95/P99 packet delay, separate first-transmission BLER and UE goodput fairness over a declared window. Extended controller KPI reports remain in experiment artifacts. Whole-device energy needs a device power model or measurement.')
+
     def cells(self, d, focus):
         cells = d.get('cell_metrics', [])
         table('cell-overview', ['Cell', 'UEs', 'Sched', 'Mbps', 'Queue B'], [
@@ -236,7 +269,10 @@ class Dashboard:
         ui.TextColored(ACCENT, f'CONTROL PLANE / {mode.upper()}')
         if mode == 'baseline':
             ui.TextWrapped('Fixed baseline: rApps/xApps are disabled for this run. Effective controls below still show the actual network configuration.')
-        ui.TextUnformatted(f'xApps: {len(apps.get("xapps", []))} / rApps: {len(apps.get("rapps", []))}')
+        ui.TextUnformatted(f'Registered xApps: {len(apps.get("xapps", []))} / rApps: {len(apps.get("rapps", []))}')
+        if d.get('xapp_test'):
+            ui.TextColored(ACCENT, banner(d))
+            ui.TextWrapped('Registration is not activation. Per-instance ON/OFF, cell scope and execution status are in xApp test.')
         ui.TextUnformatted(f'Configured periods: xApp {apps.get("xapp_interval_slots", "--")} slots / rApp {apps.get("rapp_interval_slots", "--")} slots')
         ui.Separator()
         ui.TextColored(ACCENT, 'EFFECTIVE NOW / FROM RUNTIME CELLS')
@@ -277,24 +313,35 @@ class Dashboard:
         from experiments.live_xapp_test import submit, start_comparison
         x = d['xapp_test']
         catalog = x.get('catalog') or [{**x['app'], 'available': True, 'registered': True}]
+        if self.test_app is None:
+            self.test_app = next((i for i, a in enumerate(catalog) if a.get('active_cell_ids')), 0)
         self.test_app = min(self.test_app, len(catalog) - 1)
         available = sum(bool(a.get('available')) for a in catalog)
         ui.TextColored(ACCENT, f'xAPP DISCOVERY / {len(catalog)} found / {available} available')
-        labels = [a['instance_id'] + ('' if a.get('available') else ' [unavailable]') for a in catalog]
+        states = status_rows(d)
+        active = [r for r in states if r['enabled']]
+        ui.TextColored(ACCENT if d.get('stage') == 'simulating' and active else WARN, banner(d))
+        if d.get('stage') != 'simulating':
+            ui.TextWrapped('Simulation has ended. ON/OFF and execution values below are the final recorded state; no xApp is running now.')
+        labels = [f'[{r["state"]}] {r["instance_id"]}' for r in states]
         _, self.test_app = ui.Combo('Select xApp', self.test_app, labels)
         selected = catalog[self.test_app]
+        selected_status = states[self.test_app]
         app = selected['instance_id']
+        ui.TextColored(ACCENT if selected_status['running'] else MUTED, f'SELECTED xAPP STATUS: {selected_status["state"]}')
+        ui.TextWrapped('Enabled cells: ' + (', '.join(selected_status['cells']) or 'none'))
+        ui.TextWrapped('Execution evidence: ' + selected_status['execution'])
         ui.TextWrapped(selected.get('description', app))
         ui.TextWrapped('Writes: ' + ', '.join(selected.get('writable_actions', [])))
         if selected.get('unavailable_reason'):
-            ui.TextColored(WARN, selected['unavailable_reason'])
+            ui.TextWrapped('Unavailable: ' + selected['unavailable_reason'])
         ui.TextWrapped('One xApp per test. Disable and wait for parameter restoration before selecting another. Missing or stale measured inputs make the algorithm hold.')
         cells = ['All cells'] + [c['cell_id'] for c in d.get('cells', [])]
         self.test_cell = min(self.test_cell, len(cells) - 1)
         _, self.test_cell = ui.Combo('Test scope', self.test_cell, cells)
         cell = '*' if self.test_cell == 0 else cells[self.test_cell]
-        ui.TextUnformatted('Selected cells: ' + (', '.join(x['selected_cells']) or 'OFF'))
-        ui.TextWrapped('Active xApp: ' + (x['app']['instance_id'] if x['selected_cells'] else 'OFF'))
+        if active:
+            ui.TextWrapped(('Running xApp: ' if d.get('stage') == 'simulating' else 'Final selected xApp: ') + ', '.join(r['instance_id'] for r in active))
         ui.TextUnformatted(f'Control period: {x["period_ms"]:g} ms | transition exclusion: {x["settle_ms"]:g} ms')
         if d.get('stage') == 'simulating' and self.state_path:
             for label, operation in [('Enable xApp', 'enable'), ('Disable & restore', 'disable')]:
@@ -313,12 +360,16 @@ class Dashboard:
         if self.test_message:ui.TextWrapped(self.test_message)
         if x.get('receipts'):
             r = x['receipts'][-1]
-            ui.TextWrapped(f'Latest receipt / slot {r["received_at_slot"]}: {r["status"]} / {r["reason"]}')
-        ui.TextWrapped('Selection admission is not RAN execution. Effective scheduler values and control receipts below are the execution evidence.')
-        table('test-effective', ['Cell', 'Selected', 'Effective scheduler'], [
+            ui.TextWrapped(f'Command receipt / slot {r["received_at_slot"]}: {r["operation"]} / {r["status"]}')
+            if r['status'] != 'accepted':ui.TextWrapped(r['reason'])
+        ui.TextWrapped('ON means admitted for the listed cells. Execution evidence and runtime values confirm execution. OFF withdraws the binding; parameter restoration still waits for the control pipeline.')
+        table('test-effective', ['Cell', 'Binding ON/OFF', 'Effective scheduler'], [
             [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
             for c in d.get('cell_metrics', [])])
         tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
+        if ui.CollapsingHeader('All xApps / ON, OFF and unavailable states'):
+            table('all-xapp-states', ['xApp', 'State', 'Cells'], [
+                [r['instance_id'], r['state'], ', '.join(r['cells']) or '--'] for r in sorted(states, key=lambda r: not r['enabled'])])
         tree('Effective controls / all runtime fields', [dict(cell=c['cell_id'],
             effective=c['effective'], scheduler=c['scheduler']) for c in d.get('cell_metrics', [])])
         tree('Detected xApp catalog / requirements and availability', catalog)

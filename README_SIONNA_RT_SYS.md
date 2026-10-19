@@ -116,6 +116,11 @@ python scripts/orin/project_live_viewer.py --state outputs/dgx_live/live.json --
 这是本地确定性功能测试规则，不是训练完成的优化算法，也不保证启用后 KPI 改善。
 
 在 **xApp test** 页选择一个可用算法，再选择 All cells 或一个小区，点击 **Enable xApp**。
+顶部显示真正的绑定状态 `xApps ON: ...` 或 `ALL OFF`；下拉列表和选中实例均标明
+ON / OFF / UNAVAILABLE，并显示启用小区。展开 **All xApps / ON, OFF and unavailable states**
+可查看整个目录的状态。ON 表示绑定已准入；**Execution evidence** 按实例、小区、选择版本匹配
+真实执行回执，显示 applied、rejected 或等待/保持原因，旧版本回执不会被当成新启用的执行证明。
+结束的运行明确显示 RUN ENDED / HISTORY，不能把结束时的 ON 当成仍在运行。
 一次只测试一个实例。**Disable & restore** 撤回当前实例，并通过原控制通道恢复它控制的参数；
 恢复完成后才能启用另一个实例。`--xapp-test-app IMPLEMENTATION_ID` 也可指定启动算法，
 配合 `--xapp-test-start on` 使用；默认仍是队列/HOL 测试实例且关闭。
@@ -136,6 +141,11 @@ python scripts/orin/project_live_viewer.py --state outputs/dgx_live/live.json --
 这里的热插拔是预注册 xApp 的逻辑启停，不加载任意 Python 文件，也不是 Kubernetes 部署或真实 E2 互通。
 不加 `--live-xapp-test` 的运行保持原行为；该模式与 orchestrated/train/test 明确隔离。
 DGX 同样可在普通 RT/SYS 命令中加入 `--live-xapp-test --live-state ...` 后连接现有 viewer。
+
+**KPIs** 页汇总当前已导出的实时 KPI：网络 goodput、队列、HOL、包交付/溢出/截止时限计数、
+已完成包平均/最大时延和观测 NACK 比例，以及每小区资源与 RF 功率、每 UE 无线/HARQ/包明细。
+它不是模型内全部指标。P95/P99 包时延、单独首传 BLER、指定窗口的 UE goodput 公平性
+尚未在实时导出中汇总；控制器扩展报告仍在实验文件中。整机能耗也不等同于发射 RF 功率。
 
 ## 已实现
 

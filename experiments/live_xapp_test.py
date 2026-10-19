@@ -203,7 +203,8 @@ class LiveXAppSession:
             catalog.append({key: descriptor[key] for key in (
                 'instance_id', 'implementation_id', 'category_id', 'description', 'writable_actions',
                 'active_cell_ids', 'required_kpis', 'min_action_ms') if key in descriptor} |
-                dict(registered=True, available=reason is None, unavailable_reason=reason))
+                dict(registered=True, available=reason is None, unavailable_reason=reason,
+                    selection_versions=dict(app.tokens)))
         for ident, spec in sorted(IMPLEMENTATIONS.items()):
             if ident not in self.apps:
                 catalog.append(dict(instance_id=ident, implementation_id=ident,
