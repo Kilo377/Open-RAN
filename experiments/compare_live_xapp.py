@@ -6,10 +6,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from experiments.live_xapp_test import ARGUMENTS, atomic_json
+from experiments.live_xapp_test import APP, ARGUMENTS, atomic_json
 
 
-def compare(spec_path, output, result, cell='*'):
+def compare(spec_path, output, result, cell='*', app=APP):
     from experiments.run_rt_sys import parse_args, run_case
     spec = json.loads(Path(spec_path).read_text())
     if set(spec) != {'arguments', 'slots'} or set(spec['arguments']) - set(ARGUMENTS):
@@ -20,7 +20,7 @@ def compare(spec_path, output, result, cell='*'):
     output.mkdir(parents=True, exist_ok=True)
     arms = {}
     for arm in ('off', 'on'):
-        atomic_json(result, dict(stage='running_' + arm, output=str(output), arms=arms,
+        atomic_json(result, dict(stage='running_' + arm, app_id=app, output=str(output), arms=arms,
             note='Both runs use identical initial conditions; live before/after segments are not a causal comparison.'))
         previous = sys.argv
         try:
@@ -32,6 +32,7 @@ def compare(spec_path, output, result, cell='*'):
             setattr(args, key, Path(value) if key in ('config', 'channel_cache_root') else value)
         args.slots = int(spec['slots'])
         args.live_xapp_test, args.xapp_test_start, args.xapp_test_cell = True, arm, cell
+        args.xapp_test_app = app
         args.output = output / arm
         args.live_state = args.output / 'live.json'
         run_case(args)
@@ -55,7 +56,7 @@ def compare(spec_path, output, result, cell='*'):
     delta = {key: arms['on']['metrics'][key] - arms['off']['metrics'][key]
              if arms['on']['metrics'][key] is not None and arms['off']['metrics'][key] is not None else None
              for key in keys}
-    report = dict(stage='completed', matched_initial_conditions=matched, arms=arms,
+    report = dict(stage='completed', app_id=app, matched_initial_conditions=matched, arms=arms,
         delta_on_minus_off=delta, output=str(output),
         interpretation='One paired seed is a functional comparison, not proof of general improvement. Delay includes completed packets only; queue/HOL include pending work.')
     atomic_json(result, report)
@@ -68,9 +69,10 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--result', type=Path, required=True)
     parser.add_argument('--cell', default='*')
+    parser.add_argument('--app', default=APP)
     options = parser.parse_args()
     try:
-        compare(options.spec, options.output, options.result, options.cell)
+        compare(options.spec, options.output, options.result, options.cell, options.app)
     except Exception as error:
         atomic_json(options.result, dict(stage='failed', error=str(error), output=str(options.output)))
         raise

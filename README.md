@@ -21,9 +21,12 @@ See [platform usage and limitations](README_SIONNA_RT_SYS.md#平台开关dgx--ag
 
 `bash scripts/orin/live.sh` opens the unified network workspace:
 the actual 3D scene, live per-UE/cell KPIs, radio configuration, effective and
-pending controls, execution receipts, and bounded KPI trends. The registered
-queue/HOL xApp test starts OFF and supports live per-cell enable/disable with
-configuration restoration, segment metrics, and matched OFF/ON runs. Use
+pending controls, execution receipts, and bounded KPI trends. The xApp test page
+discovers the local implementation catalog, shows runtime requirements, and lets
+you select an available algorithm and target cells. Apps start OFF; one app runs
+at a time, with parameter restoration before switching, segment metrics and
+matched OFF/ON runs of the selected algorithm. Handover commands need a separate
+experiment; missing service, beam or event reports are marked unavailable. Use
 `--read-only` for monitoring only. Select Integrated,
 Network only or Scene only from View; see the live-monitoring section in
 [the RT/SYS guide](README_SIONNA_RT_SYS.md#实时网络监测与三维统一工作区).

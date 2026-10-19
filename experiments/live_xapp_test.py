@@ -38,9 +38,21 @@ def configure(configs, manifest, args):
         raise ValueError('Comparison slot count must be positive')
     if getattr(args, 'xapp_test_cell', '*') not in ['*'] + [c['cell_id'] for c in manifest['cells']]:
         raise ValueError('Unknown xApp test cell')
+    from ric.near_rt.xapp_library import IMPLEMENTATIONS
+    cells = [c['cell_id'] for c in manifest['cells']]
     period = max(1, math.ceil(20 / manifest['slot_duration_ms']))
-    configs['ric'].update(rapps=[], xapps=[dict(type=APP, name=APP,
-        cell_ids=[c['cell_id'] for c in manifest['cells']])], freeze_learning=True,
+    apps = [dict(type=APP, name=APP, cell_ids=cells)]
+    # Command-based mobility experiments cannot promise configuration withdrawal.
+    apps += [dict(type='xapp_instance', instance_id=ident, implementation_id=ident,
+        cell_ids=cells, slot_duration_ms=manifest['slot_duration_ms'], initial_bindings={})
+        for ident, spec in sorted(IMPLEMENTATIONS.items()) if not spec['commands']]
+    if getattr(args, 'xapp_test_app', APP) not in [APP] + [a['instance_id'] for a in apps[1:]]:
+        raise ValueError('Unknown or command-based live test xApp')
+    paper = configs.setdefault('phy', {}).setdefault('rt_sys', {}).setdefault('paper_interfaces', {})
+    paper.update(enabled=True, rule_observations=True)
+    paper.setdefault('connection_events', False)
+    paper.setdefault('beam_reports', False)
+    configs['ric'].update(rapps=[], xapps=apps, freeze_learning=True,
         run_rapps_on_start=False, xapp_interval_slots=period,
         rapp_interval_slots=math.ceil(1000 / manifest['slot_duration_ms']))
     return True
@@ -52,14 +64,14 @@ class LiveXAppSession:
         self.simulator, self.args, self.output = simulator, args, Path(output)
         self.run_id = uuid.uuid4().hex
         self.manager = simulator.controller_manager
-        self.app = self.manager.instance_selection.apps()[APP]
+        self.apps = self.manager.instance_selection.apps()
+        self.app = self.apps[getattr(args, 'xapp_test_app', APP)]
         self.dt = float(simulator.clock.slot_duration_ms) if hasattr(simulator.clock, 'slot_duration_ms') else float(args._live_slot_ms)
         self.period = self.manager.xapp_interval_slots
         self.settle_slots = self.period + max(0, simulator._config_delay_slots)
         self.manager.rule_leases = RuleLeases()
-        self.baseline = {cid: {key: deepcopy(getattr(runtime.scheduler, key))
-            for key in self.app.controlled_fields}
-            for cid, runtime in simulator.state.managed_cells.items()}
+        from ric.near_rt.rule_based_v1.telemetry import executed_configs
+        self.baseline = executed_configs(simulator.state)
         self.manager.rule_leases.baseline = deepcopy(self.baseline)
         self.receipts, self.segments = deque(maxlen=30), []
         self.previous_packet = (0, 0.)
@@ -74,29 +86,59 @@ class LiveXAppSession:
             slots=min(args.slots, getattr(args, 'xapp_test_compare_slots', 200))))
         self.change(getattr(args, 'xapp_test_start', 'off') == 'on', getattr(args, 'xapp_test_cell', '*'), 0)
 
-    def change(self, enabled, cell, slot):
+    def unavailable_reason(self, app):
+        if not app.contract.available:
+            return 'Backend does not provide the declared KPI/action contract'
+        required = set(app.contract.required_kpis)
+        paper = getattr(self.simulator.state, 'paper', None)
+        if app.name != APP and not paper:
+            return 'Extended measured reports are disabled'
+        if required & {'requested_dl_rate_bps', 'sla_status'} and any(
+                getattr(u, 'paper_requested_dl_rate_bps', None) is None for u in self.simulator.state.ues):
+            return 'Explicit service requirements are not configured for all UEs'
+        if 'mobility_events' in required and not getattr(paper, 'events_enabled', False):
+            return 'Connection event model is disabled'
+        if 'beam_reference_reports' in required and not paper.config.get('beam_reports', False):
+            return 'Beam reference reports are disabled'
+        return None
+
+    def change(self, enabled, cell, slot, app_id=None):
         from models.policy import PolicyUpdate
         known = set(self.baseline)
         if cell != '*' and cell not in known:
             raise ValueError('Unknown target cell')
         selection = self.manager.instance_selection
         before = deepcopy(selection.bindings or {})
-        new = {cid: {self.app.category_id: APP} for cid in (sorted(known) if cell == '*' else [cell])} if enabled else {}
+        app = self.apps.get(app_id or self.app.name)
+        if app is None:
+            raise ValueError('Unregistered live test xApp')
+        if enabled:
+            reason = self.unavailable_reason(app)
+            if reason:
+                raise ValueError(reason)
+            if any(ident != app.name for groups in before.values() for ident in groups.values()):
+                raise ValueError('Disable the active xApp and wait for parameter restoration before switching')
+        new = {cid: {app.category_id: app.name} for cid in (sorted(known) if cell == '*' else [cell])} if enabled else {}
         if new == before and self.segments:
             return 'unchanged'
         # A previous withdrawal must finish before its baseline is reused.
         if enabled:
+            from ric.near_rt.rule_based_v1.telemetry import executed_configs
+            current = executed_configs(self.simulator.state)
             for cid in set(new) - set(before):
-                for key, value in self.baseline[cid].items():
-                    if getattr(self.simulator.state.managed_cells[cid].scheduler, key) != value:
-                        raise ValueError('Wait for the previous disable to restore the scheduler')
+                fields = {f for a in self.apps.values() for f in a.controlled_fields}
+                for key in fields:
+                    if current[cid].get(key) != self.baseline[cid].get(key):
+                        raise ValueError('Wait for the previous disable to restore controlled parameters')
         accepted = self.manager.policy_store.apply_update(PolicyUpdate(
             source_name='live_xapp_ui', xapp_bindings=new), slot_id=slot)
         if accepted is False:
             raise ValueError('Selection policy was rejected')
         # Invalidate queued old-generation requests before the next slot applies them.
         selection.sync(slot, None)
+        if enabled:self.app = app
         self.segments.append(dict(label=('ON / ' + cell) if enabled else 'OFF / baseline',
+            app_id=app.name,
             enabled=enabled, cell=cell, start_slot=slot, first_counted_slot=slot + self.settle_slots + 1,
             slots=0, skipped_slots=0, delivered_bytes=0, queue_sum=0, hol_sum=0.,
             decodes=0, nacks=0, completed_packets=0, completion_delay_sum_ms=0.))
@@ -113,16 +155,17 @@ class LiveXAppSession:
                 request = json.loads(path.read_text())
                 if not isinstance(request, dict) or set(request) != {'run_id', 'request_id', 'operation', 'app', 'cell'}:
                     raise ValueError('Malformed command')
-                if request['run_id'] != self.run_id or request['app'] != APP:
+                if request['run_id'] != self.run_id or request['app'] not in self.apps:
                     raise ValueError('Stale run or unregistered app')
                 if request['operation'] not in ('enable', 'disable'):
                     raise ValueError('Unsupported operation')
-                reason = self.change(request['operation'] == 'enable', request['cell'], self.simulator.state.slot_id)
+                reason = self.change(request['operation'] == 'enable', request['cell'], self.simulator.state.slot_id, request['app'])
                 status = 'accepted'
             except (OSError, ValueError, TypeError, KeyError) as exc:
                 reason = str(exc)
             event = dict(request_id=request.get('request_id') if isinstance(request, dict) else None,
                 operation=request.get('operation') if isinstance(request, dict) else None,
+                app=request.get('app') if isinstance(request, dict) else None,
                 received_at_slot=self.simulator.state.slot_id, status=status, reason=reason)
             self.receipts.append(event)
             with self.events.open('a') as stream:
@@ -152,6 +195,21 @@ class LiveXAppSession:
         segment['completion_delay_sum_ms'] += delay - prior_delay
 
     def snapshot(self):
+        from ric.near_rt.xapp_library import IMPLEMENTATIONS
+        catalog = []
+        for ident, app in self.apps.items():
+            descriptor = app.descriptor()
+            reason = self.unavailable_reason(app)
+            catalog.append({key: descriptor[key] for key in (
+                'instance_id', 'implementation_id', 'category_id', 'description', 'writable_actions',
+                'active_cell_ids', 'required_kpis', 'min_action_ms') if key in descriptor} |
+                dict(registered=True, available=reason is None, unavailable_reason=reason))
+        for ident, spec in sorted(IMPLEMENTATIONS.items()):
+            if ident not in self.apps:
+                catalog.append(dict(instance_id=ident, implementation_id=ident,
+                    category_id=spec['category_id'], description=spec['description'],
+                    registered=False, available=False, active_cell_ids=[],
+                    unavailable_reason='Handover commands require a separate experiment; configuration withdrawal cannot undo them'))
         segments = []
         for item in self.segments[-12:]:
             n, count = item['slots'], item['completed_packets']
@@ -161,7 +219,7 @@ class LiveXAppSession:
                 'mean_max_hol_ms': item['hol_sum'] / n if n else None,
                 'mean_completion_delay_ms': item['completion_delay_sum_ms'] / count if count else None,
                 'nack_fraction': item['nacks'] / item['decodes'] if item['decodes'] else None})
-        return dict(run_id=self.run_id, app=self.app.descriptor(),
+        return dict(run_id=self.run_id, app=self.app.descriptor(), catalog=catalog,
             selected_cells=sorted(self.app.active_cells), period_ms=self.period * self.dt,
             settle_ms=self.settle_slots * self.dt, segments=segments,
             last_decisions=deepcopy(self.app.last_decisions), receipts=list(self.receipts),
@@ -170,7 +228,7 @@ class LiveXAppSession:
             comparison_note='Live segments are observational; matched A/B restarts both arms with the same seed, traffic and propagation.')
 
 
-def submit(state_path, data, operation, cell='*'):
+def submit(state_path, data, operation, cell='*', app=APP):
     experiment = data['xapp_test']
     if data.get('stage') != 'simulating':
         raise ValueError('This run has finished; start a new live run to toggle xApps')
@@ -180,11 +238,11 @@ def submit(state_path, data, operation, cell='*'):
     request_id = uuid.uuid4().hex
     atomic_json(directory / f'{time.time_ns():020d}_{request_id}.json',
         dict(run_id=experiment['run_id'], request_id=request_id,
-             operation=operation, app=APP, cell=cell))
+             operation=operation, app=app, cell=cell))
     return request_id
 
 
-def start_comparison(state_path, data, cell='*'):
+def start_comparison(state_path, data, cell='*', app=APP):
     state_path = Path(state_path)
     result = state_path.with_suffix('.comparison.json')
     lock = result.with_suffix('.lock')
@@ -204,12 +262,12 @@ def start_comparison(state_path, data, cell='*'):
     log = None
     try:
         job_dir.mkdir()
-        atomic_json(result, dict(stage='queued', output=str(job_dir)))
+        atomic_json(result, dict(stage='queued', app_id=app, output=str(job_dir)))
         log = (job_dir / 'worker.log').open('w')
         process = subprocess.Popen([data['xapp_test']['simulation_python'],
             str(ROOT / 'experiments/compare_live_xapp.py'), '--spec',
             data['xapp_test']['comparison_spec'], '--output', str(job_dir),
-            '--result', str(result), '--cell', cell], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+            '--result', str(result), '--cell', cell, '--app', app], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
         os.write(fd, json.dumps(dict(pid=process.pid)).encode())
     except Exception:
         lock.unlink(missing_ok=True)

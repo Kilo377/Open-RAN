@@ -104,22 +104,29 @@ python scripts/orin/project_live_viewer.py --state outputs/dgx_live/live.json --
 
 ## UI 中的 xApp 测试与在线启停
 
-`live.sh` 默认加入 `--live-xapp-test`，控制模式标为 `xapp_test`，不启用其他 rApp/xApp。
+`live.sh` 默认加入 `--live-xapp-test`，控制模式标为 `xapp_test`，不启用自动编排或学习。
+测试页从现有注册表检测 46 个库内实现及下面的测试实例，显示 **Select xApp** 下拉列表。
+无命令副作用的库内实例预注册且初始全部关闭；根据真实 KPI/action 契约、SLA 声明、
+波束报告和连接事件模型检查可用条件。不满足条件的项显示 unavailable 和原因，不能启用。
+切换/连接命令类实现只列出，不在这个可恢复参数的测试入口中注册。
+该模式开启扩展测量报告，默认关闭额外连接事件模型和波束扫描报告；显式场景配置优先。
 测试实例 `live_scheduler_test:queue_hol` 只消费正常延迟、噪声处理后的队列和 HOL 测量：
 某小区队列超过 4000 B 或 HOL 达到时延预算的 50% 时，请求 `latency_aware`；否则请求
 `round_robin`。它只写 `scheduler_mode` 和 `scheduler_policy_hint`，不改变信道、业务、功率、CSI 或 HARQ。
 这是本地确定性功能测试规则，不是训练完成的优化算法，也不保证启用后 KPI 改善。
 
-在 **xApp test** 页选择 All cells 或一个小区，然后点击 **Enable xApp**。
-**Disable & restore** 撤回整个测试实例，并通过原控制通道恢复原调度模式和提示。
+在 **xApp test** 页选择一个可用算法，再选择 All cells 或一个小区，点击 **Enable xApp**。
+一次只测试一个实例。**Disable & restore** 撤回当前实例，并通过原控制通道恢复它控制的参数；
+恢复完成后才能启用另一个实例。`--xapp-test-app IMPLEMENTATION_ID` 也可指定启动算法，
+配合 `--xapp-test-start on` 使用；默认仍是队列/HOL 测试实例且关闭。
 在线启停复用实例绑定、选择版本、字段仲裁和撤回机制；停用时使旧版本待执行动作失效。
 新控制仍等待 20 ms 控制周期和原有执行延迟，不重置队列、UE、信道、HARQ 或仿真时间。
 恢复未完成时拒绝重新启用，防止把仍在恢复的状态当成基线。回执中的 accepted 表示绑定准入，
-实际生效值以 Effective scheduler 和 Control 中的执行回执为准。
+实际生效值以 Effective controls 和 Control 中的执行回执为准。停用恢复配置参数，不撤销已经发生的业务交付、移动或网络历史。
 
 分段 KPI 跳过一个控制周期加执行延迟，统计实际交付、平均队列、HOL 和已完成包时延。
 同一次运行的启停前后仍受到移动、业务和队列历史影响，只能作为观察。
-**Run matched A/B** 启动两个独立的 OFF/ON 运行，固定场景、seed、业务与初始队列，
+**Run matched A/B** 对下拉列表选中的算法启动两个独立的 OFF/ON 运行，固定场景、seed、业务与初始队列，
 并检查环境和执行源码指纹相同。默认每组最多 200 个时隙，可通过
 `--xapp-test-compare-slots` 调整；进度和结果写到当前运行旁的 `live.comparison.json`，
 完整数据在 `comparison_*/off` 与 `comparison_*/on`。它可以在主演示完成后启动，

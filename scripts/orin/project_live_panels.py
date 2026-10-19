@@ -64,6 +64,7 @@ class Dashboard:
         self.cell_index = 0
         self.state_path = state_path
         self.test_cell = 0
+        self.test_app = 0
         self.test_message = ''
 
     def window(self, name, xy, size):
@@ -275,19 +276,34 @@ class Dashboard:
     def xapp_test(self, d, focus):
         from experiments.live_xapp_test import submit, start_comparison
         x = d['xapp_test']
-        ui.TextColored(ACCENT, 'REGISTERED xAPP / QUEUE & HOL SCHEDULER')
-        ui.TextWrapped('Local rule: measured queue > 4000 B or HOL >= 50% of delay budget selects latency-aware scheduling; otherwise round-robin.')
+        catalog = x.get('catalog') or [{**x['app'], 'available': True, 'registered': True}]
+        self.test_app = min(self.test_app, len(catalog) - 1)
+        available = sum(bool(a.get('available')) for a in catalog)
+        ui.TextColored(ACCENT, f'xAPP DISCOVERY / {len(catalog)} found / {available} available')
+        labels = [a['instance_id'] + ('' if a.get('available') else ' [unavailable]') for a in catalog]
+        _, self.test_app = ui.Combo('Select xApp', self.test_app, labels)
+        selected = catalog[self.test_app]
+        app = selected['instance_id']
+        ui.TextWrapped(selected.get('description', app))
+        ui.TextWrapped('Writes: ' + ', '.join(selected.get('writable_actions', [])))
+        if selected.get('unavailable_reason'):
+            ui.TextColored(WARN, selected['unavailable_reason'])
+        ui.TextWrapped('One xApp per test. Disable and wait for parameter restoration before selecting another. Missing or stale measured inputs make the algorithm hold.')
         cells = ['All cells'] + [c['cell_id'] for c in d.get('cells', [])]
         self.test_cell = min(self.test_cell, len(cells) - 1)
         _, self.test_cell = ui.Combo('Test scope', self.test_cell, cells)
         cell = '*' if self.test_cell == 0 else cells[self.test_cell]
         ui.TextUnformatted('Selected cells: ' + (', '.join(x['selected_cells']) or 'OFF'))
+        ui.TextWrapped('Active xApp: ' + (x['app']['instance_id'] if x['selected_cells'] else 'OFF'))
         ui.TextUnformatted(f'Control period: {x["period_ms"]:g} ms | transition exclusion: {x["settle_ms"]:g} ms')
         if d.get('stage') == 'simulating' and self.state_path:
             for label, operation in [('Enable xApp', 'enable'), ('Disable & restore', 'disable')]:
+                if operation == 'enable' and not selected.get('available'):
+                    continue
                 if ui.Button(label):
                     try:
-                        ident = submit(self.state_path, d, operation, cell)
+                        ident = submit(self.state_path, d, operation, cell,
+                            app if operation == 'enable' else x['app']['instance_id'])
                         self.test_message = f'Request {ident[:8]} submitted; processing receipt is shown below.'
                     except (OSError, ValueError) as error:
                         self.test_message = str(error)
@@ -303,18 +319,23 @@ class Dashboard:
             [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
             for c in d.get('cell_metrics', [])])
         tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
+        tree('Effective controls / all runtime fields', [dict(cell=c['cell_id'],
+            effective=c['effective'], scheduler=c['scheduler']) for c in d.get('cell_metrics', [])])
+        tree('Detected xApp catalog / requirements and availability', catalog)
         ui.Separator()
         ui.TextColored(ACCENT, 'LIVE SEGMENTS / WHOLE NETWORK')
         table('test-segments', ['Phase', 'Sample ms', 'Mbps', 'Queue B', 'Delay ms'], [
             [s['label'], fmt(s['duration_ms'], 1), fmt(s['throughput_mbps']),
              fmt(s['mean_queue_bytes']), fmt(s['mean_completion_delay_ms'])] for s in x['segments']])
         ui.TextWrapped('Segments omit transition warm-up. Live before/after is observational: mobility, traffic, HARQ and queues keep evolving. Delay covers completed packets only.')
+        tree('Segment xApp identities', [dict(phase=s['label'], app=s.get('app_id'),
+            start_slot=s['start_slot']) for s in x['segments']])
         ui.Separator()
         ui.TextColored(ACCENT, 'MATCHED OFF / ON REPLAY')
         ui.TextWrapped('Starts two fresh runs with the same scene, seed, traffic and initial queues. This can take minutes on AGX and shares compute with the live run.')
-        if self.state_path and ui.Button('Run matched A/B'):
+        if self.state_path and selected.get('available') and ui.Button('Run matched A/B'):
             try:
-                pid = start_comparison(self.state_path, d, cell)
+                pid = start_comparison(self.state_path, d, cell, app)
                 self.test_message = f'Matched comparison started (worker {pid}).'
             except (OSError, ValueError) as error:
                 self.test_message = str(error)
@@ -324,6 +345,7 @@ class Dashboard:
                 try:
                     report = json.loads(result_path.read_text())
                     ui.TextUnformatted('Comparison: ' + report.get('stage', 'unknown'))
+                    if report.get('app_id'):ui.TextWrapped('Compared xApp: ' + report['app_id'])
                     if report.get('stage', '').startswith('running_'):
                         from pathlib import Path
                         arm = report['stage'].removeprefix('running_')

@@ -101,6 +101,67 @@ def test_commands_are_run_scoped_validated_and_acknowledged(tmp_path):
     assert not list(session.command_dir.glob('*.json'))
 
 
+def test_discovery_marks_missing_requirements_and_command_apps_unavailable(tmp_path):
+    sim, session, step = fixture_sim(tmp_path)
+    catalog = {a['instance_id']: a for a in session.snapshot()['catalog']}
+    assert len(catalog) == 47
+    assert catalog['ue_fairness:equal_share']['available']
+    assert not catalog['traffic_steering:a3_rsrp']['registered']
+    assert 'Handover' in catalog['traffic_steering:a3_rsrp']['unavailable_reason']
+    assert not catalog['beam_management:max_min_reference']['available']
+    assert 'Beam' in catalog['beam_management:max_min_reference']['unavailable_reason']
+    assert not catalog['slice_sla:goodput_pi']['available']
+    assert 'service requirements' in catalog['slice_sla:goodput_pi']['unavailable_reason']
+    with pytest.raises(ValueError, match='service requirements'):
+        session.change(True, '*', 0, 'slice_sla:goodput_pi')
+
+
+def test_select_different_library_app_executes_and_restores_owned_fields(tmp_path):
+    sim, session, step = fixture_sim(tmp_path)
+    step(4)
+    ident = 'ue_fairness:equal_share'
+    data = dict(stage='simulating', xapp_test=session.snapshot())
+    request = submit(tmp_path / 'live.json', data, 'enable', 'cell_1', ident)
+    step(8)
+    assert session.receipts[-1]['request_id'] == request
+    assert session.receipts[-1]['status'] == 'accepted'
+    assert session.app.name == ident
+    assert session.app.active_cells == {'cell_1'}
+    assert sim.state.managed_cells['cell_1'].cell.ue_prb_limits
+    assert not sim.state.managed_cells['cell_0'].cell.ue_prb_limits
+    with pytest.raises(ValueError, match='Disable the active'):
+        session.change(True, '*', sim.state.slot_id, 'rf_energy:sinr_pi')
+    session.change(False, '*', sim.state.slot_id)
+    with pytest.raises(ValueError, match='previous disable'):
+        session.change(True, '*', sim.state.slot_id, 'rf_energy:sinr_pi')
+    step(9)
+    assert all(not c.cell.ue_prb_limits for c in sim.state.managed_cells.values())
+    session.change(True, '*', sim.state.slot_id, 'rf_energy:sinr_pi')
+    step(9)
+    assert session.app.name == 'rf_energy:sinr_pi'
+    assert all(not a.active_cells for key, a in session.apps.items() if key != session.app.name)
+    assert session.snapshot()['segments'][-1]['app_id'] == session.app.name
+
+
+@pytest.mark.parametrize('ident', ['throughput_power:cqi_proportional', 'rf_energy:sinr_pi',
+    'latency_guard:delay_pi', 'load_balancing:load_pi', 'ret_coverage:legacy_v1'])
+def test_library_control_families_restore_runtime_baseline(tmp_path, ident):
+    from ric.near_rt.rule_based_v1.telemetry import executed_configs
+    sim, session, step = fixture_sim(tmp_path)
+    step(4)
+    session.change(True, '*', sim.state.slot_id, ident)
+    step(10)
+    assert session.app.last_decisions
+    if ident.startswith('throughput_power:'):
+        assert any(c.cell.prb_power_w is not None for c in sim.state.managed_cells.values())
+    session.change(False, '*', sim.state.slot_id)
+    step(10)
+    current = executed_configs(sim.state)
+    for cid in current:
+        for field in session.app.controlled_fields:
+            assert current[cid].get(field) == session.baseline[cid].get(field), (cid, field)
+
+
 def test_test_mode_is_opt_in_and_isolated_from_orchestration():
     configs = {'ric': {}}
     assert not configure(configs, {}, NS(live_xapp_test=False))
@@ -169,14 +230,15 @@ def test_paired_runner_checks_exogenous_identity_and_reports_absolute_deltas(tmp
     atomic_json(spec, dict(arguments=dict(scene='munich', seed=73, cells=3, ues=12), slots=80))
     if mismatch:
         with pytest.raises(ValueError, match='initial conditions changed'):
-            compare(spec, tmp_path / 'outputs' / 'pair', result)
+            compare(spec, tmp_path / 'outputs' / 'pair', result, app='ue_fairness:equal_share')
     else:
-        report = compare(spec, tmp_path / 'outputs' / 'pair', result)
+        report = compare(spec, tmp_path / 'outputs' / 'pair', result, app='ue_fairness:equal_share')
         assert report['matched_initial_conditions']
         assert report['delta_on_minus_off']['throughput_mbps'] == 1.
         assert report['delta_on_minus_off']['mean_completion_delay_ms'] is None
     assert [a.xapp_test_start for a in arguments] == ['off', 'on']
     assert all(a.seed == 73 and a.slots == 80 and a.live_xapp_test for a in arguments)
+    assert all(a.xapp_test_app == 'ue_fairness:equal_share' for a in arguments)
 
 
 def test_compare_client_deduplicates_running_worker_and_cleans_failed_start(tmp_path, monkeypatch):
