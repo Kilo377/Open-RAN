@@ -23,8 +23,9 @@ See [platform usage and limitations](README_SIONNA_RT_SYS.md#平台开关dgx--ag
 the actual 3D scene, live per-UE/cell KPIs, radio configuration, effective and
 pending controls, execution receipts, and bounded KPI trends. The xApp test page
 discovers the local implementation catalog, shows runtime requirements, and lets
-you select an available algorithm and target cells. Apps start OFF; one app runs
-at a time, with parameter restoration before switching, segment metrics and
+you toggle each available algorithm directly with its own ON/OFF button. Apps
+start OFF; one app runs at a time, with automatic parameter restoration and
+activation when you click another algorithm, segment metrics and
 matched OFF/ON runs of the selected algorithm. Handover commands need a separate
 experiment; missing service, beam or event reports are marked unavailable. Use
 `--read-only` for monitoring only. Select Integrated,

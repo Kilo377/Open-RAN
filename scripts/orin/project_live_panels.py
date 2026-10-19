@@ -5,7 +5,7 @@ import time
 import numpy as np
 import polyscope as ps
 import polyscope.imgui as ui
-from scripts.orin.live_xapp_status import banner, status_rows
+from scripts.orin.live_xapp_status import banner, status_rows, button_title
 
 ACCENT = (0.25, 0.85, 0.75, 1.0)
 MUTED = (0.65, 0.73, 0.82, 1.0)
@@ -32,6 +32,15 @@ def table(name, headers, rows):
                 ui.TableNextColumn()
                 ui.TextUnformatted(str(value))
         ui.EndTable()
+
+
+def colored_button(label, color, size=(0., 0.)):
+    ui.PushStyleColor(ui.ImGuiCol_Button, color)
+    ui.PushStyleColor(ui.ImGuiCol_ButtonHovered, tuple(min(1., c + .10) for c in color[:3]) + (1.,))
+    ui.PushStyleColor(ui.ImGuiCol_ButtonActive, tuple(min(1., c + .18) for c in color[:3]) + (1.,))
+    clicked = ui.Button(label, size)
+    ui.PopStyleColor(3)
+    return clicked
 
 
 def tree(label, value):
@@ -67,6 +76,7 @@ class Dashboard:
         self.test_cell = 0
         self.test_app = None
         self.test_message = ''
+        self.test_request_id = None
 
     def window(self, name, xy, size):
         ui.SetNextWindowPos(xy, ui.ImGuiCond_Always)
@@ -316,63 +326,82 @@ class Dashboard:
         if self.test_app is None:
             self.test_app = next((i for i, a in enumerate(catalog) if a.get('active_cell_ids')), 0)
         self.test_app = min(self.test_app, len(catalog) - 1)
-        available = sum(bool(a.get('available')) for a in catalog)
-        ui.TextColored(ACCENT, f'xAPP DISCOVERY / {len(catalog)} found / {available} available')
         states = status_rows(d)
+        by_id = {r['instance_id']: r for r in states}
         active = [r for r in states if r['enabled']]
-        ui.TextColored(ACCENT if d.get('stage') == 'simulating' and active else WARN, banner(d))
-        if d.get('stage') != 'simulating':
-            ui.TextWrapped('Simulation has ended. ON/OFF and execution values below are the final recorded state; no xApp is running now.')
-        labels = [f'[{r["state"]}] {r["instance_id"]}' for r in states]
-        _, self.test_app = ui.Combo('Select xApp', self.test_app, labels)
-        selected = catalog[self.test_app]
-        selected_status = states[self.test_app]
-        app = selected['instance_id']
-        ui.TextColored(ACCENT if selected_status['running'] else MUTED, f'SELECTED xAPP STATUS: {selected_status["state"]}')
-        ui.TextWrapped('Enabled cells: ' + (', '.join(selected_status['cells']) or 'none'))
-        ui.TextWrapped('Execution evidence: ' + selected_status['execution'])
-        ui.TextWrapped(selected.get('description', app))
-        ui.TextWrapped('Writes: ' + ', '.join(selected.get('writable_actions', [])))
-        if selected.get('unavailable_reason'):
-            ui.TextWrapped('Unavailable: ' + selected['unavailable_reason'])
-        ui.TextWrapped('One xApp per test. Disable and wait for parameter restoration before selecting another. Missing or stale measured inputs make the algorithm hold.')
+        pending = x.get('pending_activation')
+        live = d.get('stage') == 'simulating' and bool(self.state_path)
+        ui.TextColored(ACCENT, 'xAPPS / CLICK TO TURN ON OR OFF')
+        ui.TextWrapped('One xApp at a time. Click another to switch automatically. Green = ON, amber = switching.')
+        ui.TextColored(WARN if pending else ACCENT, banner(d))
+        if not live:
+            ui.TextWrapped('This run has ended. The buttons show its final state; start a new live run to operate xApps.')
+        if live and (active or pending):
+            if ui.Button('Cancel switch' if pending else 'Turn off current xApp'):
+                try:
+                    self.test_request_id = submit(self.state_path, d, 'disable', '*', x['app']['instance_id'])
+                    self.test_message = 'Stopping; original parameters will restore automatically.'
+                except (OSError, ValueError) as error:self.test_message = str(error)
         cells = ['All cells'] + [c['cell_id'] for c in d.get('cells', [])]
         self.test_cell = min(self.test_cell, len(cells) - 1)
-        _, self.test_cell = ui.Combo('Test scope', self.test_cell, cells)
+        ui.TextUnformatted('Apply next enable to:')
+        for index, name in enumerate(cells):
+            if index:ui.SameLine()
+            if colored_button(name + '##scope', (.12, .43, .35, 1.) if self.test_cell == index else (.15, .22, .29, 1.)):
+                self.test_cell = index
         cell = '*' if self.test_cell == 0 else cells[self.test_cell]
-        if active:
-            ui.TextWrapped(('Running xApp: ' if d.get('stage') == 'simulating' else 'Final selected xApp: ') + ', '.join(r['instance_id'] for r in active))
-        ui.TextUnformatted(f'Control period: {x["period_ms"]:g} ms | transition exclusion: {x["settle_ms"]:g} ms')
-        if d.get('stage') == 'simulating' and self.state_path:
-            for label, operation in [('Enable xApp', 'enable'), ('Disable & restore', 'disable')]:
-                if operation == 'enable' and not selected.get('available'):
-                    continue
-                if ui.Button(label):
-                    try:
-                        ident = submit(self.state_path, d, operation, cell,
-                            app if operation == 'enable' else x['app']['instance_id'])
-                        self.test_message = f'Request {ident[:8]} submitted; processing receipt is shown below.'
-                    except (OSError, ValueError) as error:
-                        self.test_message = str(error)
-                if operation == 'enable':ui.SameLine()
-        else:
-            ui.TextColored(MUTED, 'This run has finished. Hot toggles require a running simulation.')
+        if pending:
+            ui.TextColored(WARN, 'Switching... previous parameters are restoring. You can cancel or click a different xApp.')
+        if self.test_request_id:
+            receipt = next((r for r in reversed(x.get('receipts', [])) if r['request_id'] == self.test_request_id), None)
+            if receipt and receipt['status'] in ('accepted', 'cancelled'):
+                self.test_message = ''
+                self.test_request_id = None
         if self.test_message:ui.TextWrapped(self.test_message)
         if x.get('receipts'):
             r = x['receipts'][-1]
-            ui.TextWrapped(f'Command receipt / slot {r["received_at_slot"]}: {r["operation"]} / {r["status"]}')
-            if r['status'] != 'accepted':ui.TextWrapped(r['reason'])
-        ui.TextWrapped('ON means admitted for the listed cells. Execution evidence and runtime values confirm execution. OFF withdraws the binding; parameter restoration still waits for the control pipeline.')
-        table('test-effective', ['Cell', 'Binding ON/OFF', 'Effective scheduler'], [
-            [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
-            for c in d.get('cell_metrics', [])])
-        tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
-        if ui.CollapsingHeader('All xApps / ON, OFF and unavailable states'):
-            table('all-xapp-states', ['xApp', 'State', 'Cells'], [
-                [r['instance_id'], r['state'], ', '.join(r['cells']) or '--'] for r in sorted(states, key=lambda r: not r['enabled'])])
-        tree('Effective controls / all runtime fields', [dict(cell=c['cell_id'],
-            effective=c['effective'], scheduler=c['scheduler']) for c in d.get('cell_metrics', [])])
-        tree('Detected xApp catalog / requirements and availability', catalog)
+            if r['status'] == 'rejected':ui.TextWrapped('Could not apply: ' + r['reason'])
+        ui.Separator()
+        ui.BeginDisabled(not live)
+        if ui.BeginTable('xapp-button-grid', 2):
+            buttons = [(i, a) for i, a in enumerate(catalog) if a.get('available') or a.get('active_cell_ids')]
+            for button_index, (index, candidate) in enumerate(buttons):
+                row = by_id[candidate['instance_id']]
+                if button_index % 2 == 0:ui.TableNextRow()
+                ui.TableNextColumn()
+                title = button_title(candidate)
+                color = (.12, .45, .33, 1.) if row['running'] else (.15, .23, .31, 1.)
+                if row['switching'] and live:color = (.55, .34, .10, 1.)
+                action = 'ON - click to turn off' if row['enabled'] else 'OFF - click to turn on'
+                if row['switching']:action = 'SWITCHING - click to cancel'
+                if not live:action = row['state']
+                if colored_button(title + '\n' + action + '##toggle-' + candidate['instance_id'], color, (-1., 48.)):
+                    try:
+                        operation = 'disable' if row['enabled'] or row['switching'] else 'activate'
+                        self.test_request_id = submit(self.state_path, d, operation, cell, candidate['instance_id'])
+                        self.test_app = index
+                        self.test_message = ('Stopping ' if operation == 'disable' else 'Starting ') + title + '...'
+                    except (OSError, ValueError) as error:self.test_message = str(error)
+                if ui.IsItemHovered():
+                    ui.SetTooltip(candidate['instance_id'] + '\n' + candidate.get('description', '') + '\n' + row['execution'])
+            ui.EndTable()
+        ui.EndDisabled()
+        selected = catalog[self.test_app]
+        app = selected['instance_id']
+        ui.TextColored(MUTED, f'{sum(bool(a.get("available")) for a in catalog)} available xApps. Hover a button for algorithm details.')
+        if ui.CollapsingHeader('Unavailable xApps / why they cannot run'):
+            for candidate in catalog:
+                if not candidate.get('available'):
+                    ui.TextWrapped(candidate['instance_id'] + ': ' + (candidate.get('unavailable_reason') or 'Unavailable'))
+        if ui.CollapsingHeader('Execution details / advanced'):
+            for row in active:
+                ui.TextWrapped(row['instance_id'] + ': ' + row['execution'])
+            table('test-effective', ['Cell', 'Binding ON/OFF', 'Effective scheduler'], [
+                [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
+                for c in d.get('cell_metrics', [])])
+            tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
+            tree('Effective controls / all runtime fields', [dict(cell=c['cell_id'], effective=c['effective'], scheduler=c['scheduler']) for c in d.get('cell_metrics', [])])
+            tree('All xApp states', states)
         ui.Separator()
         ui.TextColored(ACCENT, 'LIVE SEGMENTS / WHOLE NETWORK')
         table('test-segments', ['Phase', 'Sample ms', 'Mbps', 'Queue B', 'Delay ms'], [
@@ -383,6 +412,7 @@ class Dashboard:
             start_slot=s['start_slot']) for s in x['segments']])
         ui.Separator()
         ui.TextColored(ACCENT, 'MATCHED OFF / ON REPLAY')
+        ui.TextWrapped('Replay target: ' + button_title(selected))
         ui.TextWrapped('Starts two fresh runs with the same scene, seed, traffic and initial queues. This can take minutes on AGX and shares compute with the live run.')
         if self.state_path and selected.get('available') and ui.Button('Run matched A/B'):
             try:

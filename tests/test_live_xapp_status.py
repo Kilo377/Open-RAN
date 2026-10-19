@@ -47,3 +47,12 @@ def test_completed_run_never_reports_an_app_as_currently_running():
     assert row['state'] == 'HISTORY / ON' and row['enabled'] and not row['running']
     assert 'RUN ENDED' in banner(data)
     assert 'applied' in row['execution']
+
+
+def test_pending_activation_is_a_visible_switch_not_an_active_app():
+    data = snapshot()
+    data['xapp_test']['pending_activation'] = dict(app='power')
+    row = status_rows(data)[1]
+    assert row['state'] == 'SWITCHING' and row['switching']
+    assert not row['running'] and not row['enabled']
+    assert banner(data) == 'xApps: SWITCHING to power'

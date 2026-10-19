@@ -143,6 +143,71 @@ def test_select_different_library_app_executes_and_restores_owned_fields(tmp_pat
     assert session.snapshot()['segments'][-1]['app_id'] == session.app.name
 
 
+def test_one_click_switch_waits_for_restoration_then_activates_without_reset(tmp_path):
+    sim, session, step = fixture_sim(tmp_path, enabled=True)
+    step(10)
+    assert sim.state.managed_cells['cell_1'].scheduler.scheduler_mode == 'latency_aware'
+    slot = sim.state.slot_id
+    data = dict(stage='simulating', xapp_test=session.snapshot())
+    request = submit(tmp_path / 'live.json', data, 'activate', 'cell_1', 'ue_fairness:equal_share')
+    session.before_step()
+    assert session.pending_activation['request_id'] == request
+    assert not any(a.active_cells for a in session.apps.values())
+    step(1)
+    assert session.pending_activation  # delayed withdrawal must actually execute
+    step(20)
+    assert sim.state.slot_id == slot + 21
+    assert session.pending_activation is None
+    assert session.app.name == 'ue_fairness:equal_share'
+    assert session.app.active_cells == {'cell_1'}
+    assert all(c.scheduler.scheduler_mode == 'round_robin' for c in sim.state.managed_cells.values())
+    assert sim.state.managed_cells['cell_1'].cell.ue_prb_limits
+    assert any(r['request_id'] == request and r['status'] == 'accepted' for r in session.receipts)
+
+
+def test_switch_can_be_cancelled_or_replaced_and_unavailable_target_does_not_stop_app(tmp_path):
+    sim, session, step = fixture_sim(tmp_path, enabled=True)
+    step(10)
+    path = tmp_path / 'live.json'
+    data = lambda: dict(stage='simulating', xapp_test=session.snapshot())
+    submit(path, data(), 'activate', '*', 'slice_sla:goodput_pi')
+    session.before_step()
+    assert session.app.active_cells == {'cell_0', 'cell_1'}
+    assert session.receipts[-1]['status'] == 'rejected'
+    first = submit(path, data(), 'activate', '*', 'ue_fairness:equal_share')
+    session.before_step()
+    assert session.pending_activation
+    second = submit(path, data(), 'activate', 'cell_0', 'rf_energy:sinr_pi')
+    session.before_step()
+    assert session.pending_activation['request_id'] == second
+    assert any(r['request_id'] == first and r['status'] == 'cancelled' for r in session.receipts)
+    submit(path, data(), 'disable', '*', 'rf_energy:sinr_pi')
+    session.before_step()
+    step(20)
+    assert session.pending_activation is None
+    assert not any(a.active_cells for a in session.apps.values())
+    assert all(c.scheduler.scheduler_mode == 'round_robin' for c in sim.state.managed_cells.values())
+
+
+def test_failed_restoration_times_out_instead_of_enabling_over_stale_controls(tmp_path, monkeypatch):
+    sim, session, step = fixture_sim(tmp_path, enabled=True)
+    step(10)
+    original_change = session.change
+
+    def blocked(enabled, *args, **kwargs):
+        if enabled:raise ValueError('Wait for the previous disable to restore controlled parameters')
+        return original_change(enabled, *args, **kwargs)
+
+    monkeypatch.setattr(session, 'change', blocked)
+    request = submit(tmp_path / 'live.json', dict(stage='simulating', xapp_test=session.snapshot()),
+        'activate', '*', 'ue_fairness:equal_share')
+    session.before_step()
+    step(3 * session.settle_slots + session.period + 3)
+    assert session.pending_activation is None
+    assert any(r['request_id'] == request and r['status'] == 'rejected' for r in session.receipts)
+    assert not any(a.active_cells for a in session.apps.values())
+
+
 @pytest.mark.parametrize('ident', ['throughput_power:cqi_proportional', 'rf_energy:sinr_pi',
     'latency_guard:delay_pi', 'load_balancing:load_pi', 'ret_coverage:legacy_v1'])
 def test_library_control_families_restore_runtime_baseline(tmp_path, ident):

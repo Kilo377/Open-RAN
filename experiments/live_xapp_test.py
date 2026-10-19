@@ -74,6 +74,7 @@ class LiveXAppSession:
         self.baseline = executed_configs(simulator.state)
         self.manager.rule_leases.baseline = deepcopy(self.baseline)
         self.receipts, self.segments = deque(maxlen=30), []
+        self.pending_activation = None
         self.previous_packet = (0, 0.)
         self.command_dir = Path(state_path).with_suffix('.commands') if state_path else None
         if self.command_dir:
@@ -144,8 +145,52 @@ class LiveXAppSession:
             decodes=0, nacks=0, completed_packets=0, completion_delay_sum_ms=0.))
         return 'selection_admitted; awaiting normal control tick and delayed execution'
 
+    def record_receipt(self, request, status, reason):
+        event = dict(request_id=request.get('request_id'), operation=request.get('operation'),
+            app=request.get('app'), received_at_slot=self.simulator.state.slot_id,
+            status=status, reason=reason)
+        self.receipts.append(event)
+        with self.events.open('a') as stream:
+            stream.write(json.dumps(event) + '\n')
+
+    def cancel_activation(self, reason):
+        if self.pending_activation:
+            self.record_receipt(self.pending_activation, 'cancelled', reason)
+            self.pending_activation = None
+
+    def activate(self, request):
+        """One click: withdraw the old binding, restore, then admit the new one."""
+        app = self.apps[request['app']]
+        if request['cell'] != '*' and request['cell'] not in self.baseline:
+            raise ValueError('Unknown target cell')
+        reason = self.unavailable_reason(app)
+        if reason:raise ValueError(reason)
+        self.cancel_activation('Replaced by a newer button click')
+        slot = self.simulator.state.slot_id
+        desired = {cid: {app.category_id: app.name} for cid in
+            (sorted(self.baseline) if request['cell'] == '*' else [request['cell']])}
+        if (self.manager.instance_selection.bindings or {}) == desired:
+            return self.change(True, request['cell'], slot, app.name)
+        self.change(False, '*', slot)
+        self.pending_activation = {**request, 'deadline_slot': slot + 3 * self.settle_slots + self.period}
+        return 'Restoring previous parameters; activation will continue automatically'
+
+    def advance_activation(self):
+        request = self.pending_activation
+        if not request:return
+        try:
+            reason = self.change(True, request['cell'], self.simulator.state.slot_id, request['app'])
+        except ValueError as error:
+            if 'previous disable' in str(error) and self.simulator.state.slot_id <= request['deadline_slot']:
+                return
+            self.record_receipt(request, 'rejected', 'Could not complete switch: ' + str(error))
+        else:
+            self.record_receipt(request, 'accepted', reason)
+        self.pending_activation = None
+
     def before_step(self):
         if not self.command_dir:
+            self.advance_activation()
             return
         for path in sorted(self.command_dir.glob('*.json'))[:32]:
             request, status, reason = {}, 'rejected', ''
@@ -157,20 +202,20 @@ class LiveXAppSession:
                     raise ValueError('Malformed command')
                 if request['run_id'] != self.run_id or request['app'] not in self.apps:
                     raise ValueError('Stale run or unregistered app')
-                if request['operation'] not in ('enable', 'disable'):
+                if request['operation'] not in ('enable', 'disable', 'activate'):
                     raise ValueError('Unsupported operation')
-                reason = self.change(request['operation'] == 'enable', request['cell'], self.simulator.state.slot_id, request['app'])
-                status = 'accepted'
+                if request['operation'] == 'activate':
+                    reason = self.activate(request)
+                    status = 'pending' if self.pending_activation else 'accepted'
+                else:
+                    reason = self.change(request['operation'] == 'enable', request['cell'], self.simulator.state.slot_id, request['app'])
+                    self.cancel_activation('Cancelled by an explicit enable/disable request')
+                    status = 'accepted'
             except (OSError, ValueError, TypeError, KeyError) as exc:
                 reason = str(exc)
-            event = dict(request_id=request.get('request_id') if isinstance(request, dict) else None,
-                operation=request.get('operation') if isinstance(request, dict) else None,
-                app=request.get('app') if isinstance(request, dict) else None,
-                received_at_slot=self.simulator.state.slot_id, status=status, reason=reason)
-            self.receipts.append(event)
-            with self.events.open('a') as stream:
-                stream.write(json.dumps(event) + '\n')
+            self.record_receipt(request if isinstance(request, dict) else {}, status, reason)
             path.unlink(missing_ok=True)
+        self.advance_activation()
 
     def after_step(self, adapter):
         state = self.simulator.state
@@ -221,6 +266,7 @@ class LiveXAppSession:
                 'mean_completion_delay_ms': item['completion_delay_sum_ms'] / count if count else None,
                 'nack_fraction': item['nacks'] / item['decodes'] if item['decodes'] else None})
         return dict(run_id=self.run_id, app=self.app.descriptor(), catalog=catalog,
+            pending_activation=deepcopy(self.pending_activation),
             selected_cells=sorted(self.app.active_cells), period_ms=self.period * self.dt,
             settle_ms=self.settle_slots * self.dt, segments=segments,
             last_decisions=deepcopy(self.app.last_decisions), receipts=list(self.receipts),
@@ -255,7 +301,7 @@ def start_comparison(state_path, data, cell='*', app=APP):
             os.kill(int(prior['pid']), 0)
         except ProcessLookupError:
             lock.unlink(missing_ok=True)
-            return start_comparison(state_path, data, cell)
+            return start_comparison(state_path, data, cell, app)
         except (OSError, ValueError, KeyError):
             pass
         raise ValueError('A matched A/B test is already running; see its progress below')
