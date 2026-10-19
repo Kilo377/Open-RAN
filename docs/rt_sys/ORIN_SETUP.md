@@ -89,7 +89,7 @@ and browser preview do not stream slot-by-slot simulator state.
 
 The project's live execution viewer is now available with
 `bash scripts/orin/live.sh` from the remote desktop. Its default run is Munich,
-3 cells / 12 UEs, 400 slots, fixed baseline control, `nr_direct` feedback and
+3 cells / 12 UEs, 400 slots, an initially disabled registered xApp test, `nr_direct` feedback and
 CuPy algebra when the existing CUDA preflight succeeds. Extra runner arguments
 may override the scenario, UE count or slot count. Closing the window stops
 that demo run; completed/failed/stopped runs are labeled and are not replayed.
@@ -123,13 +123,27 @@ profile, legacy hybrid invocation and explicit AGX CPU profile had identical
 resolution and strict failure behavior are covered; actual DGX/OptiX hardware
 execution still requires verification by the DGX collaborator.
 
-The live viewer now provides a unified read-only network workspace with
+The live viewer provides a unified network workspace with
 Overview / UEs / Cells / Config / Control tabs and bounded throughput/queue
 trends. Integrated, Network only and Scene only views consume the same actual
 slot stream; selecting a UE can focus its actual position in 3D. Effective
 runtime controls, pending pipeline requests and execution receipts remain
 separate. Baseline empty envelopes are labeled so receipts are not mistaken
-for parameter modifications. No manual actuation endpoint was added.
+for parameter modifications. Normal telemetry remains read-only. The optional
+`--live-xapp-test` mode adds a run-local command queue for the registered
+queue/HOL scheduler xApp only. It supports cell-scoped enable, disable and
+restoration through normal arbitration/actuation, using selection generations
+to reject stale pending writes. `live.sh` includes it by default; use
+`live.sh --read-only` to retain monitoring only.
+
+The xApp test tab shows actual selected/effective states, decision inputs and
+transition-excluded network KPI segments. Its matched A/B button runs two fresh
+OFF/ON simulations with the same seed, traffic, initial queues and propagation,
+checks source/environment identity, and reports absolute KPI differences.
+Live toggles retain all network history; their before/after segments do not
+establish causation. The test is a fixed local scheduling rule, not an asserted
+optimization result or arbitrary code-loading facility. See the RT/SYS guide
+for lifecycle semantics and result locations.
 
 Workspace verification on this AGX: 487 tests passed, 3 skipped, 2 subtests
 passed, with the existing high-code-rate warning. Expanded monitoring produced

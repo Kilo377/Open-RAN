@@ -112,6 +112,8 @@ class LivePublisher:
             nack_fraction=self.nacks / self.attempts if self.attempts else None,
             mean_completion_latency_ms=packet_totals['mean_completion_latency_ms']))
         self.latest['history'] = list(self.history)
+        if hasattr(simulator, 'live_xapp_test'):
+            self.latest['xapp_test'] = plain(simulator.live_xapp_test.snapshot())
         self._write()
 
     def finish(self, stage, error=None):

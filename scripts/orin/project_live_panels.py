@@ -1,4 +1,4 @@
-"""Read-only operations panels for the same snapshot used by the 3D viewer."""
+"""Operations panels and optional registered-xApp test controls."""
 import json
 import time
 
@@ -58,10 +58,13 @@ def action_text(action):
 
 
 class Dashboard:
-    def __init__(self, view='integrated'):
+    def __init__(self, view='integrated', state_path=None):
         self.view = view
         self.ue_index = 0
         self.cell_index = 0
+        self.state_path = state_path
+        self.test_cell = 0
+        self.test_message = ''
 
     def window(self, name, xy, size):
         ui.SetNextWindowPos(xy, ui.ImGuiCond_Always)
@@ -76,7 +79,8 @@ class Dashboard:
         age = time.time() - data['updated_unix_s'] if data.get('updated_unix_s') else None
         stale = stage == 'simulating' and age is not None and age > 10
         self.window('OPEN-RAN  /  Live Network Workspace', (10, 10), (width - 20, 112))
-        ui.TextColored(ACCENT, f'{stage.upper()}   |   {data.get("scene", "loading scene")}   |   {config.get("control_mode", "loading mode")} control   |   READ ONLY')
+        access = 'XAPP TEST ENABLED' if data.get('xapp_test') else 'READ ONLY'
+        ui.TextColored(ACCENT, f'{stage.upper()}   |   {data.get("scene", "loading scene")}   |   {config.get("control_mode", "loading mode")} control   |   {access}')
         slot, sim_ms, wall = data.get('slot', 0), data.get('sim_time_ms', 0), data.get('wall_s', 0)
         ui.TextUnformatted(f'Slot {slot}/{data.get("total_slots", "...")}   Simulation {sim_ms:.3f} ms   Wall {wall:.1f} s   State age {fmt(age, 1, " s")}')
         if stale:
@@ -98,8 +102,11 @@ class Dashboard:
         panel_width = min(720, max(620, width * .37)) if self.view == 'integrated' else width * .65 - 15
         self.window('Network operations', (10, 132), (panel_width, max(250, height - 142)))
         if ui.BeginTabBar('operations-tabs'):
-            for label, draw in [('Overview', self.overview), ('UEs', self.ues), ('Cells', self.cells),
-                                ('Config', self.config), ('Control', self.control)]:
+            tabs = [('Overview', self.overview), ('UEs', self.ues), ('Cells', self.cells),
+                    ('Config', self.config), ('Control', self.control)]
+            if data.get('xapp_test'):
+                tabs.insert(0, ('xApp test', self.xapp_test))
+            for label, draw in tabs:
                 active, _ = ui.BeginTabItem(label, True)
                 if active:
                     draw(data, focus)
@@ -264,6 +271,78 @@ class Dashboard:
         tree('Field arbitration / rejected proposals', controls.get('arbitration', {}))
         tree('Current xApp bindings', controls.get('xapp_bindings', {}))
         tree('Controller observation provenance / delay', controls.get('observation', {}))
+
+    def xapp_test(self, d, focus):
+        from experiments.live_xapp_test import submit, start_comparison
+        x = d['xapp_test']
+        ui.TextColored(ACCENT, 'REGISTERED xAPP / QUEUE & HOL SCHEDULER')
+        ui.TextWrapped('Local rule: measured queue > 4000 B or HOL >= 50% of delay budget selects latency-aware scheduling; otherwise round-robin.')
+        cells = ['All cells'] + [c['cell_id'] for c in d.get('cells', [])]
+        self.test_cell = min(self.test_cell, len(cells) - 1)
+        _, self.test_cell = ui.Combo('Test scope', self.test_cell, cells)
+        cell = '*' if self.test_cell == 0 else cells[self.test_cell]
+        ui.TextUnformatted('Selected cells: ' + (', '.join(x['selected_cells']) or 'OFF'))
+        ui.TextUnformatted(f'Control period: {x["period_ms"]:g} ms | transition exclusion: {x["settle_ms"]:g} ms')
+        if d.get('stage') == 'simulating' and self.state_path:
+            for label, operation in [('Enable xApp', 'enable'), ('Disable & restore', 'disable')]:
+                if ui.Button(label):
+                    try:
+                        ident = submit(self.state_path, d, operation, cell)
+                        self.test_message = f'Request {ident[:8]} submitted; processing receipt is shown below.'
+                    except (OSError, ValueError) as error:
+                        self.test_message = str(error)
+                if operation == 'enable':ui.SameLine()
+        else:
+            ui.TextColored(MUTED, 'This run has finished. Hot toggles require a running simulation.')
+        if self.test_message:ui.TextWrapped(self.test_message)
+        if x.get('receipts'):
+            r = x['receipts'][-1]
+            ui.TextWrapped(f'Latest receipt / slot {r["received_at_slot"]}: {r["status"]} / {r["reason"]}')
+        ui.TextWrapped('Selection admission is not RAN execution. Effective scheduler values and control receipts below are the execution evidence.')
+        table('test-effective', ['Cell', 'Selected', 'Effective scheduler'], [
+            [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
+            for c in d.get('cell_metrics', [])])
+        tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
+        ui.Separator()
+        ui.TextColored(ACCENT, 'LIVE SEGMENTS / WHOLE NETWORK')
+        table('test-segments', ['Phase', 'Sample ms', 'Mbps', 'Queue B', 'Delay ms'], [
+            [s['label'], fmt(s['duration_ms'], 1), fmt(s['throughput_mbps']),
+             fmt(s['mean_queue_bytes']), fmt(s['mean_completion_delay_ms'])] for s in x['segments']])
+        ui.TextWrapped('Segments omit transition warm-up. Live before/after is observational: mobility, traffic, HARQ and queues keep evolving. Delay covers completed packets only.')
+        ui.Separator()
+        ui.TextColored(ACCENT, 'MATCHED OFF / ON REPLAY')
+        ui.TextWrapped('Starts two fresh runs with the same scene, seed, traffic and initial queues. This can take minutes on AGX and shares compute with the live run.')
+        if self.state_path and ui.Button('Run matched A/B'):
+            try:
+                pid = start_comparison(self.state_path, d, cell)
+                self.test_message = f'Matched comparison started (worker {pid}).'
+            except (OSError, ValueError) as error:
+                self.test_message = str(error)
+        if self.state_path:
+            result_path = self.state_path.with_suffix('.comparison.json')
+            if result_path.exists():
+                try:
+                    report = json.loads(result_path.read_text())
+                    ui.TextUnformatted('Comparison: ' + report.get('stage', 'unknown'))
+                    if report.get('stage', '').startswith('running_'):
+                        from pathlib import Path
+                        arm = report['stage'].removeprefix('running_')
+                        progress_path = Path(report['output']) / arm / 'live.json'
+                        if progress_path.exists():
+                            progress = json.loads(progress_path.read_text())
+                            ui.TextUnformatted(f'{arm.upper()}: slot {progress.get("slot", 0)} / {progress.get("total_slots", "--")}')
+                    if report.get('error'):ui.TextColored(WARN, report['error'])
+                    arms = report.get('arms', {})
+                    table('paired-results', ['Arm', 'Sample ms', 'Mbps', 'Queue B', 'Delay ms'], [
+                        [arm.upper(), fmt(row['metrics']['duration_ms'], 1), fmt(row['metrics']['throughput_mbps']),
+                         fmt(row['metrics']['mean_queue_bytes']), fmt(row['metrics']['mean_completion_delay_ms'])]
+                        for arm, row in arms.items()])
+                    tree('ON minus OFF / absolute differences', report.get('delta_on_minus_off', {}))
+                    tree('Executed schedulers / evidence', {arm: row.get('executed_schedulers', {}) for arm, row in arms.items()})
+                    ui.TextWrapped(report.get('interpretation', 'One paired seed tests functionality; it does not establish general improvement.'))
+                    ui.TextWrapped('Results: ' + report.get('output', '--'))
+                except (OSError, ValueError, KeyError) as error:
+                    ui.TextWrapped(str(error))
 
     def trends(self, d):
         history = d.get('history', [])

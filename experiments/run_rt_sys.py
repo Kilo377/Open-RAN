@@ -38,6 +38,10 @@ def parse_args():
     p.add_argument('--control-timeline',type=Path)
     p.add_argument('--output',type=Path)
     p.add_argument('--live-state',type=Path,help='Atomically publish actual slot state for the read-only live viewer')
+    p.add_argument('--live-xapp-test',action='store_true',help='Register the optional live scheduler test xApp, initially disabled')
+    p.add_argument('--xapp-test-start',choices=['off','on'],default='off')
+    p.add_argument('--xapp-test-cell',default='*',help='Target cell for the registered test; * means all cells')
+    p.add_argument('--xapp-test-compare-slots',type=int,default=200)
     p.add_argument('--dry-run',action='store_true')
     p.add_argument('--generate-only',action='store_true')
     p.add_argument('--deployment-id',type=int,choices=[0,1,2])
@@ -98,6 +102,9 @@ def run_case(args):
         configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
     if control_mode == 'baseline' and phase != 'integration':
         raise ValueError('Fixed environment baseline is an integration run, not algorithm training/evaluation')
+    from experiments.live_xapp_test import configure as configure_live_test
+    live_test_enabled=configure_live_test(configs,manifest,args)
+    if live_test_enabled:control_mode='xapp_test'
     if model_path:
         configs['ric'].update(persistent_memory_enabled=True,memory_store_path=str(model_path))
         for rapp in configs['ric'].get('rapps',[]):
@@ -183,6 +190,10 @@ def run_case(args):
         registry.active_intent_manager=ActiveIntentManager(initial_intent_text=intent)
         runtime=build_runtime_scenario_config(scenario_name=name,scenario_type='rt_scene',sim_config=configs['sim'],cell_config=configs['cell'],ric_config=configs['ric'])
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
+        if live_test_enabled:
+            from experiments.live_xapp_test import LiveXAppSession
+            args._live_slot_ms=manifest['slot_duration_ms']
+            simulator.live_xapp_test=LiveXAppSession(simulator,args,output,live_path)
         for obj,method,label in ((simulator,'step','slot_total'),
             (simulator,'_run_managed_cell_schedulers','scheduling'),
             (adapter,'run_cluster_slot','precoding_interference_and_tb_inclusive'),
@@ -216,6 +227,7 @@ def run_case(args):
                 for _ in range(args.slots):
                     if steady_started is None and simulator.state.sim_time_ms>=warmup:
                         steady_started=time.perf_counter();steady_decodes=adapter.abstraction.decode_trials
+                    if live_test_enabled:simulator.live_xapp_test.before_step()
                     simulator.step()
                     selection=simulator.controller_manager.instance_selection
                     for event in selection.receipts:auxiliary['xapp_selection'].write(json.dumps(event)+'\n')
@@ -223,6 +235,7 @@ def run_case(args):
                     for event in simulator.controller_manager.policy_store.binding_receipts:auxiliary['xapp_selection'].write(json.dumps(event)+'\n')
                     simulator.controller_manager.policy_store.binding_receipts.clear()
                     feedback,decisions=diagnostics.observe(simulator.state,adapter.trace)
+                    if live_test_enabled:simulator.live_xapp_test.after_step(adapter)
                     if live:live.publish(simulator,adapter)
                     io_start=time.perf_counter()
                     for event in getattr(simulator.controller_manager,'rule_decisions',[]):
@@ -301,6 +314,7 @@ def run_case(args):
         summary['tb_outcomes']={u.ue_id:dict(successful_tbs=len(u.packet_ledger.completed_tbs),payload_flushes=u.harq.harq_flush_count,retx_deferred_resource=getattr(u.harq,'retx_deferred_resource',0),pending_tbs=len(u.packet_ledger.reservations)) for u in simulator.state.ues}
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
             'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
+        if live_test_enabled:summary['xapp_test']=simulator.live_xapp_test.snapshot()
         summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),

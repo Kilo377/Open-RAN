@@ -6,6 +6,9 @@ import argparse
 import json
 from pathlib import Path
 import time
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np
 import polyscope as ps
@@ -31,7 +34,7 @@ def main():
     ps.set_ui_scale(1.05)
     ps.init()
     ps.set_window_size(1800, 1000)
-    dashboard = Dashboard(args.view)
+    dashboard = Dashboard(args.view, state_path)
     palette = np.array([[0.1, 0.7, 1.0], [1.0, 0.6, 0.12], [0.75, 0.3, 1.0]])
     current, structures = {}, {}
     last_poll = 0.0

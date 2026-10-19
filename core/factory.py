@@ -265,7 +265,10 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
     for xapp_item in expanded_xapp_items:
         xapp_type = xapp_item["type"]
 
-        if xapp_type == "xapp_instance":
+        if xapp_type == "live_scheduler_test":
+            from ric.near_rt.live_scheduler_test_xapp import LiveSchedulerTestXApp
+            controller_registry.register_xapp(LiveSchedulerTestXApp(xapp_item['cell_ids'], xapp_item.get('name', 'live_scheduler_test')))
+        elif xapp_type == "xapp_instance":
             from ric.near_rt.xapp_library import XAppInstance
             controller_registry.register_xapp(XAppInstance(
                 xapp_item['instance_id'],xapp_item['implementation_id'],xapp_item['cell_ids'],
