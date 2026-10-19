@@ -19,6 +19,12 @@ Use `--dry-run` to inspect the selected profile without hardware execution.
 Profile selection does not install dependencies or change the radio model.
 See [platform usage and limitations](README_SIONNA_RT_SYS.md#平台开关dgx--agx).
 
+`bash scripts/orin/live.sh` opens the read-only unified network workspace:
+the actual 3D scene, live per-UE/cell KPIs, radio configuration, effective and
+pending controls, execution receipts, and bounded KPI trends. Select Integrated,
+Network only or Scene only from View; see the live-monitoring section in
+[the RT/SYS guide](README_SIONNA_RT_SYS.md#实时网络监测与三维统一工作区).
+
 This independent copy now defaults to Sionna 2.2 RT with actual NR-TB reference
 feedback and SYS transport-budget adaptation (`sionna_rt_sys`,
 `feedback_mode: nr_direct`, no online Monte Carlo probes). Geometry updates every 0.5 ms slot; Munich

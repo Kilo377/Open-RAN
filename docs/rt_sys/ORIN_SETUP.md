@@ -122,3 +122,18 @@ profile, legacy hybrid invocation and explicit AGX CPU profile had identical
 4-slot evaluation metrics (3916 bytes delivered, 15.664 Mbps). DGX option
 resolution and strict failure behavior are covered; actual DGX/OptiX hardware
 execution still requires verification by the DGX collaborator.
+
+The live viewer now provides a unified read-only network workspace with
+Overview / UEs / Cells / Config / Control tabs and bounded throughput/queue
+trends. Integrated, Network only and Scene only views consume the same actual
+slot stream; selecting a UE can focus its actual position in 3D. Effective
+runtime controls, pending pipeline requests and execution receipts remain
+separate. Baseline empty envelopes are labeled so receipts are not mistaken
+for parameter modifications. No manual actuation endpoint was added.
+
+Workspace verification on this AGX: 487 tests passed, 3 skipped, 2 subtests
+passed, with the existing high-code-rate warning. Expanded monitoring produced
+byte-identical RT traces, packet/HARQ events, UE/cell CSVs and evaluation
+summaries in paired 4-slot runs. Unit checks cover effective vs pending vs
+rejected controls, observer immutability, bounded complete-slot history and
+configuration allowlisting. Optional GUI-only dependency: requirements-viewer.txt.

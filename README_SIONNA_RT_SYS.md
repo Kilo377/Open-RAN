@@ -52,6 +52,53 @@ python experiments/run_rt_sys.py --platform agx --dry-run
 `--algebra-backend` 行为，默认仍为 CUDA；与所选平台冲突的设备参数会报错。
 两个后端保持同一套物理模型，但 CPU/GPU 数值和抽样结果不保证逐位相同。
 
+## 实时网络监测与三维统一工作区
+
+AGX 远程桌面中运行 `bash scripts/orin/live.sh`。窗口包含同一次仿真的 3D 场景、
+网络监测页签和 KPI 曲线，模式为只读监测，不发送控制命令。
+
+- **Overview**：全网吞吐量、MAC 队列、packet ledger 积压、溢出字节、已完成包平均时延、
+  连接 UE 数、真实 NR 解码尝试/NACK 样本，以及实际 CPU/GPU 后端。
+- **UEs**：逐 UE 的 serving cell、SINR、MCS、ACK/NACK、PRB/符号、rank、切换状态、
+  HOL delay 和 HARQ 积压；选择 UE 后可点击 Focus in 3D 定位。
+- **Cells**：逐小区吞吐量、队列、关联/调度 UE 数、实际功率预算/平均发射功率、
+  资源格占用率、空间层/MU 组，以及运行态调度参数。
+- **Config**：本次运行经平台和模式覆盖后的频率、带宽、SCS、slot 时长、天线、
+  ray solver、CSI/HARQ、观测/执行延迟和 rApp/xApp 周期。
+- **Control**：来自当前小区状态的实际生效值、待执行流水线及计划生效 slot、
+  请求来源/目标/参数、applied/rejected/delayed 回执、约束、字段仲裁和 xApp bindings。
+
+顶部 View 可切换 Integrated / Network only / Scene only；也可通过
+`bash scripts/orin/live.sh --view telemetry` 或 `--view scene` 选择启动视图。
+曲线包含每个已完成时隙的样本，保留最近 300 个时隙；控制历史保留最近 60 条回执。
+UI 轮询不会丢掉轮询间完成的 slot 样本。界面同时显示仿真时间、实际耗时、数据年龄和运行状态。
+计算下一 slot 时保留上一个真实状态；不伪造动画、不自动重播结束的运行。
+
+baseline 模式明确显示 rApp/xApp 未启用。baseline 仍可能产生空控制 envelope 的执行回执；
+“applied 回执数”不等于“参数修改次数”，当前实际生效值独立显示。
+请求值、待执行值和当前生效值分别来自不同状态对象，不能将请求值当作已经执行。
+NACK fraction 是当前实际解码样本比率，不代表已收敛 BLER；平均完成时延不包含未完成包。
+图中连线表示 serving association，不表示绕过建筑的真实传播射线。
+
+工作区仅依赖 Polyscope/NumPy，直接显示主仿真 Sionna RT 2.2 导出的变换后网格；
+不导入旧的官方 GUI Sionna 环境，不另外计算 PHY。官方 GUI 的场景/路径/radio-map 编辑功能见
+[Sionna RT GUI 手册](https://nvlabs.github.io/sionna/rt/rt_gui.html)。
+项目的 O-RAN 调度、HARQ、队列及控制回执由本项目监测层提供。
+
+DGX 合作者也可在有 OpenGL 图形桌面的环境内安装 `requirements-viewer.txt`，
+继续使用 DGX 原有的 Sionna/CUDA 环境。仿真与 UI 可分别运行：
+
+```bash
+python experiments/run_rt_sys.py --platform dgx --scene munich --cells 3 --ues 12 --slots 400 \
+  --output outputs/dgx_live --live-state outputs/dgx_live/live.json
+# 另一个终端，读取相同的 state，不启动第二次仿真：
+python scripts/orin/project_live_viewer.py --state outputs/dgx_live/live.json --view integrated
+# 如需两个独立窗口，可另外启动 --view telemetry 或 --view scene 读取同一个文件。
+```
+
+运行文件位于 `outputs/live_project/<timestamp>/`，旧版不含新增字段的状态仍可查看；
+没有数据的字段显示 `--`。监测导出采用字段白名单，不导出 API key 等无关设置。
+
 2026-10-12：Spark 上修复后完整接入矩阵 12/12 通过，覆盖两地图、3 小区、12/24 UE、3 种子、各 1000 时隙；真实 RT/SYS GPU 控制探针、资源/功率记账和固定种子重放通过。全量回归 193 项通过、4 项原有失败。当前调度矩阵没有自然 MU 组，MU 由专项重叠资源及已知信道测试验证。详见 [完整接入报告](docs/rt_sys/FULL_ACCEPTANCE.md)；这些结果不作为算法跨场景泛化结论。
 
 ## 已实现

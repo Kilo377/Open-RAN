@@ -145,7 +145,8 @@ def run_case(args):
             reconstruction_backend=configs['phy']['rt_sys']['channel_array_backend'])
         if live_path:
             from experiments.rt_live import LivePublisher
-            live=LivePublisher(live_path.resolve(),manifest,provider,execution_devices,configs['phy']['rt_sys']['feedback_mode'])
+            live=LivePublisher(live_path.resolve(),manifest,provider,execution_devices,configs['phy']['rt_sys']['feedback_mode'],
+                configs=configs,control_mode=control_mode,platform_profile=platform_profile)
         timings.wrap(provider,'snapshot','channel_snapshot_including_io_and_cfr')
         for method in ('generate_paths','generate'):
             if hasattr(provider.backend,method):timings.wrap(provider.backend,method,'rt_generation')

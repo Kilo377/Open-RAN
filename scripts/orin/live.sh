@@ -6,12 +6,23 @@ export DISPLAY="${DISPLAY:-:1}"
 export XAUTHORITY="${XAUTHORITY:-/run/user/1000/gdm/Xauthority}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/1000/bus}"
+live_view=integrated
+sim_args=()
+while (($#)); do
+    case "$1" in
+        --view)
+            if (($# < 2)); then printf '%s\n' '--view requires integrated, telemetry, or scene' >&2; exit 2; fi
+            live_view="$2"; shift 2 ;;
+        *) sim_args+=("$1"); shift ;;
+    esac
+done
+case "$live_view" in integrated|telemetry|scene) ;; *) printf 'Unknown view: %s\n' "$live_view" >&2; exit 2 ;; esac
 demo_dir="$PWD/outputs/live_project/$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$demo_dir"
 printf 'Actual project live run: %s\n' "$demo_dir"
 bash scripts/orin/run.sh --scene munich --cells 3 --ues 12 --slots 400 \
     --recording-mode experiment --diagnostic-window-slots 50 \
-    "$@" --output "$demo_dir" --live-state "$demo_dir/live.json" >"$demo_dir/simulation.log" 2>&1 &
+    "${sim_args[@]}" --output "$demo_dir" --live-state "$demo_dir/live.json" >"$demo_dir/simulation.log" 2>&1 &
 sim_pid=$!
 cleanup() {
     if kill -0 "$sim_pid" 2>/dev/null; then
@@ -33,4 +44,4 @@ PY
     fi
 }
 trap cleanup EXIT
-.venv-orin-gui/bin/python scripts/orin/project_live_viewer.py --state "$demo_dir/live.json" 2>&1 | tee "$demo_dir/viewer.log"
+.venv-orin-gui/bin/python scripts/orin/project_live_viewer.py --state "$demo_dir/live.json" --view "$live_view" 2>&1 | tee "$demo_dir/viewer.log"
