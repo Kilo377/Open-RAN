@@ -1,0 +1,35 @@
+Physical bandwidth sweep on OAI 2026.w42, source f80a88326801f5417405dea0b174879bac8940e0.
+The official binary image is pinned by digest in progress.json. No source patches were applied.
+
+Test order: 40 (baseline), 10, 15, 20, 25, 30, 35, 45, 50, 40 (repeat), then restore the original 40 MHz container.
+Every requested 5 MHz step from 10 through 50 was attempted. Failed settings are N/A, never zero-throughput measurements.
+The accepted container is stopped but retained; a separate trial container owns the B210 during the sweep.
+An independent systemd recovery timer is armed before stopping the accepted baseline.
+The original configuration is never edited. Recovery removes only the trial container and restarts the accepted container.
+
+Radio: n78, 3.6192 GHz carrier center, SSB ARFCN 641280, 30 kHz SCS, 1 TX/1 RX, original TDD pattern.
+TX attenuation setting is 12 dB and UHD-reported TX gain is 77.75 dB.
+This fixes configured gain, not calibrated EIRP or power spectral density across bandwidths.
+Derived configurations update Point A, DL/UL carrier PRBs and initial BWPs; CORESET0 fits within the carrier.
+10 MHz uses full 15.36 MS/s sampling without -E. 50 MHz requests full 61.44 MS/s sampling.
+Other trials use -E. Radio logs are retained to verify actual NR PRB count, center frequency, gain, sampling rate and analog filter.
+
+The AGX requests a local HTTP stream from the existing OAI Link Monitor server.
+Every data socket uses SO_BINDTODEVICE on the RM520N-GL USB network interface, with no Wi-Fi fallback.
+Wi-Fi carries control reports only. The unchanged OAI 5GC carries the tested downlink through B210 and RM520N-GL.
+Each 16 KiB frame has a per-run deterministic payload and sequence check; only fully validated frames count as received bytes.
+Wait up to 90 s for at least 1 MiB verified module data, stop the probe, then measure a fresh 35 s stream.
+Discard the first 5 s. Report the mean and sample standard deviation of three nominal 10 s windows.
+Windows use approximately 0.5 s report intervals; they are time windows, not independent repeat experiments or confidence intervals.
+The 40 MHz baseline is repeated at the end. A separate post-restoration check confirms fresh verified module data.
+This is single-flow application goodput in this bench setup, not maximum physical-layer throughput.
+
+Analysis requires successful complete payload verification, USB socket binding, sustained data, correct NR PRBs, center frequency and gain.
+An analog filter wider than the NR channel does not make the OFDM channel wider (e.g. 10 MHz NR with a 20 MHz B210 filter).
+A filter narrower than the requested channel is excluded because it may truncate active subcarriers.
+The raw controller's exact-filter-equality flag is diagnostic only. Final verification uses filter coverage and actual NR PRBs.
+
+35 and 45 MHz require a correction to the earlier planning advice: a generic OAI sampling case does not imply n78 UE support.
+3GPP TS 38.101-1, Table 5.3.5-1, does not list 35/45 MHz for n78.
+https://www.etsi.org/deliver/etsi_TS/138100_138199/13810101/18.05.00_60/ts_13810101v180500p.pdf#page=61
+Their connection failures cannot establish the UE's maximum throughput or the exact sole failure cause.

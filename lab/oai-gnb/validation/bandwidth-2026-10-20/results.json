@@ -1,0 +1,384 @@
+{
+  "date": "2026-10-20",
+  "tag": "2026.w42",
+  "image": "oaisoftwarealliance/oai-gnb@sha256:107e67b025ef3bb36c4dde98babb6d0dbcbdd7cf782f97af3742309566018567",
+  "source_commit": "f80a88326801f5417405dea0b174879bac8940e0",
+  "method": "35 s verified HTTP stream; discard first 5 s, report three 10 s windows; USB-device-bound data socket; fixed gain, not calibrated equal EIRP.",
+  "hardware": {
+    "radio": "USRP B210",
+    "UE": "RM520N-GL + Jetson AGX",
+    "band": 78,
+    "SCS_kHz": 30,
+    "center_GHz": 3.6192,
+    "TX_gain_dB": 77.75,
+    "att_tx_dB": 12
+  },
+  "results": [
+    {
+      "bandwidth_MHz": 10,
+      "mean_Mbps": 18.087992233168585,
+      "sd_Mbps": 0.23745662941412574,
+      "runs": 1,
+      "status": "verified",
+      "reason": ""
+    },
+    {
+      "bandwidth_MHz": 15,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "Assertion (0==1) failed!; N_RB 38 not yet supported for numerology 1"
+    },
+    {
+      "bandwidth_MHz": 20,
+      "mean_Mbps": 26.694990198224367,
+      "sd_Mbps": 0.9563561534313559,
+      "runs": 1,
+      "status": "verified",
+      "reason": ""
+    },
+    {
+      "bandwidth_MHz": 25,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "Assertion (0==1) failed!; N_RB 65 not yet supported for numerology 1"
+    },
+    {
+      "bandwidth_MHz": 30,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "Assertion (0==1) failed!; N_RB 78 not yet supported for numerology 1"
+    },
+    {
+      "bandwidth_MHz": 35,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "No verified module data within 90 s"
+    },
+    {
+      "bandwidth_MHz": 40,
+      "mean_Mbps": 31.789703025726357,
+      "sd_Mbps": 0.5920967662113742,
+      "runs": 2,
+      "status": "verified",
+      "reason": ""
+    },
+    {
+      "bandwidth_MHz": 45,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "No verified module data within 90 s"
+    },
+    {
+      "bandwidth_MHz": 50,
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "runs": 0,
+      "status": "not_verified",
+      "reason": "[HW]     Error: unknown sampling rate 61440000.000000"
+    }
+  ],
+  "individual_runs": [
+    {
+      "stage": 0,
+      "bandwidth_MHz": 40,
+      "PRB": 106,
+      "label": "baseline",
+      "status": "verified",
+      "mean_Mbps": 31.697466456579193,
+      "sd_Mbps": 0.7751842595176303,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 40.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": -84.96969696969697,
+      "reason": "",
+      "checks": {
+        "module_bound": true,
+        "payload_valid": true,
+        "complete": true,
+        "sustained": true,
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    },
+    {
+      "stage": 1,
+      "bandwidth_MHz": 10,
+      "PRB": 24,
+      "label": "test",
+      "status": "verified",
+      "mean_Mbps": 18.087988411152686,
+      "sd_Mbps": 0.23745662941412574,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 20.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": -80,
+      "reason": "",
+      "checks": {
+        "module_bound": true,
+        "payload_valid": true,
+        "complete": true,
+        "sustained": true,
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    },
+    {
+      "stage": 2,
+      "bandwidth_MHz": 15,
+      "PRB": 38,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": null,
+      "TX_gain_dB": null,
+      "mean_RSRP_dBm": null,
+      "reason": "Assertion (0==1) failed!; N_RB 38 not yet supported for numerology 1",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": false,
+        "gain": false,
+        "filter_covers_channel": false
+      }
+    },
+    {
+      "stage": 3,
+      "bandwidth_MHz": 20,
+      "PRB": 51,
+      "label": "test",
+      "status": "verified",
+      "mean_Mbps": 26.694991396368525,
+      "sd_Mbps": 0.9563561534313559,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 20.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": -82,
+      "reason": "",
+      "checks": {
+        "module_bound": true,
+        "payload_valid": true,
+        "complete": true,
+        "sustained": true,
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    },
+    {
+      "stage": 4,
+      "bandwidth_MHz": 25,
+      "PRB": 65,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": null,
+      "TX_gain_dB": null,
+      "mean_RSRP_dBm": null,
+      "reason": "Assertion (0==1) failed!; N_RB 65 not yet supported for numerology 1",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": false,
+        "gain": false,
+        "filter_covers_channel": false
+      }
+    },
+    {
+      "stage": 5,
+      "bandwidth_MHz": 30,
+      "PRB": 78,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": null,
+      "TX_gain_dB": null,
+      "mean_RSRP_dBm": null,
+      "reason": "Assertion (0==1) failed!; N_RB 78 not yet supported for numerology 1",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": false,
+        "gain": false,
+        "filter_covers_channel": false
+      }
+    },
+    {
+      "stage": 6,
+      "bandwidth_MHz": 35,
+      "PRB": 92,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 40.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": null,
+      "reason": "No verified module data within 90 s",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    },
+    {
+      "stage": 7,
+      "bandwidth_MHz": 45,
+      "PRB": 119,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 40.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": null,
+      "reason": "No verified module data within 90 s",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": false
+      }
+    },
+    {
+      "stage": 8,
+      "bandwidth_MHz": 50,
+      "PRB": 133,
+      "label": "test",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": null,
+      "TX_gain_dB": null,
+      "mean_RSRP_dBm": null,
+      "reason": "[HW]     Error: unknown sampling rate 61440000.000000",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": false,
+        "filter_covers_channel": false
+      }
+    },
+    {
+      "stage": 9,
+      "bandwidth_MHz": 40,
+      "PRB": 106,
+      "label": "repeat baseline",
+      "status": "not_verified",
+      "mean_Mbps": null,
+      "sd_Mbps": null,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 40.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": null,
+      "reason": "No verified module data within 90 s",
+      "checks": {
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    },
+    {
+      "stage": 10,
+      "bandwidth_MHz": 40,
+      "PRB": 106,
+      "label": "repeat after manual PLMN reselect",
+      "status": "verified",
+      "mean_Mbps": 31.88796084404121,
+      "sd_Mbps": 0.5000215168477097,
+      "diagnostic_mean_Mbps": null,
+      "actual_TX_filter_MHz": 40.0,
+      "TX_gain_dB": 77.75,
+      "mean_RSRP_dBm": -84.85910652920963,
+      "reason": "",
+      "checks": {
+        "module_bound": true,
+        "payload_valid": true,
+        "complete": true,
+        "sustained": true,
+        "actual_prb": true,
+        "center_frequency": true,
+        "gain": true,
+        "filter_covers_channel": true
+      }
+    }
+  ],
+  "ten_second_windows": [
+    {
+      "stage": 0,
+      "bandwidth_MHz": 40,
+      "window_Mbps": [
+        30.945010254370622,
+        31.65389533104524,
+        32.493539627767554
+      ]
+    },
+    {
+      "stage": 1,
+      "bandwidth_MHz": 10,
+      "window_Mbps": [
+        18.311306642353887,
+        18.114116220472297,
+        17.838553836679573
+      ]
+    },
+    {
+      "stage": 3,
+      "bandwidth_MHz": 20,
+      "window_Mbps": [
+        27.7741083897333,
+        26.358519848519233,
+        25.952342356420573
+      ]
+    },
+    {
+      "stage": 10,
+      "bandwidth_MHz": 40,
+      "window_Mbps": [
+        31.66671549106462,
+        32.45351729096758,
+        31.52554015914253
+      ]
+    }
+  ],
+  "baseline_40MHz_Mbps": [
+    31.697466456579193,
+    31.88796084404121
+  ],
+  "baseline_drift_percent": 0.6009766986360354,
+  "restoration": {
+    "baseline_config_unchanged": true,
+    "core_unchanged": true,
+    "restored_running": true
+  },
+  "post_restoration_data_checks": {
+    "module_bound": true,
+    "payload_valid": true,
+    "complete": true,
+    "sustained": true
+  },
+  "recovery_note": "UE was observed in limited service on another PLMN; existing manual operator selection mode was retained and lab PLMN reselected with AT+COPS=1,2,\"00101\"; registration C5GREG became 1. No SIM, firmware or core changes.",
+  "note": "Analog filter may be wider than the configured NR channel. Unsupported or failed points are N/A, not 0 Mbps."
+}

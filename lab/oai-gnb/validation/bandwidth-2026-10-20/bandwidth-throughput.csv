@@ -1,0 +1,10 @@
+bandwidth_MHz,mean_Mbps,sd_Mbps,runs,status,reason
+10,18.087992233168585,0.23745662941412574,1,verified,
+15,,,0,not_verified,Assertion (0==1) failed!; N_RB 38 not yet supported for numerology 1
+20,26.694990198224367,0.9563561534313559,1,verified,
+25,,,0,not_verified,Assertion (0==1) failed!; N_RB 65 not yet supported for numerology 1
+30,,,0,not_verified,Assertion (0==1) failed!; N_RB 78 not yet supported for numerology 1
+35,,,0,not_verified,No verified module data within 90 s
+40,31.789703025726357,0.5920967662113742,2,verified,
+45,,,0,not_verified,No verified module data within 90 s
+50,,,0,not_verified,[HW]     Error: unknown sampling rate 61440000.000000
