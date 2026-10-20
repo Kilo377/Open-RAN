@@ -5,6 +5,7 @@ A MATLAB-based 5G/O-RAN simulation workspace focused on baseline RAN performance
 The physical B210 / Quectel lab is documented separately in
 [lab/oai-gnb](lab/oai-gnb/README.md). It pins a newer OAI gNB in an isolated
 container and reuses the existing 5GC and SIM subscription.
+Use the [start-up guide](lab/oai-gnb/STARTUP.md) to bring up the prepared lab and verify live downlink.
 
 ## What This Project Includes
 

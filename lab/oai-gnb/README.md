@@ -84,8 +84,8 @@ sudo python3 lab/oai-gnb/scripts/labctl.py accept
 完成 UE 与流量测试。当前 `smoke-test`/`accept` 的自动验证接口依赖该监测器；
 不要将缺少测试依赖误认为新 gNB 或 SIM 不兼容。
 
-新容器没有配置开机自动启动，避免重启后与旧基站争用 B210。主机重启后需要重新检查
-5GC、旧基站和状态，再按本教程切换。
+新容器没有配置开机自动启动。日常开机后的启动入口见 [STARTUP.md](STARTUP.md)，
+包含核心网、新版 gNB、AGX 接收服务、UI 和接入失败时的检查方法。
 
 ## 回到旧版
 

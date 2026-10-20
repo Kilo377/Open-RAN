@@ -55,7 +55,13 @@ def compose(state, *args):
 
 
 def gnb_logs():
-    p = run(['docker', 'logs', '--tail', '3000', CONTAINER], check=False)
+    # Check this process invocation, including its startup evidence. A short tail
+    # drops NG Setup/RF initialization once a healthy gNB has run for a while.
+    info = container_info()
+    args = ['docker', 'logs']
+    if info:
+        args += ['--since', info['State']['StartedAt']]
+    p = run([*args, CONTAINER], check=False)
     return p.stdout + '\n' + p.stderr
 
 
@@ -160,7 +166,11 @@ def activate(state):
     if not active(RECOVERY + '.timer'):
         raise RuntimeError('Independent recovery timer did not arm.')
     try:
-        run(['systemctl', 'stop', legacy['unit']])
+        # A transient legacy unit can disappear after stop or host reboot.
+        # The process check below still prevents sharing the SDR with any owner.
+        load = run(['systemctl', 'show', legacy['unit'], '-p', 'LoadState', '--value']).stdout.strip()
+        if load != 'not-found':
+            run(['systemctl', 'stop', legacy['unit']])
         if run(['pgrep', '-x', 'nr-softmodem'], check=False).stdout.strip():
             raise RuntimeError('Another nr-softmodem is still running; refusing to share the B210.')
         compose(state, 'up', '--detach')
@@ -247,7 +257,9 @@ def accept(state):
         raise RuntimeError('The tested container is not running.')
     if not all(v['checks'].values()) or v['config_sha256'] != sha(state / 'gnb.conf'):
         raise RuntimeError('A passing smoke-test for this configuration is required.')
-    run(['systemctl', 'stop', RECOVERY + '.timer'])
+    load = run(['systemctl', 'show', RECOVERY + '.timer', '-p', 'LoadState', '--value']).stdout.strip()
+    if load != 'not-found':
+        run(['systemctl', 'stop', RECOVERY + '.timer'])
     if active(RECOVERY + '.timer'):
         raise RuntimeError('Recovery timer is still active.')
     save(state / 'current.json', {'mode': 'new', 'container_id': info['Id'], 'image': LOCK['image'],

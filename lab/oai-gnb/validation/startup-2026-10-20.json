@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-20",
+  "tag": "2026.w42",
+  "image": "oaisoftwarealliance/oai-gnb@sha256:107e67b025ef3bb36c4dde98babb6d0dbcbdd7cf782f97af3742309566018567",
+  "config_sha256": "103672c24347c213afab3e3abbd4bf9828c36bc8c38448017da2bd52a175e0ef",
+  "read_only_preflight_passed": true,
+  "start_from_stopped_container_passed": true,
+  "repeat_startup_passed": true,
+  "core_ids_and_start_times_unchanged": true,
+  "repeat_kept_gnb_id_and_start_time": true,
+  "cold_start": {
+    "checks": {
+      "ng_setup": true,
+      "rf_ready": true,
+      "40MHz": true,
+      "106_PRB": true,
+      "normal_TX_gain": true,
+      "module_identity": true,
+      "module_socket_binding": true,
+      "payload_verified": true,
+      "sustained_receive": true
+    },
+    "duration_s": 34.445830401999046,
+    "verified_frames": 8037,
+    "verified_bytes": 131678208,
+    "mean_after_warmup_Mbps": 33.22089044021294
+  },
+  "repeat_start": {
+    "checks": {
+      "ng_setup": true,
+      "rf_ready": true,
+      "40MHz": true,
+      "106_PRB": true,
+      "normal_TX_gain": true,
+      "module_identity": true,
+      "module_socket_binding": true,
+      "payload_verified": true,
+      "sustained_receive": true
+    },
+    "duration_s": 34.90163080400089,
+    "verified_frames": 7861,
+    "verified_bytes": 128794624,
+    "mean_after_warmup_Mbps": 29.94529753767887
+  },
+  "final_mode": "new",
+  "recovery_timer_active": false,
+  "legacy_running": false,
+  "OS_reboot_tested": false,
+  "scope": "Live start from a stopped gNB container and repeated startup; host OS was not rebooted."
+}
