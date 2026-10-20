@@ -216,6 +216,8 @@ def smoke_test(state, base, duration):
         raise RuntimeError('Monitor did not finish within its deadline.')
     points = result['run'].get('points', [])
     measured = [p for p in points if p['t'] >= 5]
+    receive_windows = [sum(p['delta_bytes'] for p in measured if start <= p['t'] < start+5)
+                       for start in range(5, duration-1, 5)]
     checks = gates(gnb_logs())
     checks.update({'module_identity': identity['product'] == 'RM520N-GL',
                    'module_socket_binding': bool(points) and all(p['bound_device'] == identity['interface']
@@ -223,7 +225,7 @@ def smoke_test(state, base, duration):
                    'payload_verified': bool(points) and points[-1]['verified_frames'] > 0
                                         and all(p['invalid_frames'] == 0 for p in points),
                    'sustained_receive': bool(measured) and points[-1]['t'] >= duration-1
-                                        and points[-1]['total_bytes'] > 0})
+                                        and bool(receive_windows) and all(n > 0 for n in receive_windows)})
     if not all(checks.values()):
         raise RuntimeError('Smoke test failed: ' + json.dumps(checks))
     throughput = sum(p['delta_bytes'] for p in measured)*8/sum(p['dt'] for p in measured)/1e6
@@ -231,6 +233,7 @@ def smoke_test(state, base, duration):
                   'config_sha256': sha(state / 'gnb.conf'), 'checks': checks, 'run_id': rid,
                   'duration_s': points[-1]['t'], 'verified_frames': points[-1]['verified_frames'],
                   'verified_bytes': points[-1]['total_bytes'], 'mean_after_warmup_Mbps': throughput,
+                  'five_second_window_bytes': receive_windows,
                   'samples': points, 'epoch': time.time()}
     save(state / 'smoke-test.json', validation)
     print(json.dumps({k:v for k,v in validation.items() if k not in ('samples', 'container_id')}, indent=2), flush=True)
