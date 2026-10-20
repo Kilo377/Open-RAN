@@ -1,0 +1,65 @@
+{
+  "validated_on": "2026-10-20",
+  "timezone": "Europe/London",
+  "upstream_tag": "2026.w42",
+  "source_commit": "f80a88326801f5417405dea0b174879bac8940e0",
+  "image": "oaisoftwarealliance/oai-gnb@sha256:107e67b025ef3bb36c4dde98babb6d0dbcbdd7cf782f97af3742309566018567",
+  "configuration_sha256": "103672c24347c213afab3e3abbd4bf9828c36bc8c38448017da2bd52a175e0ef",
+  "hardware": {
+    "radio": "USRP B210",
+    "UE": "Quectel RM520N-GL + NVIDIA Jetson AGX",
+    "band": 78,
+    "channel_bandwidth_MHz": 40,
+    "subcarrier_spacing_kHz": 30,
+    "PRB": 106,
+    "att_tx_dB": 12,
+    "UHD_TX_gain_dB": 77.75
+  },
+  "checks": {
+    "ng_setup": true,
+    "rf_ready": true,
+    "40MHz": true,
+    "106_PRB": true,
+    "normal_TX_gain": true,
+    "module_identity": true,
+    "module_socket_binding": true,
+    "payload_verified": true,
+    "sustained_receive": true,
+    "runtime_source_revision_matches_lock": true
+  },
+  "download_smoke_test": {
+    "duration_s": 34.48767424300058,
+    "verified_frames": 8784,
+    "verified_bytes": 143917056,
+    "mean_after_warmup_Mbps": 33.87892093611841,
+    "five_second_window_bytes": [
+      20905984,
+      21741568,
+      20676608,
+      21184512,
+      21315584,
+      19103744
+    ]
+  },
+  "legacy_rollback_test": {
+    "duration_s": 9.990468856998632,
+    "verified_frames": 1957,
+    "invalid_frames": 0,
+    "module_bound": true,
+    "verified_bytes": 32063488,
+    "monitor_phase_at_last_sample": "stopping",
+    "passed": true
+  },
+  "final_state": {
+    "new_gnb_running": true,
+    "legacy_gnb_running": false,
+    "recovery_timer_active": false,
+    "core_container_ids_images_and_start_times_unchanged": true,
+    "existing_SIM_reused": true
+  },
+  "runtime_version_lines": [
+    "[HW]     Version: Branch: develop-f80a88326801f5417405dea0b174879bac8940e0 Abrev. Hash: f80a883 Date: Fri Oct 16 23:46:56 2026 +0200",
+    "[INFO] [UHD] linux; GNU C++ version 13.3.0; Boost_108300; UHD_4.8.0.HEAD-0-g308126a4"
+  ],
+  "scope": "Connectivity smoke test using the existing 5GC and SIM; not a peak-throughput benchmark or validation of other bandwidths."
+}
