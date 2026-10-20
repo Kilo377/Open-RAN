@@ -1,0 +1,14 @@
+/.local/
+/*.local.*
+/.env
+/logs/
+/results/
+/src/
+__pycache__/
+*.pyc
+*.pcap
+*.pcapng
+*.key
+*.pem
+*.sql
+*.dump

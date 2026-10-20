@@ -1,0 +1,9 @@
+{
+  "repository": "https://gitlab.eurecom.fr/oai/openairinterface5g.git",
+  "tag": "2026.w42",
+  "commit": "f80a88326801f5417405dea0b174879bac8940e0",
+  "tag_object": "56ae995596f679345750b91298404b157efaf24c",
+  "image": "oaisoftwarealliance/oai-gnb@sha256:107e67b025ef3bb36c4dde98babb6d0dbcbdd7cf782f97af3742309566018567",
+  "platform": "linux/amd64",
+  "configuration": "configs/gnb.sa.band78.40MHz.b210.conf"
+}

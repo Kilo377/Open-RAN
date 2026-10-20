@@ -2,6 +2,10 @@
 
 A MATLAB-based 5G/O-RAN simulation workspace focused on baseline RAN performance, Near-RT xApp control, and Non-RT policy loop experiments. The project is script-driven and designed for reproducible KPI comparison, policy validation, and dataset generation.
 
+The physical B210 / Quectel lab is documented separately in
+[lab/oai-gnb](lab/oai-gnb/README.md). It pins a newer OAI gNB in an isolated
+container and reuses the existing 5GC and SIM subscription.
+
 ## What This Project Includes
 
 - **Core RAN simulation pipeline**: mobility, traffic, beamforming, radio, handover, scheduling, PHY, energy, and KPI stages.

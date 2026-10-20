@@ -1,0 +1,40 @@
+name: oai-gnb-next
+services:
+  gnb:
+    image: oaisoftwarealliance/oai-gnb@sha256:107e67b025ef3bb36c4dde98babb6d0dbcbdd7cf782f97af3742309566018567
+    platform: linux/amd64
+    container_name: oai-gnb-next
+    restart: "no"
+    network_mode: host
+    cap_add:
+      - SYS_NICE
+      - IPC_LOCK
+    device_cgroup_rules:
+      - "c 189:* rmw"
+    ulimits:
+      rtprio: 99
+      memlock:
+        soft: -1
+        hard: -1
+      core: 0
+    environment:
+      UHD_IMAGES_DIR: /uhd-images
+      USE_ADDITIONAL_OPTIONS: "-E --continuous-tx --gNBs.[0].min_rxtxtime 6"
+    volumes:
+      - type: bind
+        source: ${GNB_CONFIG:?Run prepare first}
+        target: /opt/oai-gnb/etc/gnb.conf
+        read_only: true
+      - type: bind
+        source: ${UHD_IMAGES:?Run prepare first}
+        target: /uhd-images
+        read_only: true
+      - type: bind
+        source: /dev/bus/usb
+        target: /dev/bus/usb
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    stop_grace_period: 20s
