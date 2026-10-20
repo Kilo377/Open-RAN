@@ -1,6 +1,0 @@
-{
-  "orchestrator": "graph",
-  "provider": "ollama",
-  "model": "qwen2.5:14b",
-  "intent_text": "提升吞吐"
-}

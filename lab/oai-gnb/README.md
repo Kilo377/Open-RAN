@@ -1,6 +1,6 @@
 # OAI gNB 独立升级环境：B210 + RM520N-GL
 
-这部分连接真实 USRP、5GC 和 UE。MATLAB 仿真仍在仓库原有的 `oran-sim/` 中。
+这里保存真实 USRP、5GC 和 UE 实验所需的配置、脚本、教程与脱敏验证记录。
 
 基站固定在官方 **2026.w42**；源码提交与容器摘要见
 [upstream.lock.json](upstream.lock.json)。容器内是独立的 UHD 和运行库，
