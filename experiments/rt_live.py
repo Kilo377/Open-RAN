@@ -9,6 +9,7 @@ import numpy as np
 
 from phy.rt_sys.channel import position_at
 from experiments.rt_live_state import configuration, cell_rows, control_snapshot, plain
+from experiments.rt_link_statistics import LinkStatistics, LATENCY_SCOPE
 
 
 class LivePublisher:
@@ -21,6 +22,7 @@ class LivePublisher:
         self.feedback_mode = feedback_mode
         self.started = time.monotonic()
         self.delivered = self.attempts = self.nacks = 0
+        self.link_statistics = LinkStatistics()
         self.latest = {}
         self.configuration = configuration(manifest, configs, control_mode, platform_profile)
         self.history = deque(maxlen=300)
@@ -60,6 +62,7 @@ class LivePublisher:
         decoded = [r for r in rows.values() if r.get('actual_decode')]
         self.attempts += len(decoded)
         self.nacks += sum(not r['ack'] for r in decoded)
+        self.link_statistics.observe(state.slot_id, rows.values())
         users = []
         for spec, user in zip(self.manifest['ues'], state.ues):
             assert spec['ue_id'] == user.ue_id
@@ -68,10 +71,13 @@ class LivePublisher:
             connection = state.connections[user.ue_id]
             ledger = getattr(user, 'packet_ledger', None)
             packet = plain(ledger.summary()) if ledger is not None else {}
+            measured = getattr(getattr(state, 'measurement', None), 'ue_measurements', {}).get(user.ue_id)
             users.append(dict(ue_id=user.ue_id, position_m=pos.tolist(),
                 cell_id=connection.serving_cell_id, connection_state=connection.connection_state,
                 queue_bytes=int(user.queue_bytes), scheduled=bool(row.get('scheduled', False)),
                 sinr_db=float(row['sinr_db']) if row.get('scheduled') else None,
+                reference_sinr_db=plain(getattr(measured, 'reference_sinr_db', None)),
+                sinr_scope='Executed post-LMMSE data SINR; reference_sinr_db is delayed reference feedback',
                 mcs=int(row.get('mcs', 0)), ack=bool(row['ack']) if row.get('scheduled') else None,
                 delivered_bytes=int(row.get('delivered_bytes', 0)),
                 throughput_mbps=float(row.get('throughput_mbps', 0)),
@@ -82,6 +88,9 @@ class LivePublisher:
                 rank=getattr(user, 'rank', None),
                 harq=plain(dict(pending_retx_bytes=getattr(getattr(user, 'harq', None), 'pending_retx_bytes', None),
                     is_retx=bool(row.get('is_retx', False)))),
+                link_statistics=self.link_statistics.user(user.ue_id),
+                resource_mode=row.get('resource_mode', 'unknown'),
+                intra_cell_interference_dbm=row.get('intra_cell_interference_dbm'),
                 handover_count=getattr(connection, 'handover_count', None),
                 pending_target_cell=getattr(connection, 'handover_pending_target_cell_id', None)))
         cells = cell_rows(state, adapter.trace, users)
@@ -101,6 +110,8 @@ class LivePublisher:
             sim_time_ms=float(state.sim_time_ms), ues=users,
             delivered_bytes=self.delivered, decode_attempts=self.attempts, nacks=self.nacks,
             throughput_mbps=self.delivered * 8 / max(state.sim_time_ms * 1000, 1),
+            link_statistics=self.link_statistics.snapshot(),
+            completion_latency_scope=LATENCY_SCOPE,
             slot_throughput_mbps=sum(u['delivered_bytes'] for u in users) * 8 /
                 (self.manifest['slot_duration_ms'] * 1000),
             queue_bytes=sum(u['queue_bytes'] for u in users),

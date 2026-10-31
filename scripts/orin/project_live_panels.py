@@ -136,6 +136,7 @@ class Dashboard:
     def overview(self, d, focus):
         ui.TextColored(ACCENT, 'NETWORK HEALTH')
         packet = d.get('packet_totals', {})
+        link = d.get('link_statistics', {}).get('network', {})
         count = len(d.get('ues', []))
         table('overview-metrics', ['Metric', 'Actual value'], [
             ('Connected UEs', f'{d.get("connected_ues", 0)} / {count}'),
@@ -145,12 +146,14 @@ class Dashboard:
             ('MAC queue', f'{d.get("queue_bytes", 0):,} B'),
             ('Packet ledger pending', fmt(packet.get('pending_bytes'), suffix=' B')),
             ('Overflow bytes', fmt(packet.get('overflow_bytes'), suffix=' B')),
-            ('Mean completed-packet delay', fmt(packet.get('mean_completion_latency_ms'), 3, ' ms')),
+            ('Mean completed queue delay', fmt(packet.get('mean_completion_latency_ms'), 3, ' ms')),
             ('Completed packets', fmt(packet.get('completed_packets'))),
             ('Actual NR decode attempts', fmt(d.get('decode_attempts'))),
             ('NACK / actual decode attempts', f'{d.get("nacks", 0)} / {d.get("decode_attempts", 0)}'),
+            ('First-TX BLER / attempts', f'{fmt(link.get("first_tx_bler"), 4)} / {fmt(link.get("first_tx_attempts"))}'),
+            ('Retx error rate / attempts', f'{fmt(link.get("retx_error_rate"), 4)} / {fmt(link.get("retx_attempts"))}'),
         ])
-        ui.TextWrapped('NACK fraction is an observed cumulative sample ratio, not a converged BLER estimate. Delay excludes unfinished packets.')
+        ui.TextWrapped('First-TX and retransmission errors have separate denominators. Pooled NACK is not a target-BLER certificate. Queue delay excludes unfinished packets and within-slot airtime; same-slot completion is zero.')
         ui.Separator()
         ui.TextColored(ACCENT, 'COMPUTE BACKENDS')
         for key, value in d.get('execution_devices', {}).items():
@@ -180,6 +183,7 @@ class Dashboard:
             [u['ue_id'], u['cell_id'], fmt(u.get('sinr_db')), u.get('mcs', '--'), u['queue_bytes'],
              ('ACK' if u['ack'] else 'NACK') if u['scheduled'] else 'idle'] for u in users])
         user = users[self.ue_index]
+        link = user.get('link_statistics', {})
         ui.Separator()
         ui.TextColored(ACCENT, f'DETAIL / {user["ue_id"]}')
         table('ue-detail', ['Field', 'Actual state'], [
@@ -189,9 +193,15 @@ class Dashboard:
             ('Handover target', user.get('pending_target_cell') or '--'),
             ('Physical position / m', ', '.join(f'{v:.3f}' for v in user['position_m'])),
             ('HOL delay / ms', fmt(user.get('packet', {}).get('hol_delay_ms'), 3)),
-            ('Mean completion delay / ms', fmt(user.get('packet', {}).get('mean_completion_latency_ms'), 3)),
+            ('Mean queue completion delay / ms', fmt(user.get('packet', {}).get('mean_completion_latency_ms'), 3)),
+            ('Resource mode / latest grant', user.get('resource_mode', 'unknown')),
+            ('Data / delayed-reference SINR dB', f'{fmt(user.get("sinr_db"))} / {fmt(user.get("reference_sinr_db"))}'),
+            ('First-TX BLER / attempts', f'{fmt(link.get("first_tx_bler"), 4)} / {fmt(link.get("first_tx_attempts"))}'),
+            ('Retx error rate / attempts', f'{fmt(link.get("retx_error_rate"), 4)} / {fmt(link.get("retx_attempts"))}'),
+            ('Other-UE intra-cell power / dBm', fmt(user.get('intra_cell_interference_dbm'), 3)),
             ('Pending HARQ bytes', fmt(user.get('harq', {}).get('pending_retx_bytes'))),
         ])
+        tree('Actual decode outcomes by SU / MU / mixed resources', link.get('by_resource_mode', {}))
 
     def kpis(self, d, focus):
         ui.TextColored(ACCENT, 'LIVE KPI DETAILS / EXPORTED MEASUREMENTS')
@@ -199,6 +209,7 @@ class Dashboard:
         packet = d.get('packet_totals', {})
         users = d.get('ues', [])
         attempts = d.get('decode_attempts', 0)
+        link = d.get('link_statistics', {}).get('network', {})
         hol = [u.get('packet', {}).get('hol_delay_ms') for u in users]
         maximum = [u.get('packet', {}).get('max_completion_latency_ms') for u in users]
         table('kpi-network', ['Network metric', 'Current value'], [
@@ -208,22 +219,26 @@ class Dashboard:
             ['Pending packet bytes', fmt(packet.get('pending_bytes'))],
             ['Overflow bytes', fmt(packet.get('overflow_bytes'))],
             ['Completed packets', fmt(packet.get('completed_packets'))],
-            ['Mean completed-packet delay ms', fmt(packet.get('mean_completion_latency_ms'), 3)],
-            ['Max observed completed-packet delay ms', fmt(max((v for v in maximum if v is not None), default=None), 3)],
+            ['Mean completed queue delay ms', fmt(packet.get('mean_completion_latency_ms'), 3)],
+            ['Max completed queue delay ms', fmt(max((v for v in maximum if v is not None), default=None), 3)],
             ['Current max UE HOL delay ms', fmt(max((v for v in hol if v is not None), default=None), 3)],
             ['Late completed fraction', fmt(packet.get('late_completed_fraction'), 4)],
             ['Packets that missed their deadline', fmt(packet.get('deadline_missed_packets'))],
             ['NACK / actual NR decode attempts', f'{d.get("nacks", 0)} / {attempts}'],
             ['Observed cumulative NACK fraction', fmt(d.get('nacks', 0) / attempts if attempts else None, 4)],
+            ['First-TX NACK / attempts', f'{fmt(link.get("first_tx_nacks"))} / {fmt(link.get("first_tx_attempts"))}'],
+            ['First-TX BLER', fmt(link.get('first_tx_bler'), 4)],
+            ['Retx NACK / attempts', f'{fmt(link.get("retx_nacks"))} / {fmt(link.get("retx_attempts"))}'],
+            ['Retx error rate', fmt(link.get('retx_error_rate'), 4)],
         ])
-        ui.TextWrapped('Delay covers completed packets; pending work is shown separately. NACK fraction includes the observed decode attempts and is not a converged BLER estimate.')
+        ui.TextWrapped(d.get('completion_latency_scope', 'Queue delay covers completed packets, excludes within-slot airtime, and can be zero for same-slot completion. This is not end-to-end latency.'))
         table('kpi-cell', ['Cell', 'Mbps', 'Grid %', 'RF W', 'Queue B'], [
             [c['cell_id'], fmt(c.get('slot_throughput_mbps')), fmt(c.get('grid', {}).get('utilization', 0) * 100),
              fmt(c.get('phy_power', {}).get('average_used_w'), 4), fmt(c.get('queue_bytes'))] for c in d.get('cell_metrics', [])])
         tree('All exported network packet counters', packet)
         tree('Per-UE radio, queue, HOL, HARQ and packet counters', users)
         tree('Per-cell resources, MU groups and RF power counters', d.get('cell_metrics', []))
-        ui.TextWrapped('Not aggregated in this live export: P95/P99 packet delay, separate first-transmission BLER and UE goodput fairness over a declared window. Extended controller KPI reports remain in experiment artifacts. Whole-device energy needs a device power model or measurement.')
+        ui.TextWrapped('Not aggregated in this live export: P95/P99 packet delay and UE goodput fairness over a declared window. First-TX/retx ratios are cumulative; they are not convergence certificates. Whole-device energy needs a device power model or measurement.')
 
     def cells(self, d, focus):
         cells = d.get('cell_metrics', [])
@@ -322,6 +337,10 @@ class Dashboard:
     def xapp_test(self, d, focus):
         from experiments.live_xapp_test import submit, start_comparison
         x = d['xapp_test']
+        ui.TextUnformatted('xApp pool: ' + x.get('pool', 'yisong'))
+        if not x.get('catalog') and not x.get('app'):
+            ui.TextWrapped('No xApps registered in this pool. The native network is running without xApps.')
+            return
         catalog = x.get('catalog') or [{**x['app'], 'available': True, 'registered': True}]
         if self.test_app is None:
             self.test_app = next((i for i, a in enumerate(catalog) if a.get('active_cell_ids')), 0)

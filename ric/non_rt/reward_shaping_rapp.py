@@ -226,9 +226,12 @@ class RewardShapingRApp(RAppBase):
             for item in list(getattr(plan, "selected_xapps", []) or [])
             if str(item).strip() != ""
         ]
+        candidates = (getattr(self, 'rt_xapp_capabilities', [])
+                      if getattr(self, 'rt_xapp_pool', 'yisong') != 'yisong'
+                      else available_xapp_catalog_for_llm())
         catalog = {
             str(item.get("xapp_name", "")): item
-            for item in available_xapp_catalog_for_llm()
+            for item in candidates
             if str(item.get("xapp_name", "")).strip() != ""
         }
         selected_context: list[dict[str, object]] = []

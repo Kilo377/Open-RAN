@@ -277,6 +277,12 @@ class Simulator:
                 getattr(config, "non_rt_reselection_min_gap_slots", 10) or 10
             ),
         )
+        self.controller_manager.xapp_pool = getattr(controller_registry, 'xapp_pool', 'yisong')
+        for interface in self.controller_manager.a1_interfaces:
+            interface.rapp.rt_xapp_pool = self.controller_manager.xapp_pool
+            if self.controller_manager.xapp_pool != 'yisong':
+                interface.rapp.rt_xapp_capabilities = []
+                interface.rapp.rt_xapp_categories = {}
 
     def _build_method_config_summary(self) -> dict[str, object]:
         return {

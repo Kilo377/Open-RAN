@@ -34,6 +34,18 @@ class ChannelSnapshot:
     positions: np.ndarray
     cache_key: str
     metadata: dict = field(default_factory=dict)
+    # Execution caches stay outside the serialized host contract.
+    @property
+    def device_cfr(self):return getattr(self,'_device_cfr',None)
+
+    @device_cfr.setter
+    def device_cfr(self,value):self._device_cfr=value
+
+    @property
+    def device_backend(self):return getattr(self,'_device_backend',None)
+
+    @device_backend.setter
+    def device_backend(self,value):self._device_backend=value
 
     def validate(self):
         if len(set(self.ue_ids)) != len(self.ue_ids) or len(set(self.cell_ids)) != len(self.cell_ids):
@@ -44,6 +56,8 @@ class ChannelSnapshot:
             raise ValueError('Invalid channel snapshot')
         if self.metadata.get('normalized', False):
             raise ValueError('Unit-normalized propagation channels are forbidden')
+        if self.device_cfr is not None and self.device_cfr.shape!=self.cfr.shape:
+            raise ValueError('Retained device CFR shape differs from host CFR')
         return self
 
     def link(self, ue_id, cell_id):

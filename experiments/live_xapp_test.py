@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'platform',
     'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load',
     'initial_queue_bytes', 'ue_speed_mps', 'feedback_mode', 'csi_error_nmse_db',
-    'harq_combining', 'recording_mode', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root')
+    'harq_combining', 'recording_mode', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 
 
 def atomic_json(path, value):
@@ -38,21 +38,25 @@ def configure(configs, manifest, args):
         raise ValueError('Comparison slot count must be positive')
     if getattr(args, 'xapp_test_cell', '*') not in ['*'] + [c['cell_id'] for c in manifest['cells']]:
         raise ValueError('Unknown xApp test cell')
-    from ric.near_rt.xapp_library import IMPLEMENTATIONS
+    from ric.near_rt.pools import live_configs, validate_pool
+    pool = validate_pool(getattr(args, 'xapp_pool', None) or configs['ric'].get('xapp_pool', 'yisong'))
+    args.xapp_pool = pool
     cells = [c['cell_id'] for c in manifest['cells']]
     period = max(1, math.ceil(20 / manifest['slot_duration_ms']))
-    apps = [dict(type=APP, name=APP, cell_ids=cells)]
     # Command-based mobility experiments cannot promise configuration withdrawal.
-    apps += [dict(type='xapp_instance', instance_id=ident, implementation_id=ident,
-        cell_ids=cells, slot_duration_ms=manifest['slot_duration_ms'], initial_bindings={})
-        for ident, spec in sorted(IMPLEMENTATIONS.items()) if not spec['commands']]
-    if getattr(args, 'xapp_test_app', APP) not in [APP] + [a['instance_id'] for a in apps[1:]]:
-        raise ValueError('Unknown or command-based live test xApp')
+    apps = live_configs(pool, cells, manifest['slot_duration_ms'])
+    names = [a.get('instance_id', a.get('name')) for a in apps]
+    requested = getattr(args, 'xapp_test_app', None)
+    if requested is not None and requested not in names:
+        raise ValueError(f'Unknown or command-based live test xApp in {pool} pool: {requested}')
+    args.xapp_test_app = requested or (APP if APP in names else next(iter(names), None))
+    if not apps and getattr(args, 'xapp_test_start', 'off') == 'on':
+        raise ValueError(f'xApp pool {pool} is empty; register an xApp before starting ON')
     paper = configs.setdefault('phy', {}).setdefault('rt_sys', {}).setdefault('paper_interfaces', {})
     paper.update(enabled=True, rule_observations=True)
     paper.setdefault('connection_events', False)
     paper.setdefault('beam_reports', False)
-    configs['ric'].update(rapps=[], xapps=apps, freeze_learning=True,
+    configs['ric'].update(rapps=[], xapps=apps, xapp_pool=pool, freeze_learning=True,
         run_rapps_on_start=False, xapp_interval_slots=period,
         rapp_interval_slots=math.ceil(1000 / manifest['slot_duration_ms']))
     return True
@@ -65,7 +69,10 @@ class LiveXAppSession:
         self.run_id = uuid.uuid4().hex
         self.manager = simulator.controller_manager
         self.apps = self.manager.instance_selection.apps()
-        self.app = self.apps[getattr(args, 'xapp_test_app', APP)]
+        self.pool = getattr(args, 'xapp_pool', 'yisong')
+        from ric.near_rt.pools import pool_catalog
+        self.pool_catalog = deepcopy(pool_catalog(self.pool))
+        self.app = self.apps.get(getattr(args, 'xapp_test_app', APP))
         self.dt = float(simulator.clock.slot_duration_ms) if hasattr(simulator.clock, 'slot_duration_ms') else float(args._live_slot_ms)
         self.period = self.manager.xapp_interval_slots
         self.settle_slots = self.period + max(0, simulator._config_delay_slots)
@@ -110,8 +117,8 @@ class LiveXAppSession:
             raise ValueError('Unknown target cell')
         selection = self.manager.instance_selection
         before = deepcopy(selection.bindings or {})
-        app = self.apps.get(app_id or self.app.name)
-        if app is None:
+        app = self.apps.get(app_id or (self.app.name if self.app else None))
+        if app is None and (enabled or self.apps):
             raise ValueError('Unregistered live test xApp')
         if enabled:
             reason = self.unavailable_reason(app)
@@ -131,15 +138,16 @@ class LiveXAppSession:
                 for key in fields:
                     if current[cid].get(key) != self.baseline[cid].get(key):
                         raise ValueError('Wait for the previous disable to restore controlled parameters')
-        accepted = self.manager.policy_store.apply_update(PolicyUpdate(
-            source_name='live_xapp_ui', xapp_bindings=new), slot_id=slot)
-        if accepted is False:
-            raise ValueError('Selection policy was rejected')
-        # Invalidate queued old-generation requests before the next slot applies them.
-        selection.sync(slot, None)
+        if self.apps:
+            accepted = self.manager.policy_store.apply_update(PolicyUpdate(
+                source_name='live_xapp_ui', xapp_bindings=new), slot_id=slot)
+            if accepted is False:
+                raise ValueError('Selection policy was rejected')
+            # Invalidate queued old-generation requests before the next slot applies them.
+            selection.sync(slot, None)
         if enabled:self.app = app
         self.segments.append(dict(label=('ON / ' + cell) if enabled else 'OFF / baseline',
-            app_id=app.name,
+            app_id=app.name if app else None,
             enabled=enabled, cell=cell, start_slot=slot, first_counted_slot=slot + self.settle_slots + 1,
             slots=0, skipped_slots=0, delivered_bytes=0, queue_sum=0, hol_sum=0.,
             decodes=0, nacks=0, completed_packets=0, completion_delay_sum_ms=0.))
@@ -240,7 +248,6 @@ class LiveXAppSession:
         segment['completion_delay_sum_ms'] += delay - prior_delay
 
     def snapshot(self):
-        from ric.near_rt.xapp_library import IMPLEMENTATIONS
         catalog = []
         for ident, app in self.apps.items():
             descriptor = app.descriptor()
@@ -248,13 +255,13 @@ class LiveXAppSession:
             catalog.append({key: descriptor[key] for key in (
                 'instance_id', 'implementation_id', 'category_id', 'description', 'writable_actions',
                 'active_cell_ids', 'required_kpis', 'min_action_ms') if key in descriptor} |
-                dict(registered=True, available=reason is None, unavailable_reason=reason,
+                dict(pool=self.pool, registered=True, available=reason is None, unavailable_reason=reason,
                     selection_versions=dict(app.tokens)))
-        for ident, spec in sorted(IMPLEMENTATIONS.items()):
+        for ident, spec in sorted(self.pool_catalog.items()):
             if ident not in self.apps:
                 catalog.append(dict(instance_id=ident, implementation_id=ident,
                     category_id=spec['category_id'], description=spec['description'],
-                    registered=False, available=False, active_cell_ids=[],
+                    pool=self.pool, registered=False, available=False, active_cell_ids=[],
                     unavailable_reason='Handover commands require a separate experiment; configuration withdrawal cannot undo them'))
         segments = []
         for item in self.segments[-12:]:
@@ -265,11 +272,11 @@ class LiveXAppSession:
                 'mean_max_hol_ms': item['hol_sum'] / n if n else None,
                 'mean_completion_delay_ms': item['completion_delay_sum_ms'] / count if count else None,
                 'nack_fraction': item['nacks'] / item['decodes'] if item['decodes'] else None})
-        return dict(run_id=self.run_id, app=self.app.descriptor(), catalog=catalog,
+        return dict(run_id=self.run_id, pool=self.pool, app=self.app.descriptor() if self.app else None, catalog=catalog,
             pending_activation=deepcopy(self.pending_activation),
-            selected_cells=sorted(self.app.active_cells), period_ms=self.period * self.dt,
+            selected_cells=sorted(self.app.active_cells) if self.app else [], period_ms=self.period * self.dt,
             settle_ms=self.settle_slots * self.dt, segments=segments,
-            last_decisions=deepcopy(self.app.last_decisions), receipts=list(self.receipts),
+            last_decisions=deepcopy(self.app.last_decisions) if self.app else [], receipts=list(self.receipts),
             baseline=deepcopy(self.baseline), command_dir=str(self.command_dir) if self.command_dir else None,
             comparison_spec=str(self.spec_path), simulation_python=sys.executable,
             comparison_note='Live segments are observational; matched A/B restarts both arms with the same seed, traffic and propagation.')
@@ -290,6 +297,11 @@ def submit(state_path, data, operation, cell='*', app=APP):
 
 
 def start_comparison(state_path, data, cell='*', app=APP):
+    catalog = data['xapp_test'].get('catalog') or (
+        [data['xapp_test']['app']] if data['xapp_test'].get('app') else [])
+    if not any(a.get('instance_id') == app and a.get('available')
+               for a in catalog):
+        raise ValueError('Selected xApp is not available in this pool')
     state_path = Path(state_path)
     result = state_path.with_suffix('.comparison.json')
     lock = result.with_suffix('.lock')

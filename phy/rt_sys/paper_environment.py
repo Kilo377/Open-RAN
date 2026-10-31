@@ -32,6 +32,7 @@ class PaperEnvironment:
         self.resource_counters={u.ue_id:dict(cell=None,epoch=0,total=0,start=0,window=deque(maxlen=self.window)) for u in self.state.ues}
         self.delayed=deque(maxlen=max(4,int(getattr(simulator.config,'measurement_queue_delay_slots',0))+3))
         self.last_radio_config=None
+        self.reference_cache_stats=Counter()
         for ue,item in zip(self.state.ues,getattr(simulator,'_paper_ue_config',{}).get('ues',[])):
             value=item.get('requested_dl_rate_bps',self.config.get('service_requirements_bps',{}).get(ue.ue_id,self.config.get('service_requirements_by_slice_bps',{}).get(ue.slice_id)))
             if value is not None and (not np.isfinite(value) or value<0):raise ValueError('Invalid declared service requirement')
@@ -74,9 +75,14 @@ class PaperEnvironment:
             getattr(r.cell,'ret_tilt_deg',0),getattr(r.cell,'ret_codebook_id',0),
             tuple(r.cell.prb_power_w) if getattr(r.cell,'prb_power_w',None) is not None else None)
             for cid,r in self.state.managed_cells.items())
+        report_beams=bool(self.config.get('beam_reports',False))
+        beam_state=tuple((uid,c.serving_beam_id) for uid,c in sorted(self.state.connections.items())) if report_beams else ()
         key=(slot,id(snapshot),radio,snapshot.metadata.get('tx_rows'),snapshot.metadata.get('tx_cols'),
-             self.adapter.config.get('noise_figure_db',7))
-        if self.adapter.config.get('reuse_reference_within_slot',False) and getattr(self,'_reference_key',None)==key:return
+             snapshot.metadata.get('subcarrier_spacing_hz',30000),
+             self.adapter.config.get('noise_figure_db',7),report_beams,beam_state)
+        if self.adapter.config.get('reuse_reference_within_slot',False) and getattr(self,'_reference_key',None)==key:
+            self.reference_cache_stats['hits']+=1;return
+        self.reference_cache_stats['calculations']+=1
         self.raw=references(self.adapter.current_snapshot,self.state,self.adapter.config.get('noise_figure_db',7))
         self._reference_key=key
 

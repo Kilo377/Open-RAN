@@ -29,6 +29,9 @@ def test_live_telemetry_uses_actual_slot_results_and_counts_only_decodes(tmp_pat
     assert result['delivered_bytes'] == 100
     assert result['throughput_mbps'] == 1.6
     assert result['decode_attempts'] == 1
+    assert result['link_statistics']['network']['first_tx_attempts'] == 1
+    assert result['ues'][0]['link_statistics']['first_tx_bler'] == 0
+    assert result['link_statistics']['network']['retx_error_rate'] is None
     assert result['ues'][0]['position_m'] == pytest.approx([.001, 0, 1])
     assert result['ues'][0]['queue_bytes'] == 17
     assert user.queue_bytes == 17 and adapter.trace['ues'][0] == row
@@ -42,6 +45,8 @@ def test_live_telemetry_uses_actual_slot_results_and_counts_only_decodes(tmp_pat
     assert result['throughput_mbps'] == .8
     assert result['ues'][0]['sinr_db'] is None
     assert result['stage'] == 'completed'
+    assert result['link_statistics']['network']['actual_decode_attempts'] == 1
+    assert 'same-slot completion is zero' in result['completion_latency_scope']
     with np.load(result['mesh_path']) as mesh:
         assert mesh['vertices'].shape == (3, 3)
         assert mesh['faces'].tolist() == [[0, 1, 2]]

@@ -21,9 +21,9 @@ def source_fingerprint(root):
 def read(path):return json.loads(Path(path).read_text())
 
 
-def audit(folder):
+def audit(folder,require_spark=True):
     folder=Path(folder);status=read(folder/'run_status.json');config=read(folder/'config_snapshot.json');final=read(folder/'final_summary.json')
-    assert status['completed'] and status['spark_verified']
+    assert status['completed'] and (status['spark_verified'] or not require_spark)
     assert status['source_sha256']==config['source_sha256']
     stats=final['link_reference_statistics']
     assert all(stats.get(k,0)==0 for k in ('amc_probe_trials','bler_probe_trials','calibration_decode_trials','incompatible_no_tb','unsupported_no_tb'))

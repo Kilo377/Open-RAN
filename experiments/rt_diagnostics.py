@@ -3,6 +3,7 @@ from collections import Counter
 from dataclasses import asdict
 import math
 from phy.rt_sys.reference import probability_interval
+from experiments.rt_link_statistics import LinkStatistics, LATENCY_SCOPE
 
 
 def compact_trace(trace):
@@ -18,9 +19,11 @@ class RuntimeDiagnostics:
         self.dt=dt;self.warmup=warmup_ms;self.window_slots=max(1,round(window_ms/dt))
         self.users={u.ue_id:u for u in users};self.windows={};self.ue={uid:Counter() for uid in self.users}
         self.last={};self.evaluated_slots=0;self.feedback_count=0
+        self.link_statistics=LinkStatistics()
 
     def observe(self,state,trace):
         slot=state.slot_id;feedback=[];selections=[]
+        self.link_statistics.observe(slot,trace['ues'])
         for uid,u in self.users.items():
             olla=getattr(u,'du_olla',None)
             if olla:
@@ -108,6 +111,7 @@ class RuntimeDiagnostics:
             return dict(ue_ids=ids,delivered_bytes=sum(self.ue[u]['delivered_bytes'] for u in ids),
                 offered_bytes=sum(steady['per_ue'][u]['offered_bytes'] for u in ids))
         return dict(per_ue=users,windows=rows,per_link_segment={k:dict(v) for k,v in per_link.items()},
+            link_statistics=self.link_statistics.snapshot(),completion_latency_scope=LATENCY_SCOPE,
             all_ues=cohort(list(self.users)),ever_connected_ues=cohort(connected),
             by_traffic_type={k:dict(v) for k,v in groups.items()},feedback_events=self.feedback_count,
             target_interpretation='Dynamic RT segments are diagnostic, not fixed-channel target-BLER certificates.',

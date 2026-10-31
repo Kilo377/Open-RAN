@@ -18,6 +18,12 @@ class DirectNrAbstraction(NrReferenceAbstraction):
         self.selection_samples = self.bler_samples = 0
         self.information_screening = False
         self.statistics.update(amc_probe_trials=0, bler_probe_trials=0, calibration_decode_trials=0)
+        self.parallel_receiver=None
+        if cfg.get('nr_execution')=='parallel':
+            if self.device!='cpu':raise ValueError('Process-parallel NR requires CPU PHY')
+            from phy.rt_sys.parallel_nr import ParallelNrReceiver
+            self.parallel_receiver=ParallelNrReceiver(cfg.get('nr_parallel_workers',6),
+                cfg.get('nr_worker_threads',1),cfg.get('nr_pin_workers',False))
 
     def _probe(self, *args, **kwargs):
         raise RuntimeError('nr_direct must never run a Monte Carlo probe')
@@ -32,12 +38,22 @@ class DirectNrAbstraction(NrReferenceAbstraction):
             index={'qam64':1,'qam256':2,'qam64_low_se':3}[r['table']]
             values=np.asarray(r['sinr']);values=values[values>0].astype(float)
             if not len(values) or not np.isfinite(values).all():raise ValueError('Invalid batch SINR')
-            wave=self.waveform(index,int(r['mcs']),len(values))
+            try:wave=self.waveform(index,int(r['mcs']),len(values))
+            except ValueError as exc:
+                if not supported_code_constraint(exc):raise
+                # evaluate() retains the scalar explicit no-TB result.
+                continue
             jobs.append((wave,values,r['seed'],r['slot'],r['ue_id'],r['harq_context']))
-        feedback=self.harq.transmit_many(jobs)
-        self._batch_feedback={r['ue_id']:info for r,info in zip(requests,feedback)}
+        supported={job[4] for job in jobs}
+        feedback=(self.parallel_receiver.transmit_many(self.harq,jobs) if self.parallel_receiver is not None
+                  else self.harq.transmit_many(jobs))
+        self._batch_feedback={r['ue_id']:info for r,info in zip(
+            (r for r in requests if r['ue_id'] in supported),feedback)}
         try:return [self.evaluate(**r) for r in requests]
         finally:self._batch_feedback=None
+
+    def close(self):
+        if self.parallel_receiver is not None:self.parallel_receiver.close()
 
     def _transmitted_feedback(self,wave,values,seed,slot,ue_id,ack_seed,harq_context,estimate_probe):
         if getattr(self,'_batch_feedback',None) is not None:

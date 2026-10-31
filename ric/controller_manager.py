@@ -1580,9 +1580,19 @@ class ControllerManager:
             available = [item['xapp_name'] for item in catalog if item['available']]
             for interface in self.a1_interfaces:
                 interface.rapp.rt_xapp_capabilities = catalog
-                from ric.near_rt.xapp_library import category_catalog,implementation_catalog
-                interface.rapp.rt_xapp_categories=category_catalog()
-                interface.rapp.rt_xapp_implementations=implementation_catalog()
+                pool = getattr(self, 'xapp_pool', 'yisong')
+                interface.rapp.rt_xapp_pool = pool
+                if pool == 'yisong':
+                    from ric.near_rt.xapp_library import category_catalog, implementation_catalog
+                    interface.rapp.rt_xapp_categories = category_catalog()
+                    interface.rapp.rt_xapp_implementations = implementation_catalog()
+                else:
+                    from ric.near_rt.pools import pool_catalog
+                    specs = pool_catalog(pool)
+                    interface.rapp.rt_xapp_implementations = specs
+                    interface.rapp.rt_xapp_categories = {
+                        app.category_id: dict(category_id=app.category_id,
+                            writable_actions=list(app.controlled_fields)) for app in instances.values()}
                 interface.rapp.rt_xapp_instances=[app.descriptor() for app in instances.values()]
                 interface.rapp.rt_backend = 'sionna_rt_sys'
                 if hasattr(interface.rapp, 'available_xapp_names'):

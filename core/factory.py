@@ -76,6 +76,8 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
     controller_registry = build_controller_registry(ric_config)
     """
     controller_registry = ControllerRegistry()
+    from ric.near_rt.pools import validate_pool, build_pool_xapp
+    controller_registry.xapp_pool = validate_pool(ric_config.get('xapp_pool', 'yisong'))
     global_validator_enabled = bool(ric_config.get("validator_enabled", True))
     global_rl_guidance_enabled = bool(ric_config.get("rl_guidance_enabled", True))
     global_safety_shield_enabled = bool(ric_config.get("safety_shield_enabled", True))
@@ -264,8 +266,12 @@ def build_controller_registry(ric_config: dict) -> ControllerRegistry:
 
     for xapp_item in expanded_xapp_items:
         xapp_type = xapp_item["type"]
+        if controller_registry.xapp_pool != 'yisong' and xapp_type != 'pool_xapp':
+            raise ValueError(f'{xapp_type} belongs to yisong; selected pool is {controller_registry.xapp_pool}')
 
-        if xapp_type == "live_scheduler_test":
+        if xapp_type == 'pool_xapp':
+            controller_registry.register_xapp(build_pool_xapp(xapp_item, controller_registry.xapp_pool))
+        elif xapp_type == "live_scheduler_test":
             from ric.near_rt.live_scheduler_test_xapp import LiveSchedulerTestXApp
             controller_registry.register_xapp(LiveSchedulerTestXApp(xapp_item['cell_ids'], xapp_item.get('name', 'live_scheduler_test')))
         elif xapp_type == "xapp_instance":

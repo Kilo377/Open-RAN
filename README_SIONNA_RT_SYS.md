@@ -2,7 +2,34 @@
 
 第一阶段接入三维传播信道驱动的多小区下行闭环。入口为 `experiments/run_rt_sys.py`，后端为 `sionna_rt_sys`。原目录没有修改；`source_manifest.json` 保存复制时的源码 SHA256，独立 Git 的首个提交保存原始快照。
 
+原生网络 MU/SU 对照、独立 Sionna 公式复验，以及首传/重传和队列时延的统计口径，见
+[Native MU 验证记录](docs/rt_sys/NATIVE_MU_VALIDATION.md)。这些修复保留原有调度、
+RZF 和 OLLA 参数，不以提高基线吞吐或让 BLER 看起来达标为验收条件。
+
 ## 平台开关：DGX / AGX
+
+AGX 六 UE 默认预设（2026-10-30）：`configs/rt_sys/agx_munich_6ue_depth2_fast.json`。
+保留原 12 UE 部署中的 UE0、UE1、UE2、UE4、UE6、UE8，全部保留原位置、轨迹、业务模板、速率和 1.5 m/s 移动。
+按用户选择接受 UE0 的较差表现，撤销 UE0 的替代位置。小区归属仍由物理参考测量决定。
+深度 2 下的短测分布为 cell_0: UE0/UE6/UE8、cell_1: UE1、cell_2: UE2/UE4；
+保留原 UE 优先于每站恰好两台。此前换位布局的 100-slot 验证不代表本布局的 KPI。
+`ray_solver.max_depth` 为 2，保留 LoS、镜面反射及每源 100000 个采样。
+几何更新为 5 ms，位移上限为 1 cm，Doppler 仍逐 0.5 ms slot 演化。
+NR 使用 6 个独立进程 × 每进程 2 线程，主进程和 RT 各一个线程；
+小矩阵代数使用 Torch CPU，并启用参考测量复用、理想 CSI 去重及 RT 路径预取。
+原 0.5 ms 几何更新预设仍保存在 `agx_munich_6ue_depth2.json` 中供历史复现。
+400-slot 对比结果、正确性检查与 10 秒运行命令见
+[AGX execution efficiency](docs/rt_sys/AGX_EFFICIENCY.md)。
+预设中的 `rt_sys.rt_cpu_threads: 1` 仅限制本次 Dr.Jit LLVM 线程池，避开现场复现的 nanothread queue 断言；不修改全局环境。
+`scripts/orin/live.sh` 默认使用此预设；无 GUI 运行：
+
+```bash
+bash scripts/orin/run-six-ue.sh --slots 400
+```
+
+`ue_subset.source_num_ues` 和 `ue_subset.ue_ids` 用于从原部署选择 UE，避免直接 `--ues 6` 重排位置和业务。
+可选 `ue_route_overrides` 显式记录替代位置的 `route_index`（从 0 开始）与 `start_fraction`。
+原 `default.json` 保留 12 UE 历史运行使用的射线配置，便于复现。
 
 两台机器使用同一份代码和场景，通过 `--platform` 选择执行后端：
 
@@ -39,6 +66,40 @@ AGX 的默认 CuPy 检查实际执行 CUDA solve/SVD；检查失败时，仅在�
 后端并记录原因。运行过程中不隐藏异常、不重启为 CPU 重跑。
 `--platform agx --algebra-backend cupy` 是强制 GPU 请求，检查失败会报错；
 `--platform agx --algebra-backend torch` 则直接使用 CPU，不要求安装 CuPy。
+
+AGX 的执行效率开关配置在 JSON 的 `rt_sys` 中，六 UE 默认预设采用已验证的组合：
+
+| 配置 | 用途 |
+| --- | --- |
+| `torch_num_threads`, `torch_num_interop_threads` | 当前进程的 Torch CPU 线程数，与 Dr.Jit 线程池独立 |
+| `reuse_reference_within_slot` | 同一时隙复用物理参考测量；RF 参数或报告波束变化时失效 |
+| `ideal_csi_fast_path` | 理想 CSI 下省略未使用的重复接收信号计算；非理想 CSI 保留原计算 |
+| `packed_phy_diagnostics` | 合并 GPU 诊断传输，仅读取实际导出的预编码器样本 |
+| `retain_channel_on_gpu` | 保留 CuPy CFR，供 GPU 代数直接使用；CPU 模式忽略 |
+| `nr_execution: "parallel"`, `nr_parallel_workers` | 同时解码同一时隙的独立 UE，限定 CPU `nr_direct`；默认每 worker 一个 Torch 线程 |
+| `nr_worker_threads` | 每个解码 worker 的 Torch 线程数，避免与 worker 数相乘后超额分配 |
+| `nr_pin_workers` | Linux 上把每个解码 worker 约束在独立 CPU 核组，作用于本轮子进程；要求核数足够 |
+| `rt_prefetch` | 独立 CPU 进程提前生成固定轨迹的 compact RT 块，继续使用一个 Dr.Jit 线程；缺块时前台正常计算 |
+
+并行解码沿用 Sionna 的 20 次 BP 迭代，由主进程持有 HARQ 状态，保留按 UE/TB
+确定的码字和噪声序列。预取只使用已配置的场景、轨迹、种子和几何更新周期，
+不读取未来业务、ACK 或控制决策，也不改变 Doppler 的逐 slot 演化。
+上述实现开关不减少射线样本数、不改变 MCS、调度或解码算法。`path_update_ms: 5`
+是另外的几何近似选项，不能与这些实现优化混称为完全等价。
+`performance.json` 记录线程、参考测量复用、预取统计；并行解码耗时查看
+`batch_feedback_inclusive`，其内部的 `actual_tb_feedback` 只计已完成结果的读取。
+各阶段为包含子阶段的墙钟时间，不能直接相加；首次启动 worker 和 codec 的成本计入本轮。
+
+`configs/rt_sys/agx_munich_6ue_depth2_fast.json` 是选定的默认文件。
+`run-six-ue.sh` 和 `live.sh` 均显式选择该配置与 Torch CPU 代数；原候选文件及入口
+`agx_munich_6ue_depth2_fast_candidate.json` / `run-six-ue-fast-candidate.sh` 保留用于实验复现。
+
+```bash
+bash scripts/orin/run-six-ue.sh --slots 400
+```
+
+单独调用 Python 时需同时指定 `--platform agx --algebra-backend torch` 和该配置文件；
+平台选择先于配置加载，`--algebra-backend` 决定实际执行位置。
 
 `--dry-run` 只显示请求的配置，不加载 OptiX 或执行 GPU 检查，不代表硬件验收通过：
 
@@ -104,8 +165,24 @@ python scripts/orin/project_live_viewer.py --state outputs/dgx_live/live.json --
 
 ## UI 中的 xApp 测试与在线启停
 
+2026-10-22：xApp 按开发者分为两个 pool。RT/SYS 默认配置选择 `chongyu`；CLI
+`--xapp-pool chongyu|yisong` 优先于 JSON 顶层的 `xapp_pool`。pool 在初始化时确定，
+切换 pool 或新增清单条目后需要重启；同一 pool 内仍可使用现有按钮启停和切换。
+现有库和测试实例全部归入 `yisong`，保留原导入路径；`chongyu` 当前为空，空池正常运行原生网络，
+不会补载旧库、生成占位控制器或启动 ON。UI、运行状态、配置快照和 A/B 重放参数记录所选 pool。
+新开发目录和接口见 [Chongyu pool](ric/near_rt/pools/chongyu/README.md)，
+旧实现位置见 [Yisong pool](ric/near_rt/pools/yisong/README.md)。
+
+```bash
+bash scripts/orin/live.sh --xapp-pool chongyu
+# 显式查看旧池：
+bash scripts/orin/live.sh --xapp-pool yisong
+# DGX 同样支持：
+python experiments/run_rt_sys.py --platform dgx --xapp-pool chongyu --live-xapp-test --slots 400
+```
+
 `live.sh` 默认加入 `--live-xapp-test`，控制模式标为 `xapp_test`，不启用自动编排或学习。
-测试页从现有注册表检测 46 个库内实现及下面的测试实例，为当前可用的每个 xApp 直接显示一个开关按钮。
+选择 `yisong` 时，测试页从现有注册表检测 46 个库内实现及下面的测试实例，为当前可用的每个 xApp 直接显示一个开关按钮。
 无命令副作用的库内实例预注册且初始全部关闭；根据真实 KPI/action 契约、SLA 声明、
 波束报告和连接事件模型检查可用条件。不满足条件的项显示 unavailable 和原因，不能启用。
 切换/连接命令类实现只列出，不在这个可恢复参数的测试入口中注册。
@@ -126,7 +203,7 @@ ON 表示绑定已准入；高级执行明细按实例、小区、选择版本�
 结束的运行明确显示 RUN ENDED / HISTORY，不能把结束时的 ON 当成仍在运行。
 一次只测试一个实例。停用和切换通过原控制通道恢复它控制的参数，切换超时会停止并显示失败原因，
 不会强行在旧参数上启用新实例。`--xapp-test-app IMPLEMENTATION_ID` 也可指定启动算法，
-配合 `--xapp-test-start on` 使用；默认仍是队列/HOL 测试实例且关闭。
+配合 `--xapp-test-start on` 使用；`yisong` 默认选择关闭的队列/HOL 测试实例，`chongyu` 则按自身清单选择实例，空清单保持无 xApp。
 在线启停复用实例绑定、选择版本、字段仲裁和撤回机制；停用时使旧版本待执行动作失效。
 新控制仍等待 20 ms 控制周期和原有执行延迟，不重置队列、UE、信道、HARQ 或仿真时间。
 直接调用旧 enable 接口仍会在恢复未完成时拒绝重新启用；按钮操作使用自动等待的 activate 接口。

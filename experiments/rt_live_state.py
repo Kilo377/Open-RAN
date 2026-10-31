@@ -58,7 +58,7 @@ def configuration(manifest, configs, control_mode, profile):
         phy=fields(configs.get('phy', {}).get('rt_sys', {}), ('feedback_mode', 'bler_target',
             'noise_figure_db', 'rzf_relative_regularization', 'csi_error_nmse_db', 'harq_combining',
             'mobility', 'nr_execution', 'recording_mode')),
-        controllers=dict(**fields(ric, ('xapp_interval_slots', 'rapp_interval_slots', 'freeze_learning')),
+        controllers=dict(**fields(ric, ('xapp_pool', 'xapp_interval_slots', 'rapp_interval_slots', 'freeze_learning')),
             xapps=[fields(app, ('name', 'type', 'priority', 'cell_ids')) for app in ric.get('xapps', [])],
             rapps=[fields(app, ('name', 'type', 'priority')) for app in ric.get('rapps', [])]))
 

@@ -39,7 +39,8 @@ def parse_args():
     p.add_argument('--output',type=Path)
     p.add_argument('--live-state',type=Path,help='Atomically publish actual slot state for the read-only live viewer')
     p.add_argument('--live-xapp-test',action='store_true',help='Register reversible live test xApps, initially disabled')
-    p.add_argument('--xapp-test-app',default='live_scheduler_test',help='Registered implementation to activate or compare')
+    p.add_argument('--xapp-pool',choices=['yisong','chongyu'],help='Select the xApp owner pool; overrides config xapp_pool')
+    p.add_argument('--xapp-test-app',help='Implementation in the selected pool to activate or compare')
     p.add_argument('--xapp-test-start',choices=['off','on'],default='off')
     p.add_argument('--xapp-test-cell',default='*',help='Target cell for the registered test; * means all cells')
     p.add_argument('--xapp-test-compare-slots',type=int,default=200)
@@ -61,7 +62,7 @@ def parse_args():
     p.add_argument('--recording-mode',choices=['audit','experiment'])
     p.add_argument('--policy-timeline',type=Path)
     p.add_argument('--channel-cache-root',type=Path)
-    p.add_argument('--nr-execution',choices=['scalar','batched'])
+    p.add_argument('--nr-execution',choices=['scalar','batched','parallel'])
     p.add_argument('--diagnostic-window-slots',type=int,default=200)
     return p.parse_args()
 
@@ -72,7 +73,9 @@ def run_case(args):
     rt_device=getattr(args,'rt_device',None) or args.device
     manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config,
         deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
-        initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None))
+        initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None),
+        xapp_pool=getattr(args,'xapp_pool',None))
+    args.xapp_pool=configs['ric']['xapp_pool']
     phase=getattr(args,'phase','integration');mode=getattr(args,'selection_mode','reflective')
     warmup=getattr(args,'warmup_ms',0)
     if not 0<=warmup<manifest['total_slots']*manifest['slot_duration_ms']:raise ValueError('Warmup must leave an evaluation interval')
@@ -117,7 +120,7 @@ def run_case(args):
     if recording not in ('audit','experiment'):raise ValueError('Unknown recording mode')
     window_slots=getattr(args,'diagnostic_window_slots',200)
     if window_slots<1:raise ValueError('Positive diagnostic window required')
-    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}'
+    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}_pool_{args.xapp_pool}'
     if rt_device!=args.device:name+=f'_rt{rt_device}_phy{args.device}'
     if algebra_backend=='cupy':name+='_cupy'
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
@@ -127,7 +130,8 @@ def run_case(args):
         raise ValueError('Live telemetry must stay under project outputs/')
     if args.dry_run:
         print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy'],
-            'execution_devices':execution_devices,'platform_profile':platform_profile},indent=2)); return
+            'execution_devices':execution_devices,'platform_profile':platform_profile,
+            'xapp_pool':args.xapp_pool,'registered_xapps':configs['ric'].get('xapps',[])},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
     if configs['phy']['rt_sys']['feedback_mode'] in ('nr_cached_reference','nr_bler_bank'):
         ref=configs['phy']['rt_sys'].setdefault('reference',{})
@@ -136,7 +140,7 @@ def run_case(args):
     source_hash=source_fingerprint(ROOT)
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
-    status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,
+    status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
         'execution_devices':execution_devices,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
@@ -145,12 +149,23 @@ def run_case(args):
     from phy.rt_sys.efficiency import StageTimings
     timings=StageTimings();simulation_started=None;steady_started=None;steady_decodes=0;live=None
     try:
+        from phy.rt_sys.efficiency import configure_torch_threads
+        status['torch_execution_threads']=configure_torch_threads(configs['phy']['rt_sys'])
         from phy.rt_sys.channel import RtChannelProvider
         from phy.rt_sys.adapter import RtSysPhyAdapter
+        rt_cpu_threads=configs['phy']['rt_sys'].get('rt_cpu_threads')
+        if rt_device=='cpu' and rt_cpu_threads is not None:
+            if type(rt_cpu_threads) is not int or rt_cpu_threads<1:
+                raise ValueError('rt_cpu_threads must be a positive integer')
+            import drjit
+            drjit.set_thread_count(rt_cpu_threads)
+            status['rt_cpu_threads']=rt_cpu_threads
         cache_root=(getattr(args,'channel_cache_root',None) or ROOT/'channel_cache').resolve()
         if not cache_root.is_relative_to(ROOT):raise ValueError('Channel caches must stay in the independent copy')
         provider=RtChannelProvider(manifest,cache_root,device=rt_device,
-            reconstruction_backend=configs['phy']['rt_sys']['channel_array_backend'])
+            reconstruction_backend=configs['phy']['rt_sys']['channel_array_backend'],
+            retain_device_cfr=configs['phy']['rt_sys'].get('retain_channel_on_gpu',False),
+            prefetch=configs['phy']['rt_sys'].get('rt_prefetch',False))
         if live_path:
             from experiments.rt_live import LivePublisher
             live=LivePublisher(live_path.resolve(),manifest,provider,execution_devices,configs['phy']['rt_sys']['feedback_mode'],
@@ -308,6 +323,8 @@ def run_case(args):
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})
         summary['steady_state']=steady.summary()
         summary['runtime_diagnostics']=diagnostics.summary(summary['steady_state'])
+        summary['link_statistics']=summary['runtime_diagnostics']['link_statistics']
+        summary['completion_latency_scope']=summary['runtime_diagnostics']['completion_latency_scope']
         (output/'runtime_diagnostics.json').write_text(json.dumps(summary['runtime_diagnostics'],indent=2,allow_nan=False))
         (output/'steady_state.json').write_text(json.dumps(summary['steady_state'],indent=2))
         summary['packet_metrics']={u.ue_id:u.packet_ledger.summary() for u in simulator.state.ues}
@@ -339,6 +356,9 @@ def run_case(args):
             spark_verified=args.device=='cuda' and rt_device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
         performance=dict(**timings.report(),recording_mode=recording,nr_execution=execution,
+            torch_execution_threads=status.get('torch_execution_threads'),
+            reference_cache_statistics=dict(getattr(getattr(simulator.state,'paper',None),'reference_cache_stats',{})),
+            rt_prefetch_statistics=provider.prefetch_statistics(),
             initialization_s=simulation_started-started,simulation_s=simulation_elapsed,
             output_and_telemetry_s=io_s,steady_wall_s=steady_elapsed,
             steady_slots=evaluated_slots,steady_slots_per_s=evaluated_slots/max(steady_elapsed,1e-12),
@@ -353,6 +373,8 @@ def run_case(args):
         if live:live.finish('failed',f'{type(exc).__name__}: {exc}')
         status.update(stage='failed',error=f'{type(exc).__name__}: {exc}'); raise
     finally:
+        if 'adapter' in locals() and hasattr(adapter.abstraction,'close'):adapter.abstraction.close()
+        if 'provider' in locals():provider.close()
         if 'stack' in locals():stack.close()
         status.update(elapsed_s=time.perf_counter()-started,peak_rss_native=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         status['peak_rss_bytes']=status['peak_rss_native'] if platform.system()=='Darwin' else status['peak_rss_native']*1024

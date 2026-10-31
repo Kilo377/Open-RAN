@@ -24,9 +24,10 @@ mkdir -p "$demo_dir"
 printf 'Actual project live run: %s\n' "$demo_dir"
 test_args=()
 if ((live_test)); then test_args+=(--live-xapp-test); fi
-bash scripts/orin/run.sh --scene munich --cells 3 --ues 12 --slots 400 \
+bash scripts/orin/run.sh --scene munich --cells 3 --ues 6 --slots 400 \
+    --config configs/rt_sys/agx_munich_6ue_depth2_fast.json --algebra-backend torch \
     "${test_args[@]}" \
-    --recording-mode experiment --diagnostic-window-slots 50 \
+    --recording-mode experiment --diagnostic-window-slots 40 \
     "${sim_args[@]}" --output "$demo_dir" --live-state "$demo_dir/live.json" >"$demo_dir/simulation.log" 2>&1 &
 sim_pid=$!
 cleanup() {

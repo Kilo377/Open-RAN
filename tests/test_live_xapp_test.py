@@ -7,7 +7,7 @@ from experiments.live_xapp_test import LiveXAppSession, configure, submit, atomi
 from ric.near_rt.live_scheduler_test_xapp import LiveSchedulerTestXApp
 
 
-def fixture_sim(tmp_path, enabled=False):
+def fixture_sim(tmp_path, enabled=False, pool='yisong', app_id=None):
     from test_rt_sys import FakeTracer, FixtureAbstraction
     from phy.rt_sys.scenario import build_case
     from phy.rt_sys.channel import RtChannelProvider
@@ -16,7 +16,8 @@ def fixture_sim(tmp_path, enabled=False):
     from core.simulator import Simulator
     from experiments.scenario_scan_utils import build_runtime_scenario_config
     manifest, configs, _ = build_case(num_cells=2, num_ues=4, total_slots=100, initial_queue_bytes=20000)
-    args = NS(live_xapp_test=True, phase='integration', control_mode='baseline', slots=100,
+    args = NS(live_xapp_test=True, phase='integration', control_mode='baseline', slots=100, xapp_pool=pool,
+        xapp_test_app=app_id,
         xapp_test_start='on' if enabled else 'off', xapp_test_cell='*', _live_slot_ms=.5)
     configure(configs, manifest, args)
     configs['ric']['xapp_interval_slots'] = 2  # Short unit-test clock, not the live 20 ms period.
@@ -304,12 +305,14 @@ def test_paired_runner_checks_exogenous_identity_and_reports_absolute_deltas(tmp
     assert [a.xapp_test_start for a in arguments] == ['off', 'on']
     assert all(a.seed == 73 and a.slots == 80 and a.live_xapp_test for a in arguments)
     assert all(a.xapp_test_app == 'ue_fairness:equal_share' for a in arguments)
+    assert all(a.xapp_pool == 'yisong' for a in arguments)
 
 
 def test_compare_client_deduplicates_running_worker_and_cleans_failed_start(tmp_path, monkeypatch):
     import os
     import experiments.live_xapp_test as module
-    data = dict(xapp_test=dict(simulation_python='python', comparison_spec=str(tmp_path / 'spec.json')))
+    data = dict(xapp_test=dict(simulation_python='python', comparison_spec=str(tmp_path / 'spec.json'),
+        catalog=[dict(instance_id='live_scheduler_test', available=True)]))
     state = tmp_path / 'live.json'
     monkeypatch.setattr(module.subprocess, 'Popen', lambda *a, **k: NS(pid=os.getpid()))
     assert module.start_comparison(state, data) == os.getpid()

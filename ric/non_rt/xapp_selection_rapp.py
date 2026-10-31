@@ -1043,9 +1043,23 @@ class XAppSelectionRApp(RAppBase):
         )
 
     def _available_xapp_catalog(self) -> list[dict[str, object]]:
+        if getattr(self, 'rt_xapp_pool', 'yisong') != 'yisong':
+            return [{**item, 'xapp_category': item.get('category_id', item['xapp_name']),
+                     'tunable_fields': item.get('writable_actions', []), 'variant_params': {}}
+                    for item in getattr(self, 'rt_xapp_capabilities', []) if item.get('available')]
         return available_xapp_catalog_for_llm(self.available_xapp_names,backend=getattr(self,"rt_backend",None))
 
     def _available_xapp_category_catalog(self) -> list[dict[str, object]]:
+        if getattr(self, 'rt_xapp_pool', 'yisong') != 'yisong':
+            groups = {}
+            for item in self._available_xapp_catalog():
+                category = item['xapp_category']
+                row = groups.setdefault(category, dict(xapp_category=category,
+                    description=item.get('description', ''), kpis=item.get('required_kpis', []),
+                    tunable_fields=item.get('writable_actions', []), variant_count=0, example_variants=[]))
+                row['variant_count'] += 1
+                row['example_variants'].append(item['xapp_name'])
+            return list(groups.values())
         return available_xapp_category_catalog_for_llm(self.available_xapp_names,backend=getattr(self,"rt_backend",None))
 
     def _all_known_xapps(self) -> list[str]:

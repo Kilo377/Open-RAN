@@ -15,8 +15,8 @@ class RtSysPhyAdapter:
     def __init__(self, config, *, abstraction=None, channel_provider=None):
         self.config = dict(config)
         self.nr_execution=self.config.get('nr_execution','scalar')
-        if self.nr_execution not in ('scalar','batched'):raise ValueError('Unknown NR execution mode')
-        if self.nr_execution=='batched' and self.config.get('feedback_mode')!='nr_direct':
+        if self.nr_execution not in ('scalar','batched','parallel'):raise ValueError('Unknown NR execution mode')
+        if self.nr_execution in ('batched','parallel') and self.config.get('feedback_mode')!='nr_direct':
             raise ValueError('Batched NR requires nr_direct')
         self.device = self.config.get('device', 'cuda')
         if abstraction is None and self.device == 'numpy':
@@ -35,7 +35,10 @@ class RtSysPhyAdapter:
             if mode=='nr_bler_bank' and self.config.get('harq_combining','none')!='none':raise ValueError('Statistical BLER bank cannot claim waveform HARQ combining; use nr_cached_reference')
             backend={'nr_direct':DirectNrAbstraction,'nr_cached_reference':CachedNrReferenceAbstraction,'nr_tb_reference':NrReferenceAbstraction,'nr_bler_bank':StatisticalBankAbstraction}[mode]
             self.abstraction=backend(self.device,self.config.get('bler_target',.1),
-                {**self.config.get('reference',{}),'harq_combining':self.config.get('harq_combining','none')})
+                {**self.config.get('reference',{}),'harq_combining':self.config.get('harq_combining','none'),
+                 'nr_execution':self.nr_execution,'nr_parallel_workers':self.config.get('nr_parallel_workers',6),
+                 'nr_worker_threads':self.config.get('nr_worker_threads',1),
+                 'nr_pin_workers':self.config.get('nr_pin_workers',False)})
         else:
             if not self.config.get('calibration_file') and not self.config.get('allow_unvalidated_sys',False):
                 raise ValueError('Unvalidated SYS BLER/EESM feedback requires explicit diagnostic opt-in; use nr_tb_reference for actual feedback')
@@ -51,7 +54,8 @@ class RtSysPhyAdapter:
                 raise ValueError('RT cache must remain inside the independent copy')
             manifest=json.loads(Path(self.config['manifest_path']).read_text())
             self.channel_provider=RtChannelProvider(manifest,cache,device=self.config.get('rt_device',self.device),
-                reconstruction_backend=self.config.get('channel_array_backend','numpy'))
+                reconstruction_backend=self.config.get('channel_array_backend','numpy'),
+                retain_device_cfr=self.config.get('retain_channel_on_gpu',False))
         self.seed = int(self.config.get('rng_seed', 1))
         self.trace = {}
         self.current_snapshot = None
@@ -126,8 +130,13 @@ class RtSysPhyAdapter:
                          for k in ('carrier_frequency_hz','subcarrier_spacing_hz','bandwidth_hz') if k in metadata):
             raise ValueError('RT and runtime carrier grids differ')
         a = self.math
-        h = a.array(snapshot.cfr)
+        retained=getattr(snapshot,'device_cfr',None)
+        h = a.array(retained if self.config.get('retain_channel_on_gpu',False) and a.device=='cupy'
+                    and getattr(snapshot,'device_backend',None)=='cupy' and retained is not None else snapshot.cfr)
         estimated=a.array(estimate_csi(snapshot,self.seed,self.config.get('csi_error_nmse_db'))) if self.config.get('csi_error_nmse_db') is not None else h
+        estimated_receiver=self.config.get('csi_error_nmse_db') is not None
+        compute_estimated=estimated_receiver or not self.config.get('ideal_csi_fast_path',False)
+        packed_diagnostics=self.config.get('packed_phy_diagnostics',False)
         noise = 10**((-174+10*math.log10(self.config.get('subcarrier_spacing_hz',30000))+
                       self.config.get('noise_figure_db',7)-30)/10)
         entries = []
@@ -158,7 +167,8 @@ class RtSysPhyAdapter:
                 entry = {'p':p, 'ue':ue, 'ci':snapshot.cell_ids.index(p.cell_id),
                          'ui':snapshot.ue_ids.index(ue.ue_id), 'mask':self._mask(ue,ns,nf,(nf-p.runtime_context.n_prbs_total*12)//2 if p.runtime_context else 0,p.runtime_context.n_prbs_total*12 if p.runtime_context else None),
                          'layers':layers, 'sinr':np.zeros((ns,nf,layers)),
-                         'inter':[], 'precoder_norms':[]}
+                         'inter':[], 'intra':[], 'mu_mask':np.zeros((ns,nf),bool),
+                         'precoder_norms':[]}
                 entries.append(entry); active.append(entry)
             # Uniform energy across all active RE-streams including pilots;
             # average OFDM-symbol power sums to the configured cell budget.
@@ -193,6 +203,9 @@ class RtSysPhyAdapter:
             tx = []
             for ci in sorted({entries[i]['ci'] for i in pattern}):
                 group = [entries[i] for i in pattern if entries[i]['ci']==ci]
+                if len(group)>1:
+                    for member in group:
+                        member['mu_mask'][symbols,frequencies]=True
                 stream_rows = []
                 owners = []
                 dft=beam_subspace(nt,0,0,0)
@@ -220,52 +233,68 @@ class RtSysPhyAdapter:
                 scales={symbol:max(float(row_power[indices].mean()),1e-30) for symbol,indices in symbol_indices.items()}
                 alpha=a.array(np.asarray([scales[s] for s in symbols])[:,None,None])*self.config.get('rzf_relative_regularization',.01)
                 weights = a.rzf(rows,a.array(basis),alpha)
-                samples=a.numpy(weights)
+                representative_indices=[indices[0] for symbol,indices in sorted(symbol_indices.items())]
+                samples=a.numpy(weights[representative_indices] if packed_diagnostics else weights)
                 correlations=None
                 if len({e['ue'].ue_id for e,k in owners})==2 and len(owners)==2:
                     projected=a.numpy(rows)@basis
                     numerator=abs(np.sum(projected[:,0].conj()*projected[:,1],axis=-1))**2
                     denominator=np.sum(abs(projected[:,0])**2,axis=-1)*np.sum(abs(projected[:,1])**2,axis=-1)
                     correlations=np.clip(numerator/np.maximum(denominator,1e-60),0,1)
-                for symbol,indices in sorted(symbol_indices.items()):
-                    sample=samples[indices[0]]
+                for representative,(symbol,indices) in enumerate(sorted(symbol_indices.items())):
+                    sample=samples[representative if packed_diagnostics else indices[0]]
                     precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
                         'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
                         'beam_subspace_dimension':basis.shape[-1],
                         'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':float(at(e,symbol,frequencies[indices[0]]))} for e,k in owners],
                         'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist(),
                         'mean_pair_channel_correlation':float(correlations[indices].mean()) if correlations is not None else None})
+                norms=a.numpy(a.sum(abs(weights)**2,-2)).mean(axis=0) if packed_diagnostics else None
                 for j,(e,k) in enumerate(owners):
                     w = weights[...,j:j+1]*(a.array(np.sqrt(e['power'][symbols,frequencies]))[:,None,None] if isinstance(e['power'],np.ndarray) else math.sqrt(e['power']))
-                    e['precoder_norms'].append(float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
+                    e['precoder_norms'].append(float(norms[j]) if packed_diagnostics else float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
                     tx.append((e,k,w))
             for e,k,w in tx:
                 received = []
                 desired = None
                 estimated_desired=None;estimated_received=[]
                 inter_power = np.zeros(len(frequencies))
+                intra_power = np.zeros(len(frequencies))
+                inter_parts=[];intra_parts=[]
                 for other,ok,ow in tx:
                     hu = h[e['ui'],other['ci']][:,:,symbols,frequencies]
                     hu = hu.moveaxis(-1,0) if a.torch else np.moveaxis(hu,-1,0)
                     signal = hu @ ow
-                    eh=estimated[e['ui'],other['ci']][:,:,symbols,frequencies]
-                    eh=eh.moveaxis(-1,0) if a.torch else np.moveaxis(eh,-1,0)
-                    esignal=eh@ow
+                    if compute_estimated:
+                        eh=estimated[e['ui'],other['ci']][:,:,symbols,frequencies]
+                        eh=eh.moveaxis(-1,0) if a.torch else np.moveaxis(eh,-1,0)
+                        esignal=eh@ow
                     if other is e and ok == k:
-                        desired = signal;estimated_desired=esignal
+                        desired = signal
+                        if compute_estimated:estimated_desired=esignal
                     else:
                         received.append(signal)
-                        estimated_received.append(esignal)
+                        if compute_estimated:estimated_received.append(esignal)
                         if other['ci'] != e['ci']:
-                            inter_power += a.numpy(a.sum(abs(signal)**2,(-2,-1)))
+                            power_part=a.sum(abs(signal)**2,(-2,-1))
+                            if packed_diagnostics:inter_parts.append(power_part)
+                            else:inter_power += a.numpy(power_part)
+                        elif other is not e:
+                            power_part=a.sum(abs(signal)**2,(-2,-1))
+                            if packed_diagnostics:intra_parts.append(power_part)
+                            else:intra_power += a.numpy(power_part)
+                if packed_diagnostics:
+                    from phy.rt_sys.efficiency import diagnostic_power_sums
+                    inter_power,intra_power=diagnostic_power_sums(a,inter_parts,intra_parts,len(frequencies))
                 others = a.cat(received) if received else a.array(np.zeros((len(frequencies),nr,0)))
-                eothers=a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))
+                eothers=(a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))) if compute_estimated else None
                 values = a.numpy(a.lmmse(desired,others,noise,estimated_desired,eothers)
                     if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
                 e['sinr'][symbols,frequencies,k] = values
                 e['inter'].extend(inter_power.tolist())
+                e['intra'].extend(intra_power.tolist())
         batch_metrics={}
-        if self.nr_execution=='batched':
+        if self.nr_execution in ('batched','parallel'):
             from phy.rt_sys.tx_contract import data_mask
             jobs=[];owners=[]
             for e in entries:
@@ -319,7 +348,7 @@ class RtSysPhyAdapter:
                         context={}
                         if getattr(self.abstraction,'supports_harq_context',False):
                             context['harq_context']=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,ndi=ue.harq_ndi if ue.harq_ndi is not None else 0,is_retx=ue.is_retx,cell_id=p.cell_id)
-                        metrics = batch_metrics[id(e)] if self.nr_execution=='batched' else self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
+                        metrics = batch_metrics[id(e)] if self.nr_execution in ('batched','parallel') else self.abstraction.evaluate(values, ue.mcs_table_id, mcs,
                             self.seed,p.slot_id,ue.ue_id,fixed=fixed,**context)
                         if metrics['mcs'] > maximum: raise ValueError('MCS cap excludes calibrated SYS entries')
                         result.link_adaptation_reason = ue.link_adaptation_reason or metrics.get('mcs_projection') or ('nr_independent_probe_mapping' if metrics.get('feedback_mode')=='nr_tb_reference' else 'sys_bler_mapping')
@@ -367,6 +396,20 @@ class RtSysPhyAdapter:
                         'scheduled':False,'queue_bytes':ue.queue_bytes,'throughput_mbps':0.0,'mcs_mapping':''})
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 contract=getattr(ue,'tx_contract',None)
+                if e is not None:
+                    from phy.rt_sys.tx_contract import data_mask
+                    data=data_mask(e['mask'],ue.dmrs_pattern_id)
+                    mu_re=int((data & e['mu_mask']).sum())
+                    su_re=int(data.sum())-mu_re
+                    resource_mode='mixed' if mu_re and su_re else ('mu' if mu_re else 'su')
+                    # Scheduler group labels are not proof of actual RE overlap.
+                    result.spatial_mode='mu_mimo' if mu_re else 'su_mimo'
+                    intra=10*math.log10(max(float(np.mean(e['intra'])) if e['intra'] else 0,1e-30))+30
+                else:
+                    mu_re=su_re=0;resource_mode='idle';intra=None
+                trace_ues[-1].update(resource_mode=resource_mode,mu_data_re=mu_re,su_data_re=su_re,
+                    intra_cell_interference_dbm=intra,
+                    interference_scope='Mean received other-UE power before RX combining; dBm')
                 if paper:trace_ues[-1]['resource_allocation']=dict(prbs=list(ue.resource_block_indices),symbols=list(ue.allocated_symbol_indices),layers=int(ue.layer_count or 1),scheduled=bool(ue.is_scheduled))
                 trace_ues[-1].update(tb_id=contract.tb_id if contract else None,is_retx=bool(ue.is_retx),
                     actual_decode=metrics.get('reference_tb_ack') is not None,

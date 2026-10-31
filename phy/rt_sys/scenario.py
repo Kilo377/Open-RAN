@@ -12,14 +12,44 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_slots=40,
-               path_update_ms=None,device='cuda',config_path=None,*,deployment_id=None,traffic_load=1,initial_queue_bytes=None,ue_speed_mps=None):
+               path_update_ms=None,device='cuda',config_path=None,*,deployment_id=None,traffic_load=1,initial_queue_bytes=None,ue_speed_mps=None,xapp_pool=None):
     base=json.loads((Path(config_path) if config_path else ROOT/'configs/rt_sys/default.json').read_text())
+    from ric.near_rt.pools import validate_pool
+    selected_pool=validate_pool(xapp_pool or base.get('xapp_pool','yisong'))
     catalog=json.loads((ROOT/'configs/rt_sys/scene_catalog.json').read_text())
     if scene not in catalog or not 1<=num_cells<=len(catalog[scene]['cells']) or num_ues<1 or total_slots<1:
         raise ValueError('Invalid scene/cell/UE/slot configuration')
+    subset=base.get('ue_subset')
+    source_num_ues=num_ues
+    selected_indices=None
+    if subset is not None:
+        if not isinstance(subset,dict):raise ValueError('ue_subset must be an object')
+        source_num_ues=subset.get('source_num_ues')
+        ids=subset.get('ue_ids')
+        if type(source_num_ues) is not int or source_num_ues<num_ues:
+            raise ValueError('ue_subset source_num_ues must be an integer >= requested UE count')
+        if not isinstance(ids,list) or len(ids)!=num_ues or any(not isinstance(uid,str) for uid in ids):
+            raise ValueError('ue_subset ue_ids must list exactly the requested number of UEs')
+        if len(set(ids))!=len(ids) or any(uid not in {f'ue_{i}' for i in range(source_num_ues)} for uid in ids):
+            raise ValueError('ue_subset contains duplicate or unknown source UE IDs')
+        selected_indices={int(uid[3:]) for uid in ids}
+    route_overrides=base.get('ue_route_overrides',{})
+    available_ids={f'ue_{i}' for i in range(source_num_ues) if selected_indices is None or i in selected_indices}
+    if not isinstance(route_overrides,dict) or set(route_overrides)-available_ids:
+        raise ValueError('ue_route_overrides must map selected UE IDs to road positions')
+    for override in route_overrides.values():
+        if not isinstance(override,dict):raise ValueError('Invalid ue_route_overrides entry')
+        route_index=override.get('route_index');fraction=override.get('start_fraction')
+        if type(route_index) is not int or not 0<=route_index<len(catalog[scene]['routes']):
+            raise ValueError('ue_route_overrides route_index is outside scene roads')
+        if type(fraction) not in (int,float) or not np.isfinite(fraction) or not 0<=fraction<=1:
+            raise ValueError('ue_route_overrides start_fraction must be finite and in [0,1]')
     initial_queue_bytes=int(base.get('initial_queue_bytes',0) if initial_queue_bytes is None else initial_queue_bytes)
     if initial_queue_bytes<0:raise ValueError('Initial queue must be nonnegative')
     radio=deepcopy(base['radio']); dt=radio['slot_duration_ms']; duration=dt*total_slots/1000
+    initial_rank=base.get('ue_initial_rank',1)
+    if type(initial_rank) is not int or not 1<=initial_rank<=min(radio['num_rx_ant'],radio['tx_rows']*radio['tx_cols']):
+        raise ValueError('Initial UE rank must be an integer within RX/TX antenna limits')
     if deployment_id is not None and deployment_id not in (0,1,2):raise ValueError('Deployment ID must be 0, 1, or 2')
     if not np.isfinite(traffic_load) or traffic_load<=0:raise ValueError('Positive finite traffic load required')
     nprb,_=lookup_nr_max_prbs(bandwidth_hz=radio['bandwidth_hz'],subcarrier_spacing_hz=radio['subcarrier_spacing_hz'],carrier_frequency_hz=radio['carrier_frequency_hz'])
@@ -27,10 +57,15 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     ns=14*max(1,round(dt/(1000*15/radio['subcarrier_spacing_hz'])))
     ues=[]
     # Phase offsets select distinct locations on the same validated road segment.
-    for i in range(num_ues):
-        route=np.asarray(catalog[scene]['routes'][i%len(catalog[scene]['routes'])],float)
-        phase=((i//len(catalog[scene]['routes']))+.5)/max(1,math.ceil(num_ues/len(catalog[scene]['routes'])))
+    source_indices=[]
+    for i in range(source_num_ues):
+        if selected_indices is not None and i not in selected_indices:continue
+        source_indices.append(i)
+        override=route_overrides.get(f'ue_{i}',{})
+        route=np.asarray(catalog[scene]['routes'][override.get('route_index',i%len(catalog[scene]['routes']))],float)
+        phase=((i//len(catalog[scene]['routes']))+.5)/max(1,math.ceil(source_num_ues/len(catalog[scene]['routes'])))
         fraction=min(.8,phase*.8) if deployment_id is None else .05+.25*deployment_id+.2*phase
+        fraction=override.get('start_fraction',fraction)
         start=route[0]+fraction*(route[1]-route[0])
         direction=route[1]-start
         distance=float(np.linalg.norm(direction))
@@ -55,6 +90,10 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
               'num_symbols':ns,'fft_size':fft,**radio}
     if 'max_geometry_displacement_m' in base:
         manifest['max_geometry_displacement_m']=base['max_geometry_displacement_m']
+    if subset is not None:
+        manifest['ue_subset']=deepcopy(subset)
+    if route_overrides:
+        manifest['ue_route_overrides']=deepcopy(route_overrides)
     if deployment_id is not None:
         manifest['deployment_id']=deployment_id
         for cell in manifest['cells']:cell['orientation_rad'][0]+=.1*deployment_id
@@ -64,6 +103,11 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
         if override.exists(): configs[name]=deep_merge_dict(configs[name],load_yaml_file(str(override)))
     configs['sim'].update(base['simulation']); configs['sim']['scheduler_type']='rt_sys_scheduler'; configs['sim'].update(total_slots=total_slots,slot_duration_ms=dt,rng_seed=seed)
     configs['ric']['run_forever']=False
+    configs['ric']['xapp_pool']=selected_pool
+    # Legacy YAML presets belong to Yisong, not the new development pool.
+    if selected_pool!='yisong':
+        from ric.near_rt.pools import registration_configs
+        configs['ric']['xapps']=registration_configs(selected_pool,[c['cell_id'] for c in manifest['cells']],dt)
     library=base.get('xapp_library',{})
     if library.get('enabled'):
         if base.get('rule_based_v1',{}).get('enabled'):raise ValueError('Select one library config format')
@@ -108,13 +152,13 @@ def build_case(scene='simple_street_canyon',num_cells=2,num_ues=4,seed=1,total_s
     configs['ue']['ues']=[]
     configs['ric']['persistent_memory_enabled']=False
     configs['ric']['memory_store_path']=str(ROOT/'outputs/rt_sys/model_state/xapp_selection.json')
-    for i,u in enumerate(ues):
+    for i,u in zip(source_indices,ues):
         item=deepcopy(originals[i%len(originals)])
         item.update(ue_id=u['ue_id'],queue_bytes=initial_queue_bytes,serving_beam_id=0,is_indoor=False,serving_cell_id=manifest['cells'][i%num_cells]['cell_id'],
                     num_rx_ant=radio['num_rx_ant'],velocity_mps=0,shadowing_db=0,pathloss_db=100)
-        if configs['sim'].get('scheduler_enable_spatial_multiplexing'):
-            # One stream per UE leaves the configured two-stream budget for MU.
-            item.update(rank=1,ri=1)
+        # UE rank is a radio initial condition, independent of MU enablement.
+        # Default one stream per UE also leaves the two-stream budget for MU.
+        item.update(rank=initial_rank,ri=initial_rank)
         item.update(dict(zip(('x_m','y_m','z_m'),u['trajectory']['positions_m'][0])))
         for key in ('arrival_rate_bps','burst_size_bytes'):
             if key in item:item[key]=item[key]*traffic_load
