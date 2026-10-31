@@ -1,0 +1,14 @@
+# JetPack 7.2 / L4T R39, Ubuntu 24.04, Python 3.12, CUDA 13.2.
+# Keep the JetPack 6 CPU/CUDA-12 lock separate.
+--extra-index-url https://download.pytorch.org/whl/cu132
+# Vendor cuSPARSELt 0.8.1 has an invalid internal SBSA wheel tag. See setup doc.
+pip==24.0
+torch==2.12.0+cu132
+sionna==2.2.0
+drjit==1.5.0
+mitsuba==3.9.1
+cupy-cuda13x==14.2.0
+numpy==2.5.4
+pyyaml>=6
+openai>=1.30
+pytest>=8

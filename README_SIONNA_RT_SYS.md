@@ -8,6 +8,9 @@ RZF 和 OLLA 参数，不以提高基线吞吐或让 BLER 看起来达标为验�
 
 ## 平台开关：DGX / AGX
 
+JetPack 7.2 / L4T R39 设备的独立环境与可选 CUDA NR 入口见
+[JetPack 7 setup](docs/rt_sys/AGX_JETPACK7.md)；不要使用 JetPack 6 的 CUDA 12 依赖锁。
+
 AGX 六 UE 默认预设（2026-10-30）：`configs/rt_sys/agx_munich_6ue_depth2_fast.json`。
 保留原 12 UE 部署中的 UE0、UE1、UE2、UE4、UE6、UE8，全部保留原位置、轨迹、业务模板、速率和 1.5 m/s 移动。
 按用户选择接受 UE0 的较差表现，撤销 UE0 的替代位置。小区归属仍由物理参考测量决定。

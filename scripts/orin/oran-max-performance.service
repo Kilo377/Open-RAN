@@ -1,0 +1,13 @@
+[Unit]
+Description=Restore maximum Jetson clocks for the selected power profile
+Requires=nvpmodel.service
+After=nvpmodel.service
+ConditionPathExists=/usr/bin/jetson_clocks
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/jetson_clocks
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
