@@ -14,6 +14,13 @@ def keyed_uniform(seed, slot, ue_id, purpose='tb_ack'):
     return (int(key[:16], 16) + .5) / 2**64
 
 
+def has_tb_feedback(row):
+    """A transmitted TB outcome, including fast sampling; no-path is not a trial."""
+    if 'feedback_available' in row:return bool(row['feedback_available'])
+    return bool(row.get('actual_decode') or row.get('ack_source') in (
+        'fast_sys_bernoulli','official_sys_default_bernoulli','validated_bler_bank_bernoulli'))
+
+
 def source_fingerprint(root):
     """Record executed copy content, including uncommitted source/config edits."""
     result=hashlib.sha256()

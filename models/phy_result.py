@@ -41,6 +41,8 @@ class PhyUeResult:
     scheduled_bytes: int = 0
     delivered_bytes: int = 0
     ack: bool = False
+    # Transmitted-TB feedback gate; may be sampled in fast mode.
+    # Actual decoding is identified independently in the PHY trace.
     reference_tb_ack: bool | None = None
 
     # Core PHY metrics

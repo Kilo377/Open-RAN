@@ -297,7 +297,7 @@ class PaperEnvironment:
             counter=self.resource_counters[row['ue_id']]
             if counter['cell']!=row['cell_id']:
                 counter.update(cell=row['cell_id'],epoch=counter['epoch']+1,total=0,start=slot);counter['window'].clear()
-            used=len(row.get('resource_allocation',{}).get('prbs',[])) if row.get('actual_decode') else 0
+            used=len(row.get('resource_allocation',{}).get('prbs',[])) if row.get('feedback_available',row.get('actual_decode')) else 0
             counter['total']+=used;counter['window'].append((slot,used))
         for ue in self.state.ues:
             stats=dict(ue.packet_ledger.stats);prev=self.previous[ue.ue_id]

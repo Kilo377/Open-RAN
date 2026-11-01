@@ -8,3 +8,5 @@ __pycache__/
 .DS_Store
 .cache/
 .local-llvm/
+
+validation_candidates/

@@ -18,13 +18,18 @@ while (($#)); do
         *) sim_args+=("$1"); shift ;;
     esac
 done
+oran_has_duration=false
+for oran_arg in "${sim_args[@]}"; do
+    case "$oran_arg" in --slots|--slots=*|--duration-s|--duration-s=*) oran_has_duration=true ;; esac
+done
+if ! "$oran_has_duration"; then sim_args=(--slots 400 "${sim_args[@]}"); fi
 case "$live_view" in integrated|telemetry|scene) ;; *) printf 'Unknown view: %s\n' "$live_view" >&2; exit 2 ;; esac
 demo_dir="$PWD/outputs/live_project/$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$demo_dir"
 printf 'Actual project live run: %s\n' "$demo_dir"
 test_args=()
 if ((live_test)); then test_args+=(--live-xapp-test); fi
-bash scripts/orin/run.sh --scene munich --cells 3 --ues 6 --slots 400 \
+bash scripts/orin/run.sh --scene munich --cells 3 --ues 6 \
     --config configs/rt_sys/agx_munich_6ue_depth2_fast.json --algebra-backend torch \
     "${test_args[@]}" \
     --recording-mode experiment --diagnostic-window-slots 40 \

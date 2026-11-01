@@ -1,4 +1,5 @@
 """Offline-facing evidence only. Never supplies information to a controller."""
+from phy.rt_sys.contracts import has_tb_feedback
 from collections import Counter
 from dataclasses import asdict
 import math
@@ -59,7 +60,7 @@ class RuntimeDiagnostics:
                 ue_position_m=[state.links[uid].x_m,state.links[uid].y_m,state.links[uid].z_m],
                 pending_bytes=u.packet_ledger.stats['pending_bytes'],slice_id=u.slice_id,
                 traffic_type=u.traffic_type,latency_budget_ms=u.latency_budget_ms)
-            if not row.get('actual_decode'):continue
+            if not has_tb_feedback(row):continue
             assert row.get('tb_id'), 'Actual transmission without TB identity'
             decision=getattr(u,'olla_selection',{})
             olla=u.du_olla

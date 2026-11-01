@@ -1,5 +1,59 @@
 # Sionna RT + SYS 独立副本
 
+
+## Full / fast and automatic offline HTML
+
+Select the PHY feedback model independently of the DGX/AGX hardware profile:
+
+```bash
+# New AGX with working CUDA NR kernels
+bash scripts/orin/run-six-ue-cuda-nr.sh --model full --duration-s 10
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10
+
+# Older AGX CPU profile; the same model switch is supported
+bash scripts/orin/run-six-ue.sh --model fast --duration-s 1
+```
+
+`full` is the default and retains actual NR transport-block decoding. `fast`
+is the accepted SYS EESM/BLER model from the paired comparison: it retains the
+MAC-selected MCS, exact NR TBS, queues, HARQ identities, OLLA and control delays.
+Missing table/beta entries use explicitly counted actual NR feedback. Fast uses
+statistical feedback without waveform soft combining; select full for Chase.
+Fast's latency/retransmission results can differ from full. Metadata and live
+statistics distinguish sampled feedback from actual decodes.
+
+The existing `agx_munich_6ue_depth2_fast.json` filename describes the execution
+optimizations; it does not select the PHY model. `--model full|fast` overrides
+`rt_sys.model` in the JSON configuration. The legacy `--feedback-mode` remains
+an advanced alternative and cannot be combined with `--model` on the CLI.
+`--duration-s` and `--slots` are alternatives; durations must align to whole slots.
+
+Every successful finite RT run now writes `network-replay.html` in its output
+folder and prints its absolute path. Default output folders are unique per run.
+The single HTML embeds the real scene mesh, trajectories, Three.js, network
+configuration, cell/UE metrics, throughput, delay and RF energy; it needs no
+Sionna installation or internet connection on the viewing computer.
+
+The replay adapts its time units, playback speed and KPI windows to the run
+length. The default targets at most 500 windows plus the initial frame. The
+last partial window uses its actual duration, and all cumulative byte/error/energy
+counters remain exact. Raw per-slot records are retained. Override resolution
+with `--replay-window-ms 20` or `--replay-max-frames 1000`.
+
+Use `--no-html` for timing-only runs; the mesh and raw data remain available.
+An existing completed run can be exported again without rerunning physics:
+
+```bash
+python experiments/export_replay.py --run outputs/rt_sys/<run-folder>
+# Optional: --output /path/to/report.html --window-ms 20 --max-frames 1000
+```
+
+A failed export reports the error and preserves the simulation files. Automatic
+exports use a packaged MIT-licensed Three.js r170 bundle, not a CDN. The HTML
+shows the selected model, and BLER denominators include both actual and sampled
+transmitted-TB outcomes while actual-decode counters remain separate.
+
+
 第一阶段接入三维传播信道驱动的多小区下行闭环。入口为 `experiments/run_rt_sys.py`，后端为 `sionna_rt_sys`。原目录没有修改；`source_manifest.json` 保存复制时的源码 SHA256，独立 Git 的首个提交保存原始快照。
 
 原生网络 MU/SU 对照、独立 Sionna 公式复验，以及首传/重传和队列时延的统计口径，见

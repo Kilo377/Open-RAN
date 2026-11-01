@@ -139,6 +139,7 @@ class Dashboard:
         link = d.get('link_statistics', {}).get('network', {})
         count = len(d.get('ues', []))
         table('overview-metrics', ['Metric', 'Actual value'], [
+            ('Model', d.get('configuration',{}).get('phy',{}).get('model','full')),
             ('Connected UEs', f'{d.get("connected_ues", 0)} / {count}'),
             ('Throughput / run average', fmt(d.get('throughput_mbps'), 3, ' Mbps')),
             ('Throughput / latest slot', fmt(d.get('slot_throughput_mbps'), 3, ' Mbps')),
@@ -148,6 +149,8 @@ class Dashboard:
             ('Overflow bytes', fmt(packet.get('overflow_bytes'), suffix=' B')),
             ('Mean completed queue delay', fmt(packet.get('mean_completion_latency_ms'), 3, ' ms')),
             ('Completed packets', fmt(packet.get('completed_packets'))),
+            ('TB feedback samples', fmt(link.get('transmission_attempts',d.get('decode_attempts')))),
+            ('Statistical feedback samples', fmt(link.get('sampled_attempts',0))),
             ('Actual NR decode attempts', fmt(d.get('decode_attempts'))),
             ('NACK / actual decode attempts', f'{d.get("nacks", 0)} / {d.get("decode_attempts", 0)}'),
             ('First-TX BLER / attempts', f'{fmt(link.get("first_tx_bler"), 4)} / {fmt(link.get("first_tx_attempts"))}'),
@@ -201,7 +204,7 @@ class Dashboard:
             ('Other-UE intra-cell power / dBm', fmt(user.get('intra_cell_interference_dbm'), 3)),
             ('Pending HARQ bytes', fmt(user.get('harq', {}).get('pending_retx_bytes'))),
         ])
-        tree('Actual decode outcomes by SU / MU / mixed resources', link.get('by_resource_mode', {}))
+        tree('Transmission outcomes by SU / MU / mixed resources', link.get('by_resource_mode', {}))
 
     def kpis(self, d, focus):
         ui.TextColored(ACCENT, 'LIVE KPI DETAILS / EXPORTED MEASUREMENTS')
@@ -225,7 +228,7 @@ class Dashboard:
             ['Late completed fraction', fmt(packet.get('late_completed_fraction'), 4)],
             ['Packets that missed their deadline', fmt(packet.get('deadline_missed_packets'))],
             ['NACK / actual NR decode attempts', f'{d.get("nacks", 0)} / {attempts}'],
-            ['Observed cumulative NACK fraction', fmt(d.get('nacks', 0) / attempts if attempts else None, 4)],
+            ['Observed cumulative TB NACK fraction', fmt(d.get('transmission_nacks',d.get('nacks',0)) / d.get('transmission_attempts',attempts) if d.get('transmission_attempts',attempts) else None, 4)],
             ['First-TX NACK / attempts', f'{fmt(link.get("first_tx_nacks"))} / {fmt(link.get("first_tx_attempts"))}'],
             ['First-TX BLER', fmt(link.get('first_tx_bler'), 4)],
             ['Retx NACK / attempts', f'{fmt(link.get("retx_nacks"))} / {fmt(link.get("retx_attempts"))}'],
@@ -477,6 +480,7 @@ class Dashboard:
             values = np.array([r[key] for r in history], dtype=np.float32)
             ui.TextUnformatted(f'{label} / {unit}')
             ui.PlotLines('##'+key, values, overlay_text=f'latest {values[-1]:,.3f} {unit}', scale_min=0., graph_size=(-1., 62.))
-        attempts = d.get('decode_attempts', 0)
-        ui.TextUnformatted(f'Observed NACK ratio: {d.get("nacks", 0) / attempts:.2%} / {attempts} actual decodes' if attempts else 'No actual NR decode samples yet')
-        ui.TextWrapped('Gaps in wall-time updates reflect computation time, not missing simulated slots. No replay or synthetic samples.')
+        attempts = d.get('transmission_attempts',d.get('decode_attempts',0))
+        nacks = d.get('transmission_nacks',d.get('nacks',0))
+        ui.TextUnformatted(f'Observed NACK ratio: {nacks / attempts:.2%} / {attempts} transmitted TBs' if attempts else 'No TB feedback samples yet')
+        ui.TextWrapped('Gaps in wall-time updates reflect computation time, not missing simulated slots. Every point is a completed simulation slot; feedback follows the selected full/fast model.')

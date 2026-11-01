@@ -1,4 +1,4 @@
-"""Dedicated, finite RT/SYS runner. Never falls back to an approximate PHY."""
+"""Finite RT network runner with explicit full/fast models and offline HTML replay."""
 import argparse
 from pathlib import Path
 import sys
@@ -24,7 +24,10 @@ def parse_args():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--scene',choices=['simple_street_canyon','munich'],default='simple_street_canyon')
     p.add_argument('--cells',type=int,default=2); p.add_argument('--ues',type=int,default=4)
-    p.add_argument('--seed',type=int,default=1); p.add_argument('--slots',type=int,default=40)
+    p.add_argument('--seed',type=int,default=1)
+    duration=p.add_mutually_exclusive_group()
+    duration.add_argument('--slots',type=int)
+    duration.add_argument('--duration-s',type=float,help='Simulation duration, aligned to the configured slot duration')
     p.add_argument('--path-update-ms',type=float)
     p.add_argument('--platform',choices=['dgx','agx'],
         help='dgx: CUDA/OptiX + PyTorch CUDA; agx: LLVM CPU RT/NR + CuPy CUDA algebra (CPU fallback if unavailable)')
@@ -55,7 +58,9 @@ def parse_args():
     p.add_argument('--model-state',type=Path)
     p.add_argument('--initial-queue-bytes',type=int)
     p.add_argument('--ue-speed-mps',type=float)
-    p.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
+    model=p.add_mutually_exclusive_group()
+    model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: SYS sampling with explicit NR fallback (default full)')
+    model.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
@@ -64,13 +69,26 @@ def parse_args():
     p.add_argument('--channel-cache-root',type=Path)
     p.add_argument('--nr-execution',choices=['scalar','batched','parallel'])
     p.add_argument('--diagnostic-window-slots',type=int,default=200)
-    return p.parse_args()
+    p.add_argument('--html',action=argparse.BooleanOptionalAction,default=True,help='Automatically export network-replay.html after a successful simulation')
+    p.add_argument('--replay-window-ms',type=float,help='Optional KPI aggregation window; default adapts to run duration')
+    p.add_argument('--replay-max-frames',type=int,default=500,help='Target replay time windows; raw data is retained')
+    args=p.parse_args()
+    if args.slots is None:args.slots=40
+    return args
 
 
 def run_case(args):
     from phy.rt_sys.platforms import resolve_platform
     platform_profile=resolve_platform(args)
     rt_device=getattr(args,'rt_device',None) or args.device
+    duration_s=getattr(args,'duration_s',None)
+    if duration_s is not None:
+        import math
+        base=json.loads((args.config or ROOT/'configs/rt_sys/default.json').read_text())
+        slots=duration_s*1000/base['radio']['slot_duration_ms']
+        if not math.isfinite(slots) or slots<=0 or not math.isclose(slots,round(slots),abs_tol=1e-8,rel_tol=1e-12):
+            raise ValueError('--duration-s must be positive and align with whole time slots')
+        args.slots=round(slots)
     manifest,configs,intent=build_case(args.scene,args.cells,args.ues,args.seed,args.slots,args.path_update_ms,args.device,args.config,
         deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
         initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None),
@@ -101,6 +119,14 @@ def run_case(args):
         'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
     configs['phy']['rt_sys']['channel_array_backend']='cupy' if algebra_backend=='cupy' else 'numpy'
     if getattr(args,'feedback_mode',None):configs['phy']['rt_sys']['feedback_mode']=args.feedback_mode
+    selected_model=getattr(args,'model',None) or (None if getattr(args,'feedback_mode',None) else configs['phy']['rt_sys'].get('model'))
+    if selected_model is not None:
+        if selected_model not in ('full','fast'):raise ValueError('model must be full or fast')
+        configs['phy']['rt_sys']['feedback_mode']='fast' if selected_model=='fast' else 'nr_direct'
+    selected_model='fast' if configs['phy']['rt_sys']['feedback_mode']=='fast' else 'full'
+    configs['phy']['rt_sys']['model']=selected_model
+    args.model=selected_model if not getattr(args,'feedback_mode',None) else None
+    if selected_model=='fast' and getattr(args,'harq_combining','none')!='none':raise ValueError('fast does not support waveform soft combining; select full')
     if control_mode == 'baseline':
         configs['ric'].update(rapps=[], xapps=[], freeze_learning=True, run_rapps_on_start=False)
         configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
@@ -116,20 +142,31 @@ def run_case(args):
     configs['phy']['rt_sys'].update(csi_error_nmse_db=getattr(args,'csi_error_nmse_db',None),harq_combining=getattr(args,'harq_combining','none'))
     recording=getattr(args,'recording_mode',None) or configs['phy']['rt_sys'].get('recording_mode','audit')
     execution=getattr(args,'nr_execution',None) or configs['phy']['rt_sys'].get('nr_execution','scalar')
+    if selected_model=='fast' and execution=='parallel':
+        if getattr(args,'nr_execution',None)=='parallel':raise ValueError('fast supports scalar/batched feedback; process-parallel NR is a full-model option')
+        execution='batched'
     configs['phy']['rt_sys'].update(recording_mode=recording,nr_execution=execution)
     if recording not in ('audit','experiment'):raise ValueError('Unknown recording mode')
     window_slots=getattr(args,'diagnostic_window_slots',200)
     if window_slots<1:raise ValueError('Positive diagnostic window required')
-    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}_pool_{args.xapp_pool}'
+    if getattr(args,'replay_max_frames',500)<1:raise ValueError('Replay max frames must be positive')
+    if getattr(args,'replay_window_ms',None) is not None:
+        import math
+        if not math.isfinite(args.replay_window_ms) or args.replay_window_ms<=0:raise ValueError('Replay window must be positive')
+    name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}_pool_{args.xapp_pool}_{selected_model}'
     if rt_device!=args.device:name+=f'_rt{rt_device}_phy{args.device}'
     if algebra_backend=='cupy':name+='_cupy'
+    if args.output is None:
+        from datetime import datetime,timezone
+        import uuid
+        name+='_'+datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6]
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
     live_path=getattr(args,'live_state',None)
     if live_path is not None and not live_path.resolve().is_relative_to(ROOT/'outputs'):
         raise ValueError('Live telemetry must stay under project outputs/')
     if args.dry_run:
-        print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy'],
+        print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy'],'model':selected_model,'automatic_html':getattr(args,'html',True),
             'execution_devices':execution_devices,'platform_profile':platform_profile,
             'xapp_pool':args.xapp_pool,'registered_xapps':configs['ric'].get('xapps',[])},indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
@@ -140,7 +177,7 @@ def run_case(args):
     source_hash=source_fingerprint(ROOT)
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
-    status={'completed':False,'spark_verified':False,'stage':'initializing','source_sha256':source_hash,'xapp_pool':args.xapp_pool,
+    status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
         'execution_devices':execution_devices,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
@@ -219,7 +256,7 @@ def run_case(args):
             if hasattr(obj,method):timings.wrap(obj,method,label)
         for method,label in (('waveform','codec_lookup_or_build'),('_transmitted_feedback','actual_tb_feedback'),('evaluate_many','batch_feedback_inclusive')):
             if hasattr(adapter.abstraction,method):timings.wrap(adapter.abstraction,method,label)
-        initial={'seed':args.seed,'cache_key':provider.key,'deployment':manifest,'business':configs['ue'],
+        initial={'xapp_bindings':simulator.controller_manager.instance_selection.bindings or {},'seed':args.seed,'cache_key':provider.key,'deployment':manifest,'business':configs['ue'],
             'ues':[{"ue_id":u.ue_id,"serving_cell_id":simulator.state.connections[u.ue_id].serving_cell_id,"beam_id":u.serving_beam_id,"queue_bytes":u.queue_bytes} for u in simulator.state.ues]}
         from phy.rt_sys.contracts import digest
         initial['environment_sha256']=digest(initial)
@@ -283,6 +320,7 @@ def run_case(args):
                         completed_handovers+=sum(e['handover_completed'] for e in simulator.mobility_manager.events)
                         evaluated_bytes+=sum(u['delivered_bytes'] for u in adapter.trace['ues']);evaluated_slots+=1
                     full=simulator.slot_records[-1]['rt_sys']
+                    full['xapp_bindings']=simulator.controller_manager.instance_selection.bindings or {}
                     if any(r.get('ack_source') in ('harq_incompatible_no_tb','unsupported_nr_code_no_tb') for r in adapter.trace['ues']) or any(e.get('status')=='rejected' for e in simulator.state.control.actuation_outcomes) or any(e.get('kind') in ('connection_drop','handover_failure') for e in getattr(getattr(simulator.state,'paper',None),'events',[])):
                         diagnostic_until=simulator.state.slot_id+window_slots
                     # Full audit output is a single stream, not duplicated in
@@ -333,12 +371,13 @@ def run_case(args):
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
             'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
         if live_test_enabled:summary['xapp_test']=simulator.live_xapp_test.snapshot()
-        summary['rt_sys']={'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
+        summary['rt_sys']={'model':selected_model,'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
             'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference'),
             'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'),
             'cache_hits':provider.hits,'cache_misses':provider.misses}
+        if hasattr(adapter.abstraction,'model_statistics'):summary['model_statistics']=adapter.abstraction.model_statistics()
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)
         simulator.result_writer.write_orchestration_epoch_history(simulator.controller_manager.get_orchestration_epoch_history())
@@ -365,13 +404,27 @@ def run_case(args):
             steady_actual_tbs_per_s=(adapter.abstraction.decode_trials-steady_decodes)/max(steady_elapsed,1e-12),
             actual_decodes=adapter.abstraction.decode_trials,codec_statistics=adapter.abstraction.statistics,
             source_sha256=source_hash,cache_key=provider.key,
-            numerical_fidelity='actual_nr_20_decoder_iterations_no_online_probes',
+            model=selected_model,
+            numerical_fidelity='sys_default_eesm_bernoulli_with_explicit_nr_fallback' if selected_model=='fast' else 'actual_nr_20_decoder_iterations_no_online_probes',
             csv_semantics='audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries')
         (output/'performance.json').write_text(json.dumps(performance,indent=2))
+        if getattr(args,'html',True):
+            status.update(stage='exporting_replay',elapsed_s=time.perf_counter()-started);write_status()
+            export_started=time.perf_counter()
+            from experiments.replay import export_replay
+            status['replay']=export_replay(output,provider=provider,
+                max_frames=getattr(args,'replay_max_frames',500),window_ms=getattr(args,'replay_window_ms',None))
+            performance['replay_export_s']=time.perf_counter()-export_started
+            (output/'performance.json').write_text(json.dumps(performance,indent=2))
+            print('Replay: '+status['replay']['html'],flush=True)
+        else:
+            from experiments.replay import write_scene_mesh
+            write_scene_mesh(provider,output/'replay.mesh.npz')
+        status['stage']='completed'
         if live:live.finish('completed')
     except Exception as exc:
         if live:live.finish('failed',f'{type(exc).__name__}: {exc}')
-        status.update(stage='failed',error=f'{type(exc).__name__}: {exc}'); raise
+        status.update(stage='replay_export_failed' if status.get('completed') else 'failed',error=f'{type(exc).__name__}: {exc}'); raise
     finally:
         if 'adapter' in locals() and hasattr(adapter.abstraction,'close'):adapter.abstraction.close()
         if 'provider' in locals():provider.close()

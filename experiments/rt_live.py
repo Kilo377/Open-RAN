@@ -110,6 +110,8 @@ class LivePublisher:
             sim_time_ms=float(state.sim_time_ms), ues=users,
             delivered_bytes=self.delivered, decode_attempts=self.attempts, nacks=self.nacks,
             throughput_mbps=self.delivered * 8 / max(state.sim_time_ms * 1000, 1),
+            transmission_attempts=self.link_statistics.snapshot()['network']['transmission_attempts'],
+            transmission_nacks=self.link_statistics.snapshot()['network']['transmission_nacks'],
             link_statistics=self.link_statistics.snapshot(),
             completion_latency_scope=LATENCY_SCOPE,
             slot_throughput_mbps=sum(u['delivered_bytes'] for u in users) * 8 /
@@ -120,7 +122,7 @@ class LivePublisher:
             connected_ues=sum(u['connection_state'] == 'connected' for u in users))
         self.history.append(dict(slot=int(state.slot_id), sim_time_ms=float(state.sim_time_ms),
             throughput_mbps=self.latest['slot_throughput_mbps'], queue_bytes=self.latest['queue_bytes'],
-            nack_fraction=self.nacks / self.attempts if self.attempts else None,
+            nack_fraction=self.link_statistics.snapshot()['network']['transmission_nacks'] / self.link_statistics.snapshot()['network']['transmission_attempts'] if self.link_statistics.snapshot()['network']['transmission_attempts'] else None,
             mean_completion_latency_ms=packet_totals['mean_completion_latency_ms']))
         self.latest['history'] = list(self.history)
         if hasattr(simulator, 'live_xapp_test'):

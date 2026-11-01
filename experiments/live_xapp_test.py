@@ -18,7 +18,7 @@ APP = 'live_scheduler_test'
 ROOT = Path(__file__).resolve().parents[1]
 ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'platform',
     'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load',
-    'initial_queue_bytes', 'ue_speed_mps', 'feedback_mode', 'csi_error_nmse_db',
+    'initial_queue_bytes', 'ue_speed_mps', 'model', 'feedback_mode', 'csi_error_nmse_db',
     'harq_combining', 'recording_mode', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 
 
@@ -150,7 +150,7 @@ class LiveXAppSession:
             app_id=app.name if app else None,
             enabled=enabled, cell=cell, start_slot=slot, first_counted_slot=slot + self.settle_slots + 1,
             slots=0, skipped_slots=0, delivered_bytes=0, queue_sum=0, hol_sum=0.,
-            decodes=0, nacks=0, completed_packets=0, completion_delay_sum_ms=0.))
+            decodes=0, actual_decodes=0, nacks=0, completed_packets=0, completion_delay_sum_ms=0.))
         return 'selection_admitted; awaiting normal control tick and delayed execution'
 
     def record_receipt(self, request, status, reason):
@@ -226,6 +226,8 @@ class LiveXAppSession:
         self.advance_activation()
 
     def after_step(self, adapter):
+        # The GUI client imports this module in a stdlib-only environment.
+        from phy.rt_sys.contracts import has_tb_feedback
         state = self.simulator.state
         packet = [u.packet_ledger.summary() for u in state.ues]
         completed = sum(p['completed_packets'] for p in packet)
@@ -237,12 +239,13 @@ class LiveXAppSession:
             segment['skipped_slots'] += 1
             return
         rows = adapter.trace['ues']
-        decoded = [r for r in rows if r.get('actual_decode')]
+        decoded = [r for r in rows if has_tb_feedback(r)]
         segment['slots'] += 1
         segment['delivered_bytes'] += sum(r.get('delivered_bytes', 0) for r in rows)
         segment['queue_sum'] += sum(u.queue_bytes for u in state.ues)
         segment['hol_sum'] += max((p['hol_delay_ms'] for p in packet), default=0.)
         segment['decodes'] += len(decoded)
+        segment['actual_decodes'] = segment.get('actual_decodes',0)+sum(bool(r.get('actual_decode')) for r in decoded)
         segment['nacks'] += sum(not r['ack'] for r in decoded)
         segment['completed_packets'] += completed - prior_count
         segment['completion_delay_sum_ms'] += delay - prior_delay
@@ -266,7 +269,7 @@ class LiveXAppSession:
         segments = []
         for item in self.segments[-12:]:
             n, count = item['slots'], item['completed_packets']
-            segments.append({**item, 'duration_ms': n * self.dt,
+            segments.append({**item,'feedback_samples':item['decodes'],'feedback_scope':'Transmitted TB outcomes', 'duration_ms': n * self.dt,
                 'throughput_mbps': item['delivered_bytes'] * 8 / (n * self.dt * 1000) if n else None,
                 'mean_queue_bytes': item['queue_sum'] / n if n else None,
                 'mean_max_hol_ms': item['hol_sum'] / n if n else None,

@@ -16,7 +16,7 @@ class RtSysPhyAdapter:
         self.config = dict(config)
         self.nr_execution=self.config.get('nr_execution','scalar')
         if self.nr_execution not in ('scalar','batched','parallel'):raise ValueError('Unknown NR execution mode')
-        if self.nr_execution in ('batched','parallel') and self.config.get('feedback_mode')!='nr_direct':
+        if self.nr_execution in ('batched','parallel') and self.config.get('feedback_mode') not in ('nr_direct','fast'):
             raise ValueError('Batched NR requires nr_direct')
         self.device = self.config.get('device', 'cuda')
         if abstraction is None and self.device == 'numpy':
@@ -25,15 +25,16 @@ class RtSysPhyAdapter:
         if self.algebra_backend not in ('torch','cupy'):raise ValueError('Unknown algebra backend')
         self.math = Algebra('cupy' if self.algebra_backend=='cupy' else self.device)
         mode=self.config.get('feedback_mode','sys_abstraction')
-        if mode not in ('sys_abstraction','nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
+        if mode not in ('sys_abstraction','nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
         if abstraction is not None:self.abstraction=abstraction
-        elif mode in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        elif mode in ('nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             if any(self.config.get(k) for k in ('bler_table_files','beta_table_file','calibration_file')):
                 raise ValueError('NR reference cannot use a BLER/EESM calibration table')
             from phy.rt_sys.reference import NrReferenceAbstraction,CachedNrReferenceAbstraction,StatisticalBankAbstraction
             from phy.rt_sys.direct import DirectNrAbstraction
+            from phy.rt_sys.fast import FastAbstraction
             if mode=='nr_bler_bank' and self.config.get('harq_combining','none')!='none':raise ValueError('Statistical BLER bank cannot claim waveform HARQ combining; use nr_cached_reference')
-            backend={'nr_direct':DirectNrAbstraction,'nr_cached_reference':CachedNrReferenceAbstraction,'nr_tb_reference':NrReferenceAbstraction,'nr_bler_bank':StatisticalBankAbstraction}[mode]
+            backend={'nr_direct':DirectNrAbstraction,'fast':FastAbstraction,'nr_cached_reference':CachedNrReferenceAbstraction,'nr_tb_reference':NrReferenceAbstraction,'nr_bler_bank':StatisticalBankAbstraction}[mode]
             self.abstraction=backend(self.device,self.config.get('bler_target',.1),
                 {**self.config.get('reference',{}),'harq_combining':self.config.get('harq_combining','none'),
                  'nr_execution':self.nr_execution,'nr_parallel_workers':self.config.get('nr_parallel_workers',6),
@@ -60,7 +61,7 @@ class RtSysPhyAdapter:
         self.trace = {}
         self.current_snapshot = None
         self.scheduler_snapshot=None
-        self.combiner=ChaseCombiner('none' if mode in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank') else self.config.get('harq_combining','none'))
+        self.combiner=ChaseCombiner('none' if mode in ('nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank') else self.config.get('harq_combining','none'))
 
     def run_slot(self, phy_input):
         raise RuntimeError('RT/SYS requires run_cluster_slot with all managed-cell grants')
@@ -344,7 +345,7 @@ class RtSysPhyAdapter:
                         maximum = int(ue.mcs_cap if ue.mcs_cap is not None else 27)
                         mcs = int(ue.target_mcs) if ue.target_mcs is not None else int(select_mcs_index_from_sinr(result.sinr_db,mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
                         if mcs > maximum: raise ValueError('MCS target exceeds cap')
-                        fixed=ue.is_retx if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank') else ue.target_mcs is not None
+                        fixed=ue.is_retx if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank') else ue.target_mcs is not None
                         context={}
                         if getattr(self.abstraction,'supports_harq_context',False):
                             context['harq_context']=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,ndi=ue.harq_ndi if ue.harq_ndi is not None else 0,is_retx=ue.is_retx,cell_id=p.cell_id)
@@ -375,7 +376,7 @@ class RtSysPhyAdapter:
                     result.inter_cell_interference_dbm = 10*math.log10(max(float(np.mean(e['inter'])) if e['inter'] else 0,1e-30))+30
                     result.rank = result.ri = e['layers']; result.cqi = max(0,min(15,result.mcs_index//2))
                     result.spatial_mode = 'mu_mimo' if ue.spatial_group_size>1 else 'su_mimo'
-                    trace_ues.append({'ue_id':ue.ue_id,'cell_id':p.cell_id,'sinr_db':result.effective_sinr_db,
+                    trace_ues.append({'ue_id':ue.ue_id,'cell_id':p.cell_id,'sinr_db':result.sinr_db,'effective_sinr_db':result.effective_sinr_db,
                         'bler':result.bler,'mcs':result.mcs_index,'allocated_re':result.resource_grid_re_count,
                         'data_re':result.effective_data_re_count,'layers':e['layers'],'ack':result.ack,
                         'tb_bytes':result.tb_size_bytes,'delivered_bytes':result.delivered_bytes,
@@ -412,11 +413,12 @@ class RtSysPhyAdapter:
                     interference_scope='Mean received other-UE power before RX combining; dBm')
                 if paper:trace_ues[-1]['resource_allocation']=dict(prbs=list(ue.resource_block_indices),symbols=list(ue.allocated_symbol_indices),layers=int(ue.layer_count or 1),scheduled=bool(ue.is_scheduled))
                 trace_ues[-1].update(tb_id=contract.tb_id if contract else None,is_retx=bool(ue.is_retx),
-                    actual_decode=metrics.get('reference_tb_ack') is not None,
+                    actual_decode=metrics.get('actual_decode',metrics.get('reference_tb_ack') is not None),
+                    feedback_available=metrics.get('reference_tb_ack') is not None,
                     mcs_table=ue.mcs_table_id,tx_contract=asdict(contract) if contract else None,
                     link_adaptation_reason=ue.link_adaptation_reason)
                 outputs.append(result)
-                if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+                if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
                     defaults={'ack_source':'no_path' if e is not None else 'not_scheduled','bler_probe_errors':0,'bler_probe_samples':0,
                         'bler_wilson_95':[1.,1.] if e is not None else [0.,0.],'amc_probes':[],'unsupported_nr_mcs':[],
                         'bler_probe_seed':None,'ack_seed':None,'reference_tb_errors':None,'reference_tb_ack':False,
@@ -444,7 +446,7 @@ class RtSysPhyAdapter:
             self.trace['phy_calibration_status']='independently_validated_exact_re_domain'
             self.trace['phy_calibration_digest']=artifact['digest']
             self.trace['phy_calibration_scope']='Exact table/MCS/coded-RE tuples and validation profiles only; not URLLC tails or waveform HARQ'
-        if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
+        if getattr(self.abstraction,'feedback_mode',None) in ('nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):
             self.trace.update(phy_calibration_status='nr_tb_equivalent_link_reference',default_bler_eesm_used=False,
                 feedback_mode=self.abstraction.feedback_mode,reference_decode_trials=self.abstraction.decode_trials+getattr(getattr(self.abstraction,'bank',None),'stats',{}).get('calibration_decode_trials',0),
                 phy_calibration_scope='Actual RV0 NR-TB CRC/LDPC/QAM on independent Gaussian post-LMMSE resources; finite-probe or local validated BLER; same-codeword RV0/Chase LLR combining, no IR',
@@ -455,6 +457,13 @@ class RtSysPhyAdapter:
                 mcs_table_policy='MAC-selected MCS; SYS NR TBS; RV0/Chase compatibility guards retained')
             for row in self.trace['ues']:
                 row['bler_estimate_scope']='Realized block error indicator; controller BLER uses actual ACK/NACK window'
+        if getattr(self.abstraction,'feedback_mode',None)=='fast':
+            self.trace.update(model='fast',phy_calibration_status='fast_sys_default_with_nr_fallback',
+                default_bler_eesm_used=True,feedback_mode='fast',
+                phy_calibration_scope='Accepted fast model: sampled SYS feedback, actual NR outside table coverage; no waveform soft combining')
+            for row in self.trace['ues']:
+                row['bler_estimate_scope']='Sampled SYS TBLER or explicitly identified actual NR fallback'
+        else:self.trace['model']='full'
         if getattr(self.abstraction,'feedback_mode',None)=='nr_bler_bank':
             self.trace.update(phy_calibration_status='locally_validated_statistical_bler_bank',
                 phy_calibration_scope='Independent actual NR bin-bound validation; sampled TB ACK inside domain; explicit NR on rejected entries; no waveform HARQ',

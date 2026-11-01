@@ -184,7 +184,7 @@ class Simulator:
         self.state = self._build_initial_state()
         self._rt_sys_mode = bool(getattr(self.phy_adapter, "cluster_execution", False))
         self.state.rt_tx_contracts = self._rt_sys_mode and getattr(
-            getattr(self.phy_adapter, 'abstraction', None), 'feedback_mode', None) == 'nr_direct'
+            getattr(self.phy_adapter, 'abstraction', None), 'feedback_mode', None) in ('nr_direct','fast')
         if self._rt_sys_mode:
             from phy.rt_sys.mobility import RtMobilityManager
             self.traffic_engine.enable_packet_tracking(self.state)
@@ -888,7 +888,7 @@ class Simulator:
             managed_cells=getattr(state, "managed_cells", {}),
             paper=getattr(state,'paper',None),
             rt_du_observation=getattr(state,'rt_du_observation',None),
-            rt_tx_contracts=self._rt_sys_mode and getattr(self.phy_adapter.abstraction,'feedback_mode',None)=='nr_direct',
+            rt_tx_contracts=self._rt_sys_mode and getattr(self.phy_adapter.abstraction,'feedback_mode',None) in ('nr_direct','fast'),
             rt_channel_snapshot=self.phy_adapter.scheduler_snapshot if self._rt_sys_mode else None,
             rt_harq_combining=self.phy_adapter.config.get('harq_combining','none') if self._rt_sys_mode else 'none',
         )
