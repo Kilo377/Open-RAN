@@ -71,3 +71,14 @@ def test_adaptive_windows_bound_replay_size_from_ms_to_hours():
     assert replay_window_slots(20000,.5)==40
     assert duration_label(.2)=='200 ms' and duration_label(10)=='10 s' and duration_label(3600)=='60 min'
     with pytest.raises(ValueError):replay_window_slots(100,.5,window_ms=float('nan'))
+
+
+def test_replay_labels_historical_and_current_fast_sampling(tmp_path):
+    run=fixture_run(tmp_path/'run',sampled=True)
+    assert build_data(run)['meta']['fast_profile']=='reference'
+    p=run/'config_snapshot.json';c=json.loads(p.read_text())
+    c['configs']['phy']['rt_sys'].update(fast_profile='efficient',algebra_device='cpu')
+    p.write_text(json.dumps(c))
+    assert build_data(run)['meta']['fast_profile']=='efficient'
+    report=export_replay(run);source=Path(report['html']).read_text()
+    assert '4 SC / PRB' in source and '1 / slot / stream pattern' in source

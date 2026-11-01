@@ -9,6 +9,8 @@ Select the PHY feedback model independently of the DGX/AGX hardware profile:
 # New AGX with working CUDA NR kernels
 bash scripts/orin/run-six-ue-cuda-nr.sh --model full --duration-s 10
 bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10
+# Previous fast model, for controlled comparisons
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --fast-profile reference --duration-s 10
 
 # Older AGX CPU profile; the same model switch is supported
 bash scripts/orin/run-six-ue.sh --model fast --duration-s 1
@@ -19,6 +21,26 @@ is the accepted SYS EESM/BLER model from the paired comparison: it retains the
 MAC-selected MCS, exact NR TBS, queues, HARQ identities, OLLA and control delays.
 Missing table/beta entries use explicitly counted actual NR feedback. Fast uses
 statistical feedback without waveform soft combining; select full for Chase.
+The default fast profile is now `efficient`: four channel frequency samples per
+PRB and one time sample per slot within each exact co-scheduled stream pattern,
+CPU small-matrix RZF/LMMSE, and batched CPU official EESM/BLER evaluation. SINRs
+are expanded onto the original resource grid before the original DMRS/data mask
+and exact NR TBS are applied. Allocation, power accounting, 0.5 ms MAC/HARQ clocks,
+queues and xApp actuation are unchanged. RT geometry and its update interval are
+unchanged; hardware selection still controls OptiX versus LLVM and the actual NR
+fallback device. `--fast-profile reference` restores the previous per-RE,
+per-symbol channel algebra and scalar SYS feedback on the selected device.
+The profile can also be set with `rt_sys.fast_profile`; CLI takes precedence.
+The profile switch requires fast. Full continues using its existing execution.
+
+On the new Orin AGX, a paired warm-cache 400-slot experiment measured 146.2 s
+for reference versus 70.8 s for efficient (2.06x). Three seeds and a doubled-load
+control scenario reproduced packet/HARQ events and KPI counters; the largest
+effective-SINR difference in these tests was 0.105 dB. Sampling is an approximation,
+not a guarantee of identical outcomes in other channels or xApp experiments.
+The clean production implementation reproduced the experiment; its paired
+400-slot timing was 145.0 s versus 71.2 s (2.04x). See
+[efficient fast acceptance](docs/rt_sys/FAST_EFFICIENT_ACCEPTANCE.md).
 Fast's latency/retransmission results can differ from full. Metadata and live
 statistics distinguish sampled feedback from actual decodes.
 
@@ -52,6 +74,8 @@ A failed export reports the error and preserves the simulation files. Automatic
 exports use a packaged MIT-licensed Three.js r170 bundle, not a CDN. The HTML
 shows the selected model, and BLER denominators include both actual and sampled
 transmitted-TB outcomes while actual-decode counters remain separate.
+Fast exports also show the selected profile and actual PHY sampling. Historical
+fast results without profile metadata are labelled reference.
 
 
 第一阶段接入三维传播信道驱动的多小区下行闭环。入口为 `experiments/run_rt_sys.py`，后端为 `sionna_rt_sys`。原目录没有修改；`source_manifest.json` 保存复制时的源码 SHA256，独立 Git 的首个提交保存原始快照。

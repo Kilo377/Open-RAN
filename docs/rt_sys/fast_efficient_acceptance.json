@@ -1,0 +1,381 @@
+{
+  "completed": true,
+  "date": "2026-11-01",
+  "base_commit": "dd97f17359a366f5d3dc728dafda180d183f5bc6",
+  "timing_scope": "Serial 400-slot runs, same prewarmed RT cache, new Orin AGX, automatic HTML enabled",
+  "speedup": 2.0365050943292755,
+  "time_reduction_percent": 50.89626818098627,
+  "paired_runs": {
+    "completed": true,
+    "stage": "completed",
+    "cases": [
+      {
+        "name": "efficient",
+        "elapsed_s": 71.1894350569928,
+        "simulation_s": 60.16708995902445,
+        "checks": {
+          "packet_metrics": true,
+          "link": true,
+          "packet_events": true,
+          "harq_events": true,
+          "energy": true
+        }
+      },
+      {
+        "name": "reference",
+        "elapsed_s": 144.97764715598896,
+        "simulation_s": 134.38718767196406,
+        "checks": {
+          "packet_metrics": true,
+          "link": true,
+          "packet_events": true,
+          "harq_events": true,
+          "energy": true
+        }
+      }
+    ]
+  },
+  "followup": {
+    "completed": true,
+    "stage": "completed",
+    "cases": [
+      {
+        "name": "seed2",
+        "elapsed_s": 63.59017792204395,
+        "checks": {
+          "packet_metrics": true,
+          "link": true,
+          "packet_events": true,
+          "harq_events": true,
+          "energy": true,
+          "controls": true
+        }
+      },
+      {
+        "name": "stress_controls",
+        "elapsed_s": 80.93972320400644,
+        "checks": {
+          "packet_metrics": true,
+          "link": true,
+          "packet_events": true,
+          "harq_events": true,
+          "energy": true,
+          "controls": true
+        }
+      }
+    ]
+  },
+  "final_checks": {
+    "completed": true,
+    "full_actual_nr": true,
+    "fast_default_efficient": true,
+    "automatic_html": true
+  },
+  "regression_result": "136 passed, 2 warnings in 133.18s (0:02:13)",
+  "final_tests_result": "51 passed, 1 warning in 61.82s (0:01:01)",
+  "final_revision_note": "After paired/follow-up runs, help/UI/export metadata and historical comparison compatibility were finalized; the fixture-only NumPy override was narrowed to efficient fast to preserve reference/full CuPy fixtures. Final targeted tests and 17-slot full/fast launcher runs check this revision.",
+  "production_files_sha256": {
+    "phy/rt_sys/adapter.py": "42fac5969b16145912093d225a20d3b8fe2b726f7af7ae279e97113c8cf0d3e5",
+    "phy/rt_sys/fast.py": "0507ccfdf1d361eef8b15d9de8c22fcd6d82e170c59b5cda73e53fe153f277cf",
+    "phy/rt_sys/fast_profile.py": "8da80d46a64b35eba410395989cade60828e8ba4be2de7fd105d060bd466da97",
+    "phy/rt_sys/sampling.py": "e7496cffdc129feacd717e207097f71d3581cf5def6660224bda84251c20c7c3"
+  },
+  "runs": [
+    {
+      "name": "efficient",
+      "model": "fast",
+      "fast_profile": "efficient",
+      "slots": 400,
+      "source_sha256": "511960628a0cf5e3faa0fb143a656b0946a7c5c39676ca6ad8c05f0d51343d13",
+      "link": {
+        "first_tx_attempts": 2173,
+        "first_tx_nacks": 48,
+        "retx_attempts": 58,
+        "retx_nacks": 12,
+        "first_tx_bler": 0.02208927749654855,
+        "retx_error_rate": 0.20689655172413793,
+        "transmission_attempts": 2231,
+        "transmission_nacks": 60,
+        "actual_decode_attempts": 76,
+        "actual_nacks": 0,
+        "sampled_attempts": 2155
+      },
+      "rf_energy_j": 0.6000000000000004,
+      "packet_events_sha256": "b0b0d7f19c247948b79637eb9a9bdbb306d652403160226b18d547665da817c0",
+      "harq_events_sha256": "85c4c1ba211f73415274e25ae2bc4899c0f0350c02060015963661f2f981ee68",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/efficient/network-replay.html",
+        "html_bytes": 1419782,
+        "html_sha256": "93928e9d0472ae0195b41143b07837583444368bf2540176a8280f092f2bede0",
+        "self_contained": true,
+        "model": "fast",
+        "fast_profile": "efficient",
+        "slots": 400,
+        "simulation_s": 0.2,
+        "frames": 401,
+        "window_ms": 0.5,
+        "actual_decodes": 76,
+        "sampled_attempts": 2155,
+        "audits_passed": true
+      }
+    },
+    {
+      "name": "reference",
+      "model": "fast",
+      "fast_profile": "reference",
+      "slots": 400,
+      "source_sha256": "511960628a0cf5e3faa0fb143a656b0946a7c5c39676ca6ad8c05f0d51343d13",
+      "link": {
+        "first_tx_attempts": 2173,
+        "first_tx_nacks": 48,
+        "retx_attempts": 58,
+        "retx_nacks": 12,
+        "first_tx_bler": 0.02208927749654855,
+        "retx_error_rate": 0.20689655172413793,
+        "transmission_attempts": 2231,
+        "transmission_nacks": 60,
+        "actual_decode_attempts": 76,
+        "actual_nacks": 0,
+        "sampled_attempts": 2155
+      },
+      "rf_energy_j": 0.6000000000000004,
+      "packet_events_sha256": "b0b0d7f19c247948b79637eb9a9bdbb306d652403160226b18d547665da817c0",
+      "harq_events_sha256": "85c4c1ba211f73415274e25ae2bc4899c0f0350c02060015963661f2f981ee68",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/reference/network-replay.html",
+        "html_bytes": 1419774,
+        "html_sha256": "74c0a951d86a58531b536ef318fa1b512ff7a6043bf2ad0c9649b9546bcf7ea3",
+        "self_contained": true,
+        "model": "fast",
+        "fast_profile": "reference",
+        "slots": 400,
+        "simulation_s": 0.2,
+        "frames": 401,
+        "window_ms": 0.5,
+        "actual_decodes": 76,
+        "sampled_attempts": 2155,
+        "audits_passed": true
+      }
+    },
+    {
+      "name": "seed2",
+      "model": "fast",
+      "fast_profile": "efficient",
+      "slots": 400,
+      "source_sha256": "511960628a0cf5e3faa0fb143a656b0946a7c5c39676ca6ad8c05f0d51343d13",
+      "link": {
+        "first_tx_attempts": 2176,
+        "first_tx_nacks": 39,
+        "retx_attempts": 45,
+        "retx_nacks": 8,
+        "first_tx_bler": 0.017922794117647058,
+        "retx_error_rate": 0.17777777777777778,
+        "transmission_attempts": 2221,
+        "transmission_nacks": 47,
+        "actual_decode_attempts": 25,
+        "actual_nacks": 0,
+        "sampled_attempts": 2196
+      },
+      "rf_energy_j": 0.4000000000000003,
+      "packet_events_sha256": "f8f53823b207509a97c210333e6b8da8b9052e5b466305b2aac1abaff5d7e280",
+      "harq_events_sha256": "8965692240668fb8014f62aedcea90ec6b5c21ab3839bf86f027520703320c10",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/seed2/network-replay.html",
+        "html_bytes": 1412272,
+        "html_sha256": "43a61231c26e2e511a4a6f448912224c793681e37ef01a0641fc0afbe53ebd48",
+        "self_contained": true,
+        "model": "fast",
+        "slots": 400,
+        "simulation_s": 0.2,
+        "frames": 401,
+        "window_ms": 0.5,
+        "actual_decodes": 25,
+        "sampled_attempts": 2196,
+        "audits_passed": true
+      }
+    },
+    {
+      "name": "stress_controls",
+      "model": "fast",
+      "fast_profile": "efficient",
+      "slots": 400,
+      "source_sha256": "511960628a0cf5e3faa0fb143a656b0946a7c5c39676ca6ad8c05f0d51343d13",
+      "link": {
+        "first_tx_attempts": 2086,
+        "first_tx_nacks": 43,
+        "retx_attempts": 81,
+        "retx_nacks": 51,
+        "first_tx_bler": 0.020613614573346116,
+        "retx_error_rate": 0.6296296296296297,
+        "transmission_attempts": 2167,
+        "transmission_nacks": 94,
+        "actual_decode_attempts": 188,
+        "actual_nacks": 0,
+        "sampled_attempts": 1979
+      },
+      "rf_energy_j": 0.5400949786901821,
+      "packet_events_sha256": "171683e27a817e6d9997e285830b8dbd77f2c92c87995639c7c0dd070599cc3b",
+      "harq_events_sha256": "67e68ef5afd41c12ff093eeb153d5a6597d0d4c645de4cffc6f5f5b7b8c48994",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/stress_controls/network-replay.html",
+        "html_bytes": 1431047,
+        "html_sha256": "6f9cda890f05fc6f58bd5e8bc929ea170e6cb018d7e2c383d1fbc4f8f91a6348",
+        "self_contained": true,
+        "model": "fast",
+        "slots": 400,
+        "simulation_s": 0.2,
+        "frames": 401,
+        "window_ms": 0.5,
+        "actual_decodes": 188,
+        "sampled_attempts": 1979,
+        "audits_passed": true
+      }
+    },
+    {
+      "name": "full_smoke",
+      "model": "full",
+      "fast_profile": null,
+      "slots": 17,
+      "source_sha256": "027693cde88ae7df763251d795a62e7a37705f0d5b9c771ffa713991f48a5e5d",
+      "link": {
+        "first_tx_attempts": 89,
+        "first_tx_nacks": 4,
+        "retx_attempts": 13,
+        "retx_nacks": 13,
+        "first_tx_bler": 0.0449438202247191,
+        "retx_error_rate": 1.0,
+        "transmission_attempts": 102,
+        "transmission_nacks": 17,
+        "actual_decode_attempts": 102,
+        "actual_nacks": 17,
+        "sampled_attempts": 0
+      },
+      "rf_energy_j": 0.025500000000000012,
+      "packet_events_sha256": "0ef5b037692d739717e5c1d5982dd18a65a1502182739bc657dddf749cb779e4",
+      "harq_events_sha256": "eac0465255df1ca2c162a11c0637bb6389a6a2d6d09de8343648a97a6cc544b0",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/full_smoke/network-replay.html",
+        "html_bytes": 1033412,
+        "html_sha256": "65712dd66432d0dc8fba4939ec2bd45f3190cecf068b25ddcc86b6c9044f1082",
+        "self_contained": true,
+        "model": "full",
+        "fast_profile": null,
+        "slots": 17,
+        "simulation_s": 0.0085,
+        "frames": 18,
+        "window_ms": 0.5,
+        "actual_decodes": 102,
+        "sampled_attempts": 0,
+        "audits_passed": true
+      }
+    },
+    {
+      "name": "fast_smoke",
+      "model": "fast",
+      "fast_profile": "efficient",
+      "slots": 17,
+      "source_sha256": "027693cde88ae7df763251d795a62e7a37705f0d5b9c771ffa713991f48a5e5d",
+      "link": {
+        "first_tx_attempts": 93,
+        "first_tx_nacks": 8,
+        "retx_attempts": 9,
+        "retx_nacks": 1,
+        "first_tx_bler": 0.08602150537634409,
+        "retx_error_rate": 0.1111111111111111,
+        "transmission_attempts": 102,
+        "transmission_nacks": 9,
+        "actual_decode_attempts": 3,
+        "actual_nacks": 0,
+        "sampled_attempts": 99
+      },
+      "rf_energy_j": 0.025500000000000012,
+      "packet_events_sha256": "4f54a906a2c6feda4d74afe6f1e704205d565d4aa4b3d4a67dd1e30f6b39d65a",
+      "harq_events_sha256": "4dfc7a867315982deffaaf296abe198f4d74d15221ddd82fe5d24acdb035da90",
+      "replay": {
+        "completed": true,
+        "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/fast_smoke/network-replay.html",
+        "html_bytes": 1033788,
+        "html_sha256": "c3adcaafc64e26a936f23657b500d1a5c9aca70ae1b6865b4794020d627652d3",
+        "self_contained": true,
+        "model": "fast",
+        "fast_profile": "efficient",
+        "slots": 17,
+        "simulation_s": 0.0085,
+        "frames": 18,
+        "window_ms": 0.5,
+        "actual_decodes": 3,
+        "sampled_attempts": 99,
+        "audits_passed": true
+      }
+    }
+  ],
+  "browser_checks": [
+    {
+      "passed": true,
+      "time_scale_units": [
+        "ms",
+        "s",
+        "min",
+        "h"
+      ],
+      "reports": [
+        {
+          "file": "/Users/kilobao/Desktop/oran-fast-efficient-400slot.html",
+          "passed": true,
+          "model": "fast",
+          "duration_s": 0.2,
+          "frames": 401,
+          "offline": true,
+          "external_requests": [],
+          "errors": [],
+          "layouts": [
+            320,
+            375,
+            414,
+            768,
+            1440
+          ]
+        },
+        {
+          "file": "/Users/kilobao/Desktop/oran-fast-reference-400slot.html",
+          "passed": true,
+          "model": "fast",
+          "duration_s": 0.2,
+          "frames": 401,
+          "offline": true,
+          "external_requests": [],
+          "errors": [],
+          "layouts": [
+            320,
+            375,
+            414,
+            768,
+            1440
+          ]
+        },
+        {
+          "file": "/Users/kilobao/Documents/Codex/2026-10-17/b/outputs/fast_promote_20261101/fast-smoke-17slot.html",
+          "passed": true,
+          "model": "fast",
+          "duration_s": 0.0085,
+          "frames": 18,
+          "offline": true,
+          "external_requests": [],
+          "errors": [],
+          "layouts": [
+            320,
+            375,
+            414,
+            768,
+            1440
+          ]
+        }
+      ]
+    }
+  ]
+}

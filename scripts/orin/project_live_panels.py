@@ -138,8 +138,11 @@ class Dashboard:
         packet = d.get('packet_totals', {})
         link = d.get('link_statistics', {}).get('network', {})
         count = len(d.get('ues', []))
+        phy=d.get('configuration',{}).get('phy',{})
+        model=phy.get('model','full')
+        if model=='fast':model+=' / '+phy.get('fast_profile','reference')
         table('overview-metrics', ['Metric', 'Actual value'], [
-            ('Model', d.get('configuration',{}).get('phy',{}).get('model','full')),
+            ('Model', model),
             ('Connected UEs', f'{d.get("connected_ues", 0)} / {count}'),
             ('Throughput / run average', fmt(d.get('throughput_mbps'), 3, ' Mbps')),
             ('Throughput / latest slot', fmt(d.get('slot_throughput_mbps'), 3, ' Mbps')),

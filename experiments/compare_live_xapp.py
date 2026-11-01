@@ -32,6 +32,9 @@ def compare(spec_path, output, result, cell='*', app=APP):
             setattr(args, key, Path(value) if key in ('config', 'channel_cache_root') else value)
         # Historical live specs predate pools; their xApps all belong to Yisong.
         args.xapp_pool = spec['arguments'].get('xapp_pool', 'yisong')
+        # Recorded pre-profile fast sessions used the reference computation.
+        if args.model=='fast' and 'fast_profile' not in spec['arguments']:
+            args.fast_profile='reference'
         args.slots = int(spec['slots'])
         args.live_xapp_test, args.xapp_test_start, args.xapp_test_cell = True, arm, cell
         args.xapp_test_app = app

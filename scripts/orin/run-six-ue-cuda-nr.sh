@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Optional CUDA NR + Torch algebra; RT remains on the LLVM CPU backend.
+# CUDA NR + Torch backend; efficient fast uses CPU small-matrix algebra/SYS.
+# RT remains on the LLVM CPU backend.
 # Requires a PyTorch wheel with working Orin CUDA kernels (e.g. JetPack 7.2).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/activate-gpu.sh"

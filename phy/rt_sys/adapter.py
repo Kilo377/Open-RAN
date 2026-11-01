@@ -14,6 +14,8 @@ class RtSysPhyAdapter:
 
     def __init__(self, config, *, abstraction=None, channel_provider=None):
         self.config = dict(config)
+        from phy.rt_sys.fast_profile import configure_fast_profile
+        self.fast_profile=configure_fast_profile(self.config)
         self.nr_execution=self.config.get('nr_execution','scalar')
         if self.nr_execution not in ('scalar','batched','parallel'):raise ValueError('Unknown NR execution mode')
         if self.nr_execution in ('batched','parallel') and self.config.get('feedback_mode') not in ('nr_direct','fast'):
@@ -23,7 +25,9 @@ class RtSysPhyAdapter:
             raise ValueError('NumPy device is fixture-only; production requires PyTorch/Sionna')
         self.algebra_backend=self.config.get('algebra_backend','torch')
         if self.algebra_backend not in ('torch','cupy'):raise ValueError('Unknown algebra backend')
-        self.math = Algebra('cupy' if self.algebra_backend=='cupy' else self.device)
+        math_device=self.config.get('algebra_device','cupy' if self.algebra_backend=='cupy' else self.device)
+        if self.fast_profile=='efficient' and abstraction is not None and self.device=='numpy':math_device='numpy'
+        self.math = Algebra(math_device)
         mode=self.config.get('feedback_mode','sys_abstraction')
         if mode not in ('sys_abstraction','nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
         if abstraction is not None:self.abstraction=abstraction
@@ -36,7 +40,7 @@ class RtSysPhyAdapter:
             if mode=='nr_bler_bank' and self.config.get('harq_combining','none')!='none':raise ValueError('Statistical BLER bank cannot claim waveform HARQ combining; use nr_cached_reference')
             backend={'nr_direct':DirectNrAbstraction,'fast':FastAbstraction,'nr_cached_reference':CachedNrReferenceAbstraction,'nr_tb_reference':NrReferenceAbstraction,'nr_bler_bank':StatisticalBankAbstraction}[mode]
             self.abstraction=backend(self.device,self.config.get('bler_target',.1),
-                {**self.config.get('reference',{}),'harq_combining':self.config.get('harq_combining','none'),
+                {**self.config.get('reference',{}),'fast_profile':self.fast_profile,'harq_combining':self.config.get('harq_combining','none'),
                  'nr_execution':self.nr_execution,'nr_parallel_workers':self.config.get('nr_parallel_workers',6),
                  'nr_worker_threads':self.config.get('nr_worker_threads',1),
                  'nr_pin_workers':self.config.get('nr_pin_workers',False)})
@@ -194,19 +198,24 @@ class RtSysPhyAdapter:
                                     'occupied_re':int(np.logical_or.reduce([e['mask'] for e in active]).sum()) if active and budget>0 else 0,
                                     'grid_re':int(ns*nf),
                                     'tx_power_dbm':float(p.tx_power_dbm)}
-        # Batch all REs with the same transmitter/stream set across symbols.
-        # Each RE retains its true channel and the original per-symbol ridge.
+        # Exact stream grouping; efficient fast samples only channel algebra.
         def at(e,s,f):return e['power'][s,f] if isinstance(e['power'],np.ndarray) else e['power']
         from phy.rt_sys.efficiency import resource_patterns
         patterns=resource_patterns(entries,ns,nf)
         for pattern,coordinates in patterns.items():
+            full_symbols,full_frequencies=map(list,zip(*coordinates))
+            if self.fast_profile=='efficient':
+                from phy.rt_sys.sampling import sample_coordinates
+                offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
+                coordinates,inverse=sample_coordinates(coordinates,4,offset)
+            else:inverse=np.arange(len(coordinates))
             symbols,frequencies=map(list,zip(*coordinates))
             tx = []
             for ci in sorted({entries[i]['ci'] for i in pattern}):
                 group = [entries[i] for i in pattern if entries[i]['ci']==ci]
                 if len(group)>1:
                     for member in group:
-                        member['mu_mask'][symbols,frequencies]=True
+                        member['mu_mask'][full_symbols,full_frequencies]=True
                 stream_rows = []
                 owners = []
                 dft=beam_subspace(nt,0,0,0)
@@ -291,9 +300,9 @@ class RtSysPhyAdapter:
                 eothers=(a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))) if compute_estimated else None
                 values = a.numpy(a.lmmse(desired,others,noise,estimated_desired,eothers)
                     if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
-                e['sinr'][symbols,frequencies,k] = values
-                e['inter'].extend(inter_power.tolist())
-                e['intra'].extend(intra_power.tolist())
+                e['sinr'][full_symbols,full_frequencies,k] = values[inverse]
+                e['inter'].extend(inter_power[inverse].tolist())
+                e['intra'].extend(intra_power[inverse].tolist())
         batch_metrics={}
         if self.nr_execution in ('batched','parallel'):
             from phy.rt_sys.tx_contract import data_mask
@@ -440,6 +449,10 @@ class RtSysPhyAdapter:
                 sum(r.tb_size_bytes for r in outputs))
         self.trace = {'mcs_table_policy':'SYS default EESM tables 1/2; low-SE MAC requests use table 1', 'slot_id':snapshot.slot_id,'cache_key':snapshot.cache_key,'cells':cell_trace,'ues':trace_ues,'precoders':precoder_trace}
         self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.config.get('harq_combining','none'))
+        if self.fast_profile:
+            self.trace.update(fast_profile=self.fast_profile,
+                spatial_samples_per_prb=self.config['spatial_samples_per_prb'],
+                channel_time_sampling=self.config['channel_time_sampling'])
         self.trace['phy_calibration_status']='custom_tables_require_validation' if self.config.get('bler_table_files') else 'default_tables_failed_expanded_validation'
         artifact=getattr(self.abstraction,'calibration',None)
         if artifact is not None:

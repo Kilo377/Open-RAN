@@ -152,7 +152,9 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None):
     mesh_file=Path(mesh_path) if mesh_path else next((p for p in candidates if p.is_file()),None)
     if mesh_file is None:raise ValueError('No scene mesh found; use --mesh or export during a simulation')
     mesh,view=render_mesh(mesh_file,manifest);duration=total*dt
-    return dict(meta=dict(scene=manifest['scene'],model=model,completed=True,slots=total,slot_ms=slot_ms,simulation_s=duration,
+    # Historical fast outputs used the full grid and predate profile metadata.
+    fast_profile=phy.get('fast_profile','reference') if model=='fast' else None
+    return dict(meta=dict(scene=manifest['scene'],model=model,fast_profile=fast_profile,completed=True,slots=total,slot_ms=slot_ms,simulation_s=duration,
         active_prbs=summary['n_prbs_total'],window_ms=window_slots*slot_ms,warmup_s=config.get('warmup_ms',0)/1000,wall_s=status.get('elapsed_s'),
         source_sha256=status.get('source_sha256'),source_run=folder.name,playback_speed=duration/20,
         first_overflow_s=first_overflow,actual_decodes=actual,sampled_attempts=sampled,xapp_pool=config['configs']['ric'].get('xapp_pool'),
@@ -175,6 +177,12 @@ def configuration_rows(data,config):
         ('Model',data['meta']['model'].capitalize(),'xApp pool',data['meta'].get('xapp_pool') or 'N/A'),
         ('Control policy','Orchestrated' if config.get('control_mode')=='orchestrated' else 'Native baseline','xApps','Off' if not data['meta']['configured_xapps'] else 'Configured'),
         ('Max. reflection depth',m['ray_solver']['max_depth'],'Path update interval',label_ms(m['path_update_ms']))]
+    if data['meta']['model']=='fast':
+        efficient=data['meta'].get('fast_profile')=='efficient'
+        phy=r['phy']['rt_sys']
+        algebra_device=phy.get('algebra_device','cuda' if phy.get('algebra_backend')=='cupy' else phy.get('device','N/A'))
+        rows.extend([('Fast profile',data['meta'].get('fast_profile','reference').capitalize(),'PHY frequency sampling','4 SC / PRB' if efficient else 'Per RE'),
+            ('PHY time sampling','1 / slot / stream pattern' if efficient else 'Per symbol','Linear algebra',algebra_device)])
     return ''.join('<tr>'+''.join(f'<td'+((' class="value" id="xapps-state"' if row[i-1]=='xApps' else ' class="value"') if i%2 else '')+'>'+html.escape(str(value))+'</td>' for i,value in enumerate(row))+'</tr>' for row in rows)
 
 def export_replay(folder,output=None,*,provider=None,max_frames=500,window_ms=None,mesh_path=None):
@@ -197,7 +205,7 @@ def export_replay(folder,output=None,*,provider=None,max_frames=500,window_ms=No
     template=template.replace('</head>','<!-- Three.js r170 license:\n'+(ASSETS/'THREE-LICENSE.txt').read_text()+'\n-->\n</head>')
     target.parent.mkdir(parents=True,exist_ok=True);temporary=target.with_name(target.name+'.'+uuid.uuid4().hex+'.tmp');temporary.write_text(template);os.replace(temporary,target)
     report=dict(completed=True,html=str(target.resolve()),html_bytes=target.stat().st_size,html_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
-        self_contained=True,model=data['meta']['model'],slots=data['meta']['slots'],simulation_s=duration,frames=len(data['frames']),window_ms=data['meta']['window_ms'],
+        self_contained=True,model=data['meta']['model'],fast_profile=data['meta']['fast_profile'],slots=data['meta']['slots'],simulation_s=duration,frames=len(data['frames']),window_ms=data['meta']['window_ms'],
         actual_decodes=data['meta']['actual_decodes'],sampled_attempts=data['meta']['sampled_attempts'],audits_passed=True)
     (folder/'replay_export.json').write_text(json.dumps(report,indent=2))
     return report

@@ -56,6 +56,7 @@ def configuration(manifest, configs, control_mode, profile):
         timing=fields(configs.get('sim', {}), ('obs_delay_slots', 'config_actuation_delay_slots',
             'command_actuation_delay_slots', 'measurement_queue_delay_slots', 'measurement_sinr_noise_std_db')),
         phy=fields(configs.get('phy', {}).get('rt_sys', {}), ('model', 'feedback_mode', 'bler_target',
+            'fast_profile', 'spatial_samples_per_prb', 'channel_time_sampling', 'fast_feedback_execution', 'algebra_device',
             'noise_figure_db', 'rzf_relative_regularization', 'csi_error_nmse_db', 'harq_combining',
             'mobility', 'nr_execution', 'recording_mode')),
         controllers=dict(**fields(ric, ('xapp_pool', 'xapp_interval_slots', 'rapp_interval_slots', 'freeze_learning')),

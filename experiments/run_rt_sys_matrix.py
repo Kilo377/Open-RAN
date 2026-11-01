@@ -20,14 +20,19 @@ if __name__=='__main__':
     p.add_argument('--slots',type=int,default=1000);p.add_argument('--path-update-ms',type=float,default=.5)
     p.add_argument('--device',choices=['cuda','cpu'],default='cuda');p.add_argument('--skip-completed',action='store_true')
     p.add_argument('--model',choices=['full','fast'],default='full')
+    p.add_argument('--fast-profile',choices=['efficient','reference'])
     p.add_argument('--workers',type=int,default=1,choices=range(1,5))
     p.add_argument('--output-root',type=Path,default=ROOT/'outputs/rt_sys_matrix')
     args=p.parse_args();plan=cases(args.slots,args.path_update_ms)
+    if args.fast_profile and args.model!='fast':p.error('--fast-profile requires --model fast')
+    if args.model=='fast':args.fast_profile=args.fast_profile or 'efficient'
     if args.dry_run:print(json.dumps(plan,indent=2));sys.exit(0)
     sys.path.insert(0,str(ROOT))
     from phy.rt_sys.contracts import source_fingerprint
     source_hash=source_fingerprint(ROOT)
-    root=args.output_root.resolve()/args.model;root.mkdir(parents=True,exist_ok=True)
+    root=args.output_root.resolve()/args.model
+    if args.fast_profile:root=root/args.fast_profile
+    root.mkdir(parents=True,exist_ok=True)
     if args.device=='cuda':
         sys.path.insert(0,str(ROOT))
         from scripts.spark.preflight import check
@@ -44,9 +49,11 @@ if __name__=='__main__':
                 saved_device=json.loads(saved.read_text())['configs']['phy']['rt_sys']['device']
                 if (saved_status.get('completed') and saved_status.get('stage')=='completed' and
                     saved_status.get('source_sha256')==source_hash and saved_status.get('model')==args.model and
+                    saved_status.get('fast_profile')==args.fast_profile and
                     saved_device==args.device and m['total_slots']==args.slots and m['path_update_ms']==args.path_update_ms):
                     return {'case':case,'skipped':True,'returncode':0}
         command=[sys.executable,str(ROOT/'experiments/run_rt_sys.py'),'--output',str(out),'--device',args.device,'--model',args.model]
+        if args.fast_profile:command.extend(['--fast-profile',args.fast_profile])
         for key,value in case.items(): command.extend(['--'+key.replace('_','-'),str(value)])
         out.mkdir(parents=True,exist_ok=True)
         with (out/'process.log').open('w') as log:

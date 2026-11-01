@@ -30,13 +30,13 @@ def parse_args():
     duration.add_argument('--duration-s',type=float,help='Simulation duration, aligned to the configured slot duration')
     p.add_argument('--path-update-ms',type=float)
     p.add_argument('--platform',choices=['dgx','agx'],
-        help='dgx: CUDA/OptiX + PyTorch CUDA; agx: LLVM CPU RT/NR + CuPy CUDA algebra (CPU fallback if unavailable)')
+        help='dgx: CUDA/OptiX; agx: LLVM CPU RT/NR + CuPy (CPU fallback). Efficient fast overrides small-matrix algebra to CPU.')
     p.add_argument('--device',choices=['cuda','cpu'],
-        help='PHY/SYS device; default CUDA without --platform, otherwise selected by platform')
+        help='NR/full SYS device; efficient fast SYS uses CPU. Default CUDA without --platform.')
     p.add_argument('--rt-device',choices=['cuda','cpu'],
         help='Ray-tracing device; defaults to --device. --device selects PHY/SYS.')
     p.add_argument('--algebra-backend',choices=['torch','cupy'],
-        help='CuPy executes RZF/LMMSE on CUDA independently of the PHY/SYS device.')
+        help='Algebra/channel reconstruction backend. Efficient fast always uses CPU RZF/LMMSE.')
     p.add_argument('--config',type=Path)
     p.add_argument('--control-timeline',type=Path)
     p.add_argument('--output',type=Path)
@@ -60,6 +60,7 @@ def parse_args():
     p.add_argument('--ue-speed-mps',type=float)
     model=p.add_mutually_exclusive_group()
     model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: SYS sampling with explicit NR fallback (default full)')
+    p.add_argument('--fast-profile',choices=['efficient','reference'],help='fast only: efficient (default) or previous full-grid reference')
     model.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
@@ -114,9 +115,6 @@ def run_case(args):
     if getattr(args,'algebra_backend',None):
         configs['phy']['rt_sys']['algebra_backend']=args.algebra_backend
     algebra_backend=configs['phy']['rt_sys'].get('algebra_backend','torch')
-    execution_devices={'rt':rt_device,'phy_sys':args.device,
-        'linear_algebra':'cuda' if algebra_backend=='cupy' else args.device,
-        'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
     configs['phy']['rt_sys']['channel_array_backend']='cupy' if algebra_backend=='cupy' else 'numpy'
     if getattr(args,'feedback_mode',None):configs['phy']['rt_sys']['feedback_mode']=args.feedback_mode
     selected_model=getattr(args,'model',None) or (None if getattr(args,'feedback_mode',None) else configs['phy']['rt_sys'].get('model'))
@@ -125,6 +123,13 @@ def run_case(args):
         configs['phy']['rt_sys']['feedback_mode']='fast' if selected_model=='fast' else 'nr_direct'
     selected_model='fast' if configs['phy']['rt_sys']['feedback_mode']=='fast' else 'full'
     configs['phy']['rt_sys']['model']=selected_model
+    from phy.rt_sys.fast_profile import configure_fast_profile
+    fast_profile=configure_fast_profile(configs['phy']['rt_sys'],getattr(args,'fast_profile',None))
+    args.fast_profile=fast_profile
+    execution_devices={'rt':rt_device,'phy_sys':'cpu' if fast_profile=='efficient' else args.device,
+        'nr_fallback':args.device if selected_model=='fast' else None,
+        'linear_algebra':'cpu' if fast_profile=='efficient' else ('cuda' if algebra_backend=='cupy' else args.device),
+        'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
     args.model=selected_model if not getattr(args,'feedback_mode',None) else None
     if selected_model=='fast' and getattr(args,'harq_combining','none')!='none':raise ValueError('fast does not support waveform soft combining; select full')
     if control_mode == 'baseline':
@@ -154,6 +159,7 @@ def run_case(args):
         import math
         if not math.isfinite(args.replay_window_ms) or args.replay_window_ms<=0:raise ValueError('Replay window must be positive')
     name=f'{args.scene}_c{args.cells}_u{args.ues}_s{args.seed}_dt{manifest["path_update_ms"]}_{control_mode}_pool_{args.xapp_pool}_{selected_model}'
+    if fast_profile:name+=f'_{fast_profile}'
     if rt_device!=args.device:name+=f'_rt{rt_device}_phy{args.device}'
     if algebra_backend=='cupy':name+='_cupy'
     if args.output is None:
@@ -177,7 +183,7 @@ def run_case(args):
     source_hash=source_fingerprint(ROOT)
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
-    status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
+    status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'fast_profile':fast_profile,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
         'execution_devices':execution_devices,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
@@ -371,7 +377,7 @@ def run_case(args):
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
             'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
         if live_test_enabled:summary['xapp_test']=simulator.live_xapp_test.snapshot()
-        summary['rt_sys']={'model':selected_model,'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
+        summary['rt_sys']={'model':selected_model,'fast_profile':fast_profile,'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),
             'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference'),
@@ -404,7 +410,7 @@ def run_case(args):
             steady_actual_tbs_per_s=(adapter.abstraction.decode_trials-steady_decodes)/max(steady_elapsed,1e-12),
             actual_decodes=adapter.abstraction.decode_trials,codec_statistics=adapter.abstraction.statistics,
             source_sha256=source_hash,cache_key=provider.key,
-            model=selected_model,
+            model=selected_model,fast_profile=fast_profile,
             numerical_fidelity='sys_default_eesm_bernoulli_with_explicit_nr_fallback' if selected_model=='fast' else 'actual_nr_20_decoder_iterations_no_online_probes',
             csv_semantics='audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries')
         (output/'performance.json').write_text(json.dumps(performance,indent=2))
