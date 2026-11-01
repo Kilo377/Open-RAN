@@ -9,40 +9,61 @@ Select the PHY feedback model independently of the DGX/AGX hardware profile:
 # New AGX with working CUDA NR kernels
 bash scripts/orin/run-six-ue-cuda-nr.sh --model full --duration-s 10
 bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10
-# Previous fast model, for controlled comparisons
+# Historical full-grid fast, for controlled comparisons
 bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --fast-profile reference --duration-s 10
 
 # Older AGX CPU profile; the same model switch is supported
 bash scripts/orin/run-six-ue.sh --model fast --duration-s 1
 ```
 
-`full` is the default and retains actual NR transport-block decoding. `fast`
-is the accepted SYS EESM/BLER model from the paired comparison: it retains the
-MAC-selected MCS, exact NR TBS, queues, HARQ identities, OLLA and control delays.
-Missing table/beta entries use explicitly counted actual NR feedback. Fast uses
-statistical feedback without waveform soft combining; select full for Chase.
-The default fast profile is now `efficient`: four channel frequency samples per
-PRB and one time sample per slot within each exact co-scheduled stream pattern,
-CPU small-matrix RZF/LMMSE, and batched CPU official EESM/BLER evaluation. SINRs
-are expanded onto the original resource grid before the original DMRS/data mask
-and exact NR TBS are applied. Allocation, power accounting, 0.5 ms MAC/HARQ clocks,
-queues and xApp actuation are unchanged. RT geometry and its update interval are
-unchanged; hardware selection still controls OptiX versus LLVM and the actual NR
-fallback device. `--fast-profile reference` restores the previous per-RE,
-per-symbol channel algebra and scalar SYS feedback on the selected device.
-The profile can also be set with `rt_sys.fast_profile`; CLI takes precedence.
-The profile switch requires fast. Full continues using its existing execution.
+`full` is the default model and retains actual NR transport-block decoding.
+`fast` retains MAC-selected MCS, exact NR TBS, queues, HARQ identities, OLLA and
+control delays, and uses official Sionna SYS EESM/BLER feedback. Missing table/beta
+entries use explicitly counted actual NR fallback. Fast has no waveform soft
+combining; select full for Chase.
 
-On the new Orin AGX, a paired warm-cache 400-slot experiment measured 146.2 s
-for reference versus 70.8 s for efficient (2.06x). Three seeds and a doubled-load
-control scenario reproduced packet/HARQ events and KPI counters; the largest
-effective-SINR difference in these tests was 0.105 dB. Sampling is an approximation,
-not a guarantee of identical outcomes in other channels or xApp experiments.
-The clean production implementation reproduced the experiment; its paired
-400-slot timing was 145.0 s versus 71.2 s (2.04x). See
-[efficient fast acceptance](docs/rt_sys/FAST_EFFICIENT_ACCEPTANCE.md).
-Fast's latency/retransmission results can differ from full. Metadata and live
-statistics distinguish sampled feedback from actual decodes.
+The fast profiles are:
+
+- `system` (default): four samples/PRB, block-updated RZF spatial fields and
+  power-conditioned LMMSE coupling gains, with a 2 ms update bound. Each 0.5 ms
+  slot uses its actual scheduled streams, per-PRB powers and receiver noise.
+  Reference gains use the same update bound; filtering and E2 observation queues
+  still advance every slot. Power, scheduling, pairing, beam/RET and sleep changes
+  affect the current slot. New RT geometry invalidates older gain epochs.
+- `efficient`: the previous four-sample/PRB, per-slot channel calculation and
+  batched CPU SYS feedback. Use this for paired precision comparisons.
+- `reference`: the historical per-RE/per-symbol calculation and scalar SYS on the
+  selected device.
+
+```bash
+# New default fast, with 2 ms gain updates
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10
+# Previous per-slot fast
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --fast-profile efficient --duration-s 10
+# Optional 5 ms system gain updates
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --fast-gain-update-ms 5 --duration-s 10
+```
+
+`--fast-gain-update-ms` overrides both spatial and reference intervals in the
+system profile and must align with whole slots. It does not change the MAC slot
+or RT path-update interval. JSON uses `rt_sys.fast_profile`,
+`system_gain_update_ms` and `reference_gain_update_ms`; CLI takes precedence.
+System currently requires ideal CSI; select efficient/full for CSI-error studies.
+Its spatial calculations use NumPy CPU, official SYS feedback uses batched CPU,
+and actual NR fallback uses the selected PHY device. Hardware profiles still
+select OptiX versus LLVM and the channel reconstruction backend independently.
+
+In experiment recording, system also uses detached JSON report copies, vectorized
+subband CQI quantization and diagnostic snapshots at window boundaries plus the
+final slot. Per-slot packet/HARQ records, observations, controls, RF accounting
+and KPI traces remain available. Audit recording retains per-slot state snapshots.
+
+The paired new-AGX 400-slot sweep measured 70.46 s for efficient, 39.84 s for system
+at 2 ms and 37.37 s at 5 ms. Main-loop time fell from 59.75 s to 29.00 s at 2 ms.
+The 2 ms default was selected for smaller latency-tail deviations. This is a
+finite scenario comparison, not packet-level equivalence or guaranteed accuracy
+for every xApp/channel. See [system profile validation](docs/rt_sys/FAST_SYSTEM_ACCEPTANCE.md)
+and the [earlier efficient-profile study](docs/rt_sys/FAST_EFFICIENT_ACCEPTANCE.md).
 
 The existing `agx_munich_6ue_depth2_fast.json` filename describes the execution
 optimizations; it does not select the PHY model. `--model full|fast` overrides

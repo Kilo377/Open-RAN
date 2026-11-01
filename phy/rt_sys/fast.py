@@ -62,9 +62,9 @@ class FastAbstraction(DirectNrAbstraction):
         self.profile=configure_fast_profile(cfg)
         from sionna.sys import PHYAbstraction, EESM
         from sionna.phy.nr.utils import TransportBlockNR
-        self.feedback_device='cpu' if self.profile=='efficient' else self.device
+        self.feedback_device='cpu' if self.profile!='reference' else self.device
         self.sys=PHYAbstraction(device=self.feedback_device)
-        if self.profile=='efficient':
+        if self.profile!='reference':
             self.eesm=EESM(device='cpu')
             self.transport=TransportBlockNR(device='cpu')
         self.segments={}
@@ -103,7 +103,7 @@ class FastAbstraction(DirectNrAbstraction):
         if not math.isfinite(prob) or not 0<=prob<=1 or not math.isfinite(eff):return None,None,'nonfinite_official_interpolation'
         return prob,eff,None
     def probability(self,wave,values):
-        if self.profile=='efficient':return self.probability_many([(wave,values)])[0]
+        if self.profile!='reference':return self.probability_many([(wave,values)])[0]
         alias=self.equivalent(wave)
         if alias is None:return None,None,'missing_equivalent_official_mcs_and_beta_entry'
         table,mcs=alias

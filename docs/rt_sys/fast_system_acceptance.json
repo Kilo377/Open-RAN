@@ -1,0 +1,1166 @@
+{
+  "completed": true,
+  "date": "2026-11-01",
+  "base_commit": "d1822f03d8e73fac32f1670362c91999bb2443fb",
+  "selected_profile": "system",
+  "gain_update_ms": 2,
+  "slot_ms": 0.5,
+  "serial_timing_scope": "Seven serial warm-cache 400-slot runs on new AGX; automatic HTML enabled. Follow-up wall times are not speed claims.",
+  "total_speedup": 1.768441542589603,
+  "main_loop_speedup": 2.0604795809750507,
+  "sweep": [
+    {
+      "name": "baseline",
+      "elapsed_s": 70.46139832295012,
+      "simulation_s": 59.75052761298139,
+      "settings": {},
+      "metrics": {
+        "goodput_mbps": 30.01136,
+        "mean_delay_ms": 3.253283669868653,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2173,
+          "first_tx_nacks": 48,
+          "retx_attempts": 58,
+          "retx_nacks": 12,
+          "first_tx_bler": 0.02208927749654855,
+          "retx_error_rate": 0.20689655172413793,
+          "transmission_attempts": 2231,
+          "transmission_nacks": 60,
+          "actual_decode_attempts": 76,
+          "actual_nacks": 0,
+          "sampled_attempts": 2155
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 76,
+        "gain_stats": null,
+        "p95_ms": {
+          "ue_0": 7.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 0.0
+        },
+        "packet_metrics_exact": true,
+        "packet_events_exact": true,
+        "harq_events_exact": true
+      }
+    },
+    {
+      "name": "reports_only",
+      "elapsed_s": 64.68085183796939,
+      "simulation_s": 54.07352359499782,
+      "settings": {
+        "system_phy_enabled": false,
+        "reference_gain_update_ms": null,
+        "fast_reports": true,
+        "compact_snapshots": true
+      },
+      "metrics": {
+        "goodput_mbps": 30.01136,
+        "mean_delay_ms": 3.253283669868653,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2173,
+          "first_tx_nacks": 48,
+          "retx_attempts": 58,
+          "retx_nacks": 12,
+          "first_tx_bler": 0.02208927749654855,
+          "retx_error_rate": 0.20689655172413793,
+          "transmission_attempts": 2231,
+          "transmission_nacks": 60,
+          "actual_decode_attempts": 76,
+          "actual_nacks": 0,
+          "sampled_attempts": 2155
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 76,
+        "gain_stats": null,
+        "p95_ms": {
+          "ue_0": 7.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 0.0
+        },
+        "packet_metrics_exact": true,
+        "packet_events_exact": true,
+        "harq_events_exact": true
+      }
+    },
+    {
+      "name": "reference_only_5ms",
+      "elapsed_s": 60.80030908097979,
+      "simulation_s": 50.27348682808224,
+      "settings": {
+        "system_phy_enabled": false,
+        "reference_gain_update_ms": 5.0,
+        "fast_reports": false,
+        "compact_snapshots": false
+      },
+      "metrics": {
+        "goodput_mbps": 30.01136,
+        "mean_delay_ms": 3.226328170946873,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2170,
+          "first_tx_nacks": 48,
+          "retx_attempts": 58,
+          "retx_nacks": 12,
+          "first_tx_bler": 0.022119815668202765,
+          "retx_error_rate": 0.20689655172413793,
+          "transmission_attempts": 2228,
+          "transmission_nacks": 60,
+          "actual_decode_attempts": 79,
+          "actual_nacks": 0,
+          "sampled_attempts": 2149
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 79,
+        "gain_stats": null,
+        "p95_ms": {
+          "ue_0": 8.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 0.0
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      }
+    },
+    {
+      "name": "spatial_only_5ms",
+      "elapsed_s": 53.02036472503096,
+      "simulation_s": 42.444275693036616,
+      "settings": {
+        "system_phy_enabled": true,
+        "system_gain_update_ms": 5.0,
+        "reference_gain_update_ms": null,
+        "fast_reports": false,
+        "compact_snapshots": false
+      },
+      "metrics": {
+        "goodput_mbps": 30.00944,
+        "mean_delay_ms": 3.0809645167614192,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2165,
+          "first_tx_nacks": 47,
+          "retx_attempts": 58,
+          "retx_nacks": 14,
+          "first_tx_bler": 0.021709006928406466,
+          "retx_error_rate": 0.2413793103448276,
+          "transmission_attempts": 2223,
+          "transmission_nacks": 61,
+          "actual_decode_attempts": 76,
+          "actual_nacks": 0,
+          "sampled_attempts": 2147
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 76,
+        "gain_stats": {
+          "epochs": 41,
+          "layout_builds": 15,
+          "field_builds": 183,
+          "combiner_builds": 186,
+          "layout_hits": 385,
+          "field_hits": 590,
+          "combiner_hits": 587
+        },
+        "p95_ms": {
+          "ue_0": 8.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 16.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": -0.02490156101661034
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      }
+    },
+    {
+      "name": "combined_1ms",
+      "elapsed_s": 42.58066165598575,
+      "simulation_s": 32.0519341629697,
+      "settings": {
+        "system_phy_enabled": true,
+        "system_gain_update_ms": 1.0,
+        "reference_gain_update_ms": 1.0,
+        "fast_reports": true,
+        "compact_snapshots": true
+      },
+      "metrics": {
+        "goodput_mbps": 30.00944,
+        "mean_delay_ms": 3.2104489315820426,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2170,
+          "first_tx_nacks": 46,
+          "retx_attempts": 56,
+          "retx_nacks": 12,
+          "first_tx_bler": 0.02119815668202765,
+          "retx_error_rate": 0.21428571428571427,
+          "transmission_attempts": 2226,
+          "transmission_nacks": 58,
+          "actual_decode_attempts": 76,
+          "actual_nacks": 0,
+          "sampled_attempts": 2150
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 76,
+        "gain_stats": {
+          "epochs": 201,
+          "layout_builds": 14,
+          "field_builds": 485,
+          "combiner_builds": 487,
+          "layout_hits": 386,
+          "field_hits": 290,
+          "combiner_hits": 288
+        },
+        "p95_ms": {
+          "ue_0": 7.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": -0.02490156101661034
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      }
+    },
+    {
+      "name": "combined_2ms",
+      "elapsed_s": 39.84378144599032,
+      "simulation_s": 28.998359491000883,
+      "settings": {
+        "system_phy_enabled": true,
+        "system_gain_update_ms": 2.0,
+        "reference_gain_update_ms": 2.0,
+        "fast_reports": true,
+        "compact_snapshots": true
+      },
+      "metrics": {
+        "goodput_mbps": 30.01136,
+        "mean_delay_ms": 3.161438933542443,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2170,
+          "first_tx_nacks": 47,
+          "retx_attempts": 56,
+          "retx_nacks": 11,
+          "first_tx_bler": 0.02165898617511521,
+          "retx_error_rate": 0.19642857142857142,
+          "transmission_attempts": 2226,
+          "transmission_nacks": 58,
+          "actual_decode_attempts": 77,
+          "actual_nacks": 0,
+          "sampled_attempts": 2149
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 77,
+        "gain_stats": {
+          "epochs": 121,
+          "layout_builds": 14,
+          "field_builds": 337,
+          "combiner_builds": 340,
+          "layout_hits": 386,
+          "field_hits": 439,
+          "combiner_hits": 436
+        },
+        "p95_ms": {
+          "ue_0": 7.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 0.0
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      }
+    },
+    {
+      "name": "combined_5ms",
+      "elapsed_s": 37.373884890927,
+      "simulation_s": 26.793192442972213,
+      "settings": {
+        "system_phy_enabled": true,
+        "system_gain_update_ms": 5.0,
+        "reference_gain_update_ms": 5.0,
+        "fast_reports": true,
+        "compact_snapshots": true
+      },
+      "metrics": {
+        "goodput_mbps": 30.01136,
+        "mean_delay_ms": 3.2494608900215645,
+        "deadline_misses": 0,
+        "overflow_bytes": 0,
+        "link": {
+          "first_tx_attempts": 2171,
+          "first_tx_nacks": 47,
+          "retx_attempts": 58,
+          "retx_nacks": 13,
+          "first_tx_bler": 0.02164900967296177,
+          "retx_error_rate": 0.22413793103448276,
+          "transmission_attempts": 2229,
+          "transmission_nacks": 60,
+          "actual_decode_attempts": 79,
+          "actual_nacks": 0,
+          "sampled_attempts": 2150
+        },
+        "rf_energy_j": 0.6000000000000004,
+        "actual_nr": 79,
+        "gain_stats": {
+          "epochs": 41,
+          "layout_builds": 14,
+          "field_builds": 185,
+          "combiner_builds": 187,
+          "layout_hits": 386,
+          "field_hits": 595,
+          "combiner_hits": 593
+        },
+        "p95_ms": {
+          "ue_0": 8.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 17.0
+        },
+        "per_ue_goodput_change_percent": {
+          "ue_0": 0.0,
+          "ue_1": 0.0,
+          "ue_2": 0.0,
+          "ue_4": 0.0,
+          "ue_6": 0.0,
+          "ue_8": 0.0
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      }
+    }
+  ],
+  "followup": {
+    "completed": true,
+    "stage": "completed",
+    "cases": [
+      {
+        "scenario": "seed2",
+        "variant": "combined_2ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed2_combined_2ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/seed2",
+        "elapsed_s": 36.37191311502829,
+        "metrics": {
+          "network_goodput_change_percent": 0.0,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 0.0,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.0
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 7.0,
+              "baseline": 6.0
+            },
+            "ue_1": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_8": {
+              "candidate": 13.5,
+              "baseline": 13.0
+            }
+          },
+          "first_tx_bler_change_pp": 0.13521026239775408,
+          "retx_error_change_pp": 0.5895691609977327,
+          "deadline_misses": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "overflow_bytes": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "rf_energy_j": {
+            "candidate": 0.4000000000000003,
+            "baseline": 0.4000000000000003
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 121,
+            "layout_builds": 8,
+            "field_builds": 345,
+            "combiner_builds": 346,
+            "layout_hits": 392,
+            "field_hits": 455,
+            "combiner_hits": 454
+          }
+        }
+      },
+      {
+        "scenario": "seed2",
+        "variant": "combined_5ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed2_combined_5ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/seed2",
+        "elapsed_s": 34.51066652708687,
+        "metrics": {
+          "network_goodput_change_percent": 0.006397577450667491,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 0.0,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.02490156101659924
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 7.5,
+              "baseline": 6.0
+            },
+            "ue_1": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_8": {
+              "candidate": 14.5,
+              "baseline": 13.0
+            }
+          },
+          "first_tx_bler_change_pp": 0.08931765110817176,
+          "retx_error_change_pp": 2.6303854875283443,
+          "deadline_misses": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "overflow_bytes": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "rf_energy_j": {
+            "candidate": 0.4000000000000003,
+            "baseline": 0.4000000000000003
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 41,
+            "layout_builds": 8,
+            "field_builds": 177,
+            "combiner_builds": 188,
+            "layout_hits": 392,
+            "field_hits": 623,
+            "combiner_hits": 612
+          }
+        }
+      },
+      {
+        "scenario": "seed3",
+        "variant": "baseline",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_baseline",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_baseline",
+        "elapsed_s": 64.08188173500821,
+        "metrics": {
+          "network_goodput_change_percent": 0.0,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 0.0,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.0
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 5.5,
+              "baseline": 5.5
+            },
+            "ue_1": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_8": {
+              "candidate": 15.5,
+              "baseline": 15.5
+            }
+          },
+          "first_tx_bler_change_pp": 0.0,
+          "retx_error_change_pp": 0.0,
+          "deadline_misses": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "overflow_bytes": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "rf_energy_j": {
+            "candidate": 0.4000000000000003,
+            "baseline": 0.4000000000000003
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": null
+        }
+      },
+      {
+        "scenario": "seed3",
+        "variant": "combined_2ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_combined_2ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_baseline",
+        "elapsed_s": 36.28087960800622,
+        "metrics": {
+          "network_goodput_change_percent": 0.0,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 0.0,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.0
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 6.0,
+              "baseline": 5.5
+            },
+            "ue_1": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_8": {
+              "candidate": 16.5,
+              "baseline": 15.5
+            }
+          },
+          "first_tx_bler_change_pp": 0.04416074002502636,
+          "retx_error_change_pp": -0.3102836879432608,
+          "deadline_misses": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "overflow_bytes": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "rf_energy_j": {
+            "candidate": 0.4000000000000003,
+            "baseline": 0.4000000000000003
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 121,
+            "layout_builds": 8,
+            "field_builds": 334,
+            "combiner_builds": 336,
+            "layout_hits": 392,
+            "field_hits": 466,
+            "combiner_hits": 464
+          }
+        }
+      },
+      {
+        "scenario": "seed3",
+        "variant": "combined_5ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_combined_5ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_seed3_baseline",
+        "elapsed_s": 34.237488609040156,
+        "metrics": {
+          "network_goodput_change_percent": 0.0,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 0.0,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.0
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 6.0,
+              "baseline": 5.5
+            },
+            "ue_1": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_8": {
+              "candidate": 17.0,
+              "baseline": 15.5
+            }
+          },
+          "first_tx_bler_change_pp": 0.0,
+          "retx_error_change_pp": 3.473729917498916,
+          "deadline_misses": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "overflow_bytes": {
+            "candidate": 0,
+            "baseline": 0
+          },
+          "rf_energy_j": {
+            "candidate": 0.4000000000000003,
+            "baseline": 0.4000000000000003
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 41,
+            "layout_builds": 8,
+            "field_builds": 175,
+            "combiner_builds": 192,
+            "layout_hits": 392,
+            "field_hits": 625,
+            "combiner_hits": 608
+          }
+        }
+      },
+      {
+        "scenario": "stress_controls",
+        "variant": "combined_2ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_stress_controls_combined_2ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/stress_controls",
+        "elapsed_s": 49.61857695202343,
+        "metrics": {
+          "network_goodput_change_percent": -0.03518775610201752,
+          "per_ue_goodput_change_percent": {
+            "ue_0": -0.4059368260814433,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 0.34351519645796635
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 107.5,
+              "baseline": 107.0
+            },
+            "ue_1": {
+              "candidate": 1.5,
+              "baseline": 1.5
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 20.0,
+              "baseline": 20.0
+            },
+            "ue_8": {
+              "candidate": 116.5,
+              "baseline": 116.77499999999998
+            }
+          },
+          "first_tx_bler_change_pp": 0.0,
+          "retx_error_change_pp": 0.0,
+          "deadline_misses": {
+            "candidate": 1700,
+            "baseline": 1701
+          },
+          "overflow_bytes": {
+            "candidate": 204700,
+            "baseline": 204450
+          },
+          "rf_energy_j": {
+            "candidate": 0.5400949786901821,
+            "baseline": 0.5400949786901821
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 121,
+            "layout_builds": 19,
+            "field_builds": 371,
+            "combiner_builds": 381,
+            "layout_hits": 381,
+            "field_hits": 537,
+            "combiner_hits": 527
+          }
+        }
+      },
+      {
+        "scenario": "stress_controls",
+        "variant": "combined_5ms",
+        "output": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/followup_stress_controls_combined_5ms",
+        "reference": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_promote_20261101/outputs/acceptance/stress_controls",
+        "elapsed_s": 46.20653151301667,
+        "metrics": {
+          "network_goodput_change_percent": 0.49851322723364344,
+          "per_ue_goodput_change_percent": {
+            "ue_0": 2.0417019969688255,
+            "ue_1": 0.0,
+            "ue_2": 0.0,
+            "ue_4": 0.0,
+            "ue_6": 0.0,
+            "ue_8": 1.1919432054875223
+          },
+          "p95_ms": {
+            "ue_0": {
+              "candidate": 104.5,
+              "baseline": 107.0
+            },
+            "ue_1": {
+              "candidate": 1.5,
+              "baseline": 1.5
+            },
+            "ue_2": {
+              "candidate": 0.0,
+              "baseline": 0.0
+            },
+            "ue_4": {
+              "candidate": 0.5,
+              "baseline": 0.5
+            },
+            "ue_6": {
+              "candidate": 20.0,
+              "baseline": 20.0
+            },
+            "ue_8": {
+              "candidate": 116.5,
+              "baseline": 116.77499999999998
+            }
+          },
+          "first_tx_bler_change_pp": -0.0029603084595517665,
+          "retx_error_change_pp": -2.7065527065527117,
+          "deadline_misses": {
+            "candidate": 1646,
+            "baseline": 1701
+          },
+          "overflow_bytes": {
+            "candidate": 200200,
+            "baseline": 204450
+          },
+          "rf_energy_j": {
+            "candidate": 0.5400949786901821,
+            "baseline": 0.5400949786901821
+          },
+          "control_receipts_exact": true,
+          "gain_statistics": {
+            "epochs": 41,
+            "layout_builds": 19,
+            "field_builds": 200,
+            "combiner_builds": 208,
+            "layout_hits": 381,
+            "field_hits": 715,
+            "combiner_hits": 707
+          }
+        }
+      }
+    ],
+    "timing_note": "Follow-up checks may run alongside regression; wall times are not performance claims."
+  },
+  "final_model_checks": {
+    "completed": true,
+    "cases": [
+      {
+        "name": "final_default",
+        "elapsed_s": 40.08217039005831,
+        "simulation_s": 29.594115821062587,
+        "gain_stats": {
+          "model": "fast",
+          "fast_profile": "system",
+          "feedback_device": "cpu",
+          "actual_nr_decodes": 77,
+          "statistical_tb_samples": 2149,
+          "statistical_fraction": 0.9654088050314465,
+          "fallback_reasons": {
+            "missing_equivalent_official_mcs_and_beta_entry": 77
+          },
+          "equivalent_format_alias_counts": {
+            "(3, 16)->(1, 11)": 798
+          },
+          "system_gain_statistics": {
+            "epochs": 121,
+            "layout_builds": 14,
+            "field_builds": 337,
+            "max_anchor_age_slots": 3,
+            "combiner_builds": 340,
+            "layout_hits": 386,
+            "field_hits": 439,
+            "combiner_hits": 436
+          },
+          "reference_gain_statistics": {
+            "builds": 2178,
+            "hits": 5040,
+            "update_slots": 4
+          }
+        },
+        "packet_metrics_exact": false,
+        "packet_events_exact": false,
+        "harq_events_exact": false
+      },
+      {
+        "name": "final_per_slot",
+        "elapsed_s": 49.0634734579362,
+        "simulation_s": 38.341911158990115,
+        "gain_stats": {
+          "model": "fast",
+          "fast_profile": "system",
+          "feedback_device": "cpu",
+          "actual_nr_decodes": 76,
+          "statistical_tb_samples": 2155,
+          "statistical_fraction": 0.9659345584939489,
+          "fallback_reasons": {
+            "missing_equivalent_official_mcs_and_beta_entry": 76
+          },
+          "equivalent_format_alias_counts": {
+            "(3, 16)->(1, 11)": 799
+          },
+          "system_gain_statistics": {
+            "epochs": 400,
+            "layout_builds": 14,
+            "field_builds": 779,
+            "max_anchor_age_slots": 0,
+            "combiner_builds": 779,
+            "layout_hits": 386
+          },
+          "reference_gain_statistics": {
+            "builds": 7218,
+            "hits": 0,
+            "update_slots": 1
+          }
+        },
+        "packet_metrics_exact": true,
+        "packet_events_exact": true,
+        "harq_events_exact": true
+      }
+    ],
+    "full_actual_nr": true,
+    "efficient_retained": true,
+    "final_default_reproduced": true
+  },
+  "release": {
+    "source_sha256": "0f64aa513ff7d0b3c1f2ce682b12a0af6c84840480c91876a3b69412bed7a358",
+    "performance": {
+      "stages": {
+        "channel_snapshot_including_io_and_cfr": {
+          "calls": 401,
+          "wall_s": 3.906976950238459
+        },
+        "scheduling": {
+          "calls": 400,
+          "wall_s": 2.3711244807345793
+        },
+        "codec_lookup_or_build": {
+          "calls": 4452,
+          "wall_s": 0.04452612344175577
+        },
+        "actual_tb_feedback": {
+          "calls": 2226,
+          "wall_s": 0.005226969835348427
+        },
+        "batch_feedback_inclusive": {
+          "calls": 400,
+          "wall_s": 6.525558891706169
+        },
+        "precoding_interference_and_tb_inclusive": {
+          "calls": 400,
+          "wall_s": 13.146799591020681
+        },
+        "state_update": {
+          "calls": 1200,
+          "wall_s": 0.9300959528191015
+        },
+        "measurement_update": {
+          "calls": 400,
+          "wall_s": 0.32286281615961343
+        },
+        "slot_total": {
+          "calls": 400,
+          "wall_s": 29.021877052262425
+        }
+      },
+      "clock": "inclusive_host_wall_no_cuda_fences",
+      "interpretation": "Nested and asynchronous stages are not additive GPU execution times.",
+      "recording_mode": "experiment",
+      "nr_execution": "batched",
+      "torch_execution_threads": {
+        "intra_op": 1,
+        "inter_op": 1
+      },
+      "reference_cache_statistics": {
+        "calculations": 401,
+        "hits": 401
+      },
+      "rt_prefetch_statistics": {
+        "completed": true,
+        "generated_blocks": 0,
+        "worker_wall_s": 2.2459972229553387
+      },
+      "initialization_s": 7.574084072955884,
+      "simulation_s": 29.562572928960435,
+      "output_and_telemetry_s": 0.42293173004873097,
+      "steady_wall_s": 29.562300799996592,
+      "steady_slots": 400,
+      "steady_slots_per_s": 13.530746564896807,
+      "steady_actual_tbs_per_s": 2.6046687137426354,
+      "actual_decodes": 77,
+      "codec_statistics": {
+        "amc_probe_trials": 0,
+        "bler_probe_trials": 0,
+        "calibration_decode_trials": 0,
+        "actual_tb_decodes": 77,
+        "statistical_tb_samples": 2149,
+        "chase_combined_attempts": 0,
+        "lifecycle_context_cleanup": 1
+      },
+      "source_sha256": "0f64aa513ff7d0b3c1f2ce682b12a0af6c84840480c91876a3b69412bed7a358",
+      "cache_key": "9073befc83675035b1edec1121f961aec156b7d273478d7fc9367949976dda96",
+      "model": "fast",
+      "fast_profile": "system",
+      "numerical_fidelity": "sys_default_eesm_bernoulli_with_explicit_nr_fallback",
+      "csv_semantics": "audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries",
+      "replay_export_s": 0.23708088009152561
+    },
+    "model_statistics": {
+      "model": "fast",
+      "fast_profile": "system",
+      "feedback_device": "cpu",
+      "actual_nr_decodes": 77,
+      "statistical_tb_samples": 2149,
+      "statistical_fraction": 0.9654088050314465,
+      "fallback_reasons": {
+        "missing_equivalent_official_mcs_and_beta_entry": 77
+      },
+      "equivalent_format_alias_counts": {
+        "(3, 16)->(1, 11)": 798
+      },
+      "system_gain_statistics": {
+        "epochs": 121,
+        "layout_builds": 14,
+        "field_builds": 337,
+        "max_anchor_age_slots": 3,
+        "combiner_builds": 340,
+        "layout_hits": 386,
+        "field_hits": 439,
+        "combiner_hits": 436
+      },
+      "reference_gain_statistics": {
+        "builds": 2178,
+        "hits": 5040,
+        "update_slots": 4
+      }
+    },
+    "replay": {
+      "completed": true,
+      "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_system_20261101/outputs/benchmark/final_release/network-replay.html",
+      "html_bytes": 1420237,
+      "html_sha256": "11ee2fc893c915c2d2710c196017369fa4d20088e45294ede8e24f148c9f420c",
+      "self_contained": true,
+      "model": "fast",
+      "fast_profile": "system",
+      "slots": 400,
+      "simulation_s": 0.2,
+      "frames": 401,
+      "window_ms": 0.5,
+      "actual_decodes": 77,
+      "sampled_attempts": 2149,
+      "audits_passed": true
+    },
+    "live_spec_gain_ms": 2,
+    "packet_harq_events_match_selected": true,
+    "physics_hashes": {
+      "phy/rt_sys/system_gain.py": "9421d7f4778fdc13d8a232f9c5538e85b180c71ce27213c91a3711a284826e68",
+      "phy/rt_sys/report_copy.py": "c76cd109fef67fc3d6f26c2b4e4607b48e60993de555641ba9f73fdfc55890e1",
+      "phy/rt_sys/paper_radio.py": "38216b9efb5ff41ad14340756e68d0f83d315afb58f07a426db6ea0dbc1e9150",
+      "phy/rt_sys/paper_environment.py": "75f8ffffe48ea09bd41fd51f370e26bda396ad185b8e4e8e3d5be98e16d56db4",
+      "phy/rt_sys/fast_profile.py": "6a8a3e4e4594d9fbed7c5da7e29622d1403d14c165d5189bfb246923beb1afcd",
+      "phy/rt_sys/adapter.py": "ae2a0f1960cfdc7bb3d4cff6f126b49d43e44589bf268bc245d71665462c2055",
+      "phy/rt_sys/fast.py": "07c5ad99ac145a787d2638c5394647fa45313cbb296262481f5b1ae187809522",
+      "core/state_updater.py": "951f78c099b45fe47b5fc22457b3586501976337965d69a371dc1088c1d39337",
+      "experiments/run_rt_sys.py": "0cdceb2a56e9d4fc8bc9d19f98178c152deb71fb0408798312fb6cacfd59f44b"
+    }
+  },
+  "controls": {
+    "count": 480,
+    "transitions": [
+      81,
+      161,
+      241,
+      321,
+      361
+    ],
+    "rejected": 460,
+    "expired": 460
+  },
+  "regression": "178 passed, 2 warnings in 182.17s (0:03:02)",
+  "final_tests": "100 passed, 2 warnings in 101.06s (0:01:41)",
+  "final_cli_tests": "12 passed in 0.62s",
+  "interpretation": "Finite topology/seed/control validation; 2 ms is approximate. No universal xApp equivalence or long-run timing claim. MAC/HARQ/control clocks retained.",
+  "browser_checks": {
+    "passed": true,
+    "time_scale_units": [
+      "ms",
+      "s",
+      "min",
+      "h"
+    ],
+    "reports": [
+      {
+        "file": "/Users/kilobao/Desktop/oran-fast-system-400slot.html",
+        "passed": true,
+        "model": "fast",
+        "duration_s": 0.2,
+        "frames": 401,
+        "offline": true,
+        "external_requests": [],
+        "errors": [],
+        "layouts": [
+          320,
+          375,
+          414,
+          768,
+          1440
+        ]
+      },
+      {
+        "file": "/Users/kilobao/Desktop/oran-fast-system-per-slot-400slot.html",
+        "passed": true,
+        "model": "fast",
+        "duration_s": 0.2,
+        "frames": 401,
+        "offline": true,
+        "external_requests": [],
+        "errors": [],
+        "layouts": [
+          320,
+          375,
+          414,
+          768,
+          1440
+        ]
+      }
+    ]
+  }
+}

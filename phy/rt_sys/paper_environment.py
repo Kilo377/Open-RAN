@@ -19,6 +19,13 @@ class PaperEnvironment:
         self.sim=simulator;self.state=simulator.state;self.adapter=simulator.phy_adapter
         self.config=deepcopy(config);self.adapter.paper=self
         self.dt=float(simulator.config.slot_duration_ms);self.window=int(getattr(simulator.config,'measurement_throughput_granularity_slots',10))
+        self.copy_report=deepcopy
+        if self.adapter.config.get('fast_reports',False):
+            from phy.rt_sys.report_copy import copy_report
+            self.copy_report=copy_report
+        if self.adapter.config.get('reference_gain_update_ms') is not None:
+            from phy.rt_sys.paper_radio import ReferenceGainCache
+            self.gain_cache=ReferenceGainCache(self.adapter.config['reference_gain_update_ms'],self.dt)
         self.thresholds=config.get('cqi_thresholds_db',list(range(-7,22,2)))
         quantify_cqi(0,self.thresholds)
         self.events_enabled=bool(config.get('connection_events',True))
@@ -216,7 +223,7 @@ class PaperEnvironment:
             for cid,r in cells.items():
                 rng=random.Random(int(digest([self.adapter.seed,slot,uid,cid,'paper_reference_noise'])[:15],16))
                 noise=rng.gauss(0,float(getattr(self.sim.config,'measurement_sinr_noise_std_db',2)))
-                old=self.filtered.get((uid,cid));new=deepcopy(r)
+                old=self.filtered.get((uid,cid));new=self.copy_report(r)
                 for k in ('rsrp_dbm','reference_sinr_db'):
                     value=r[k]+noise;new[k]=value if old is None else old[k]+alpha*(value-old[k])
                 value=np.asarray(r['prb_sinr_db'])+noise
@@ -308,11 +315,11 @@ class PaperEnvironment:
         for c,p in powers.items():self.rf_energy[c]+=p*dt
         self.samples.append(dict(slot=slot,energy={c:p*dt for c,p in powers.items()},bits={c:b*8 for c,b in cell_bytes.items()}))
         self.published=self.build_reports()
-        self.delayed.append((slot,deepcopy(self.published)))
+        self.delayed.append((slot,self.copy_report(self.published)))
         self.adapter.trace['paper_interfaces']=dict(events=deepcopy(self.events),command_receipts=deepcopy(self.receipts),
             config_outcomes=deepcopy(self.state.control.actuation_outcomes),rf_energy_j=dict(self.rf_energy),
             runtime_config={cid:{k:deepcopy(getattr(r.cell,k)) for k in DEFAULTS} for cid,r in self.state.managed_cells.items()},
-            reports=deepcopy(self.published))
+            reports=self.copy_report(self.published))
 
     def build_reports(self):
         slot=self.state.slot_id;dt=self.dt/1000;reports={'ue':{},'cell':{}};window_start=self.samples[0]['slot'] if self.samples else slot
@@ -334,7 +341,11 @@ class PaperEnvironment:
             alloc=deepcopy(trace.get('resource_allocation',{}))
             group=int(self.state.managed_cells[c.serving_cell_id].cell.power_group_size_prbs)
             subbands=[list(range(i,min(i+group,len(r['prb_sinr_db'])))) for i in range(0,len(r['prb_sinr_db']),group)]
-            group_cqi=[quantify_cqi(10*math.log10(float(np.mean(10**(np.asarray(r['prb_sinr_db'])[indices]/10)))),self.thresholds) for indices in subbands]
+            if self.adapter.config.get('fast_reports',False):
+                linear=10**(np.asarray(r['prb_sinr_db'])/10)
+                means=np.asarray([linear[indices].mean() for indices in subbands]) if group!=1 else linear
+                group_cqi=np.searchsorted(self.thresholds,10*np.log10(means),side='right').tolist()
+            else:group_cqi=[quantify_cqi(10*math.log10(float(np.mean(10**(np.asarray(r['prb_sinr_db'])[indices]/10)))),self.thresholds) for indices in subbands]
             reports['ue'][uid]=dict(subband_prb_groups=subbands,reference_sinr_db=r['reference_sinr_db'],rsrp_dbm=r['rsrp_dbm'],association=dict(cell_id=c.serving_cell_id,connection_state=c.connection_state),
                 resource_allocation=alloc,wideband_cqi=quantify_cqi(r['reference_sinr_db'],self.thresholds) if not r['no_path'] else None,
                 subband_cqi=group_cqi if not r['no_path'] else None,
@@ -361,6 +372,6 @@ class PaperEnvironment:
         if not candidates:
             observation.paper_report=None;return
         produced,report=candidates[-1]
-        observation.paper_report=dict(values=deepcopy(report),produced_at_slot=produced,window_slots=min(self.window,produced),
+        observation.paper_report=dict(values=self.copy_report(report),produced_at_slot=produced,window_slots=min(self.window,produced),
             source='RT_reference_quantization_and_executed_MAC_RF_event_counters',reference_window_slots=max(1,math.ceil(float(self.adapter.config.get('mobility',{}).get('measurement_filter_ms',20))/self.dt)),cqi_thresholds_db=list(self.thresholds),
             connection_model=deepcopy(self.model),connection_model_enabled=self.events_enabled,rf_energy_scope='emitted modeled data/pilots only; reference transmission is a measurement hypothesis')

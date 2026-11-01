@@ -60,7 +60,8 @@ def parse_args():
     p.add_argument('--ue-speed-mps',type=float)
     model=p.add_mutually_exclusive_group()
     model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: SYS sampling with explicit NR fallback (default full)')
-    p.add_argument('--fast-profile',choices=['efficient','reference'],help='fast only: efficient (default) or previous full-grid reference')
+    p.add_argument('--fast-profile',choices=['efficient','reference','system'],help='fast only: system (default, 2 ms gains), per-slot efficient, or full-grid reference')
+    p.add_argument('--fast-gain-update-ms',type=float,help='System profile only: override both spatial/reference gain update intervals')
     model.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
@@ -125,10 +126,23 @@ def run_case(args):
     configs['phy']['rt_sys']['model']=selected_model
     from phy.rt_sys.fast_profile import configure_fast_profile
     fast_profile=configure_fast_profile(configs['phy']['rt_sys'],getattr(args,'fast_profile',None))
+    gain_update=getattr(args,'fast_gain_update_ms',None)
+    if gain_update is not None:
+        import math
+        slots=gain_update/manifest['slot_duration_ms']
+        if fast_profile!='system':raise ValueError('--fast-gain-update-ms requires --model fast --fast-profile system')
+        if not math.isfinite(slots) or slots<1 or not math.isclose(slots,round(slots),rel_tol=1e-12,abs_tol=1e-8):
+            raise ValueError('Fast gain interval must align with positive whole slots')
+        configs['phy']['rt_sys'].update(system_gain_update_ms=gain_update,reference_gain_update_ms=gain_update)
+    elif fast_profile=='system':
+        phy_config=configs['phy']['rt_sys']
+        if phy_config.get('system_gain_update_ms')==phy_config.get('reference_gain_update_ms'):
+            # Freeze resolved defaults in subsequent OFF/ON comparison specs.
+            args.fast_gain_update_ms=phy_config['system_gain_update_ms']
     args.fast_profile=fast_profile
-    execution_devices={'rt':rt_device,'phy_sys':'cpu' if fast_profile=='efficient' else args.device,
+    execution_devices={'rt':rt_device,'phy_sys':'cpu' if fast_profile in ('efficient','system') else args.device,
         'nr_fallback':args.device if selected_model=='fast' else None,
-        'linear_algebra':'cpu' if fast_profile=='efficient' else ('cuda' if algebra_backend=='cupy' else args.device),
+        'linear_algebra':'cpu' if fast_profile in ('efficient','system') else ('cuda' if algebra_backend=='cupy' else args.device),
         'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
     args.model=selected_model if not getattr(args,'feedback_mode',None) else None
     if selected_model=='fast' and getattr(args,'harq_combining','none')!='none':raise ValueError('fast does not support waveform soft combining; select full')
@@ -249,6 +263,9 @@ def run_case(args):
         registry.active_intent_manager=ActiveIntentManager(initial_intent_text=intent)
         runtime=build_runtime_scenario_config(scenario_name=name,scenario_type='rt_scene',sim_config=configs['sim'],cell_config=configs['cell'],ric_config=configs['ric'])
         simulator=Simulator(runtime,registry,build_scheduler(configs['sim']),adapter,configs['cell'],configs['ue'],configs['beamforming'],str(output))
+        if recording=='experiment' and configs['phy']['rt_sys'].get('compact_snapshots',False):
+            simulator.state.snapshot_interval_slots=window_slots
+            simulator.state.snapshot_final_slot=args.slots
         if live_test_enabled:
             from experiments.live_xapp_test import LiveXAppSession
             args._live_slot_ms=manifest['slot_duration_ms']
@@ -384,6 +401,10 @@ def run_case(args):
             'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'),
             'cache_hits':provider.hits,'cache_misses':provider.misses}
         if hasattr(adapter.abstraction,'model_statistics'):summary['model_statistics']=adapter.abstraction.model_statistics()
+        if hasattr(adapter,'system_gains'):summary['model_statistics']['system_gain_statistics']=dict(adapter.system_gains.stats)
+        gain_cache=getattr(getattr(simulator.state,'paper',None),'gain_cache',None)
+        if gain_cache is not None:
+            summary['model_statistics']['reference_gain_statistics']=dict(builds=gain_cache.builds,hits=gain_cache.hits,update_slots=gain_cache.slots)
         simulator.result_writer.write_slot_metrics(simulator.slot_records)
         simulator.result_writer.write_final_summary(summary)
         simulator.result_writer.write_orchestration_epoch_history(simulator.controller_manager.get_orchestration_epoch_history())

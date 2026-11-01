@@ -1,5 +1,8 @@
 # Efficient fast profile — 2026-11-01
 
+Historical efficient-profile acceptance. The current fast default is described
+in [system profile acceptance](FAST_SYSTEM_ACCEPTANCE.md).
+
 `--model fast` now selects `efficient`. The previous fast computation remains
 available with `--model fast --fast-profile reference`. `full` remains the default
 model and retains its existing actual NR execution. JSON configuration uses

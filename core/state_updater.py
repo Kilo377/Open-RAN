@@ -2752,6 +2752,9 @@ class StateUpdater:
         OUTPUT
         None.
         """
+        # Diagnostic retention is independent of per-slot E2 observations.
+        interval=getattr(state,'snapshot_interval_slots',1)
+        if interval>1 and state.slot_id%interval and state.slot_id!=getattr(state,'snapshot_final_slot',None):return
         if not hasattr(state, "snapshots") or getattr(state, "snapshots") is None:
             state.snapshots = []
 

@@ -49,7 +49,7 @@ def test_sampling_preserves_mu_resource_counts_dmrs_budget_and_rf_power():
 
 def test_profile_resolution_and_full_isolation():
     c=dict(feedback_mode='fast',device='cuda',algebra_backend='cupy')
-    assert configure_fast_profile(c)=='efficient'
+    assert configure_fast_profile(c)=='system'
     assert c['algebra_device']=='cpu' and c['spatial_samples_per_prb']==4
     assert configure_fast_profile(c,'reference')=='reference'
     assert c['algebra_device']=='cupy' and c['spatial_samples_per_prb'] is None
@@ -114,7 +114,7 @@ def test_batched_cpu_sys_matches_reference_with_aliases_and_unequal_lengths(devi
             assert a[0]==pytest.approx(b[0],abs=1e-5)
             assert a[1]==pytest.approx(b[1],rel=1e-5,abs=1e-6)
     assert old.alias_counts==new.alias_counts
-    assert new.profile=='efficient' and new.feedback_device=='cpu'
+    assert new.profile=='system' and new.feedback_device=='cpu'
 
 
 def test_batched_feedback_preserves_scalar_harq_events_and_counters():

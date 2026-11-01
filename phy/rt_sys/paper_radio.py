@@ -41,6 +41,44 @@ def quantify_cqi(sinr_db, thresholds=None):
     return int(np.searchsorted(bins,sinr_db,side='right'))
 
 
+def probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id):
+    h=snapshot.cfr[ui,ci];offset=(h.shape[-1]-nprb*12)//2;h=h[...,offset:offset+nprb*12]
+    probes=[]
+    for beam in range(int(snapshot.metadata.get('tx_cols',h.shape[1])) if getattr(cell,'ret_enabled',False) else h.shape[1]):
+        b=basis(snapshot,cell,beam,True);v=b[:,beam%b.shape[1]]
+        signal=np.einsum('rtsf,t->rsf',h,v)
+        gain=np.mean(np.sum(abs(signal)**2,axis=0),axis=0).reshape(nprb,12).mean(axis=1)
+        probes.append(gain)
+    best=int(np.argmax([g.mean() for g in probes]));gain=probes[best];alternatives=[]
+    if beam_reports:
+        for cb in (0,1,2):
+            for profile in (0,1):
+                b=beam_subspace(h.shape[1],cb,profile,beam_id)
+                field=np.einsum('rtsf,tk->rksf',h,b)
+                g=np.mean(np.sum(abs(field)**2,axis=(0,1))/b.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
+                alternatives.append((cb,profile,g))
+    return gain,best,alternatives
+
+
+class ReferenceGainCache:
+    def __init__(self,update_ms,slot_ms):
+        slots=update_ms/slot_ms
+        if not np.isfinite(slots) or slots<1 or not np.isclose(slots,round(slots)):
+            raise ValueError('Reference gain interval must align to whole slots')
+        self.slots=int(round(slots));self.epoch=None;self.cache={};self.hits=0;self.builds=0
+    def get(self,snapshot,state,ui,ci,cell,nprb,beam_reports):
+        epoch=(snapshot.cache_key,snapshot.slot_id//self.slots,snapshot.metadata.get('geometry_block_slot'))
+        if epoch!=self.epoch:self.cache.clear();self.epoch=epoch
+        beam_id=state.connections[snapshot.ue_ids[ui]].serving_beam_id
+        key=(ui,ci,nprb,cell.current_codebook_id,cell.current_beam_profile_id,
+            getattr(cell,'ret_enabled',False),getattr(cell,'ret_tilt_deg',0),getattr(cell,'ret_codebook_id',0),
+            snapshot.metadata.get('tx_rows'),snapshot.metadata.get('tx_cols'),beam_reports,beam_id if beam_reports else 0)
+        if key not in self.cache:
+            self.cache[key]=probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id);self.builds+=1
+        else:self.hits+=1
+        return self.cache[key]
+
+
 def references(snapshot,state,noise_figure_db=7):
     """Common UE/candidate, wideband/subband reference-transmission hypothesis.
 
@@ -53,29 +91,15 @@ def references(snapshot,state,noise_figure_db=7):
         powers={};beams={};alternatives={}
         for ci,cid in enumerate(snapshot.cell_ids):
             runtime=state.managed_cells[cid];cell=runtime.cell;nprb=runtime.resource_grid.n_prbs_total
-            h=snapshot.cfr[ui,ci];offset=(h.shape[-1]-nprb*12)//2;h=h[...,offset:offset+nprb*12]
-            probes=[]
-            # Every probe uses the same RET constraint. No CFR reaches controllers.
-            for beam in range(int(snapshot.metadata.get('tx_cols',h.shape[1])) if getattr(cell,'ret_enabled',False) else h.shape[1]):
-                b=basis(snapshot,cell,beam,True);v=b[:,beam%b.shape[1]]
-                signal=np.einsum('rtsf,t->rsf',h,v)
-                gain=np.mean(np.sum(abs(signal)**2,axis=0),axis=0).reshape(nprb,12).mean(axis=1)
-                probes.append(gain)
-            best=int(np.argmax([g.mean() for g in probes]));gain=probes[best]
+            beam_reports=state.paper.config.get('beam_reports',False)
+            cache=getattr(state.paper,'gain_cache',None)
+            gain,best,alternative=(cache.get(snapshot,state,ui,ci,cell,nprb,beam_reports) if cache is not None else
+                probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,state.connections[uid].serving_beam_id))
             p=prb_powers(cell,nprb)*gain/12
             if cell.cell_sleep_mode=='deep_sleep':p=np.zeros(nprb)
             powers[cid]=p;beams[cid]=best
-            if state.paper.config.get('beam_reports',False):
-                alternatives[cid]=[]
-                # Reference hypotheses use current UE beam identity and legal DFT subspaces.
-                from phy.rt_sys.numerics import beam_subspace
-                beam_id=state.connections[uid].serving_beam_id
-                for cb in (0,1,2):
-                    for profile in (0,1):
-                        b=beam_subspace(h.shape[1],cb,profile,beam_id)
-                        field=np.einsum('rtsf,tk->rksf',h,b)
-                        g=np.mean(np.sum(abs(field)**2,axis=(0,1))/b.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
-                        alternatives[cid].append((cb,profile,prb_powers(cell,nprb)*g/12))
+            if beam_reports:
+                alternatives[cid]=[(cb,profile,prb_powers(cell,nprb)*g/12) for cb,profile,g in alternative]
         result[uid]={}
         for cid,p in powers.items():
             inter=sum((v for c,v in powers.items() if c!=cid),np.zeros_like(p));ratio=p/(inter+noise)

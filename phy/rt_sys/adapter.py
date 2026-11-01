@@ -26,7 +26,7 @@ class RtSysPhyAdapter:
         self.algebra_backend=self.config.get('algebra_backend','torch')
         if self.algebra_backend not in ('torch','cupy'):raise ValueError('Unknown algebra backend')
         math_device=self.config.get('algebra_device','cupy' if self.algebra_backend=='cupy' else self.device)
-        if self.fast_profile=='efficient' and abstraction is not None and self.device=='numpy':math_device='numpy'
+        if self.fast_profile in ('efficient','system') and abstraction is not None and self.device=='numpy':math_device='numpy'
         self.math = Algebra(math_device)
         mode=self.config.get('feedback_mode','sys_abstraction')
         if mode not in ('sys_abstraction','nr_direct','fast','nr_tb_reference','nr_cached_reference','nr_bler_bank'):raise ValueError('Unknown RT/SYS feedback mode')
@@ -201,108 +201,116 @@ class RtSysPhyAdapter:
         # Exact stream grouping; efficient fast samples only channel algebra.
         def at(e,s,f):return e['power'][s,f] if isinstance(e['power'],np.ndarray) else e['power']
         from phy.rt_sys.efficiency import resource_patterns
-        patterns=resource_patterns(entries,ns,nf)
-        for pattern,coordinates in patterns.items():
-            full_symbols,full_frequencies=map(list,zip(*coordinates))
-            if self.fast_profile=='efficient':
-                from phy.rt_sys.sampling import sample_coordinates
-                offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
-                coordinates,inverse=sample_coordinates(coordinates,4,offset)
-            else:inverse=np.arange(len(coordinates))
-            symbols,frequencies=map(list,zip(*coordinates))
-            tx = []
-            for ci in sorted({entries[i]['ci'] for i in pattern}):
-                group = [entries[i] for i in pattern if entries[i]['ci']==ci]
-                if len(group)>1:
+        if self.config.get('system_phy_enabled',False):
+            if self.config.get('csi_error_nmse_db') is not None:
+                raise ValueError('System gain profile currently requires ideal CSI')
+            if not hasattr(self,'system_gains'):
+                from phy.rt_sys.system_gain import SystemGainEngine
+                self.system_gains=SystemGainEngine(self.config.get('system_gain_update_ms',2.),radio[0].slot_duration_ms if radio else self.config.get('slot_duration_ms',.5))
+            precoder_trace=self.system_gains.fill(entries,snapshot,radio,paper,noise,self.config.get('rzf_relative_regularization',.01))
+        else:
+            patterns=resource_patterns(entries,ns,nf)
+            for pattern,coordinates in patterns.items():
+                full_symbols,full_frequencies=map(list,zip(*coordinates))
+                if self.fast_profile in ('efficient','system'):
+                    from phy.rt_sys.sampling import sample_coordinates
+                    offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
+                    coordinates,inverse=sample_coordinates(coordinates,4,offset)
+                else:inverse=np.arange(len(coordinates))
+                symbols,frequencies=map(list,zip(*coordinates))
+                tx = []
+                for ci in sorted({entries[i]['ci'] for i in pattern}):
+                    group = [entries[i] for i in pattern if entries[i]['ci']==ci]
+                    if len(group)>1:
+                        for member in group:
+                            member['mu_mask'][full_symbols,full_frequencies]=True
+                    stream_rows = []
+                    owners = []
+                    dft=beam_subspace(nt,0,0,0)
+                    directions=set()
                     for member in group:
-                        member['mu_mask'][full_symbols,full_frequencies]=True
-                stream_rows = []
-                owners = []
-                dft=beam_subspace(nt,0,0,0)
-                directions=set()
-                for member in group:
-                    sub=beam_subspace(nt,member['p'].current_codebook_id,
-                        member['p'].current_beam_profile_id,int(member['ue'].serving_beam_id))
-                    directions.update(np.argmax(abs(dft.conj().T @ sub),axis=0).tolist())
-                basis=dft[:,sorted(directions)]
-                if paper and getattr(paper.state.managed_cells[snapshot.cell_ids[ci]].cell,'ret_enabled',False):
-                    from phy.rt_sys.paper_radio import basis as paper_basis
-                    basis=paper_basis(snapshot,paper.state.managed_cells[snapshot.cell_ids[ci]].cell,group[0]['ue'].serving_beam_id)
-                for e in group:
-                    hu = estimated[e['ui'],ci][:,:,symbols,frequencies].moveaxis(-1,0) if a.torch else np.moveaxis(estimated[e['ui'],ci][:,:,symbols,frequencies],-1,0)
-                    u,_,_ = a.svd(hu)
-                    effective = a.adj(u)[..., :e['layers'], :] @ hu
-                    stream_rows.append(effective)
-                    owners.extend((e,k) for k in range(e['layers']))
-                if len(owners) > basis.shape[-1]:
-                    raise ValueError('Scheduled MU layers exceed physical beam subspace')
-                rows = a.cat(stream_rows, -2)
-                # Relative ridge keeps physical scale and works at small RT gains.
-                row_power=a.numpy(a.sum(abs(rows)**2,-1))
-                symbol_indices={symbol:np.flatnonzero(np.asarray(symbols)==symbol) for symbol in set(symbols)}
-                scales={symbol:max(float(row_power[indices].mean()),1e-30) for symbol,indices in symbol_indices.items()}
-                alpha=a.array(np.asarray([scales[s] for s in symbols])[:,None,None])*self.config.get('rzf_relative_regularization',.01)
-                weights = a.rzf(rows,a.array(basis),alpha)
-                representative_indices=[indices[0] for symbol,indices in sorted(symbol_indices.items())]
-                samples=a.numpy(weights[representative_indices] if packed_diagnostics else weights)
-                correlations=None
-                if len({e['ue'].ue_id for e,k in owners})==2 and len(owners)==2:
-                    projected=a.numpy(rows)@basis
-                    numerator=abs(np.sum(projected[:,0].conj()*projected[:,1],axis=-1))**2
-                    denominator=np.sum(abs(projected[:,0])**2,axis=-1)*np.sum(abs(projected[:,1])**2,axis=-1)
-                    correlations=np.clip(numerator/np.maximum(denominator,1e-60),0,1)
-                for representative,(symbol,indices) in enumerate(sorted(symbol_indices.items())):
-                    sample=samples[representative if packed_diagnostics else indices[0]]
-                    precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
-                        'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
-                        'beam_subspace_dimension':basis.shape[-1],
-                        'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':float(at(e,symbol,frequencies[indices[0]]))} for e,k in owners],
-                        'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist(),
-                        'mean_pair_channel_correlation':float(correlations[indices].mean()) if correlations is not None else None})
-                norms=a.numpy(a.sum(abs(weights)**2,-2)).mean(axis=0) if packed_diagnostics else None
-                for j,(e,k) in enumerate(owners):
-                    w = weights[...,j:j+1]*(a.array(np.sqrt(e['power'][symbols,frequencies]))[:,None,None] if isinstance(e['power'],np.ndarray) else math.sqrt(e['power']))
-                    e['precoder_norms'].append(float(norms[j]) if packed_diagnostics else float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
-                    tx.append((e,k,w))
-            for e,k,w in tx:
-                received = []
-                desired = None
-                estimated_desired=None;estimated_received=[]
-                inter_power = np.zeros(len(frequencies))
-                intra_power = np.zeros(len(frequencies))
-                inter_parts=[];intra_parts=[]
-                for other,ok,ow in tx:
-                    hu = h[e['ui'],other['ci']][:,:,symbols,frequencies]
-                    hu = hu.moveaxis(-1,0) if a.torch else np.moveaxis(hu,-1,0)
-                    signal = hu @ ow
-                    if compute_estimated:
-                        eh=estimated[e['ui'],other['ci']][:,:,symbols,frequencies]
-                        eh=eh.moveaxis(-1,0) if a.torch else np.moveaxis(eh,-1,0)
-                        esignal=eh@ow
-                    if other is e and ok == k:
-                        desired = signal
-                        if compute_estimated:estimated_desired=esignal
-                    else:
-                        received.append(signal)
-                        if compute_estimated:estimated_received.append(esignal)
-                        if other['ci'] != e['ci']:
-                            power_part=a.sum(abs(signal)**2,(-2,-1))
-                            if packed_diagnostics:inter_parts.append(power_part)
-                            else:inter_power += a.numpy(power_part)
-                        elif other is not e:
-                            power_part=a.sum(abs(signal)**2,(-2,-1))
-                            if packed_diagnostics:intra_parts.append(power_part)
-                            else:intra_power += a.numpy(power_part)
-                if packed_diagnostics:
-                    from phy.rt_sys.efficiency import diagnostic_power_sums
-                    inter_power,intra_power=diagnostic_power_sums(a,inter_parts,intra_parts,len(frequencies))
-                others = a.cat(received) if received else a.array(np.zeros((len(frequencies),nr,0)))
-                eothers=(a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))) if compute_estimated else None
-                values = a.numpy(a.lmmse(desired,others,noise,estimated_desired,eothers)
-                    if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
-                e['sinr'][full_symbols,full_frequencies,k] = values[inverse]
-                e['inter'].extend(inter_power[inverse].tolist())
-                e['intra'].extend(intra_power[inverse].tolist())
+                        sub=beam_subspace(nt,member['p'].current_codebook_id,
+                            member['p'].current_beam_profile_id,int(member['ue'].serving_beam_id))
+                        directions.update(np.argmax(abs(dft.conj().T @ sub),axis=0).tolist())
+                    basis=dft[:,sorted(directions)]
+                    if paper and getattr(paper.state.managed_cells[snapshot.cell_ids[ci]].cell,'ret_enabled',False):
+                        from phy.rt_sys.paper_radio import basis as paper_basis
+                        basis=paper_basis(snapshot,paper.state.managed_cells[snapshot.cell_ids[ci]].cell,group[0]['ue'].serving_beam_id)
+                    for e in group:
+                        hu = estimated[e['ui'],ci][:,:,symbols,frequencies].moveaxis(-1,0) if a.torch else np.moveaxis(estimated[e['ui'],ci][:,:,symbols,frequencies],-1,0)
+                        u,_,_ = a.svd(hu)
+                        effective = a.adj(u)[..., :e['layers'], :] @ hu
+                        stream_rows.append(effective)
+                        owners.extend((e,k) for k in range(e['layers']))
+                    if len(owners) > basis.shape[-1]:
+                        raise ValueError('Scheduled MU layers exceed physical beam subspace')
+                    rows = a.cat(stream_rows, -2)
+                    # Relative ridge keeps physical scale and works at small RT gains.
+                    row_power=a.numpy(a.sum(abs(rows)**2,-1))
+                    symbol_indices={symbol:np.flatnonzero(np.asarray(symbols)==symbol) for symbol in set(symbols)}
+                    scales={symbol:max(float(row_power[indices].mean()),1e-30) for symbol,indices in symbol_indices.items()}
+                    alpha=a.array(np.asarray([scales[s] for s in symbols])[:,None,None])*self.config.get('rzf_relative_regularization',.01)
+                    weights = a.rzf(rows,a.array(basis),alpha)
+                    representative_indices=[indices[0] for symbol,indices in sorted(symbol_indices.items())]
+                    samples=a.numpy(weights[representative_indices] if packed_diagnostics else weights)
+                    correlations=None
+                    if len({e['ue'].ue_id for e,k in owners})==2 and len(owners)==2:
+                        projected=a.numpy(rows)@basis
+                        numerator=abs(np.sum(projected[:,0].conj()*projected[:,1],axis=-1))**2
+                        denominator=np.sum(abs(projected[:,0])**2,axis=-1)*np.sum(abs(projected[:,1])**2,axis=-1)
+                        correlations=np.clip(numerator/np.maximum(denominator,1e-60),0,1)
+                    for representative,(symbol,indices) in enumerate(sorted(symbol_indices.items())):
+                        sample=samples[representative if packed_diagnostics else indices[0]]
+                        precoder_trace.append({'cell_id':snapshot.cell_ids[ci], 'symbol':symbol,
+                            'representative_subcarrier':frequencies[indices[0]],'subcarrier_count':len(indices),
+                            'beam_subspace_dimension':basis.shape[-1],
+                            'streams':[{'ue_id':e['ue'].ue_id,'layer':k,'power_per_re_w':float(at(e,symbol,frequencies[indices[0]]))} for e,k in owners],
+                            'weights_real':sample.real.tolist(),'weights_imag':sample.imag.tolist(),
+                            'mean_pair_channel_correlation':float(correlations[indices].mean()) if correlations is not None else None})
+                    norms=a.numpy(a.sum(abs(weights)**2,-2)).mean(axis=0) if packed_diagnostics else None
+                    for j,(e,k) in enumerate(owners):
+                        w = weights[...,j:j+1]*(a.array(np.sqrt(e['power'][symbols,frequencies]))[:,None,None] if isinstance(e['power'],np.ndarray) else math.sqrt(e['power']))
+                        e['precoder_norms'].append(float(norms[j]) if packed_diagnostics else float(a.numpy(a.sum(abs(weights[...,j:j+1])**2,-2)).mean()))
+                        tx.append((e,k,w))
+                for e,k,w in tx:
+                    received = []
+                    desired = None
+                    estimated_desired=None;estimated_received=[]
+                    inter_power = np.zeros(len(frequencies))
+                    intra_power = np.zeros(len(frequencies))
+                    inter_parts=[];intra_parts=[]
+                    for other,ok,ow in tx:
+                        hu = h[e['ui'],other['ci']][:,:,symbols,frequencies]
+                        hu = hu.moveaxis(-1,0) if a.torch else np.moveaxis(hu,-1,0)
+                        signal = hu @ ow
+                        if compute_estimated:
+                            eh=estimated[e['ui'],other['ci']][:,:,symbols,frequencies]
+                            eh=eh.moveaxis(-1,0) if a.torch else np.moveaxis(eh,-1,0)
+                            esignal=eh@ow
+                        if other is e and ok == k:
+                            desired = signal
+                            if compute_estimated:estimated_desired=esignal
+                        else:
+                            received.append(signal)
+                            if compute_estimated:estimated_received.append(esignal)
+                            if other['ci'] != e['ci']:
+                                power_part=a.sum(abs(signal)**2,(-2,-1))
+                                if packed_diagnostics:inter_parts.append(power_part)
+                                else:inter_power += a.numpy(power_part)
+                            elif other is not e:
+                                power_part=a.sum(abs(signal)**2,(-2,-1))
+                                if packed_diagnostics:intra_parts.append(power_part)
+                                else:intra_power += a.numpy(power_part)
+                    if packed_diagnostics:
+                        from phy.rt_sys.efficiency import diagnostic_power_sums
+                        inter_power,intra_power=diagnostic_power_sums(a,inter_parts,intra_parts,len(frequencies))
+                    others = a.cat(received) if received else a.array(np.zeros((len(frequencies),nr,0)))
+                    eothers=(a.cat(estimated_received) if estimated_received else a.array(np.zeros((len(frequencies),nr,0)))) if compute_estimated else None
+                    values = a.numpy(a.lmmse(desired,others,noise,estimated_desired,eothers)
+                        if self.config.get('csi_error_nmse_db') is not None else a.lmmse(desired,others,noise))
+                    e['sinr'][full_symbols,full_frequencies,k] = values[inverse]
+                    e['inter'].extend(inter_power[inverse].tolist())
+                    e['intra'].extend(intra_power[inverse].tolist())
         batch_metrics={}
         if self.nr_execution in ('batched','parallel'):
             from phy.rt_sys.tx_contract import data_mask
@@ -449,6 +457,9 @@ class RtSysPhyAdapter:
                 sum(r.tb_size_bytes for r in outputs))
         self.trace = {'mcs_table_policy':'SYS default EESM tables 1/2; low-SE MAC requests use table 1', 'slot_id':snapshot.slot_id,'cache_key':snapshot.cache_key,'cells':cell_trace,'ues':trace_ues,'precoders':precoder_trace}
         self.trace.update(ideal_csi=self.config.get('csi_error_nmse_db') is None,harq_combining_mode=self.config.get('harq_combining','none'))
+        if hasattr(self,'system_gains'):
+            self.trace.update(system_gain_statistics=dict(self.system_gains.stats),system_gain_update_ms=self.config.get('system_gain_update_ms',2.),
+                system_gain_epoch=self.system_gains.epoch[1],channel_approximation='block_updated_spatial_fields_actual_stream_interference')
         if self.fast_profile:
             self.trace.update(fast_profile=self.fast_profile,
                 spatial_samples_per_prb=self.config['spatial_samples_per_prb'],

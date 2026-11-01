@@ -178,11 +178,15 @@ def configuration_rows(data,config):
         ('Control policy','Orchestrated' if config.get('control_mode')=='orchestrated' else 'Native baseline','xApps','Off' if not data['meta']['configured_xapps'] else 'Configured'),
         ('Max. reflection depth',m['ray_solver']['max_depth'],'Path update interval',label_ms(m['path_update_ms']))]
     if data['meta']['model']=='fast':
-        efficient=data['meta'].get('fast_profile')=='efficient'
+        efficient=data['meta'].get('fast_profile') in ('efficient','system')
         phy=r['phy']['rt_sys']
         algebra_device=phy.get('algebra_device','cuda' if phy.get('algebra_backend')=='cupy' else phy.get('device','N/A'))
+        time_sampling='Per symbol' if not efficient else ('1 / gain update / stream pattern' if phy.get('system_phy_enabled') else '1 / slot / stream pattern')
         rows.extend([('Fast profile',data['meta'].get('fast_profile','reference').capitalize(),'PHY frequency sampling','4 SC / PRB' if efficient else 'Per RE'),
-            ('PHY time sampling','1 / slot / stream pattern' if efficient else 'Per symbol','Linear algebra',algebra_device)])
+            ('PHY time sampling',time_sampling,'Linear algebra',algebra_device)])
+        if phy.get('system_phy_enabled') or phy.get('reference_gain_update_ms'):
+            rows.append(('Spatial gain update',label_ms(phy.get('system_gain_update_ms',data['meta']['slot_ms'])) if phy.get('system_phy_enabled') else 'Per slot',
+                'Reference gain update',label_ms(phy.get('reference_gain_update_ms') or data['meta']['slot_ms'])))
     return ''.join('<tr>'+''.join(f'<td'+((' class="value" id="xapps-state"' if row[i-1]=='xApps' else ' class="value"') if i%2 else '')+'>'+html.escape(str(value))+'</td>' for i,value in enumerate(row))+'</tr>' for row in rows)
 
 def export_replay(folder,output=None,*,provider=None,max_frames=500,window_ms=None,mesh_path=None):
