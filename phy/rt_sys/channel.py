@@ -66,7 +66,7 @@ def geometry_blocks(manifest):
         speed=max((float(np.linalg.norm(np.diff(u['trajectory']['positions_m'],axis=0)/np.diff(u['trajectory']['times_s'])[:,None],axis=1).max()) for u in manifest['ues']),default=0)
         if speed*dt>cap*(1+1e-9):
             raise ValueError('Per-slot UE displacement exceeds geometry cap; shorten slot or increase explicit cap')
-        if speed>0:update=min(update,max(1,int(np.floor(cap/(speed*dt)))))
+        if speed>0:update=min(update,max(1,int(np.floor(cap/(speed*dt)+1e-9))))
     if all(np.all(np.diff(np.asarray(u['trajectory']['positions_m']),axis=0)==0) for u in manifest['ues']):
         return [0],int(manifest['total_slots'])+1  # Exact static geometry, no moving objects modeled.
     blocks=set(range(0,int(manifest['total_slots'])+1,update))
@@ -76,7 +76,7 @@ def geometry_blocks(manifest):
 
 
 class RtChannelProvider:
-    def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3,reconstruction_backend='numpy',retain_device_cfr=False,prefetch=False):
+    def __init__(self, manifest, cache_root, *, device='cuda', backend=None,quota_bytes=5*1024**3,reconstruction_backend='numpy',retain_device_cfr=False,prefetch=False,channel_mode='dense',prefetch_workers=1):
         self.manifest = json.loads(json.dumps(manifest))
         self.device = device
         if reconstruction_backend not in ('numpy','cupy'):raise ValueError('Unknown channel array backend')
@@ -89,6 +89,10 @@ class RtChannelProvider:
         # Explicitly injected dense fixtures remain fixtures; production does
         # not fall back when its requested compact RT interface is missing.
         if backend is not None and not hasattr(backend,'generate_paths'):self.compact=False
+        if channel_mode not in ('dense','sampled'):raise ValueError('Unknown channel reconstruction mode')
+        if channel_mode=='sampled' and (not self.compact or retain_device_cfr):
+            raise ValueError('Sampled channel requires compact paths and host-only reconstruction')
+        self.channel_mode=channel_mode;self.sampling_statistics={};self.path_lock_wait_s=0.
         # Backend fingerprint includes actual material properties and scene meshes.
         self.key = digest({'schema':2 if self.compact else 1,'manifest':manifest,'backend':self.backend.fingerprint()})
         self.root = Path(cache_root)/self.key
@@ -110,14 +114,16 @@ class RtChannelProvider:
         if prefetch and len(self.blocks)>1:
             if backend is not None:raise ValueError('RT prefetch requires a production ray tracer')
             from phy.rt_sys.prefetch import PathPrefetch
-            self.prefetch=PathPrefetch(self)
+            self.prefetch=PathPrefetch(self,prefetch_workers)
 
     def close(self):
         if self.prefetch is not None:self.prefetch.close()
 
     def prefetch_statistics(self):
-        path=self.root/'prefetch_status.json'
-        return json.loads(path.read_text()) if self.prefetch is not None and path.exists() else None
+        if self.prefetch is None:return None
+        status=self.prefetch.statistics()
+        return {**status,'foreground_generated_blocks':self.misses,'foreground_lock_wait_s':self.path_lock_wait_s,
+                'total_generated_blocks':status.get('generated_blocks',0)+self.misses}
 
     def snapshot(self, slot_id):
         if self.prefetch is not None:self.prefetch.check()
@@ -131,24 +137,29 @@ class RtChannelProvider:
                 arrays = dict(np.load(path,allow_pickle=False)); self.hits+=1
             else:
                 if self.compact:
-                    arrays=self.backend.generate_paths(block)
+                    from phy.rt_sys.cache_storage import ensure_paths
+                    arrays,created,waited=ensure_paths(self.root,block,self.backend,self.quota_bytes)
+                    self.misses+=int(created);self.hits+=int(not created);self.path_lock_wait_s+=waited
                 else:
                     first = chunk*self.chunk_slots
                     last = min(self.total+1,first+self.chunk_slots)
                     arrays = self.backend.generate(first,last,self.update_slots)
-                tmp = path.with_suffix(f'.{os.getpid()}.tmp')
-                with tmp.open('wb') as stream: np.savez_compressed(stream,**arrays)
-                if self.compact:
-                    from phy.rt_sys.cache_storage import publish
-                    publish(tmp,path,self.quota_bytes)
-                else:os.replace(tmp,path)
-                self.misses+=1
+                    tmp = path.with_suffix(f'.{os.getpid()}.tmp')
+                    with tmp.open('wb') as stream: np.savez_compressed(stream,**arrays)
+                    os.replace(tmp,path);self.misses+=1
             self.loaded_arrays, self.loaded_chunk = arrays, chunk
+            if self.channel_mode=='sampled':
+                from phy.rt_sys.sampled_channel import PathCoefficients
+                self.path_coefficients=PathCoefficients(arrays,self.manifest,self.sampling_statistics)
         i = slot_id-chunk*self.chunk_slots
         device_cfr=None
+        sampler=None
         if self.compact:
             static=len(self.blocks)==1 and np.all(self.loaded_arrays['doppler']==0)
-            if static and hasattr(self,'_static_cfr'):
+            if self.channel_mode=='sampled':
+                cfr=None;sampler=self.path_coefficients.snapshot((slot_id-block)*self.dt)
+                self.sampling_statistics['snapshots']=self.sampling_statistics.get('snapshots',0)+1
+            elif static and hasattr(self,'_static_cfr'):
                 cfr=self._static_cfr;device_cfr=getattr(self,'_static_device_cfr',None)
             else:
                 reconstructed=reconstruct_paths(self.loaded_arrays,self.manifest,(slot_id-block)*self.dt,self.reconstruction_backend,
@@ -169,7 +180,8 @@ class RtChannelProvider:
                 'static_geometry_exact_reuse':len(self.blocks)==1,
                 'ray_seed_policy':'fixed_per_trace',
                 'subcarrier_spacing_hz':self.manifest['subcarrier_spacing_hz'],
-                'cache_hits':self.hits,'cache_misses':self.misses,'reconstruction_backend':self.reconstruction_backend})
+                'cache_hits':self.hits,'cache_misses':self.misses,'reconstruction_backend':self.reconstruction_backend,
+                'channel_mode':self.channel_mode},path_sampler=sampler)
         snap.device_cfr=device_cfr
         snap.device_backend='cupy' if device_cfr is not None else None
         return snap.validate()

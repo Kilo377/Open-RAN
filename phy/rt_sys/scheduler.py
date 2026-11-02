@@ -236,16 +236,16 @@ class RtSysScheduler(SimpleScheduler):
             raise RuntimeError('RT MU scheduling requires a channel snapshot')
         if self._get_layer_count(state,left_ue)+self._get_layer_count(state,right_ue)>self._get_max_total_spatial_layers(state):
             return 0.
-        nt=snapshot.cfr.shape[3]
+        nt=snapshot.grid_shape[3]
         dft=beam_subspace(nt,0,0,0); directions=set(); vectors=[]; channels=[]
         for ue in (left_ue,right_ue):
             basis=beam_subspace(nt,state.cell.current_codebook_id,state.cell.current_beam_profile_id,ue.serving_beam_id)
             directions.update(np.argmax(abs(dft.conj().T@basis),axis=0).tolist())
-            h=snapshot.link(ue.ue_id,state.cell.cell_id)
             # Sample eight frequencies over the active band, not guard tones.
-            nsc=state.resource_grid.n_prbs_total*12; offset=(h.shape[-1]-nsc)//2
+            nsc=state.resource_grid.n_prbs_total*12; offset=(snapshot.grid_shape[-1]-nsc)//2
             indices=np.linspace(offset,offset+nsc-1,min(8,nsc),dtype=int)
-            h=h[:,:,0,indices].transpose(2,0,1)
+            h=snapshot.samples(snapshot.ue_ids.index(ue.ue_id),snapshot.cell_ids.index(state.cell.cell_id),
+                               np.zeros(len(indices),dtype=int),indices).transpose(2,0,1)
             channels.append(h)
         basis=dft[:,sorted(directions)]
         for h in channels:

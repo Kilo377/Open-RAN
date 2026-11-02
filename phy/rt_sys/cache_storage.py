@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import fcntl
 import os
+import time
 
 
 @contextmanager
@@ -26,3 +27,26 @@ def publish(tmp,path,quota_bytes):
                 raise RuntimeError('Compact channel cache quota exceeded; inspect cache inventory before cleanup')
             os.replace(tmp,path)
     finally:tmp.unlink(missing_ok=True)
+
+
+def ensure_paths(root,block,backend,quota_bytes,load=True):
+    """One producer per physical block, including foreground/prefetch races.
+
+    OS locks release on process failure. Publication remains atomic and quota
+    checked; waiting consumers recheck existence after acquiring ownership.
+    """
+    import numpy as np
+    root=Path(root);path=root/f'paths_{block:09d}.npz'
+    started=time.perf_counter()
+    with (root/f'.paths_{block:09d}.lock').open('a') as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX)
+        waited=time.perf_counter()-started
+        if path.exists():
+            return (dict(np.load(path,allow_pickle=False)) if load else None),False,waited
+        arrays=backend.generate_paths(block)
+        tmp=path.with_suffix(f'.{os.getpid()}.tmp')
+        try:
+            with tmp.open('wb') as stream:np.savez_compressed(stream,**arrays)
+            publish(tmp,path,quota_bytes)
+        finally:tmp.unlink(missing_ok=True)
+        return arrays if load else None,True,waited

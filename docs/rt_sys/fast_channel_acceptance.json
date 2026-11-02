@@ -1,0 +1,170 @@
+{
+  "date": "2026-11-02",
+  "base_commit": "a1b540388d5b9e39c3c921fbddfc665f55667848",
+  "validated_computational_source_sha256": "ecab8bcffeef4cbf194dbefc457a213da268be38e448abc8308cd4d34fcb7de2",
+  "recommended_preset": "agx_munich_6ue_depth2_fast_10ms.json",
+  "defaults_preserved": true,
+  "short_runs": [
+    {
+      "name": "baseline",
+      "cold_s": 44.01869880605955,
+      "warm_mean_s": 39.7840161845088,
+      "warm_loop_mean_s": 29.307227568002418
+    },
+    {
+      "name": "lock_only",
+      "cold_s": 49.53876855701674,
+      "warm_mean_s": 40.086399780993816,
+      "warm_loop_mean_s": 29.575679513567593
+    },
+    {
+      "name": "rt10_only",
+      "cold_s": 40.105557317030616,
+      "warm_mean_s": 39.18603320996044,
+      "warm_loop_mean_s": 28.685899433970917
+    },
+    {
+      "name": "sampled_only",
+      "cold_s": 43.548291919985786,
+      "warm_mean_s": 35.535271248896606,
+      "warm_loop_mean_s": 25.04983579099644
+    },
+    {
+      "name": "combined",
+      "cold_s": 35.42906978400424,
+      "warm_mean_s": 34.64279158448335,
+      "warm_loop_mean_s": 24.139975729980506
+    },
+    {
+      "name": "final_coordinates_exact_reference_power_10ms_two_workers",
+      "cold_s": 32.75495896395296,
+      "warm_mean_s": 31.73165567050455,
+      "warm_loop_mean_s": 21.221476799051743
+    }
+  ],
+  "long_comparison": {
+    "baseline_wall_s": 1731.2540853579994,
+    "candidate_wall_s": 1042.6564007510897,
+    "wall_reduction_pct": 39.77450164194225,
+    "speedup": 1.6604262766822036,
+    "baseline_goodput_mbps": 26.385495199999998,
+    "candidate_goodput_mbps": 26.3735952,
+    "goodput_delta_pct": -0.04510053690406357,
+    "per_ue": {
+      "ue_0": {
+        "goodput_delta_pct": 0.00948719459978875,
+        "p95_before_ms": 73.0,
+        "p95_after_ms": 71.5,
+        "misses_before": 2075,
+        "misses_after": 1880,
+        "overflow_before": 4615025,
+        "overflow_after": 4614200
+      },
+      "ue_1": {
+        "goodput_delta_pct": 0.0,
+        "p95_before_ms": 7.5,
+        "p95_after_ms": 7.5,
+        "misses_before": 118,
+        "misses_after": 114,
+        "overflow_before": 0,
+        "overflow_after": 0
+      },
+      "ue_2": {
+        "goodput_delta_pct": 0.0,
+        "p95_before_ms": 0.5,
+        "p95_after_ms": 0.5,
+        "misses_before": 0,
+        "misses_after": 0,
+        "overflow_before": 0,
+        "overflow_after": 0
+      },
+      "ue_4": {
+        "goodput_delta_pct": 0.0,
+        "p95_before_ms": 0.5,
+        "p95_after_ms": 0.5,
+        "misses_before": 0,
+        "misses_after": 0,
+        "overflow_before": 0,
+        "overflow_after": 0
+      },
+      "ue_6": {
+        "goodput_delta_pct": 0.0,
+        "p95_before_ms": 150.02499999999964,
+        "p95_after_ms": 145.5,
+        "misses_before": 1697,
+        "misses_after": 1674,
+        "overflow_before": 0,
+        "overflow_after": 0
+      },
+      "ue_8": {
+        "goodput_delta_pct": -0.16314444658385163,
+        "p95_before_ms": 266.5,
+        "p95_after_ms": 271.5,
+        "misses_before": 20256,
+        "misses_after": 20298,
+        "overflow_before": 105925,
+        "overflow_after": 121600
+      }
+    },
+    "link_before": {
+      "first_tx_attempts": 93181,
+      "first_tx_nacks": 5683,
+      "retx_attempts": 7337,
+      "retx_nacks": 2240,
+      "first_tx_bler": 0.06098882819458903,
+      "retx_error_rate": 0.3053018945072918,
+      "transmission_attempts": 100518,
+      "transmission_nacks": 7923,
+      "actual_decode_attempts": 1110,
+      "actual_nacks": 0,
+      "sampled_attempts": 99408
+    },
+    "link_after": {
+      "first_tx_attempts": 93232,
+      "first_tx_nacks": 5653,
+      "retx_attempts": 7312,
+      "retx_nacks": 2241,
+      "first_tx_bler": 0.06063368800411876,
+      "retx_error_rate": 0.30648249452954046,
+      "transmission_attempts": 100544,
+      "transmission_nacks": 7894,
+      "actual_decode_attempts": 1093,
+      "actual_nacks": 0,
+      "sampled_attempts": 99451
+    },
+    "energy_before": {
+      "cell_0": 10.00000000000073,
+      "cell_1": 10.00000000000073,
+      "cell_2": 10.00000000000073
+    },
+    "energy_after": {
+      "cell_0": 10.00000000000073,
+      "cell_1": 10.00000000000073,
+      "cell_2": 10.00000000000073
+    },
+    "accounting_passed": true,
+    "html_integrity_passed": true,
+    "configuration_comparable": true,
+    "wall_scope": "Same AGX, same scenario/seed/traffic/control, separate cold-cache runs including launcher and HTML; not a universal speed guarantee"
+  },
+  "regression": "94 passed before batching, 71 relevant integration/CLI/replay/physics checks passed for final batched code",
+  "prefetch": {
+    "requested_blocks": 1001,
+    "foreground_generated": 1,
+    "background_generated": 1000,
+    "workers": 2,
+    "duplicate_blocks": 0
+  },
+  "batching_caveat": "Secondary batch vectorization adds only ~0.6% versus analytic power aggregation in the short warm-cache benchmark; this is within observed variation and is not credited as a distinct speedup. Final batched version is retained because it is the exact version validated for 10 seconds.",
+  "limits": "One topology, three seeds at 400 slots, doubled-load control stress and one matched-seed 10s pair. 10ms geometry is approximate, so packet/tail equivalence is not claimed. Cold timings include startup/HTML; stages overlap and must not be summed.",
+  "named_preset_verification": {
+    "passed": true,
+    "manifest_exact": true,
+    "configs_exact": true,
+    "packet_metrics_exact": true,
+    "link_statistics_exact": true,
+    "source_sha256": "3075e1ab64af9162249ffd3eb6ccd98d97e2225ea45d08105c7ee9321e3e1147"
+  },
+  "completed_short_400_slot_runs": 55,
+  "offline_browser_passed": true
+}

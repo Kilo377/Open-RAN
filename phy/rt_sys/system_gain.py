@@ -50,7 +50,9 @@ class SystemGainEngine:
         key=(tuple(controls),s.tobytes(),f.tobytes())
         if key in self.fields:
             self.stats['field_hits']+=1;return key,self.fields[key]
-        h=snapshot.cfr;nt=h.shape[3];a=self.a;owners=[];weights=[]
+        nt=snapshot.grid_shape[3];a=self.a;owners=[];weights=[]
+        links=sorted({(entries[i]['ui'],entries[j]['ci']) for i in pattern for j in pattern})
+        h=snapshot.samples_for_links(links,s,f)
         for ci in sorted({entries[i]['ci'] for i in pattern}):
             group=[i for i in pattern if entries[i]['ci']==ci]
             directions=set();dft=beam_subspace(nt,0,0,0)
@@ -64,7 +66,7 @@ class SystemGainEngine:
                 basis=radio_basis(snapshot,paper.state.managed_cells[snapshot.cell_ids[ci]].cell,entries[group[0]]['ue'].serving_beam_id)
             rows=[];local=[]
             for i in group:
-                e=entries[i];hu=np.moveaxis(h[e['ui'],ci][:,:,s,f],-1,0).astype(np.complex128)
+                e=entries[i];hu=np.moveaxis(h[e['ui'],ci],-1,0).astype(np.complex128)
                 u,_,_=a.svd(hu);rows.append(a.adj(u)[...,:e['layers'],:]@hu)
                 local.extend((i,k) for k in range(e['layers']))
             if len(local)>basis.shape[-1]:raise ValueError('Scheduled MU layers exceed physical beam subspace')
@@ -74,12 +76,8 @@ class SystemGainEngine:
             w=a.rzf(rows,basis,alpha)
             owners.extend(local);weights.extend(w[...,j] for j in range(len(local)))
         # [sample, victim stream, transmitting stream, RX antenna]
-        fields=np.empty((len(s),len(owners),len(owners),h.shape[2]),dtype=np.complex128)
-        for j,(i,k) in enumerate(owners):
-            victim=entries[i]
-            for v,(other,layer) in enumerate(owners):
-                channel=np.moveaxis(h[victim['ui'],entries[other]['ci']][:,:,s,f],-1,0)
-                fields[:,j,v,:]=(channel@weights[v][...,None])[...,0]
+        channels=np.asarray([[h[entries[i]['ui'],entries[other]['ci']] for other,_ in owners] for i,_ in owners])
+        fields=np.einsum('jvrtn,nvt->njvr',channels,np.stack(weights,axis=1),optimize=True)
         value=(tuple((entries[i]['ue'].ue_id,k) for i,k in owners),fields,snapshot.slot_id)
         self.stats['field_builds']+=1
         return key,self.put(self.fields,key,value)
@@ -87,10 +85,10 @@ class SystemGainEngine:
     def fill(self,entries,snapshot,radio,paper,noise,regularization=.01):
         self.regularization=regularization
         epoch=(snapshot.cache_key,snapshot.slot_id//self.slots,snapshot.metadata.get('geometry_block_slot'),
-               snapshot.cfr.shape,regularization)
+               snapshot.grid_shape,regularization)
         if epoch!=self.epoch:
             self.fields.clear();self.combiners.clear();self.epoch=epoch;self.stats['epochs']+=1
-        ns,nf=snapshot.cfr.shape[-2:];offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
+        ns,nf=snapshot.grid_shape[-2:];offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
         for pattern,fulls,fullf,s,f,inverse in self.layout(entries,ns,nf,offset):
             for ci in {entries[i]['ci'] for i in pattern}:
                 group=[entries[i] for i in pattern if entries[i]['ci']==ci]

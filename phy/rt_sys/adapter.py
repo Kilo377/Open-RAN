@@ -60,7 +60,8 @@ class RtSysPhyAdapter:
             manifest=json.loads(Path(self.config['manifest_path']).read_text())
             self.channel_provider=RtChannelProvider(manifest,cache,device=self.config.get('rt_device',self.device),
                 reconstruction_backend=self.config.get('channel_array_backend','numpy'),
-                retain_device_cfr=self.config.get('retain_channel_on_gpu',False))
+                retain_device_cfr=self.config.get('retain_channel_on_gpu',False),
+                channel_mode=self.config.get('fast_channel_mode','dense'))
         self.seed = int(self.config.get('rng_seed', 1))
         self.trace = {}
         self.current_snapshot = None
@@ -87,6 +88,8 @@ class RtSysPhyAdapter:
         self.release_inactive_contexts(state)
         self.current_snapshot = self.channel_provider.snapshot(int(state.slot_id))
         self.current_snapshot.validate()
+        if self.current_snapshot.path_sampler is not None and self.config.get('csi_error_nmse_db') is not None:
+            raise ValueError('Sampled system channel currently requires ideal CSI')
         if getattr(self,'paper',None):
             self.current_snapshot.metadata.update(tx_rows=self.config['tx_rows'],tx_cols=self.config['tx_cols'])
         self.scheduler_snapshot=replace(self.current_snapshot,
@@ -125,8 +128,8 @@ class RtSysPhyAdapter:
         for name in ('carrier_frequency_hz','bandwidth_hz','subcarrier_spacing_hz','n_prbs_total','num_ofdm_symbols_per_slot','cyclic_prefix_type'):
             if len({getattr(r,name) for r in radio}) > 1:
                 raise ValueError(f'V1 requires common frequency/numerology: {name}')
-        ns, nf = snapshot.cfr.shape[-2:]
-        nr, nt = snapshot.cfr.shape[2:4]
+        ns, nf = snapshot.grid_shape[-2:]
+        nr, nt = snapshot.grid_shape[2:4]
         if radio and (radio[0].num_ofdm_symbols_per_slot != ns):
             raise ValueError('RT and grant symbol grids differ')
         paper=getattr(self,'paper',None)
@@ -136,7 +139,9 @@ class RtSysPhyAdapter:
             raise ValueError('RT and runtime carrier grids differ')
         a = self.math
         retained=getattr(snapshot,'device_cfr',None)
-        h = a.array(retained if self.config.get('retain_channel_on_gpu',False) and a.device=='cupy'
+        if snapshot.path_sampler is not None and not self.config.get('system_phy_enabled',False):
+            raise ValueError('On-demand channel sampling requires the fast system profile')
+        h = None if snapshot.path_sampler is not None else a.array(retained if self.config.get('retain_channel_on_gpu',False) and a.device=='cupy'
                     and getattr(snapshot,'device_backend',None)=='cupy' and retained is not None else snapshot.cfr)
         estimated=a.array(estimate_csi(snapshot,self.seed,self.config.get('csi_error_nmse_db'))) if self.config.get('csi_error_nmse_db') is not None else h
         estimated_receiver=self.config.get('csi_error_nmse_db') is not None

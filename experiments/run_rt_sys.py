@@ -29,6 +29,7 @@ def parse_args():
     duration.add_argument('--slots',type=int)
     duration.add_argument('--duration-s',type=float,help='Simulation duration, aligned to the configured slot duration')
     p.add_argument('--path-update-ms',type=float)
+    p.add_argument('--max-geometry-displacement-m',type=float,help='Explicit motion-distance cap for RT geometry blocks')
     p.add_argument('--platform',choices=['dgx','agx'],
         help='dgx: CUDA/OptiX; agx: LLVM CPU RT/NR + CuPy (CPU fallback). Efficient fast overrides small-matrix algebra to CPU.')
     p.add_argument('--device',choices=['cuda','cpu'],
@@ -62,6 +63,8 @@ def parse_args():
     model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: SYS sampling with explicit NR fallback (default full)')
     p.add_argument('--fast-profile',choices=['efficient','reference','system'],help='fast only: system (default, 2 ms gains), per-slot efficient, or full-grid reference')
     p.add_argument('--fast-gain-update-ms',type=float,help='System profile only: override both spatial/reference gain update intervals')
+    p.add_argument('--fast-channel-mode',choices=['dense','sampled'],help='System profile only: reconstruct full CFR or requested physical coordinates')
+    p.add_argument('--rt-prefetch-workers',type=int,choices=range(1,9),help='CPU path prefetch workers; blocks have exclusive generation ownership')
     model.add_argument('--feedback-mode',choices=['nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'])
     p.add_argument('--warmup-ms',type=float,default=0)
     p.add_argument('--csi-error-nmse-db',type=float)
@@ -95,6 +98,11 @@ def run_case(args):
         deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
         initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None),
         xapp_pool=getattr(args,'xapp_pool',None))
+    displacement=getattr(args,'max_geometry_displacement_m',None)
+    if displacement is not None:
+        import math
+        if not math.isfinite(displacement) or displacement<=0:raise ValueError('Geometry displacement cap must be positive and finite')
+        manifest['max_geometry_displacement_m']=displacement
     args.xapp_pool=configs['ric']['xapp_pool']
     phase=getattr(args,'phase','integration');mode=getattr(args,'selection_mode','reflective')
     warmup=getattr(args,'warmup_ms',0)
@@ -140,10 +148,18 @@ def run_case(args):
             # Freeze resolved defaults in subsequent OFF/ON comparison specs.
             args.fast_gain_update_ms=phy_config['system_gain_update_ms']
     args.fast_profile=fast_profile
+    channel_mode=getattr(args,'fast_channel_mode',None)
+    if channel_mode is not None:
+        if fast_profile!='system':raise ValueError('--fast-channel-mode requires --model fast --fast-profile system')
+        configs['phy']['rt_sys']['fast_channel_mode']=channel_mode
+    channel_mode=configs['phy']['rt_sys'].get('fast_channel_mode','dense')
+    if fast_profile=='system':args.fast_channel_mode=channel_mode
+    if getattr(args,'rt_prefetch_workers',None) is not None:
+        configs['phy']['rt_sys']['rt_prefetch_workers']=args.rt_prefetch_workers
     execution_devices={'rt':rt_device,'phy_sys':'cpu' if fast_profile in ('efficient','system') else args.device,
         'nr_fallback':args.device if selected_model=='fast' else None,
         'linear_algebra':'cpu' if fast_profile in ('efficient','system') else ('cuda' if algebra_backend=='cupy' else args.device),
-        'channel_reconstruction':'cuda' if algebra_backend=='cupy' else 'cpu'}
+        'channel_reconstruction':'cuda' if algebra_backend=='cupy' and channel_mode=='dense' else 'cpu'}
     args.model=selected_model if not getattr(args,'feedback_mode',None) else None
     if selected_model=='fast' and getattr(args,'harq_combining','none')!='none':raise ValueError('fast does not support waveform soft combining; select full')
     if control_mode == 'baseline':
@@ -159,6 +175,8 @@ def run_case(args):
         for rapp in configs['ric'].get('rapps',[]):
             if rapp['type']=='xapp_selection_rapp':rapp.update(persistent_memory_enabled=True,memory_store_path=str(model_path))
     configs['phy']['rt_sys'].update(csi_error_nmse_db=getattr(args,'csi_error_nmse_db',None),harq_combining=getattr(args,'harq_combining','none'))
+    if channel_mode=='sampled' and configs['phy']['rt_sys'].get('csi_error_nmse_db') is not None:
+        raise ValueError('Sampled system channel currently requires ideal CSI')
     recording=getattr(args,'recording_mode',None) or configs['phy']['rt_sys'].get('recording_mode','audit')
     execution=getattr(args,'nr_execution',None) or configs['phy']['rt_sys'].get('nr_execution','scalar')
     if selected_model=='fast' and execution=='parallel':
@@ -222,7 +240,8 @@ def run_case(args):
         provider=RtChannelProvider(manifest,cache_root,device=rt_device,
             reconstruction_backend=configs['phy']['rt_sys']['channel_array_backend'],
             retain_device_cfr=configs['phy']['rt_sys'].get('retain_channel_on_gpu',False),
-            prefetch=configs['phy']['rt_sys'].get('rt_prefetch',False))
+            prefetch=configs['phy']['rt_sys'].get('rt_prefetch',False),channel_mode=channel_mode,
+            prefetch_workers=configs['phy']['rt_sys'].get('rt_prefetch_workers',1))
         if live_path:
             from experiments.rt_live import LivePublisher
             live=LivePublisher(live_path.resolve(),manifest,provider,execution_devices,configs['phy']['rt_sys']['feedback_mode'],
@@ -421,7 +440,8 @@ def run_case(args):
         status.update(completed=True,stage='completed',runtime_environment=environment,
             spark_verified=args.device=='cuda' and rt_device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
-        performance=dict(**timings.report(),recording_mode=recording,nr_execution=execution,
+        performance=dict(**timings.report(),channel_mode=channel_mode,channel_sampling_statistics=provider.sampling_statistics,
+            recording_mode=recording,nr_execution=execution,
             torch_execution_threads=status.get('torch_execution_threads'),
             reference_cache_statistics=dict(getattr(getattr(simulator.state,'paper',None),'reference_cache_stats',{})),
             rt_prefetch_statistics=provider.prefetch_statistics(),

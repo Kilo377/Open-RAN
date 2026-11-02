@@ -5,6 +5,7 @@ from phy.rt_sys.contracts import keyed_uniform
 
 def estimate_csi(snapshot,seed,nmse_db):
     if nmse_db is None:return snapshot.cfr
+    if snapshot.path_sampler is not None:raise ValueError('Sampled system channel currently requires ideal CSI')
     if not np.isfinite(nmse_db):raise ValueError('Finite CSI NMSE required')
     estimated=snapshot.cfr.copy()
     for ui,uid in enumerate(snapshot.ue_ids):

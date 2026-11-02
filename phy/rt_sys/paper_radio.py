@@ -20,11 +20,11 @@ def ret_basis(rows, cols, tilt_deg, codebook=0, beam=0):
 
 
 def basis(snapshot, cell, beam=0, reference=False):
-    rows=int(snapshot.metadata.get('tx_rows',1));cols=int(snapshot.metadata.get('tx_cols',snapshot.cfr.shape[3]))
+    rows=int(snapshot.metadata.get('tx_rows',1));cols=int(snapshot.metadata.get('tx_cols',snapshot.grid_shape[3]))
     if getattr(cell,'ret_enabled',False):
-        if rows*cols!=snapshot.cfr.shape[3]:raise ValueError('RET array layout missing/mismatched')
+        if rows*cols!=snapshot.grid_shape[3]:raise ValueError('RET array layout missing/mismatched')
         return ret_basis(rows,cols,cell.ret_tilt_deg,cell.ret_codebook_id,beam)
-    return beam_subspace(snapshot.cfr.shape[3],cell.current_codebook_id,cell.current_beam_profile_id,beam)
+    return beam_subspace(snapshot.grid_shape[3],cell.current_codebook_id,cell.current_beam_profile_id,beam)
 
 
 def prb_powers(cell, nprb):
@@ -42,20 +42,24 @@ def quantify_cqi(sinr_db, thresholds=None):
 
 
 def probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id):
-    h=snapshot.cfr[ui,ci];offset=(h.shape[-1]-nprb*12)//2;h=h[...,offset:offset+nprb*12]
+    ns,nf=snapshot.grid_shape[-2:];offset=(nf-nprb*12)//2
+    sampler=snapshot.path_sampler;nt=snapshot.grid_shape[3]
+    h=None if sampler is not None else snapshot.grid(ui,ci,np.arange(ns),np.arange(offset,offset+nprb*12))
+    def power(vectors):
+        if sampler is not None:return sampler.mean_reference_power(ui,ci,vectors,nprb,offset).mean(axis=0)
+        signal=np.einsum('rtsf,tk->rksf',h,vectors)
+        return np.mean(np.sum(abs(signal)**2,axis=(0,1))/vectors.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
     probes=[]
-    for beam in range(int(snapshot.metadata.get('tx_cols',h.shape[1])) if getattr(cell,'ret_enabled',False) else h.shape[1]):
+    for beam in range(int(snapshot.metadata.get('tx_cols',nt)) if getattr(cell,'ret_enabled',False) else nt):
         b=basis(snapshot,cell,beam,True);v=b[:,beam%b.shape[1]]
-        signal=np.einsum('rtsf,t->rsf',h,v)
-        gain=np.mean(np.sum(abs(signal)**2,axis=0),axis=0).reshape(nprb,12).mean(axis=1)
+        gain=power(v[:,None])
         probes.append(gain)
     best=int(np.argmax([g.mean() for g in probes]));gain=probes[best];alternatives=[]
     if beam_reports:
         for cb in (0,1,2):
             for profile in (0,1):
-                b=beam_subspace(h.shape[1],cb,profile,beam_id)
-                field=np.einsum('rtsf,tk->rksf',h,b)
-                g=np.mean(np.sum(abs(field)**2,axis=(0,1))/b.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
+                b=beam_subspace(nt,cb,profile,beam_id)
+                g=power(b)
                 alternatives.append((cb,profile,g))
     return gain,best,alternatives
 

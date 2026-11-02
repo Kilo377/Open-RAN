@@ -37,10 +37,36 @@ class ChannelSnapshot:
     ue_ids: tuple
     cell_ids: tuple
     # [UE, cell, rx antenna, tx antenna, symbol, subcarrier]
-    cfr: np.ndarray
+    cfr: np.ndarray | None
     positions: np.ndarray
     cache_key: str
     metadata: dict = field(default_factory=dict)
+    # Fast system runs may reconstruct only the coordinates actually consumed.
+    path_sampler: object = None
+
+    @property
+    def grid_shape(self):
+        return self.path_sampler.shape if self.path_sampler is not None else self.cfr.shape
+
+    def samples(self, ui, ci, symbols, frequencies):
+        """Paired coordinates, returned as [RX, TX, coordinate]."""
+        if self.path_sampler is not None:
+            return self.path_sampler.paired(ui, ci, symbols, frequencies)
+        return self.cfr[ui,ci][:,:,symbols,frequencies]
+
+    def samples_for_links(self,links,symbols,frequencies):
+        if self.path_sampler is not None:
+            return self.path_sampler.paired_links(links,symbols,frequencies)
+        return {link:self.samples(*link,symbols,frequencies) for link in links}
+
+    def grid(self, ui, ci, symbols, frequencies):
+        """Cartesian symbol/frequency subset; physical grid indices are retained."""
+        if self.path_sampler is not None:
+            return self.path_sampler.cartesian(ui, ci, symbols, frequencies)
+        s=np.asarray(symbols);f=np.asarray(frequencies)
+        if len(s) and len(f) and np.all(np.diff(s)==1) and np.all(np.diff(f)==1):
+            return self.cfr[ui,ci][:,:,s[0]:s[-1]+1,f[0]:f[-1]+1]
+        return np.take(np.take(self.cfr[ui,ci],symbols,axis=-2),frequencies,axis=-1)
     # Execution caches stay outside the serialized host contract.
     @property
     def device_cfr(self):return getattr(self,'_device_cfr',None)
@@ -57,15 +83,23 @@ class ChannelSnapshot:
     def validate(self):
         if len(set(self.ue_ids)) != len(self.ue_ids) or len(set(self.cell_ids)) != len(self.cell_ids):
             raise ValueError('Duplicate channel IDs')
-        if self.cfr.ndim != 6 or self.cfr.shape[:2] != (len(self.ue_ids), len(self.cell_ids)):
+        shape=self.grid_shape
+        if len(shape) != 6 or shape[:2] != (len(self.ue_ids), len(self.cell_ids)):
             raise ValueError('CFR must be [UE,cell,RX,TX,symbol,subcarrier]')
-        if self.positions.shape != (len(self.ue_ids), 3) or not np.isfinite(self.cfr).all():
+        if self.positions.shape != (len(self.ue_ids), 3) or not np.isfinite(self.positions).all():
             raise ValueError('Invalid channel snapshot')
+        if self.path_sampler is None and not np.isfinite(self.cfr).all():
+            raise ValueError('Invalid channel snapshot')
+        if self.path_sampler is not None and self.cfr is not None:
+            raise ValueError('Choose dense CFR or on-demand paths, not both')
         if self.metadata.get('normalized', False):
             raise ValueError('Unit-normalized propagation channels are forbidden')
-        if self.device_cfr is not None and self.device_cfr.shape!=self.cfr.shape:
+        if self.device_cfr is not None and self.device_cfr.shape!=shape:
             raise ValueError('Retained device CFR shape differs from host CFR')
         return self
 
     def link(self, ue_id, cell_id):
-        return self.cfr[self.ue_ids.index(ue_id), self.cell_ids.index(cell_id)]
+        if self.path_sampler is None:
+            return self.cfr[self.ue_ids.index(ue_id),self.cell_ids.index(cell_id)]
+        return self.grid(self.ue_ids.index(ue_id),self.cell_ids.index(cell_id),
+                         np.arange(self.grid_shape[-2]),np.arange(self.grid_shape[-1]))
