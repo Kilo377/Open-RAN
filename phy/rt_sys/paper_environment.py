@@ -21,11 +21,12 @@ class PaperEnvironment:
         self.dt=float(simulator.config.slot_duration_ms);self.window=int(getattr(simulator.config,'measurement_throughput_granularity_slots',10))
         self.copy_report=deepcopy
         if self.adapter.config.get('fast_reports',False):
-            from phy.rt_sys.report_copy import copy_report
-            self.copy_report=copy_report
+            from phy.rt_sys.report_copy import copy_report, compiled_copy_report
+            self.copy_report=compiled_copy_report if self.adapter.config.get('compiled_report_copy',False) else copy_report
         if self.adapter.config.get('reference_gain_update_ms') is not None:
             from phy.rt_sys.paper_radio import ReferenceGainCache
-            self.gain_cache=ReferenceGainCache(self.adapter.config['reference_gain_update_ms'],self.dt)
+            self.gain_cache=ReferenceGainCache(self.adapter.config['reference_gain_update_ms'],self.dt,
+                cache_static=self.adapter.config.get('cached_static_phy',False))
         self.thresholds=config.get('cqi_thresholds_db',list(range(-7,22,2)))
         quantify_cqi(0,self.thresholds)
         self.events_enabled=bool(config.get('connection_events',True))

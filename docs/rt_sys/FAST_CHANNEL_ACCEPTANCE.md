@@ -1,5 +1,10 @@
 # Fast channel computation acceptance — 2026-11-02
 
+The subsequent [implementation-efficiency validation](FAST_EXACT_ACCEPTANCE.md)
+retains this channel model and reduces the measured 10 s wall time further to
+13m 18.80s through compact SINR and static-data reuse. Report-copy serialization
+was tested and is disabled by default.
+
 Adopted as the default `--model fast` system channel on 2026-11-03. The normal
 `run-six-ue-cuda-nr.sh --model fast` entry now resolves to the configuration below.
 Full and the older efficient/reference fast profiles retain their configured

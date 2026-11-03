@@ -28,6 +28,12 @@ class DirectNrAbstraction(NrReferenceAbstraction):
     def _probe(self, *args, **kwargs):
         raise RuntimeError('nr_direct must never run a Monte Carlo probe')
 
+    def _sinr_values(self, sinr):
+        values=np.asarray(sinr)
+        values=values[values>0].astype(float)
+        if not len(values) or not np.isfinite(values).all():raise ValueError('Invalid batch SINR')
+        return values
+
     def evaluate_many(self, requests):
         if getattr(self,'_batch_feedback',None) is not None:
             raise RuntimeError('NR batch is not reentrant')
@@ -36,8 +42,7 @@ class DirectNrAbstraction(NrReferenceAbstraction):
         jobs=[]
         for r in requests:
             index={'qam64':1,'qam256':2,'qam64_low_se':3}[r['table']]
-            values=np.asarray(r['sinr']);values=values[values>0].astype(float)
-            if not len(values) or not np.isfinite(values).all():raise ValueError('Invalid batch SINR')
+            values=self._sinr_values(r['sinr'])
             try:wave=self.waveform(index,int(r['mcs']),len(values))
             except ValueError as exc:
                 if not supported_code_constraint(exc):raise
@@ -65,10 +70,7 @@ class DirectNrAbstraction(NrReferenceAbstraction):
         index = {'qam64': 1, 'qam256': 2, 'qam64_low_se': 3}.get(table)
         if index is None or not 0 <= int(mcs) <= (27 if index == 2 else 28):
             raise ValueError('Invalid NR MCS/table')
-        values = np.asarray(sinr)
-        values = values[values > 0].astype(float)
-        if not len(values) or not np.isfinite(values).all():
-            raise ValueError('Direct NR requires positive finite allocated SINRs')
+        values = self._sinr_values(sinr)
         result = dict(mcs=int(mcs), qm=0, rate=0., capacity_bytes=0,
                       sinr_eff=float(values.mean()), tbler=1., cbler=1., ack=False,
                       feedback_mode=self.feedback_mode, reference_tb_ack=None, reference_tb_errors=None,

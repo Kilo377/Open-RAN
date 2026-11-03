@@ -19,12 +19,16 @@ def ret_basis(rows, cols, tilt_deg, codebook=0, beam=0):
     return np.kron(horizontal,vertical[:,None])
 
 
-def basis(snapshot, cell, beam=0, reference=False):
+def basis(snapshot, cell, beam=0, reference=False, cache_static=False):
     rows=int(snapshot.metadata.get('tx_rows',1));cols=int(snapshot.metadata.get('tx_cols',snapshot.grid_shape[3]))
     if getattr(cell,'ret_enabled',False):
         if rows*cols!=snapshot.grid_shape[3]:raise ValueError('RET array layout missing/mismatched')
         return ret_basis(rows,cols,cell.ret_tilt_deg,cell.ret_codebook_id,beam)
-    return beam_subspace(snapshot.grid_shape[3],cell.current_codebook_id,cell.current_beam_profile_id,beam)
+    basis_for=beam_subspace
+    if cache_static:
+        from phy.rt_sys.numerics import cached_beam_subspace
+        basis_for=cached_beam_subspace
+    return basis_for(snapshot.grid_shape[3],cell.current_codebook_id,cell.current_beam_profile_id,beam)
 
 
 def prb_powers(cell, nprb):
@@ -41,7 +45,7 @@ def quantify_cqi(sinr_db, thresholds=None):
     return int(np.searchsorted(bins,sinr_db,side='right'))
 
 
-def probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id):
+def probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id,cache_static=False):
     ns,nf=snapshot.grid_shape[-2:];offset=(nf-nprb*12)//2
     sampler=snapshot.path_sampler;nt=snapshot.grid_shape[3]
     h=None if sampler is not None else snapshot.grid(ui,ci,np.arange(ns),np.arange(offset,offset+nprb*12))
@@ -51,25 +55,29 @@ def probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id):
         return np.mean(np.sum(abs(signal)**2,axis=(0,1))/vectors.shape[1],axis=0).reshape(nprb,12).mean(axis=1)
     probes=[]
     for beam in range(int(snapshot.metadata.get('tx_cols',nt)) if getattr(cell,'ret_enabled',False) else nt):
-        b=basis(snapshot,cell,beam,True);v=b[:,beam%b.shape[1]]
+        b=basis(snapshot,cell,beam,True,cache_static=cache_static);v=b[:,beam%b.shape[1]]
         gain=power(v[:,None])
         probes.append(gain)
     best=int(np.argmax([g.mean() for g in probes]));gain=probes[best];alternatives=[]
     if beam_reports:
         for cb in (0,1,2):
             for profile in (0,1):
-                b=beam_subspace(nt,cb,profile,beam_id)
+                if cache_static:
+                    from phy.rt_sys.numerics import cached_beam_subspace
+                    b=cached_beam_subspace(nt,cb,profile,beam_id)
+                else:b=beam_subspace(nt,cb,profile,beam_id)
                 g=power(b)
                 alternatives.append((cb,profile,g))
     return gain,best,alternatives
 
 
 class ReferenceGainCache:
-    def __init__(self,update_ms,slot_ms):
+    def __init__(self,update_ms,slot_ms,cache_static=False):
         slots=update_ms/slot_ms
         if not np.isfinite(slots) or slots<1 or not np.isclose(slots,round(slots)):
             raise ValueError('Reference gain interval must align to whole slots')
         self.slots=int(round(slots));self.epoch=None;self.cache={};self.hits=0;self.builds=0
+        self.cache_static=cache_static
     def get(self,snapshot,state,ui,ci,cell,nprb,beam_reports):
         epoch=(snapshot.cache_key,snapshot.slot_id//self.slots,snapshot.metadata.get('geometry_block_slot'))
         if epoch!=self.epoch:self.cache.clear();self.epoch=epoch
@@ -78,7 +86,7 @@ class ReferenceGainCache:
             getattr(cell,'ret_enabled',False),getattr(cell,'ret_tilt_deg',0),getattr(cell,'ret_codebook_id',0),
             snapshot.metadata.get('tx_rows'),snapshot.metadata.get('tx_cols'),beam_reports,beam_id if beam_reports else 0)
         if key not in self.cache:
-            self.cache[key]=probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id);self.builds+=1
+            self.cache[key]=probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,beam_id,cache_static=self.cache_static);self.builds+=1
         else:self.hits+=1
         return self.cache[key]
 

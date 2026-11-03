@@ -10,6 +10,7 @@ import numpy as np
 from phy.rt_sys.direct import DirectNrAbstraction
 from phy.rt_sys.contracts import keyed_uniform
 from phy.rt_sys.tx_contract import nr_budget
+from phy.rt_sys.compact_sinr import CompactSinr
 
 class FastReceiver:
     """Retain a TB's identity and its statistical/actual-NR route across retries."""
@@ -29,6 +30,7 @@ class FastReceiver:
         use_nr=old.get('feedback_route')=='nr' if context['is_retx'] else prob is None
         if use_nr:
             realwave=self.owner.real.waveform(wave.table,wave.mcs,wave.data_re)
+            if isinstance(values,CompactSinr):values=values.expand()
             info=self.real.transmit(realwave,values,seed,slot,uid,context)
             if key in self.pending:self.pending[key]['feedback_route']='nr'
             self.owner.reasons[reason or 'retained_nr_retransmission']+=1
@@ -53,6 +55,10 @@ class FastAbstraction(DirectNrAbstraction):
     actual_decode distinguishes sampled outcomes from actual NR decoding.
     """
     feedback_mode = 'fast'
+    supports_compact_sinr = True
+
+    def _sinr_values(self,sinr):
+        return sinr.validate() if isinstance(sinr,CompactSinr) else super()._sinr_values(sinr)
     def __init__(self,device='cuda',target_bler=.1,config=None):
         if (config or {}).get('harq_combining','none')!='none':
             raise ValueError('fast uses statistical HARQ feedback without soft combining; use full for Chase')
@@ -67,6 +73,11 @@ class FastAbstraction(DirectNrAbstraction):
         if self.profile!='reference':
             self.eesm=EESM(device='cpu')
             self.transport=TransportBlockNR(device='cpu')
+            # Preserve the loaded official beta parameters without float32
+            # cancellation when weighted exp(-SINR/beta) is close to one.
+            self.weighted_beta=self.eesm.beta_tensor.to(self.torch.float64).clone()
+            for table,betas in self.eesm.beta_table['index'].items():
+                self.weighted_beta[table-1,:len(betas)]=self.torch.tensor(betas,dtype=self.torch.float64)
         self.segments={}
         self.real=DirectNrAbstraction(device,target_bler,{**(config or {}),'nr_execution':'batched'})
         self.formats={};self.reasons=Counter();self.aliases={};self.alias_counts=Counter();self.prob_sum=0.;self.harq=FastReceiver(self)
@@ -120,13 +131,20 @@ class FastAbstraction(DirectNrAbstraction):
             alias=self.equivalent(wave)
             if alias is None:
                 result[i]=(None,None,'missing_equivalent_official_mcs_and_beta_entry');continue
-            groups[alias[0]].append((i,wave,np.asarray(values).reshape(-1),alias[1]))
+            groups[alias[0]].append((i,wave,values if isinstance(values,CompactSinr) else np.asarray(values).reshape(-1),alias[1]))
         for table,group in groups.items():
-            maximum=max(len(values) for _,_,values,_ in group)
+            weighted=any(isinstance(values,CompactSinr) for _,_,values,_ in group)
+            maximum=max(len(values.values) if isinstance(values,CompactSinr) else len(values) for _,_,values,_ in group)
             padded=np.zeros((len(group),1,maximum,1,1),dtype=np.float32)
+            weights=np.zeros((len(group),maximum),dtype=np.float32) if weighted else None
             segments=[]
             for j,(_,wave,values,mcs) in enumerate(group):
-                padded[j,0,:len(values),0,0]=values
+                if isinstance(values,CompactSinr):
+                    padded[j,0,:len(values.values),0,0]=values.values
+                    weights[j,:len(values.values)]=values.weights
+                else:
+                    padded[j,0,:len(values),0,0]=values
+                    if weighted:weights[j,:len(values)]=values>0
                 key=(table,mcs,wave.data_re)
                 if key not in self.segments:
                     q=t.tensor([[wave.q]],dtype=t.int32)
@@ -138,7 +156,15 @@ class FastAbstraction(DirectNrAbstraction):
             index=t.tensor([[row[3]] for row in group],dtype=t.int32)
             tensor=t.as_tensor(padded,dtype=t.float32)
             with t.no_grad():
-                eff=self.eesm(tensor,mcs_index=index,mcs_table_index=table,mcs_category=1,per_stream=False)
+                if weighted:
+                    # Same EESM equation, official beta and clamp bounds.
+                    # Accumulate in double; SYS still consumes its normal dtype.
+                    beta=self.weighted_beta[table-1,index]
+                    w=t.as_tensor(weights,dtype=t.float64)
+                    exp=t.exp(-tensor.reshape(len(group),-1).to(t.float64)/beta)
+                    eff=-beta*t.log((exp*w).sum(-1,keepdim=True)/w.sum(-1,keepdim=True))
+                    eff=t.clamp(eff,self.eesm._sinr_eff_min,self.eesm._sinr_eff_max).to(self.eesm.dtype)
+                else:eff=self.eesm(tensor,mcs_index=index,mcs_table_index=table,mcs_category=1,per_stream=False)
                 cb=t.tensor([[s[0]] for s in segments],dtype=t.int32)
                 n=t.tensor([[s[1]] for s in segments],dtype=t.float32)
                 bler=self.sys.get_bler(index,table,1,cb,eff)
@@ -155,7 +181,7 @@ class FastAbstraction(DirectNrAbstraction):
         if info.get('feedback_source')=='fast_sampled':
             result.update(ack_source='fast_sys_bernoulli',tbler=info['predicted_probability'],cbler=None,
                           sinr_eff=info['effective_sinr'],bler_estimate_source='sionna_default_tables',
-                          effective_sinr_kind='official_eesm',coding_backend='statistical_sys_no_codec')
+                          effective_sinr_kind='weighted_eesm_official_beta' if isinstance(sinr,CompactSinr) else 'official_eesm',coding_backend='statistical_sys_no_codec')
         result['actual_decode']=info.get('feedback_source')=='actual_nr_fallback' and not info.get('no_tb',False)
         if result['actual_decode']:result['ack_source']='actual_nr_crc_and_bit_check'
         return result

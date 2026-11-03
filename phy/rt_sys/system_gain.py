@@ -13,12 +13,17 @@ from phy.rt_sys.sampling import sample_coordinates
 
 
 class SystemGainEngine:
-    def __init__(self, update_ms=2., slot_ms=.5):
+    def __init__(self, update_ms=2., slot_ms=.5, compact=False, cache_static=True):
         slots=update_ms/slot_ms
         if not np.isfinite(slots) or slots<1 or not np.isclose(slots,round(slots)):
             raise ValueError('System gain interval must align to positive whole slots')
         self.slots=int(round(slots));self.epoch=None
         self.layouts=OrderedDict();self.fields=OrderedDict();self.combiners=OrderedDict()
+        self.compact=compact
+        if cache_static:
+            from phy.rt_sys.numerics import cached_beam_subspace
+            self.beam_subspace=cached_beam_subspace
+        else:self.beam_subspace=beam_subspace
         self.stats=Counter();self.a=Algebra('numpy')
 
     @staticmethod
@@ -28,7 +33,7 @@ class SystemGainEngine:
         return value
 
     def layout(self,entries,ns,nf,offset):
-        key=(ns,nf,offset,tuple((e['ue'].ue_id,e['layers'],e['mask'].tobytes(),
+        key=(ns,nf,offset,tuple((e['ue'].ue_id,e['layers'],e['ue'].dmrs_pattern_id,e['mask'].tobytes(),
             np.asarray(e['power']>0).tobytes()) for e in entries))
         if key in self.layouts:
             self.layouts.move_to_end(key);self.stats['layout_hits']+=1;return self.layouts[key]
@@ -38,7 +43,9 @@ class SystemGainEngine:
             fulls,fullf=map(np.asarray,zip(*coords));s,f=map(np.asarray,zip(*reduced))
             result.append((pattern,fulls,fullf,s,f,inverse))
         self.stats['layout_builds']+=1
-        return self.put(self.layouts,key,result)
+        from phy.rt_sys.compact_sinr import entry_layout
+        templates=entry_layout(entries,result,ns,nf) if self.compact else None
+        return self.put(self.layouts,key,(result,templates))
 
     def field(self,entries,pattern,s,f,snapshot,paper):
         controls=[]
@@ -55,10 +62,10 @@ class SystemGainEngine:
         h=snapshot.samples_for_links(links,s,f)
         for ci in sorted({entries[i]['ci'] for i in pattern}):
             group=[i for i in pattern if entries[i]['ci']==ci]
-            directions=set();dft=beam_subspace(nt,0,0,0)
+            directions=set();dft=self.beam_subspace(nt,0,0,0)
             for i in group:
                 e=entries[i];p=e['p']
-                sub=beam_subspace(nt,p.current_codebook_id,p.current_beam_profile_id,int(e['ue'].serving_beam_id))
+                sub=self.beam_subspace(nt,p.current_codebook_id,p.current_beam_profile_id,int(e['ue'].serving_beam_id))
                 directions.update(np.argmax(abs(dft.conj().T@sub),axis=0).tolist())
             basis=dft[:,sorted(directions)]
             if paper and getattr(paper.state.managed_cells[snapshot.cell_ids[ci]].cell,'ret_enabled',False):
@@ -89,7 +96,13 @@ class SystemGainEngine:
         if epoch!=self.epoch:
             self.fields.clear();self.combiners.clear();self.epoch=epoch;self.stats['epochs']+=1
         ns,nf=snapshot.grid_shape[-2:];offset=(nf-radio[0].n_prbs_total*12)//2 if radio else 0
-        for pattern,fulls,fullf,s,f,inverse in self.layout(entries,ns,nf,offset):
+        patterns,templates=self.layout(entries,ns,nf,offset)
+        if self.compact:
+            for e,(data,inverse,weights,parts,size) in zip(entries,templates):
+                e.update(data_mask=data,compact_values=np.zeros(size),compact_parts=parts,
+                         compact_inverse=inverse,compact_weights=weights,inter_sum=0.,intra_sum=0.,inter_count=0)
+        for pattern,fulls,fullf,s,f,inverse in patterns:
+            multiplicity=np.bincount(inverse,minlength=len(s))
             for ci in {entries[i]['ci'] for i in pattern}:
                 group=[entries[i] for i in pattern if entries[i]['ci']==ci]
                 if len(group)>1:
@@ -118,10 +131,25 @@ class SystemGainEngine:
             for j,(e,k) in enumerate(owners):
                 interference=powers.copy();interference[:,j]=0
                 values=powers[:,j]*gains[:,j,j]/np.maximum(np.sum(interference*gains[:,j],axis=-1)+noise*noise_gains[:,j],1e-300)
-                e['sinr'][fulls,fullf,k]=values[inverse]
+                if self.compact:
+                    e['compact_values'][e['compact_parts'][pattern,k]]=values
+                else:e['sinr'][fulls,fullf,k]=values[inverse]
                 inter=[v for v,(other,_) in enumerate(owners) if other['ci']!=e['ci']]
                 intra=[v for v,(other,_) in enumerate(owners) if other['ci']==e['ci'] and other is not e]
-                e['inter'].extend(np.sum(powers[:,inter]*raw[:,j,inter],axis=-1)[inverse].tolist())
-                e['intra'].extend(np.sum(powers[:,intra]*raw[:,j,intra],axis=-1)[inverse].tolist())
+                inter_power=np.sum(powers[:,inter]*raw[:,j,inter],axis=-1)
+                intra_power=np.sum(powers[:,intra]*raw[:,j,intra],axis=-1)
+                if self.compact:
+                    e['inter_sum']+=float(np.dot(inter_power,multiplicity))
+                    e['intra_sum']+=float(np.dot(intra_power,multiplicity))
+                    e['inter_count']+=len(inverse)
+                else:
+                    e['inter'].extend(inter_power[inverse].tolist())
+                    e['intra'].extend(intra_power[inverse].tolist())
                 e['precoder_norms'].append(1.)
+        if self.compact:
+            from phy.rt_sys.compact_sinr import CompactSinr
+            for e in entries:
+                e['compact_sinr']=CompactSinr(e['compact_values'],e['compact_weights'],e['compact_inverse'])
+                e['inter']=[e['inter_sum']/max(1,e['inter_count'])]
+                e['intra']=[e['intra_sum']/max(1,e['inter_count'])]
         return []

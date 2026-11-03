@@ -150,6 +150,8 @@ class RtSysPhyAdapter:
         packed_diagnostics=self.config.get('packed_phy_diagnostics',False)
         noise = 10**((-174+10*math.log10(self.config.get('subcarrier_spacing_hz',30000))+
                       self.config.get('noise_figure_db',7)-30)/10)
+        compact=(self.config.get('system_phy_enabled',False) and self.config.get('compact_sinr',True)
+                 and getattr(self.abstraction,'supports_compact_sinr',False))
         entries = []
         precoder_trace=[]
         all_seen = set()
@@ -177,7 +179,7 @@ class RtSysPhyAdapter:
                     raise ValueError('Requested layer count exceeds antenna capability')
                 entry = {'p':p, 'ue':ue, 'ci':snapshot.cell_ids.index(p.cell_id),
                          'ui':snapshot.ue_ids.index(ue.ue_id), 'mask':self._mask(ue,ns,nf,(nf-p.runtime_context.n_prbs_total*12)//2 if p.runtime_context else 0,p.runtime_context.n_prbs_total*12 if p.runtime_context else None),
-                         'layers':layers, 'sinr':np.zeros((ns,nf,layers)),
+                         'layers':layers, 'sinr':None if compact else np.zeros((ns,nf,layers)),
                          'inter':[], 'intra':[], 'mu_mask':np.zeros((ns,nf),bool),
                          'precoder_norms':[]}
                 entries.append(entry); active.append(entry)
@@ -213,7 +215,7 @@ class RtSysPhyAdapter:
                 raise ValueError('System gain profile currently requires ideal CSI')
             if not hasattr(self,'system_gains'):
                 from phy.rt_sys.system_gain import SystemGainEngine
-                self.system_gains=SystemGainEngine(self.config.get('system_gain_update_ms',2.),radio[0].slot_duration_ms if radio else self.config.get('slot_duration_ms',.5))
+                self.system_gains=SystemGainEngine(self.config.get('system_gain_update_ms',2.),radio[0].slot_duration_ms if radio else self.config.get('slot_duration_ms',.5),compact=compact,cache_static=self.config.get('cached_static_phy',True))
             precoder_trace=self.system_gains.fill(entries,snapshot,radio,paper,noise,self.config.get('rzf_relative_regularization',.01))
         else:
             patterns=resource_patterns(entries,ns,nf)
@@ -318,18 +320,27 @@ class RtSysPhyAdapter:
                     e['sinr'][full_symbols,full_frequencies,k] = values[inverse]
                     e['inter'].extend(inter_power[inverse].tolist())
                     e['intra'].extend(intra_power[inverse].tolist())
+        from phy.rt_sys.tx_contract import data_mask
+        for e in entries:
+            if compact:
+                values=e['compact_sinr'];data=e['data_mask'];no_path=values.no_path
+                mean=values.mean() if not no_path else 0.
+            else:
+                data=data_mask(e['mask'],e['ue'].dmrs_pattern_id)
+                values=e['sinr'].copy();values[~data,:]=0
+                no_path=not np.any(values[data,:]>0)
+                if not no_path:values[data,:]=np.maximum(values[data,:],1e-30)
+                mean=float(values[values>0].mean()) if not no_path else 0.
+            e['prepared']=(data,values,no_path,mean)
         batch_metrics={}
         if self.nr_execution in ('batched','parallel'):
-            from phy.rt_sys.tx_contract import data_mask
             jobs=[];owners=[]
             for e in entries:
-                ue=e['ue'];p=e['p'];data=data_mask(e['mask'],ue.dmrs_pattern_id)
-                values=e['sinr'].copy();values[~data,:]=0
-                if not np.any(values[data,:]>0):continue
-                values[data,:]=np.maximum(values[data,:],1e-30)
+                ue=e['ue'];p=e['p'];data,values,no_path,mean=e['prepared']
+                if no_path:continue
                 maximum=int(ue.mcs_cap if ue.mcs_cap is not None else 27)
                 mcs=int(ue.target_mcs) if ue.target_mcs is not None else int(select_mcs_index_from_sinr(
-                    10*math.log10(float(values[values>0].mean())),mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
+                    10*math.log10(mean),mcs_table_id=ue.mcs_table_id,max_mcs_index=maximum))
                 if mcs>maximum:raise ValueError('MCS target exceeds cap')
                 jobs.append(dict(sinr=values,table=ue.mcs_table_id,mcs=mcs,seed=self.seed,slot=p.slot_id,
                     ue_id=ue.ue_id,fixed=ue.is_retx,harq_context=dict(process_id=ue.harq_process_id if ue.harq_process_id is not None else 0,
@@ -349,19 +360,13 @@ class RtSysPhyAdapter:
                 result.queue_bytes = ue.queue_bytes
                 result.phy_mode = 'rt_sys'; result.waveform_backend = 'sionna_rt_sys'
                 if e is not None:
-                    from phy.rt_sys.tx_contract import data_mask
-                    data = data_mask(e['mask'],ue.dmrs_pattern_id)
-                    values = e['sinr'].copy(); values[~data,:] = 0
+                    data,values,no_path,mean=e['prepared']
                     result.resource_grid_re_count = int(e['mask'].sum())
                     result.effective_data_re_count = int(data.sum())
                     result.dmrs_overhead_fraction = 1-data.sum()/max(1,e['mask'].sum())
-                    no_path=not np.any(values[data,:]>0)
                     # Zero SINR on an allocated stream is an erasure, not an
                     # unscheduled RE. SYS uses zero as its resource-mask value.
-                    if not no_path:values[data,:]=np.maximum(values[data,:],1e-30)
-                    usable = values[values>0]
                     values,combining_reason=self.combiner.combine(ue,p.cell_id,p.slot_id,values)
-                    mean = float(usable.mean()) if not no_path else 0
                     result.sinr_db = result.effective_sinr_db = 10*math.log10(max(mean,1e-30))
                     result.pre_eq_sinr_db = result.post_eq_sinr_db = result.sinr_db
                     result.bler = 1.0
@@ -422,8 +427,7 @@ class RtSysPhyAdapter:
                     trace_ues[-1].update(raw_sinr_db=0.,harq_combining='not_scheduled',physical_tb_capacity_bytes=0,padding_bytes=0)
                 contract=getattr(ue,'tx_contract',None)
                 if e is not None:
-                    from phy.rt_sys.tx_contract import data_mask
-                    data=data_mask(e['mask'],ue.dmrs_pattern_id)
+                    data=e['prepared'][0]
                     mu_re=int((data & e['mu_mask']).sum())
                     su_re=int(data.sum())-mu_re
                     resource_mode='mixed' if mu_re and su_re else ('mu' if mu_re else 'su')
@@ -467,6 +471,7 @@ class RtSysPhyAdapter:
         if hasattr(self,'system_gains'):
             self.trace.update(system_gain_statistics=dict(self.system_gains.stats),system_gain_update_ms=self.config.get('system_gain_update_ms',2.),
                 system_gain_epoch=self.system_gains.epoch[1],channel_approximation='block_updated_spatial_fields_actual_stream_interference')
+            self.trace['sinr_storage']='dmrs_weighted_representatives' if compact else 'expanded_re_grid'
         if self.fast_profile:
             self.trace.update(fast_profile=self.fast_profile,
                 spatial_samples_per_prb=self.config['spatial_samples_per_prb'],

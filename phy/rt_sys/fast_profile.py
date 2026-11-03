@@ -3,7 +3,7 @@
 
 def configure_fast_profile(config, requested=None):
     """Mutate a run config with explicit, reproducible execution settings."""
-    system_keys=('system_phy_enabled','system_gain_update_ms','reference_gain_update_ms','fast_reports','compact_snapshots','fast_channel_mode')
+    system_keys=('system_phy_enabled','system_gain_update_ms','reference_gain_update_ms','fast_reports','compact_snapshots','fast_channel_mode','compact_sinr','compiled_report_copy','cached_static_phy')
     if config.get('feedback_mode') != 'fast':
         if requested is not None:
             raise ValueError('--fast-profile requires --model fast')
@@ -22,6 +22,9 @@ def configure_fast_profile(config, requested=None):
         config.setdefault('fast_reports',True)
         config.setdefault('compact_snapshots',True)
         config.setdefault('fast_channel_mode','sampled')
+        config.setdefault('compact_sinr',True)
+        config.setdefault('compiled_report_copy',False)
+        config.setdefault('cached_static_phy',True)
     else:
         for key in system_keys:config.pop(key,None)
     config.update(fast_profile=profile,

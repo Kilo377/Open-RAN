@@ -1,0 +1,290 @@
+{
+  "source_sha256": "e465f7e5519b13b3cc142ffcae85c788b26c88f7b903c83a1e3ec4ad0b8e9a9f",
+  "warm400": {
+    "baseline": {
+      "total_s": 31.64672605053056,
+      "simulation_s": 21.037201795028523,
+      "repetitions": 2
+    },
+    "common": {
+      "total_s": 31.16639811702771,
+      "simulation_s": 20.631552132952493,
+      "repetitions": 2
+    },
+    "reports": {
+      "total_s": 31.317076474020723,
+      "simulation_s": 20.785982295987196,
+      "repetitions": 2
+    },
+    "storage": {
+      "total_s": 28.548216004564893,
+      "simulation_s": 18.05378184298752,
+      "repetitions": 2
+    },
+    "static": {
+      "total_s": 30.625133890018333,
+      "simulation_s": 20.131896942446474,
+      "repetitions": 2
+    },
+    "combined": {
+      "total_s": 27.852432948478963,
+      "simulation_s": 17.354527948540635,
+      "repetitions": 2
+    },
+    "selected": {
+      "total_s": 27.861863451544195,
+      "simulation_s": 17.380384787509684,
+      "repetitions": 2
+    }
+  },
+  "ten_seconds": {
+    "baseline_wall_s": 1040.48,
+    "selected_wall_s": 798.8002798809903,
+    "reduction_fraction": 0.23227714143377065,
+    "speedup": 1.302553374361632,
+    "baseline_simulation_s": 997.2310337870149,
+    "selected_simulation_s": 755.9419274519896,
+    "goodput_mbps": [
+      26.3735952,
+      26.3735952
+    ],
+    "actual_nr": [
+      1093,
+      1093
+    ],
+    "sampled_tbs": [
+      99451,
+      99451
+    ],
+    "rf_energy_j": [
+      30.00000000000219,
+      30.00000000000219
+    ]
+  },
+  "equivalence": {
+    "manifest_equal": true,
+    "hashes": {
+      "packet_events.jsonl": {
+        "baseline": "2b7e23b3360a914733de89dd68dd7db1f3d1039b0fd3dfc8ed8f1cd96f94060c",
+        "selected": "2b7e23b3360a914733de89dd68dd7db1f3d1039b0fd3dfc8ed8f1cd96f94060c"
+      },
+      "harq_events.jsonl": {
+        "baseline": "b22608edd1af8edf9df52e8ad32611b81f51417c635b5780e8550ef1950f69c7",
+        "selected": "b22608edd1af8edf9df52e8ad32611b81f51417c635b5780e8550ef1950f69c7"
+      }
+    },
+    "packet_events_equal": true,
+    "packet_metrics_equal": true,
+    "link_statistics_equal": true,
+    "rf_energy_equal": true,
+    "compared_ue_slots": 120000,
+    "differing_decisions": 0,
+    "max_abs_trace_difference_db": {
+      "sinr_db": 1.4210854715202004e-14,
+      "effective_sinr_db": 3.4942354436694316,
+      "inter_cell_interference_dbm": 2.842170943040401e-14,
+      "intra_cell_interference_dbm": 2.842170943040401e-14
+    }
+  },
+  "stages": {
+    "baseline": {
+      "rt_generation": {
+        "calls": 1,
+        "wall_s": 0.8622176559874788
+      },
+      "channel_snapshot_including_io_and_cfr": {
+        "calls": 20001,
+        "wall_s": 11.623856049380265
+      },
+      "scheduling": {
+        "calls": 20000,
+        "wall_s": 152.16415487020276
+      },
+      "codec_lookup_or_build": {
+        "calls": 201088,
+        "wall_s": 0.7689033460337669
+      },
+      "actual_tb_feedback": {
+        "calls": 100544,
+        "wall_s": 0.2607969472883269
+      },
+      "batch_feedback_inclusive": {
+        "calls": 20000,
+        "wall_s": 130.13351846579462
+      },
+      "precoding_interference_and_tb_inclusive": {
+        "calls": 20000,
+        "wall_s": 422.0365991484141
+      },
+      "state_update": {
+        "calls": 60000,
+        "wall_s": 52.19073836016469
+      },
+      "measurement_update": {
+        "calls": 20000,
+        "wall_s": 16.348632387118414
+      },
+      "slot_total": {
+        "calls": 20000,
+        "wall_s": 968.7145313336514
+      }
+    },
+    "selected": {
+      "rt_generation": {
+        "calls": 1,
+        "wall_s": 0.8634209629381076
+      },
+      "channel_snapshot_including_io_and_cfr": {
+        "calls": 20001,
+        "wall_s": 11.331689406419173
+      },
+      "scheduling": {
+        "calls": 20000,
+        "wall_s": 132.20606721029617
+      },
+      "codec_lookup_or_build": {
+        "calls": 201088,
+        "wall_s": 0.642361919162795
+      },
+      "actual_tb_feedback": {
+        "calls": 100544,
+        "wall_s": 0.23059911280870438
+      },
+      "batch_feedback_inclusive": {
+        "calls": 20000,
+        "wall_s": 106.98273256712127
+      },
+      "precoding_interference_and_tb_inclusive": {
+        "calls": 20000,
+        "wall_s": 245.34612802485935
+      },
+      "state_update": {
+        "calls": 60000,
+        "wall_s": 47.26352286187466
+      },
+      "measurement_update": {
+        "calls": 20000,
+        "wall_s": 15.546780062140897
+      },
+      "slot_total": {
+        "calls": 20000,
+        "wall_s": 728.670798212639
+      }
+    }
+  },
+  "rt_prefetch": {
+    "baseline": {
+      "completed": true,
+      "cancelled": false,
+      "workers": 2,
+      "generated_blocks": 1000,
+      "skipped_blocks": 0,
+      "lock_wait_s": 0.12808884400874376,
+      "worker_wall_s": 425.32081012497656,
+      "worker_wall_sum_s": 849.7982461859938,
+      "worker_statuses": [
+        {
+          "completed": true,
+          "cancelled": false,
+          "assigned_blocks": 500,
+          "processed_blocks": 500,
+          "generated_blocks": 500,
+          "skipped_blocks": 0,
+          "lock_wait_s": 0.07219887629617006,
+          "worker_wall_s": 425.32081012497656
+        },
+        {
+          "completed": true,
+          "cancelled": false,
+          "assigned_blocks": 500,
+          "processed_blocks": 500,
+          "generated_blocks": 500,
+          "skipped_blocks": 0,
+          "lock_wait_s": 0.05588996771257371,
+          "worker_wall_s": 424.4774360610172
+        }
+      ],
+      "foreground_generated_blocks": 1,
+      "foreground_lock_wait_s": 0.00016125000547617674,
+      "total_generated_blocks": 1001
+    },
+    "selected": {
+      "completed": true,
+      "cancelled": false,
+      "workers": 2,
+      "generated_blocks": 1000,
+      "skipped_blocks": 0,
+      "lock_wait_s": 0.19777702679857612,
+      "worker_wall_s": 425.3209753839765,
+      "worker_wall_sum_s": 850.6330271159532,
+      "worker_statuses": [
+        {
+          "completed": true,
+          "cancelled": false,
+          "assigned_blocks": 500,
+          "processed_blocks": 500,
+          "generated_blocks": 500,
+          "skipped_blocks": 0,
+          "lock_wait_s": 0.06066796951927245,
+          "worker_wall_s": 425.3209753839765
+        },
+        {
+          "completed": true,
+          "cancelled": false,
+          "assigned_blocks": 500,
+          "processed_blocks": 500,
+          "generated_blocks": 500,
+          "skipped_blocks": 0,
+          "lock_wait_s": 0.13710905727930367,
+          "worker_wall_s": 425.3120517319767
+        }
+      ],
+      "foreground_generated_blocks": 1,
+      "foreground_lock_wait_s": 0.00014883605763316154,
+      "total_generated_blocks": 1001
+    }
+  },
+  "controls": {
+    "stage": "complete",
+    "results": [
+      {
+        "name": "baseline_controls400",
+        "hashes": {
+          "packet_events.jsonl": "76d6b9ac2c14a0c3b3b7ffa7a8373662c24c5bcd95b25677ce29dadea729ed69",
+          "harq_events.jsonl": "18027d87b2e66208a0df32429b024e152c0fc7d18539786bc3abf0343fef3794"
+        },
+        "powers": {
+          "79": 1.0,
+          "81": 0.5011872336272724,
+          "161": 1.0,
+          "241": 0.0,
+          "321": 1.0
+        },
+        "energy": {
+          "cell_0": 0.1400474893450909,
+          "cell_1": 0.20000000000000015,
+          "cell_2": 0.20000000000000015
+        }
+      },
+      {
+        "name": "candidate_controls400",
+        "hashes": {
+          "packet_events.jsonl": "76d6b9ac2c14a0c3b3b7ffa7a8373662c24c5bcd95b25677ce29dadea729ed69",
+          "harq_events.jsonl": "18027d87b2e66208a0df32429b024e152c0fc7d18539786bc3abf0343fef3794"
+        },
+        "powers": {
+          "79": 1.0,
+          "81": 0.5011872336272724,
+          "161": 1.0,
+          "241": 0.0,
+          "321": 1.0
+        },
+        "energy": {
+          "cell_0": 0.1400474893450909,
+          "cell_1": 0.20000000000000015,
+          "cell_2": 0.20000000000000015
+        }
+      }
+    ]
+  }
+}

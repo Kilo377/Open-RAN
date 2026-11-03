@@ -25,13 +25,20 @@ def audit_action(action):
     return trace
 
 
-def limit_logical_allocations(allocations, budget):
+def limit_logical_allocations(allocations, budget, *, fast_copy=False):
     """Match pending HARQ/LC accounting to the actual transmitted TB payload."""
-    from copy import deepcopy
+    from copy import deepcopy, copy
+    from models.scheduling import LogicalChannelGrant
+    from phy.rt_sys.tx_contract import TbTxContract
     limited=[]
     remaining=max(0,int(budget))
     for allocation in allocations:
-        item=deepcopy(allocation)
+        # This dataclass contains scalar metadata, one list, and an immutable
+        # TB contract. Preserve isolation without traversing the whole graph.
+        if fast_copy and type(allocation) is LogicalChannelGrant and (allocation.tx_contract is None or type(allocation.tx_contract) is TbTxContract):
+            item=copy(allocation)
+            item.constraint_hits=list(allocation.constraint_hits)
+        else:item=deepcopy(allocation)
         item.scheduled_bytes=min(remaining,max(0,int(item.scheduled_bytes)))
         remaining-=item.scheduled_bytes
         item.prioritized_bytes=min(item.scheduled_bytes,max(0,int(item.prioritized_bytes)))

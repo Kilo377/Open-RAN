@@ -4,6 +4,7 @@ SINR uses instantaneous absolute channels, explicitly including every active
 stream. No empirical beam, MU, shadowing or inter-cell penalty is added.
 """
 import numpy as np
+from functools import lru_cache
 
 
 class Algebra:
@@ -99,3 +100,11 @@ def beam_subspace(nt, codebook_id, profile_id, beam_id):
     indices = [(beam_id + j) % nt for j in range(size)]
     dft = np.exp(2j*np.pi*np.arange(nt)[:, None]*np.arange(nt)[None, :]/nt)/np.sqrt(nt)
     return dft[:, indices]
+
+
+@lru_cache(maxsize=128)
+def cached_beam_subspace(nt, codebook_id, profile_id, beam_id):
+    """Read-only physical basis; the key includes every controlling input."""
+    result=beam_subspace(nt,codebook_id,profile_id,beam_id)
+    result.flags.writeable=False
+    return result

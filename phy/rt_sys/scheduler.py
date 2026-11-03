@@ -215,7 +215,8 @@ class RtSysScheduler(SimpleScheduler):
                     g.requested_bytes=payload
                     for lc in g.logical_channel_allocations:
                         lc.scheduled_bytes=counts.get(lc.logical_channel_id,0)
-                    g.logical_channel_allocations=limit_logical_allocations(g.logical_channel_allocations,payload)
+                    g.logical_channel_allocations=limit_logical_allocations(g.logical_channel_allocations,payload,
+                        fast_copy=bool(self._paper and self._paper.adapter.config.get('cached_static_phy',False)))
                 g.link_adaptation_reason=getattr(ue,'olla_selection_reason','original_retx_contract') if not g.is_retx else 'original_retx_contract'
                 valid.append(g)
             decision.grants=valid
@@ -231,15 +232,19 @@ class RtSysScheduler(SimpleScheduler):
         return decision
 
     def _compute_spatial_compatibility_score(self,state,left_ue,right_ue):
+        basis_for=beam_subspace
+        if self._paper and self._paper.adapter.config.get('cached_static_phy',False):
+            from phy.rt_sys.numerics import cached_beam_subspace
+            basis_for=cached_beam_subspace
         snapshot=getattr(state,'rt_channel_snapshot',None)
         if snapshot is None:
             raise RuntimeError('RT MU scheduling requires a channel snapshot')
         if self._get_layer_count(state,left_ue)+self._get_layer_count(state,right_ue)>self._get_max_total_spatial_layers(state):
             return 0.
         nt=snapshot.grid_shape[3]
-        dft=beam_subspace(nt,0,0,0); directions=set(); vectors=[]; channels=[]
+        dft=basis_for(nt,0,0,0); directions=set(); vectors=[]; channels=[]
         for ue in (left_ue,right_ue):
-            basis=beam_subspace(nt,state.cell.current_codebook_id,state.cell.current_beam_profile_id,ue.serving_beam_id)
+            basis=basis_for(nt,state.cell.current_codebook_id,state.cell.current_beam_profile_id,ue.serving_beam_id)
             directions.update(np.argmax(abs(dft.conj().T@basis),axis=0).tolist())
             # Sample eight frequencies over the active band, not guard tones.
             nsc=state.resource_grid.n_prbs_total*12; offset=(snapshot.grid_shape[-1]-nsc)//2
