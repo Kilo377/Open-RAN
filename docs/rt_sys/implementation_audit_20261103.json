@@ -1,0 +1,447 @@
+{
+  "date": "2026-11-03",
+  "base_commit": "76c23b8",
+  "scope": "Executed fast/full RT-SYS path and telemetry; not a certification of every legacy repository module or full 3GPP/O-RAN protocol conformance",
+  "source_before": "346ddf41c8771f3ce4c98332ef921a4f400ec8931aa93cbbb8fddb99ba9089d1",
+  "source_after": "3d7988189f8b593c04bd8a9d032a43799c05c051554860a0bbaa8b6b3c5743e4",
+  "native_sionna_oracle": {
+    "passed": true,
+    "links": 18,
+    "slots_checked": [
+      0,
+      1,
+      3
+    ],
+    "symbols": 14,
+    "frequency_points_per_slot": 96,
+    "max_relative_l2": 5.479170681610412e-07,
+    "reference_power_checked": true,
+    "ray_solver": "actual Sionna PathSolver; no fixture or cached paths"
+  },
+  "fault_injection_before": {
+    "rt_failure": {
+      "exception_propagated": true,
+      "completed": false,
+      "stage": "failed",
+      "final_summary_exists": false
+    },
+    "sys_failure": {
+      "exception_propagated": true,
+      "completed": false,
+      "stage": "failed",
+      "final_summary_exists": false
+    },
+    "close_failure": {
+      "exception_propagated": true,
+      "completed": true,
+      "stage": "exporting_replay",
+      "final_summary_exists": true
+    }
+  },
+  "fault_injection_after": {
+    "rt_failure": {
+      "exception_propagated": true,
+      "completed": false,
+      "stage": "failed"
+    },
+    "sys_failure": {
+      "exception_propagated": true,
+      "completed": false,
+      "stage": "failed"
+    },
+    "close_failure": {
+      "exception_propagated": true,
+      "completed": false,
+      "stage": "cleanup_failed"
+    }
+  },
+  "cancellation": {
+    "passed": true,
+    "completed": false,
+    "stage": "cancelled"
+  },
+  "witnesses": {
+    "cold400": {
+      "slots": 400,
+      "all_ues": 6,
+      "packet_event_ledger_recomputed": true,
+      "no_duplicate_payload_ranges": true,
+      "ack_byte_totals_recomputed": true,
+      "link_counts_recomputed": true,
+      "rf_energy_recomputed": true,
+      "goodput_mbps": 30.00944,
+      "link": {
+        "first_tx_attempts": 2170,
+        "first_tx_nacks": 47,
+        "actual_decode_attempts": 77,
+        "sampled_attempts": 2149,
+        "retx_attempts": 56,
+        "retx_nacks": 11
+      },
+      "prefetch": {
+        "completed": true,
+        "cancelled": false,
+        "workers": 2,
+        "generated_blocks": 20,
+        "skipped_blocks": 0,
+        "lock_wait_s": 0.0019871009280905128,
+        "worker_wall_s": 12.83691714296583,
+        "worker_wall_sum_s": 25.66108688293025,
+        "worker_statuses": [
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 10,
+            "skipped_blocks": 0,
+            "lock_wait_s": 0.0009751840261742473,
+            "worker_wall_s": 12.824169739964418
+          },
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 10,
+            "skipped_blocks": 0,
+            "lock_wait_s": 0.0010119169019162655,
+            "worker_wall_s": 12.83691714296583
+          }
+        ],
+        "foreground_generated_blocks": 1,
+        "foreground_lock_wait_s": 0.0001572769833728671,
+        "total_generated_blocks": 21
+      },
+      "source_sha256": "288b0ebc8659b8dcd5596e3e26c1a8a8b0a8eee5619bc1fc14f9a637904df80b",
+      "hashes": {
+        "packet_events.jsonl": "fca99e35a1dd1148df4c5a1cb98217b569e71fef9958b0c68abee928d6b02dec",
+        "harq_events.jsonl": "f3f1d996ae71255fd9fddb4b3126a8cba08f1e1e100e5c478bbf8d4206eb74b6"
+      }
+    },
+    "warm400": {
+      "slots": 400,
+      "all_ues": 6,
+      "packet_event_ledger_recomputed": true,
+      "no_duplicate_payload_ranges": true,
+      "ack_byte_totals_recomputed": true,
+      "link_counts_recomputed": true,
+      "rf_energy_recomputed": true,
+      "goodput_mbps": 30.00944,
+      "link": {
+        "first_tx_attempts": 2170,
+        "first_tx_nacks": 47,
+        "actual_decode_attempts": 77,
+        "sampled_attempts": 2149,
+        "retx_attempts": 56,
+        "retx_nacks": 11
+      },
+      "prefetch": {
+        "completed": true,
+        "cancelled": false,
+        "workers": 2,
+        "generated_blocks": 0,
+        "skipped_blocks": 20,
+        "lock_wait_s": 0.0,
+        "worker_wall_s": 2.262633958947845,
+        "worker_wall_sum_s": 4.524853396927938,
+        "worker_statuses": [
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.262633958947845
+          },
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.262219437980093
+          }
+        ],
+        "foreground_generated_blocks": 0,
+        "foreground_lock_wait_s": 0.0,
+        "total_generated_blocks": 0
+      },
+      "source_sha256": "288b0ebc8659b8dcd5596e3e26c1a8a8b0a8eee5619bc1fc14f9a637904df80b",
+      "hashes": {
+        "packet_events.jsonl": "fca99e35a1dd1148df4c5a1cb98217b569e71fef9958b0c68abee928d6b02dec",
+        "harq_events.jsonl": "f3f1d996ae71255fd9fddb4b3126a8cba08f1e1e100e5c478bbf8d4206eb74b6"
+      }
+    },
+    "controls400": {
+      "slots": 400,
+      "all_ues": 6,
+      "packet_event_ledger_recomputed": true,
+      "no_duplicate_payload_ranges": true,
+      "ack_byte_totals_recomputed": true,
+      "link_counts_recomputed": true,
+      "rf_energy_recomputed": true,
+      "goodput_mbps": 21.1536,
+      "link": {
+        "first_tx_attempts": 1979,
+        "first_tx_nacks": 36,
+        "actual_decode_attempts": 308,
+        "sampled_attempts": 1738,
+        "retx_attempts": 67,
+        "retx_nacks": 41
+      },
+      "prefetch": {
+        "completed": true,
+        "cancelled": false,
+        "workers": 2,
+        "generated_blocks": 0,
+        "skipped_blocks": 20,
+        "lock_wait_s": 0.0,
+        "worker_wall_s": 2.256320677930489,
+        "worker_wall_sum_s": 4.492934245034121,
+        "worker_statuses": [
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.256320677930489
+          },
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.236613567103632
+          }
+        ],
+        "foreground_generated_blocks": 0,
+        "foreground_lock_wait_s": 0.0,
+        "total_generated_blocks": 0
+      },
+      "source_sha256": "288b0ebc8659b8dcd5596e3e26c1a8a8b0a8eee5619bc1fc14f9a637904df80b",
+      "hashes": {
+        "packet_events.jsonl": "76d6b9ac2c14a0c3b3b7ffa7a8373662c24c5bcd95b25677ce29dadea729ed69",
+        "harq_events.jsonl": "18027d87b2e66208a0df32429b024e152c0fc7d18539786bc3abf0343fef3794"
+      },
+      "actual_control_power_at_slots": {
+        "79": 1.0,
+        "81": 0.5011872336272724,
+        "161": 1.0,
+        "241": 0.0,
+        "321": 1.0
+      }
+    },
+    "full20": {
+      "slots": 20,
+      "all_ues": 6,
+      "packet_event_ledger_recomputed": true,
+      "no_duplicate_payload_ranges": true,
+      "ack_byte_totals_recomputed": true,
+      "link_counts_recomputed": true,
+      "rf_energy_recomputed": true,
+      "goodput_mbps": 20.7712,
+      "link": {
+        "first_tx_attempts": 104,
+        "first_tx_nacks": 4,
+        "actual_decode_attempts": 120,
+        "sampled_attempts": 0,
+        "retx_attempts": 16,
+        "retx_nacks": 15
+      },
+      "prefetch": {
+        "completed": true,
+        "cancelled": false,
+        "workers": 1,
+        "generated_blocks": 2,
+        "skipped_blocks": 0,
+        "lock_wait_s": 0.00024473306257277727,
+        "worker_wall_s": 4.041005453909747,
+        "worker_wall_sum_s": 4.041005453909747,
+        "worker_statuses": [
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 2,
+            "processed_blocks": 2,
+            "generated_blocks": 2,
+            "skipped_blocks": 0,
+            "lock_wait_s": 0.00024473306257277727,
+            "worker_wall_s": 4.041005453909747
+          }
+        ],
+        "foreground_generated_blocks": 1,
+        "foreground_lock_wait_s": 0.00017804501112550497,
+        "total_generated_blocks": 3
+      },
+      "source_sha256": "288b0ebc8659b8dcd5596e3e26c1a8a8b0a8eee5619bc1fc14f9a637904df80b",
+      "hashes": {
+        "packet_events.jsonl": "1d547e31c3c1e37dd2a67eefc2f093611db7c5f24c9d47c4593e3a354443cced",
+        "harq_events.jsonl": "9e5f8e8666a4c7234961476720451f3033d178d3e6b3c5786269cd80eafc56a9"
+      }
+    },
+    "final400": {
+      "slots": 400,
+      "all_ues": 6,
+      "packet_event_ledger_recomputed": true,
+      "no_duplicate_payload_ranges": true,
+      "ack_byte_totals_recomputed": true,
+      "link_counts_recomputed": true,
+      "rf_energy_recomputed": true,
+      "goodput_mbps": 30.00944,
+      "link": {
+        "first_tx_attempts": 2170,
+        "first_tx_nacks": 47,
+        "actual_decode_attempts": 77,
+        "sampled_attempts": 2149,
+        "retx_attempts": 56,
+        "retx_nacks": 11
+      },
+      "prefetch": {
+        "completed": true,
+        "cancelled": false,
+        "workers": 2,
+        "generated_blocks": 0,
+        "skipped_blocks": 20,
+        "lock_wait_s": 0.0,
+        "worker_wall_s": 2.2643657269654796,
+        "worker_wall_sum_s": 4.515023719985038,
+        "worker_statuses": [
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.2643657269654796
+          },
+          {
+            "completed": true,
+            "cancelled": false,
+            "assigned_blocks": 10,
+            "processed_blocks": 10,
+            "generated_blocks": 0,
+            "skipped_blocks": 10,
+            "lock_wait_s": 0.0,
+            "worker_wall_s": 2.2506579930195585
+          }
+        ],
+        "foreground_generated_blocks": 0,
+        "foreground_lock_wait_s": 0.0,
+        "total_generated_blocks": 0
+      },
+      "source_sha256": "4bbff9f46eee3c8419d0c9bcb53e34705e18e819a55e73cf4e24e57a4a04a2da",
+      "hashes": {
+        "packet_events.jsonl": "fca99e35a1dd1148df4c5a1cb98217b569e71fef9958b0c68abee928d6b02dec",
+        "harq_events.jsonl": "f3f1d996ae71255fd9fddb4b3126a8cba08f1e1e100e5c478bbf8d4206eb74b6"
+      }
+    },
+    "cold_vs_warm_packet_and_harq_exact": true
+  },
+  "regression_suites": {
+    "initial_status_fix_passed": 145,
+    "final_integration_contract_replay_passed": 173,
+    "note": "Overlapping suites; counts are not added as distinct tests",
+    "final_completion_gate_replay_passed": 9
+  },
+  "browser": {
+    "passed": true,
+    "time_scale_units": [
+      "ms",
+      "s",
+      "min",
+      "h"
+    ],
+    "reports": [
+      {
+        "file": "agx-fast-channel-10ms-network-replay-10s.html",
+        "passed": true,
+        "model": "fast",
+        "duration_s": 10,
+        "frames": 501,
+        "offline": true,
+        "external_requests": [],
+        "errors": [],
+        "layouts": [
+          320,
+          375,
+          414,
+          768,
+          1440
+        ]
+      },
+      {
+        "file": "final400_network-replay.html",
+        "passed": true,
+        "model": "fast",
+        "duration_s": 0.2,
+        "frames": 401,
+        "offline": true,
+        "external_requests": [],
+        "errors": [],
+        "layouts": [
+          320,
+          375,
+          414,
+          768,
+          1440
+        ]
+      }
+    ]
+  },
+  "historical_replay": {
+    "physics_data_unchanged": true,
+    "changed_field": "active PRB utilization",
+    "old_max_utilization": 0.5625,
+    "new_max_utilization": 1.0,
+    "allowed_metadata_changes": {
+      "source_run": [
+        "20261102_fast_channel_10ms_10s_w2",
+        "historical_10s_audited"
+      ],
+      "wall_s": [
+        1033.6775586709846,
+        1039.0733574100304
+      ]
+    },
+    "original_preserved": true
+  },
+  "fixes": [
+    "Run completion is published only after cleanup; all resource closes attempted; original failures preserved; status writes atomic",
+    "Cancelled path workers report cancelled/incomplete with assigned/processed counts",
+    "Replay utilization uses active PRBs, preserving FFT grid diagnostics; historical traces supported",
+    "Public BLER sources identify ACK/NACK, not universally actual CRC; legacy diagnostic limitations annotated"
+  ],
+  "limitations": [
+    "Fast feedback is mostly official SYS EESM/BLER Bernoulli sampling, with real NR fallback; no waveform soft combining",
+    "10ms geometry, 2ms gains, 4 frequency samples/PRB and ideal CSI remain declared approximations",
+    "pre_eq_sinr_db is an alias; BER/precoder-match/beam-gain legacy defaults are not independent measurements and are excluded from valid xApp KPI projection",
+    "Legacy CQI and allocated rank are not independent measured CQI/RI; supported reference-based reports are separate",
+    "RF energy excludes device/baseband/circuit power; reference measurement is a configured hypothesis",
+    "No-path slots are outage diagnostics, excluded from transmitted-TB BLER; BLER alone is not end-to-end outage/reliability",
+    "Packet latency is queue completion of arrival units, excluding within-slot airtime, transport/core processing and undelivered/dropped units"
+  ],
+  "final_completion_gate_verification": {
+    "passed": true,
+    "source_sha256": "3d7988189f8b593c04bd8a9d032a43799c05c051554860a0bbaa8b6b3c5743e4",
+    "completed": true,
+    "stage": "completed",
+    "packet_and_harq_exact": true,
+    "packet_and_link_metrics_exact": true,
+    "active_grid_re": 4032,
+    "fft_grid_re": 7168,
+    "legacy_diagnostics_annotated": true
+  }
+}

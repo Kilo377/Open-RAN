@@ -44,6 +44,20 @@ def test_partial_window_has_correct_rates_and_end_counters(tmp_path):
     assert data['frames'][-1]['rf_energy_j']==pytest.approx(.017)
 
 
+@pytest.mark.parametrize('new_trace',[False,True])
+def test_replay_resource_utilization_excludes_fft_guard_tones(tmp_path,new_trace):
+    run=fixture_run(tmp_path/'run');p=run/'config_snapshot.json';config=json.loads(p.read_text())
+    config['manifest'].update(num_symbols=14,fft_size=512);p.write_text(json.dumps(config))
+    p=run/'rt_sys_trace.jsonl';rows=[json.loads(line) for line in p.read_text().splitlines()]
+    for row in rows:
+        for cell in row['cells'].values():
+            cell.update(grid_re=14*512,occupied_re=14*24*12)
+            if new_trace:cell['active_grid_re']=14*24*12
+    p.write_text(''.join(json.dumps(row)+'\n' for row in rows))
+    data=build_data(run)
+    assert all(cell[1]==1 for frame in data['frames'][1:] for cell in frame['cells'])
+
+
 def test_single_file_keeps_data_safe_and_embeds_all_dependencies(tmp_path):
     run=fixture_run(tmp_path/'run');report=export_replay(run,max_frames=3)
     source=Path(report['html']).read_text()
@@ -62,6 +76,35 @@ def test_replay_refuses_incomplete_or_inconsistent_source_and_preserves_it(tmp_p
     assert p.read_text()=='{"completed":false}' and not (run/'network-replay.html').exists()
     p.write_text('{"completed":true}');trace=run/'rt_sys_trace.jsonl';source=trace.read_text();trace.write_text(source.replace('"slot_id": 2,','"slot_id": 3,',1))
     with pytest.raises(ValueError,match='missing/repeated'):export_replay(run)
+
+
+def test_internal_export_does_not_publish_run_completion_before_cleanup(tmp_path):
+    run=fixture_run(tmp_path/'run');p=run/'run_status.json'
+    p.write_text(json.dumps(dict(completed=False,simulation_completed=True,stage='exporting_replay')))
+    with pytest.raises(ValueError,match='completed'):export_replay(run)
+    assert export_replay(run,allow_finalizing=True)['audits_passed']
+    assert json.loads(p.read_text())['completed'] is False
+    for stage in ['failed','cleanup_failed','cancelled']:
+        p.write_text(json.dumps(dict(completed=False,simulation_completed=True,stage=stage)))
+        with pytest.raises(ValueError,match='completed'):build_data(run,allow_finalizing=True)
+        p.write_text(json.dumps(dict(completed=True,stage=stage)))
+        with pytest.raises(ValueError,match='completed'):build_data(run,allow_finalizing=True)
+    p.write_text(json.dumps(dict(completed=True,stage='exporting_replay')))
+    with pytest.raises(ValueError,match='completed'):export_replay(run)
+
+
+def test_resource_cleanup_attempts_all_closers_and_reports_failures():
+    from experiments.run_rt_sys import close_run_resources
+    from types import SimpleNamespace as N
+    calls=[]
+    def close_first():calls.append('phy');raise RuntimeError('injected PHY close failure')
+    def close_second():calls.append('rt');raise KeyboardInterrupt('injected RT cancellation')
+    def close_third():calls.append('writers')
+    errors=close_run_resources([('phy',N(close=close_first)),('rt',N(close=close_second)),
+        ('writers',N(close=close_third)),('absent',None)])
+    assert calls==['phy','rt','writers']
+    assert [e['resource'] for e in errors]==['phy','rt']
+    assert 'RuntimeError' in errors[0]['error'] and 'KeyboardInterrupt' in errors[1]['error']
 
 
 def test_adaptive_windows_bound_replay_size_from_ms_to_hours():

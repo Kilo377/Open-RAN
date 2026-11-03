@@ -203,6 +203,7 @@ class RtSysPhyAdapter:
                                     're_streams':int(total),'emitted_re_streams':int(total) if budget>0 else 0,
                                     'occupied_re':int(np.logical_or.reduce([e['mask'] for e in active]).sum()) if active and budget>0 else 0,
                                     'grid_re':int(ns*nf),
+                                    'active_grid_re':int(ns*(p.runtime_context.n_prbs_total*12 if p.runtime_context else nf)),
                                     'tx_power_dbm':float(p.tx_power_dbm)}
         # Exact stream grouping; efficient fast samples only channel algebra.
         def at(e,s,f):return e['power'][s,f] if isinstance(e['power'],np.ndarray) else e['power']

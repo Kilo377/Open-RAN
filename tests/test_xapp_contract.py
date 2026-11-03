@@ -29,6 +29,18 @@ def test_truth_isolation_zero_traffic_vs_no_bler_samples_and_metadata():
     ue.queue_bytes=100;assert observation.ue_observations[0].queue_bytes==0
 
 
+def test_legacy_phy_defaults_are_not_exposed_as_measured_kpis():
+    observation=fixture();u=observation.ue_observations[0]
+    u.pre_eq_sinr_db=99.;u.precoder_match_score=1.;u.beam_gain_db=0.;u.ber=0.
+    view,errors=project(observation,contract_for(['power_cap_dbm']))
+    assert not errors
+    for name in ('pre_eq_sinr_db','precoder_match_score','beam_gain_db','ber','cqi'):
+        assert name not in KPI_REGISTRY and not hasattr(view.ue_observations[0],name)
+    assert not contract_for(['codebook_id'],name='massive_mimo_beamformer_xapp').available
+    assert 'ack_nack' in KPI_REGISTRY['bler'].source
+    assert 'ack_nack' in KPI_REGISTRY['first_tx_bler'].source
+
+
 def test_missing_stale_future_and_unknown_required_kpis():
     o=fixture();o.ue_observations[0].reference_sinr_db=None
     _,errors=project(o,contract_for(['power_cap_dbm']));assert any('reference_sinr_db:missing' in e for e in errors)

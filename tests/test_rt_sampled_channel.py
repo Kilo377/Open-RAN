@@ -170,6 +170,19 @@ def test_prefetch_shards_cover_each_block_once_and_skip_foreground_work(tmp_path
     assert sum(s['skipped_blocks'] for s in statuses)==1
 
 
+def test_cancelled_prefetch_does_not_report_all_blocks_completed(tmp_path,monkeypatch):
+    from phy.rt_sys.prefetch import _generate
+    root=tmp_path/'key';root.mkdir();backend=CountingTracer(root)
+    provider=N(key='fixture',root=root,blocks=[0,10,20,30,40],backend=backend)
+    monkeypatch.setattr('phy.rt_sys.channel.RtChannelProvider',lambda *a,**k:provider)
+    status=root/'cancelled.json'
+    _generate({},tmp_path,'cpu',100000,'fixture',N(is_set=lambda:True),0,2,str(status))
+    row=json.loads(status.read_text())
+    assert row['completed'] is False and row['cancelled'] is True
+    assert row['assigned_blocks']==2 and row['processed_blocks']==0
+    assert not (root/'calls').exists()
+
+
 def test_ten_ms_cli_applies_motion_cap_and_preserves_child_spec(monkeypatch,capsys):
     from experiments.run_rt_sys import parse_args,run_case,ROOT
     from experiments.live_xapp_test import ARGUMENTS

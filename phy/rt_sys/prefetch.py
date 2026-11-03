@@ -12,18 +12,21 @@ def _generate(manifest,cache_root,device,quota_bytes,expected_key,cancel,worker_
     dr.set_thread_count(1)
     from phy.rt_sys.channel import RtChannelProvider
     from phy.rt_sys.cache_storage import ensure_paths
-    started=time.perf_counter();provider=None;generated=0;skipped=0;waited=0.
+    started=time.perf_counter();provider=None;generated=0;skipped=0;waited=0.;cancelled=False
     try:
         provider=RtChannelProvider(manifest,Path(cache_root),device=device,quota_bytes=quota_bytes)
         if provider.key!=expected_key:raise RuntimeError('RT prefetch scene fingerprint differs from foreground')
         # The foreground produces block zero while this worker loads the scene.
-        for block in provider.blocks[1+worker_index::workers]:
-            if cancel.is_set():break
+        blocks=provider.blocks[1+worker_index::workers]
+        for block in blocks:
+            if cancel.is_set():cancelled=True;break
             path=provider.root/f'paths_{block:09d}.npz'
             if path.exists():skipped+=1;continue
             _,created,wait=ensure_paths(provider.root,block,provider.backend,quota_bytes,load=False)
             generated+=int(created);skipped+=int(not created);waited+=wait
-        status=dict(completed=True,generated_blocks=generated,skipped_blocks=skipped,lock_wait_s=waited,worker_wall_s=time.perf_counter()-started)
+        status=dict(completed=not cancelled,cancelled=cancelled,assigned_blocks=len(blocks),
+            processed_blocks=generated+skipped,generated_blocks=generated,skipped_blocks=skipped,
+            lock_wait_s=waited,worker_wall_s=time.perf_counter()-started)
     except BaseException:
         status=dict(completed=False,generated_blocks=generated,error=traceback.format_exc())
         raise
@@ -54,6 +57,7 @@ class PathPrefetch:
     def statistics(self):
         rows=[json.loads(p.read_text()) for p in self.status_paths if p.exists()]
         return dict(completed=len(rows)==len(self.processes) and all(r.get('completed') for r in rows),
+            cancelled=any(r.get('cancelled',False) for r in rows),
             workers=len(self.processes),generated_blocks=sum(r.get('generated_blocks',0) for r in rows),
             skipped_blocks=sum(r.get('skipped_blocks',0) for r in rows),
             lock_wait_s=sum(r.get('lock_wait_s',0) for r in rows),

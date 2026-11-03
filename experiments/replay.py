@@ -70,10 +70,13 @@ def render_mesh(path,manifest):
         vertex_bits=vertices.dtype.itemsize*8,index_bits=indices.dtype.itemsize*8,vertex_count=len(v),face_count=len(faces),quantization_m=quant),dict(
         center=[float(center[0]),12.,float(-center[1])],distance=span*2.8,ground_size=max(span*2.5,300.))
 
-def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None):
+def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None, allow_finalizing=False):
     folder=Path(folder);config=read_json(folder/'config_snapshot.json');summary=read_json(folder/'final_summary.json')
     status=read_json(folder/'run_status.json');initial=read_json(folder/'initial_conditions.json');manifest=config['manifest']
-    if not status.get('completed'):raise ValueError('Replay requires a completed simulation; source files were preserved')
+    finalizing=(allow_finalizing and status.get('simulation_completed') and status.get('stage')=='exporting_replay')
+    completed=status.get('completed') and status.get('stage') in (None,'completed')
+    if not completed and not finalizing:
+        raise ValueError('Replay requires a completed simulation; source files were preserved')
     total=int(summary['total_slots']);slot_ms=float(manifest['slot_duration_ms']);dt=slot_ms/1000
     if total!=manifest['total_slots'] or total<1:raise ValueError('Configured and completed slot counts differ')
     window_slots=replay_window_slots(total,slot_ms,max_frames,window_ms)
@@ -96,7 +99,14 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None):
             if {u['ue_id'] for u in row['ues']}!=set(ids):raise ValueError('Trace UE population differs from manifest')
             window_n+=1
             for cid,c in row['cells'].items():
-                cells[cid]['power']+=c['average_used_w'];cells[cid]['occupancy']+=c['occupied_re']/c['grid_re']
+                active_re=c.get('active_grid_re')
+                if active_re is None:
+                    # Historical real traces stored FFT tones, including guards.
+                    active_re=(min(c['grid_re'],manifest['num_symbols']*summary['n_prbs_total']*12)
+                        if 'num_symbols' in manifest else c['grid_re'])
+                if active_re<=0 or not 0<=c['occupied_re']<=active_re:
+                    raise ValueError('Cell occupancy exceeds active resource grid')
+                cells[cid]['power']+=c['average_used_w'];cells[cid]['occupancy']+=c['occupied_re']/active_re
                 energy+=c['average_used_w']*dt
             for u in row['ues']:
                 uid=u['ue_id'];last[uid]=u;w=window[uid]
@@ -189,11 +199,11 @@ def configuration_rows(data,config):
                 'Reference gain update',label_ms(phy.get('reference_gain_update_ms') or data['meta']['slot_ms'])))
     return ''.join('<tr>'+''.join(f'<td'+((' class="value" id="xapps-state"' if row[i-1]=='xApps' else ' class="value"') if i%2 else '')+'>'+html.escape(str(value))+'</td>' for i,value in enumerate(row))+'</tr>' for row in rows)
 
-def export_replay(folder,output=None,*,provider=None,max_frames=500,window_ms=None,mesh_path=None):
+def export_replay(folder,output=None,*,provider=None,max_frames=500,window_ms=None,mesh_path=None,allow_finalizing=False):
     folder=Path(folder);target=Path(output) if output else folder/'network-replay.html'
     if mesh_path is None and provider is not None:
         mesh_path=write_scene_mesh(provider,folder/'replay.mesh.npz')
-    data=build_data(folder,max_frames=max_frames,window_ms=window_ms,mesh_path=mesh_path)
+    data=build_data(folder,max_frames=max_frames,window_ms=window_ms,mesh_path=mesh_path,allow_finalizing=allow_finalizing)
     config=read_json(folder/'config_snapshot.json');template=(ASSETS/'template.html').read_text();app=(ASSETS/'replay.js').read_text()
     duration=data['meta']['simulation_s'];speed=data['meta']['playback_speed']
     choices=sorted({speed/2,speed,speed*2,1.})

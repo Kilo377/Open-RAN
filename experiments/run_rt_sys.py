@@ -20,6 +20,18 @@ from phy.rt_sys.scenario import build_case
 from phy.rt_sys.contracts import source_fingerprint
 
 
+def close_run_resources(resources):
+    """Attempt every close; report cleanup failure without leaking later resources."""
+    errors=[]
+    for name,resource in resources:
+        close=getattr(resource,'close',None)
+        if close is None:continue
+        try:close()
+        except BaseException as exc:
+            errors.append(dict(resource=name,error=f'{type(exc).__name__}: {exc}'))
+    return errors
+
+
 def parse_args():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--scene',choices=['simple_street_canyon','munich'],default='simple_street_canyon')
@@ -227,7 +239,10 @@ def run_case(args):
         'platform_profile':platform_profile,
         'execution_devices':execution_devices,
         'thread_budgets':{k:os.environ[k] for k in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}}
-    def write_status(): (output/'run_status.json').write_text(json.dumps(status,indent=2))
+    def write_status():
+        temporary=output/f'.run_status.{os.getpid()}.tmp'
+        temporary.write_text(json.dumps(status,indent=2))
+        os.replace(temporary,output/'run_status.json')
     write_status(); started=time.perf_counter()
     from phy.rt_sys.efficiency import StageTimings
     timings=StageTimings();simulation_started=None;steady_started=None;steady_decodes=0;live=None
@@ -427,6 +442,15 @@ def run_case(args):
             'nr_equivalent_link_reference':getattr(adapter.abstraction,'feedback_mode',None) in ('nr_direct','nr_tb_reference','nr_cached_reference'),
             'default_bler_eesm_used':getattr(adapter.abstraction,'feedback_mode',None) not in ('nr_direct','nr_tb_reference','nr_cached_reference','nr_bler_bank'),
             'cache_hits':provider.hits,'cache_misses':provider.misses}
+        summary['rt_sys']['legacy_diagnostic_fields']={
+            'pre_eq_sinr_db':'Alias of post-LMMSE arithmetic-mean SINR; not an independent pre-equalizer measurement',
+            'ber':'Not measured; legacy default must not be interpreted as zero measured BER',
+            'beam_gain_db':'Legacy compatibility value, not a measured beam gain; use supported reference reports',
+            'precoder_match_score':'Not measured; legacy compatibility default is not evidence of precoder quality',
+            'cqi':'MCS-derived legacy hint; use independently generated paper wideband/subband CQI reports',
+            'rank_and_ri':'Allocated layer count, not an independently estimated propagation-channel rank'}
+        summary['rt_sys']['energy_scope']='Emitted RF energy only; excludes device/baseband/circuit power'
+        summary['rt_sys']['feedback_scope']='Fast uses SYS-sampled and actual-NR ACK/NACK; actual_decode distinguishes them'
         if hasattr(adapter.abstraction,'model_statistics'):summary['model_statistics']=adapter.abstraction.model_statistics()
         if hasattr(adapter,'system_gains'):summary['model_statistics']['system_gain_statistics']=dict(adapter.system_gains.stats)
         gain_cache=getattr(getattr(simulator.state,'paper',None),'gain_cache',None)
@@ -445,7 +469,7 @@ def run_case(args):
             'completed_handovers':completed_handovers,'training_artifact_sha256':model_hash,
             'learning_frozen':configs['ric']['freeze_learning']}
         (output/'evaluation_summary.json').write_text(json.dumps(evaluation,indent=2))
-        status.update(completed=True,stage='completed',runtime_environment=environment,
+        status.update(simulation_completed=True,stage='finalizing',runtime_environment=environment,
             spark_verified=args.device=='cuda' and rt_device=='cuda' and environment['system']=='Linux' and environment['machine'] in ('aarch64','arm64') and environment['cuda_available'] and
             environment['rt_variant'].startswith('cuda') and 'GB10' in environment['gpu_name'])
         performance=dict(**timings.report(),channel_mode=channel_mode,channel_sampling_statistics=provider.sampling_statistics,
@@ -468,22 +492,24 @@ def run_case(args):
             export_started=time.perf_counter()
             from experiments.replay import export_replay
             status['replay']=export_replay(output,provider=provider,
-                max_frames=getattr(args,'replay_max_frames',500),window_ms=getattr(args,'replay_window_ms',None))
+                max_frames=getattr(args,'replay_max_frames',500),window_ms=getattr(args,'replay_window_ms',None),allow_finalizing=True)
             performance['replay_export_s']=time.perf_counter()-export_started
             (output/'performance.json').write_text(json.dumps(performance,indent=2))
             print('Replay: '+status['replay']['html'],flush=True)
         else:
             from experiments.replay import write_scene_mesh
             write_scene_mesh(provider,output/'replay.mesh.npz')
-        status['stage']='completed'
-        if live:live.finish('completed')
-    except Exception as exc:
-        if live:live.finish('failed',f'{type(exc).__name__}: {exc}')
-        status.update(stage='replay_export_failed' if status.get('completed') else 'failed',error=f'{type(exc).__name__}: {exc}'); raise
+        status['stage']='finalizing'
+    except BaseException as exc:
+        stage=('cancelled' if isinstance(exc,(KeyboardInterrupt,SystemExit)) else
+               'replay_export_failed' if status.get('stage')=='exporting_replay' else 'failed')
+        status.update(completed=False,stage=stage,error=f'{type(exc).__name__}: {exc}')
+        raise
     finally:
-        if 'adapter' in locals() and hasattr(adapter.abstraction,'close'):adapter.abstraction.close()
-        if 'provider' in locals():provider.close()
-        if 'stack' in locals():stack.close()
+        active_exception=sys.exc_info()[1]
+        cleanup_errors=close_run_resources([
+            ('phy',getattr(locals().get('adapter'),'abstraction',None)),
+            ('rt',locals().get('provider')),('writers',locals().get('stack'))])
         status.update(elapsed_s=time.perf_counter()-started,peak_rss_native=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
         status['peak_rss_bytes']=status['peak_rss_native'] if platform.system()=='Darwin' else status['peak_rss_native']*1024
         try:
@@ -495,7 +521,19 @@ def run_case(args):
             cupy.cuda.Stream.null.synchronize()
             status['cupy_pool_reserved_bytes']=cupy.get_default_memory_pool().total_bytes()
         status['output_bytes']=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())
+        if cleanup_errors:
+            status.update(completed=False,stage='cleanup_failed',cleanup_errors=cleanup_errors)
+            status.setdefault('error','; '.join(e['error'] for e in cleanup_errors))
+        elif status.get('stage')=='finalizing':status.update(completed=True,stage='completed')
+        if live:
+            try:live.finish('completed' if status.get('completed') else status['stage'],status.get('error'))
+            except BaseException as exc:
+                cleanup_errors.append(dict(resource='live',error=f'{type(exc).__name__}: {exc}'))
+                status.update(completed=False,stage='cleanup_failed',cleanup_errors=cleanup_errors)
+                status.setdefault('error',cleanup_errors[-1]['error'])
         write_status()
+        if cleanup_errors and active_exception is None:
+            raise RuntimeError('Run cleanup failed: '+'; '.join(e['error'] for e in cleanup_errors))
 
 
 if __name__=='__main__': run_case(parse_args())
