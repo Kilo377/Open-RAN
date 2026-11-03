@@ -25,7 +25,11 @@ combining; select full for Chase.
 The fast profiles are:
 
 - `system` (default): four samples/PRB, block-updated RZF spatial fields and
-  power-conditioned LMMSE coupling gains, with a 2 ms update bound. Each 0.5 ms
+  power-conditioned LMMSE coupling gains, with a 2 ms update bound. Since
+  2026-11-03 it defaults to 10 ms RT geometry, a 0.015 m displacement cap,
+  on-demand channel coordinates and direct reference-power aggregation.
+  CPU RT uses two workers with per-block generation ownership; CUDA/OptiX RT
+  keeps its GPU backend and disables the CPU prefetch pool. Each 0.5 ms
   slot uses its actual scheduled streams, per-PRB powers and receiver noise.
   Reference gains use the same update bound; filtering and E2 observation queues
   still advance every slot. Power, scheduling, pairing, beam/RET and sleep changes
@@ -36,8 +40,11 @@ The fast profiles are:
   selected device.
 
 ```bash
-# New default fast, with 2 ms gain updates
+# Default fast: 10 ms geometry, on-demand channels, 2 ms gain updates
 bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10
+# Previous 5 ms geometry/dense-channel system reference
+bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --path-update-ms 5 \
+  --max-geometry-displacement-m .01 --fast-channel-mode dense --rt-prefetch-workers 1 --duration-s 10
 # Previous per-slot fast
 bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --fast-profile efficient --duration-s 10
 # Optional 5 ms system gain updates
@@ -51,19 +58,28 @@ or RT path-update interval. JSON uses `rt_sys.fast_profile`,
 System currently requires ideal CSI; select efficient/full for CSI-error studies.
 Its spatial calculations use NumPy CPU, official SYS feedback uses batched CPU,
 and actual NR fallback uses the selected PHY device. Hardware profiles still
-select OptiX versus LLVM and the channel reconstruction backend independently.
+select OptiX versus LLVM; on-demand system channels use NumPy on the CPU.
+Explicit path interval, displacement cap, channel mode and worker CLI flags
+override the system defaults. JSON may set `rt_sys.system_path_update_ms` and
+`system_max_geometry_displacement_m`. Resolved values are frozen for live
+restart/OFF-ON comparison commands. Full and the older fast profiles retain
+their configured geometry. The explicit `run-six-ue-fast-10ms.sh` alias remains.
 
 In experiment recording, system also uses detached JSON report copies, vectorized
 subband CQI quantization and diagnostic snapshots at window boundaries plus the
 final slot. Per-slot packet/HARQ records, observations, controls, RF accounting
 and KPI traces remain available. Audit recording retains per-slot state snapshots.
 
-The paired new-AGX 400-slot sweep measured 70.46 s for efficient, 39.84 s for system
+The earlier gain-only new-AGX 400-slot sweep measured 70.46 s for efficient, 39.84 s for system
 at 2 ms and 37.37 s at 5 ms. Main-loop time fell from 59.75 s to 29.00 s at 2 ms.
 The 2 ms default was selected for smaller latency-tail deviations. This is a
 finite scenario comparison, not packet-level equivalence or guaranteed accuracy
 for every xApp/channel. See [system profile validation](docs/rt_sys/FAST_SYSTEM_ACCEPTANCE.md)
 and the [earlier efficient-profile study](docs/rt_sys/FAST_EFFICIENT_ACCEPTANCE.md).
+The subsequently adopted channel preset measured 31.73 s over 400 slots and
+17m 23s for 10 s simulated, versus the preceding 28m 51s. Goodput changed
+-0.045%; UE8 P95 increased 5 ms. See [channel validation](docs/rt_sys/FAST_CHANNEL_ACCEPTANCE.md)
+for the measured scope and latency differences.
 
 The existing `agx_munich_6ue_depth2_fast.json` filename describes the execution
 optimizations; it does not select the PHY model. `--model full|fast` overrides

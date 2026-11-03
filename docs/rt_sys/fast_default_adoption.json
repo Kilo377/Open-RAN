@@ -1,0 +1,158 @@
+{
+  "date": "2026-11-03",
+  "adopted": true,
+  "default_model_still_full": true,
+  "fast_profile": "system",
+  "channel_mode": "sampled",
+  "path_update_ms": 10,
+  "max_geometry_displacement_m": 0.015,
+  "gain_update_ms": 2,
+  "cpu_rt_workers": 2,
+  "regression_passed": 127,
+  "checks": {
+    "manifest_exact": true,
+    "phy_config_exact": true,
+    "packet_metrics_exact": true,
+    "link_statistics_exact": true,
+    "rf_energy_exact": true,
+    "packet_events.jsonl_exact": true,
+    "harq_events.jsonl_exact": true
+  },
+  "source_sha256": "346ddf41c8771f3ce4c98332ef921a4f400ec8931aa93cbbb8fddb99ba9089d1",
+  "validation": {
+    "stage": "completed",
+    "regression_returncode": 0,
+    "benchmark_returncode": 0,
+    "benchmark_wall_s": 32.34615438000765
+  },
+  "performance": {
+    "stages": {
+      "channel_snapshot_including_io_and_cfr": {
+        "calls": 401,
+        "wall_s": 0.18813987413886935
+      },
+      "scheduling": {
+        "calls": 400,
+        "wall_s": 2.4646626928588375
+      },
+      "codec_lookup_or_build": {
+        "calls": 4452,
+        "wall_s": 0.04097662738058716
+      },
+      "actual_tb_feedback": {
+        "calls": 2226,
+        "wall_s": 0.005342474207282066
+      },
+      "batch_feedback_inclusive": {
+        "calls": 400,
+        "wall_s": 6.443120999960229
+      },
+      "precoding_interference_and_tb_inclusive": {
+        "calls": 400,
+        "wall_s": 11.954527438734658
+      },
+      "state_update": {
+        "calls": 1200,
+        "wall_s": 0.9168049553409219
+      },
+      "measurement_update": {
+        "calls": 400,
+        "wall_s": 0.32252535375300795
+      },
+      "slot_total": {
+        "calls": 400,
+        "wall_s": 20.865024395519868
+      }
+    },
+    "clock": "inclusive_host_wall_no_cuda_fences",
+    "interpretation": "Nested and asynchronous stages are not additive GPU execution times.",
+    "channel_mode": "sampled",
+    "channel_sampling_statistics": {
+      "snapshots": 401,
+      "reference_power_evaluations": 7272,
+      "paired_points": 11192,
+      "batched_link_points": 186712
+    },
+    "recording_mode": "experiment",
+    "nr_execution": "batched",
+    "torch_execution_threads": {
+      "intra_op": 1,
+      "inter_op": 1
+    },
+    "reference_cache_statistics": {
+      "calculations": 401,
+      "hits": 401
+    },
+    "rt_prefetch_statistics": {
+      "completed": true,
+      "workers": 2,
+      "generated_blocks": 0,
+      "skipped_blocks": 20,
+      "lock_wait_s": 0.0,
+      "worker_wall_s": 2.256865308037959,
+      "worker_wall_sum_s": 4.50643182604108,
+      "worker_statuses": [
+        {
+          "completed": true,
+          "generated_blocks": 0,
+          "skipped_blocks": 10,
+          "lock_wait_s": 0.0,
+          "worker_wall_s": 2.256865308037959
+        },
+        {
+          "completed": true,
+          "generated_blocks": 0,
+          "skipped_blocks": 10,
+          "lock_wait_s": 0.0,
+          "worker_wall_s": 2.249566518003121
+        }
+      ],
+      "foreground_generated_blocks": 0,
+      "foreground_lock_wait_s": 0.0,
+      "total_generated_blocks": 0
+    },
+    "initialization_s": 7.9789557449985296,
+    "simulation_s": 21.392871137009934,
+    "output_and_telemetry_s": 0.42394383647479117,
+    "steady_wall_s": 21.39261900400743,
+    "steady_slots": 400,
+    "steady_slots_per_s": 18.69803785712581,
+    "steady_actual_tbs_per_s": 3.599372287496719,
+    "actual_decodes": 77,
+    "codec_statistics": {
+      "amc_probe_trials": 0,
+      "bler_probe_trials": 0,
+      "calibration_decode_trials": 0,
+      "actual_tb_decodes": 77,
+      "statistical_tb_samples": 2149,
+      "chase_combined_attempts": 0,
+      "lifecycle_context_cleanup": 1
+    },
+    "source_sha256": "346ddf41c8771f3ce4c98332ef921a4f400ec8931aa93cbbb8fddb99ba9089d1",
+    "cache_key": "4f4df793b744ac69a773cfa9b08e7b15ad8741c0bd7a3d11ad59fd7f2be37804",
+    "model": "fast",
+    "fast_profile": "system",
+    "numerical_fidelity": "sys_default_eesm_bernoulli_with_explicit_nr_fallback",
+    "csv_semantics": "audit: each slot; experiment: instantaneous samples at diagnostic-window boundaries",
+    "replay_export_s": 0.24384031596127898
+  },
+  "replay": {
+    "completed": true,
+    "html": "/home/lboroldn/Desktop/oran_slot_sim_sionna/validation_candidates/fast_default_20261103/outputs/default_400/network-replay.html",
+    "html_bytes": 1418517,
+    "html_sha256": "e1ff0617b822ddfd83a4efb0a5a25413419eece91fbfabd9891c6f410c089710",
+    "self_contained": true,
+    "model": "fast",
+    "fast_profile": "system",
+    "slots": 400,
+    "simulation_s": 0.2,
+    "frames": 401,
+    "window_ms": 0.5,
+    "actual_decodes": 77,
+    "sampled_attempts": 2149,
+    "audits_passed": true
+  },
+  "default_entry": "bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --duration-s 10",
+  "reference_entry": "bash scripts/orin/run-six-ue-cuda-nr.sh --model fast --path-update-ms 5 --max-geometry-displacement-m .01 --fast-channel-mode dense --rt-prefetch-workers 1 --duration-s 10",
+  "scope": "Default selection and argument freezing only; 400-slot equality against the prior named 10ms preset. Prior 10s measurements are not newly measured here. DGX backend selection verified in dry runs; actual OptiX hardware not exercised on AGX."
+}

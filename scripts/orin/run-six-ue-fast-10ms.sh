@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validated O-RAN system-level fast preset; original launcher retains 5 ms RT.
+# Explicit alias for the validated preset, now also the default fast channel.
 set -euo pipefail
 oran_fast_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 exec bash "$oran_fast_script_dir/run-six-ue-cuda-nr.sh" --model fast \

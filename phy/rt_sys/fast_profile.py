@@ -21,7 +21,7 @@ def configure_fast_profile(config, requested=None):
         config.setdefault('reference_gain_update_ms',2.)
         config.setdefault('fast_reports',True)
         config.setdefault('compact_snapshots',True)
-        config.setdefault('fast_channel_mode','dense')
+        config.setdefault('fast_channel_mode','sampled')
     else:
         for key in system_keys:config.pop(key,None)
     config.update(fast_profile=profile,
@@ -32,3 +32,24 @@ def configure_fast_profile(config, requested=None):
                       'cupy' if config.get('algebra_backend') == 'cupy' else config.get('device', 'cuda')))
     if config.get('system_phy_enabled'):config['channel_time_sampling']='one_per_gain_update_per_stream_pattern'
     return profile
+
+
+def configure_fast_channel(config, manifest=None, *, path_update_ms=None,
+                           displacement_m=None, rt_device=None):
+    """Resolve system-channel defaults after CLI overrides, isolating full.
+
+    Explicit CLI geometry values take priority over the fast defaults.
+    """
+    if config.get('fast_profile')!='system':return
+    if config.get('fast_channel_mode')=='sampled':
+        config.update(channel_array_backend='numpy',retain_channel_on_gpu=False)
+    if manifest is None:return
+    if path_update_ms is None:
+        manifest['path_update_ms']=config.get('system_path_update_ms',10.)
+    if displacement_m is None:
+        manifest['max_geometry_displacement_m']=config.get('system_max_geometry_displacement_m',.015)
+    config.setdefault('rt_prefetch_workers',2)
+    if rt_device=='cpu':config.setdefault('rt_prefetch',True)
+    elif rt_device=='cuda':config['rt_prefetch']=False
+    from phy.rt_sys.channel import geometry_blocks
+    geometry_blocks(manifest)

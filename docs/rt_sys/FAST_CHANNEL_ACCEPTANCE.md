@@ -1,12 +1,17 @@
 # Fast channel computation acceptance — 2026-11-02
 
-Recommended opt-in preset for the current AGX system-level xApp experiments:
+Adopted as the default `--model fast` system channel on 2026-11-03. The normal
+`run-six-ue-cuda-nr.sh --model fast` entry now resolves to the configuration below.
+Full and the older efficient/reference fast profiles retain their configured
+geometry. The following alias still pins the named preset explicitly:
 
 ```sh
 bash scripts/orin/run-six-ue-fast-10ms.sh --duration-s 10 --seed 1
 ```
 
-The existing launcher/configuration retains 5 ms geometry and is the reference.
+The existing base configuration retains 5 ms geometry for full/older profiles.
+For the previous system reference, explicitly request `--path-update-ms 5
+--max-geometry-displacement-m .01 --fast-channel-mode dense --rt-prefetch-workers 1`.
 This preset uses 10 ms path updates, a 0.015 m displacement cap at the current
 1.5 m/s UE speed, 2 ms spatial/reference gains, and two CPU path workers. Actual
 NR fallback stays on CUDA. Slot, measurement, queue, HARQ and control clocks are
@@ -102,7 +107,10 @@ The named preset/launcher were subsequently added and rerun for 400 slots.
 Manifest, resolved configs, packet metrics and link statistics matched the
 explicit-flags case exactly. Its computational/config inventory hash is
 `3075e1ab64af9162249ffd3eb6ccd98d97e2225ea45d08105c7ee9321e3e1147`.
-The default preset was not silently replaced.
+The November 2 validation left defaults unchanged; adoption was authorized and
+implemented separately on November 3. Resolved geometry/channel/worker options
+are frozen into live comparison arguments. The adoption verification is recorded
+in `fast_default_adoption.json`.
 
 See `fast_channel_acceptance.json` for numbers. Raw cases and traces remain on
 AGX2 under `validation_candidates/fast_channel_20261102/`; the completed long case

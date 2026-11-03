@@ -51,11 +51,66 @@ def test_profile_resolution_and_full_isolation():
     c=dict(feedback_mode='fast',device='cuda',algebra_backend='cupy')
     assert configure_fast_profile(c)=='system'
     assert c['algebra_device']=='cpu' and c['spatial_samples_per_prb']==4
+    assert c['fast_channel_mode']=='sampled'
     assert configure_fast_profile(c,'reference')=='reference'
     assert c['algebra_device']=='cupy' and c['spatial_samples_per_prb'] is None
     c['feedback_mode']='nr_direct'
     assert configure_fast_profile(c) is None and 'algebra_device' not in c
     with pytest.raises(ValueError,match='requires'):configure_fast_profile(c,'efficient')
+
+
+def test_default_fast_matches_validated_named_preset_and_freezes_live_arguments(monkeypatch,capsys):
+    from experiments.run_rt_sys import parse_args,run_case,ROOT
+    base=['runner','--dry-run','--device','cuda','--rt-device','cpu','--scene','munich',
+        '--cells','3','--ues','6','--slots','400','--model','fast']
+    results=[]
+    for config in ['agx_munich_6ue_depth2_fast.json','agx_munich_6ue_depth2_fast_10ms.json']:
+        monkeypatch.setattr('sys.argv',base+['--config',str(ROOT/'configs/rt_sys'/config)])
+        args=parse_args();run_case(args);results.append(json.loads(capsys.readouterr().out))
+        assert args.path_update_ms==10 and args.max_geometry_displacement_m==.015
+        assert args.rt_prefetch_workers==2 and args.fast_channel_mode=='sampled'
+    assert results[0]['manifest']==results[1]['manifest']
+    assert results[0]['phy_config']==results[1]['phy_config']
+    from phy.rt_sys.channel import geometry_blocks
+    assert geometry_blocks(results[0]['manifest'])[1]==20
+
+
+@pytest.mark.parametrize('model_args',[[],['--model','full'],['--model','fast','--fast-profile','efficient'],['--model','fast','--fast-profile','reference']])
+def test_full_and_older_profiles_keep_configured_geometry(monkeypatch,capsys,model_args):
+    from experiments.run_rt_sys import parse_args,run_case,ROOT
+    monkeypatch.setattr('sys.argv',['runner','--dry-run','--device','cpu','--scene','munich','--cells','3','--ues','6',
+        '--config',str(ROOT/'configs/rt_sys/agx_munich_6ue_depth2_fast.json'),*model_args])
+    run_case(parse_args());result=json.loads(capsys.readouterr().out)
+    assert result['manifest']['path_update_ms']==5
+    assert result['manifest']['max_geometry_displacement_m']==.01
+    assert result['phy_config']['rt_sys'].get('fast_channel_mode','dense')=='dense'
+    assert 'rt_prefetch_workers' not in result['phy_config']['rt_sys']
+
+
+def test_fast_default_allows_exact_five_ms_dense_reference_overrides(monkeypatch,capsys):
+    from experiments.run_rt_sys import parse_args,run_case
+    monkeypatch.setattr('sys.argv',['runner','--dry-run','--device','cpu','--model','fast',
+        '--path-update-ms','5','--max-geometry-displacement-m','.01','--fast-channel-mode','dense',
+        '--rt-prefetch-workers','1'])
+    args=parse_args();run_case(args);result=json.loads(capsys.readouterr().out)
+    assert result['manifest']['path_update_ms']==5 and result['manifest']['max_geometry_displacement_m']==.01
+    assert result['phy_config']['rt_sys']['fast_channel_mode']=='dense'
+    assert result['phy_config']['rt_sys']['rt_prefetch_workers']==1
+    assert args.path_update_ms==5 and args.max_geometry_displacement_m==.01
+
+
+@pytest.mark.parametrize('platform,prefetch',[('agx',True),('dgx',False)])
+def test_sampled_default_retains_platform_rt_and_selects_host_channel_execution(monkeypatch,capsys,tmp_path,platform,prefetch):
+    from experiments.run_rt_sys import parse_args,run_case,ROOT
+    config=json.loads((ROOT/'configs/rt_sys/default.json').read_text())
+    config['rt_sys'].update(retain_channel_on_gpu=True,rt_prefetch=True)
+    path=tmp_path/'retained.json';path.write_text(json.dumps(config))
+    monkeypatch.setattr('sys.argv',['runner','--dry-run','--model','fast','--platform',platform,'--config',str(path)])
+    run_case(parse_args());result=json.loads(capsys.readouterr().out);phy=result['phy_config']['rt_sys']
+    assert phy['retain_channel_on_gpu'] is False and phy['channel_array_backend']=='numpy'
+    assert phy['rt_prefetch'] is prefetch and phy['rt_prefetch_workers']==2
+    assert result['execution_devices']['rt']==('cpu' if platform=='agx' else 'cuda')
+    assert result['execution_devices']['channel_reconstruction']=='cpu'
 
 
 def test_config_profile_cli_precedence(monkeypatch,capsys,tmp_path):

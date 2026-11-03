@@ -14,8 +14,9 @@ class RtSysPhyAdapter:
 
     def __init__(self, config, *, abstraction=None, channel_provider=None):
         self.config = dict(config)
-        from phy.rt_sys.fast_profile import configure_fast_profile
+        from phy.rt_sys.fast_profile import configure_fast_profile,configure_fast_channel
         self.fast_profile=configure_fast_profile(self.config)
+        configure_fast_channel(self.config)
         self.nr_execution=self.config.get('nr_execution','scalar')
         if self.nr_execution not in ('scalar','batched','parallel'):raise ValueError('Unknown NR execution mode')
         if self.nr_execution in ('batched','parallel') and self.config.get('feedback_mode') not in ('nr_direct','fast'):

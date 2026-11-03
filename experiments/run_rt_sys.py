@@ -60,7 +60,7 @@ def parse_args():
     p.add_argument('--initial-queue-bytes',type=int)
     p.add_argument('--ue-speed-mps',type=float)
     model=p.add_mutually_exclusive_group()
-    model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: SYS sampling with explicit NR fallback (default full)')
+    model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: 10 ms geometry and on-demand SYS channels with explicit NR fallback (default full)')
     p.add_argument('--fast-profile',choices=['efficient','reference','system'],help='fast only: system (default, 2 ms gains), per-slot efficient, or full-grid reference')
     p.add_argument('--fast-gain-update-ms',type=float,help='System profile only: override both spatial/reference gain update intervals')
     p.add_argument('--fast-channel-mode',choices=['dense','sampled'],help='System profile only: reconstruct full CFR or requested physical coordinates')
@@ -156,6 +156,14 @@ def run_case(args):
     if fast_profile=='system':args.fast_channel_mode=channel_mode
     if getattr(args,'rt_prefetch_workers',None) is not None:
         configs['phy']['rt_sys']['rt_prefetch_workers']=args.rt_prefetch_workers
+    from phy.rt_sys.fast_profile import configure_fast_channel
+    configure_fast_channel(configs['phy']['rt_sys'],manifest,
+        path_update_ms=args.path_update_ms,displacement_m=displacement,rt_device=rt_device)
+    if fast_profile=='system':
+        # Freeze defaults for live restart and OFF/ON comparison commands.
+        args.path_update_ms=manifest['path_update_ms']
+        args.max_geometry_displacement_m=manifest['max_geometry_displacement_m']
+        args.rt_prefetch_workers=configs['phy']['rt_sys']['rt_prefetch_workers']
     execution_devices={'rt':rt_device,'phy_sys':'cpu' if fast_profile in ('efficient','system') else args.device,
         'nr_fallback':args.device if selected_model=='fast' else None,
         'linear_algebra':'cpu' if fast_profile in ('efficient','system') else ('cuda' if algebra_backend=='cupy' else args.device),
