@@ -82,6 +82,7 @@ def parse_args():
     p.add_argument('--csi-error-nmse-db',type=float)
     p.add_argument('--harq-combining',choices=['none','chase'],default='none')
     p.add_argument('--recording-mode',choices=['audit','experiment'])
+    p.add_argument('--record-compression',choices=['none','gzip'],default='none',help='Losslessly compress CSV/JSONL records; HTML reads either format')
     p.add_argument('--policy-timeline',type=Path)
     p.add_argument('--channel-cache-root',type=Path)
     p.add_argument('--nr-execution',choices=['scalar','batched','parallel'])
@@ -233,7 +234,8 @@ def run_case(args):
         bank=ref.setdefault('probability_bank',{})
         bank.setdefault('bank_file',str(output/'link_bler_bank.json'))
     source_hash=source_fingerprint(ROOT)
-    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
+    compression=getattr(args,'record_compression','none')
+    snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'record_compression':compression,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
     status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'fast_profile':fast_profile,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
@@ -333,14 +335,17 @@ def run_case(args):
         from experiments.rt_diagnostics import RuntimeDiagnostics,compact_trace
         diagnostics=RuntimeDiagnostics(simulator.state.ues,manifest['slot_duration_ms'],warmup,window_slots*manifest['slot_duration_ms'])
         from contextlib import ExitStack
+        from core.record_io import open_record
+        simulator.result_writer.record_compression=compression
+        status['record_compression']=compression
         stack=ExitStack()
-        auxiliary={name:stack.enter_context((output/f'{name}.jsonl').open('w'))
+        auxiliary={name:stack.enter_context(open_record(output/f'{name}.jsonl','w',compression=compression))
             for name in ('olla_feedback','olla_decisions','control_receipts','state_snapshots','diagnostic_trace','rule_decisions','xapp_selection')}
         simulation_started=time.perf_counter();io_s=0.;diagnostic_until=-1
         evaluated_bytes=0;evaluated_slots=0;completed_handovers=0
-        with (output/'rt_sys_trace.jsonl').open('w') as trace, (output/'packet_events.jsonl').open('w') as packet_events, (output/'harq_events.jsonl').open('w') as harq_events:
+        with open_record(output/'rt_sys_trace.jsonl','w',compression=compression) as trace, open_record(output/'packet_events.jsonl','w',compression=compression) as packet_events, open_record(output/'harq_events.jsonl','w',compression=compression) as harq_events:
             import csv
-            with (output/'ue_metrics.csv').open('w',newline='') as ufile, (output/'cell_metrics.csv').open('w',newline='') as cfile:
+            with open_record(output/'ue_metrics.csv','w',compression=compression,newline='') as ufile, open_record(output/'cell_metrics.csv','w',compression=compression,newline='') as cfile:
                 uw=cw=None
                 for _ in range(args.slots):
                     if steady_started is None and simulator.state.sim_time_ms>=warmup:
@@ -405,6 +410,11 @@ def run_case(args):
                         if cw is None: cw=csv.DictWriter(cfile,fieldnames=list(row)); cw.writeheader()
                         cw.writerow(row)
                     io_s+=time.perf_counter()-io_start
+                    if simulator.state.slot_id%1000==0 or simulator.state.slot_id==args.slots:
+                        status.update(last_completed_slot=simulator.state.slot_id,
+                            simulated_seconds=simulator.state.sim_time_ms/1000,
+                            simulation_wall_s_so_far=time.perf_counter()-simulation_started)
+                        write_status()
         simulation_elapsed=time.perf_counter()-simulation_started
         steady_elapsed=time.perf_counter()-steady_started if steady_started is not None else 0.
         stack.close()

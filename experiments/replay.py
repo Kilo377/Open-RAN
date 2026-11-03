@@ -4,6 +4,7 @@ import base64
 import hashlib
 import html
 import json
+from core.record_io import open_record
 import math
 import os
 import re
@@ -92,7 +93,7 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None, allow_
     def empty_window():
         return {u:dict(bytes=0,decodes=0,nacks=0,sinr_sum=0.,sinr_n=0,hol=0.) for u in ids},{c:dict(bytes=0,power=0.,occupancy=0.) for c in cell_ids}
     window,cells=empty_window()
-    with (folder/'rt_sys_trace.jsonl').open() as stream:
+    with open_record(folder/'rt_sys_trace.jsonl') as stream:
         for expected,line in enumerate(stream,1):
             row=json.loads(line);slot=row['slot_id'];bindings_recorded=bindings_recorded or 'xapp_bindings' in row
             if slot!=expected:raise ValueError(f'Replay trace missing/repeated slot: expected {expected}, got {slot}')

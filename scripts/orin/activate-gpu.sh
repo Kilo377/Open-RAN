@@ -6,6 +6,13 @@ oran_project_root="$PWD"
 export CUDA_PATH="${CUDA_PATH:-/usr/local/cuda}"
 export PATH="$CUDA_PATH/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_PATH/lib64:/usr/lib/aarch64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+# Optional runtime libraries (e.g. cuDSS) stay inside this virtual environment.
+for oran_library_dir in "$VIRTUAL_ENV"/lib/python*/site-packages/nvidia/{cudss,cu12}/lib; do
+    if [[ -d "$oran_library_dir" ]]; then
+        export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$oran_library_dir"
+    fi
+done
+unset oran_library_dir
 export CUDA_CACHE_PATH="$oran_project_root/.cache/cuda-orin"
 export CUPY_CACHE_DIR="$oran_project_root/.cache/cupy"
 mkdir -p "$CUDA_CACHE_PATH" "$CUPY_CACHE_DIR"

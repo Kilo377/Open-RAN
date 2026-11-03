@@ -1,0 +1,93 @@
+{
+  "cuda": {
+    "torch": "2.9.1",
+    "cuda": "12.6",
+    "device": "Orin",
+    "capability": [
+      8,
+      7
+    ],
+    "arches": [
+      "sm_87"
+    ],
+    "passed": [
+      "GPU_matmul",
+      "GPU_cudnn_conv1d",
+      "GPU_LDPC_project_tests"
+    ],
+    "project_gpu_tests": 28,
+    "rt_device": "cpu",
+    "fast_matrix_device": "cpu",
+    "nr_fallback_device": "cuda",
+    "limitation": "GPU dense linalg not accepted on the existing JetPack 6 libraries; fast retains its validated CPU matrix path."
+  },
+  "python310_annotation_changes": [
+    {
+      "file": "sionna/rt/path_solvers/paths.py",
+      "before": "5ad56ec10f8587b39fa8db16be6b4264ebd2494ddee56b41224ee07d725b645c",
+      "after": "0f55ac72ac3a75455c21f1b758ca021f6788c84cb1ba59083a5257291c95c997",
+      "change": "typing.Self import backported to typing_extensions.Self only"
+    },
+    {
+      "file": "sionna/rt/rcs/scattering_points.py",
+      "before": "45e9888815771c8efc7fbb18a1709f8cb3179e75ef3ce77841e8a9186c6ce29e",
+      "after": "4f94169449252e18c81301eefd9959c4f6efc4473568cfd99a94d5d4ccdc04e3",
+      "change": "typing.Self import backported to typing_extensions.Self only"
+    }
+  ],
+  "scene400": {
+    "completed": true,
+    "source_sha256": "fa5f697bb330ce7ebf35fb243d7fb17abb1fbe4ed5c844ad499109dbb8f88dcb",
+    "slot_count": 400,
+    "model": "fast",
+    "devices": {
+      "rt": "cpu",
+      "phy_sys": "cpu",
+      "nr_fallback": "cuda",
+      "linear_algebra": "cpu",
+      "channel_reconstruction": "cpu"
+    },
+    "record_compression": "gzip",
+    "simulation_wall_s": 19.616959538077936,
+    "status_elapsed_s": 31.50884667702485,
+    "actual_nr_decodes": 77,
+    "sys_samples": 2149,
+    "html_audits": true
+  },
+  "record_compression_acceptance": {
+    "all_records_semantically_equal": true,
+    "byte_equal": {
+      "control_receipts.jsonl": false,
+      "diagnostic_trace.jsonl": true,
+      "xapp_selection.jsonl": true,
+      "state_snapshots.jsonl": true,
+      "rule_decisions.jsonl": true,
+      "rt_sys_trace.jsonl": true,
+      "packet_events.jsonl": true,
+      "harq_events.jsonl": true,
+      "olla_feedback.jsonl": true,
+      "olla_decisions.jsonl": true,
+      "cell_metrics.csv": true,
+      "slot_metrics.csv": true,
+      "ue_metrics.csv": true
+    },
+    "json_equal": {
+      "control_receipts.jsonl": true,
+      "diagnostic_trace.jsonl": true,
+      "xapp_selection.jsonl": true,
+      "state_snapshots.jsonl": true,
+      "rule_decisions.jsonl": true,
+      "rt_sys_trace.jsonl": true,
+      "packet_events.jsonl": true,
+      "harq_events.jsonl": true,
+      "olla_feedback.jsonl": true,
+      "olla_decisions.jsonl": true
+    },
+    "sizes": {
+      "plain": 16503237,
+      "gzip": 3573995
+    },
+    "gzip_ratio": 0.21656327179934456,
+    "note": "Control receipt JSON values match; dictionary key order differs across fresh Python hash seeds."
+  }
+}

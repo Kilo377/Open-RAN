@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, List, Any
+from core.record_io import open_record
 
 
 class ResultWriter:
@@ -84,17 +85,20 @@ class ResultWriter:
         if len(slot_records) == 0:
             return
 
-        flattened_records = [self._flatten_record(record) for record in slot_records]
         field_names: list[str] = []
-        for record in flattened_records:
-            for field_name in record.keys():
-                if field_name not in field_names:
+        seen=set()
+        # Keep only one flattened row in memory; large runs already retain the
+        # original records for summary calculations.
+        for record in slot_records:
+            for field_name in self._flatten_record(record):
+                if field_name not in seen:
+                    seen.add(field_name)
                     field_names.append(field_name)
 
-        with output_path.open("w", newline="", encoding="utf-8") as csv_file:
+        with open_record(output_path,'w',compression=getattr(self,'record_compression','none'),newline='') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=field_names)
             writer.writeheader()
-            writer.writerows(flattened_records)
+            writer.writerows(self._flatten_record(record) for record in slot_records)
 
     def write_final_summary(self, summary: Dict[str, Any]) -> None:
         """

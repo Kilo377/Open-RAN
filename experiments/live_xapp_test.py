@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'max_geometry_displacement_m', 'fast_channel_mode', 'rt_prefetch_workers', 'platform',
     'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load',
     'initial_queue_bytes', 'ue_speed_mps', 'model', 'fast_profile', 'fast_gain_update_ms', 'feedback_mode', 'csi_error_nmse_db',
-    'harq_combining', 'recording_mode', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
+    'harq_combining', 'recording_mode', 'record_compression', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 
 
 def atomic_json(path, value):
