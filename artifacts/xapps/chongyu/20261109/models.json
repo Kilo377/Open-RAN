@@ -1,0 +1,22 @@
+{
+  "schema": "oran.frozen-modelset.v1",
+  "release": "20261109",
+  "models": {
+    "x01": {
+      "path": "models/x01.json",
+      "sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee"
+    },
+    "x02": {
+      "path": "models/x02.json",
+      "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935"
+    },
+    "x08": {
+      "path": "models/x08.json",
+      "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+    },
+    "x12_mec": {
+      "path": "models/x12_mec.json",
+      "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1"
+    }
+  }
+}

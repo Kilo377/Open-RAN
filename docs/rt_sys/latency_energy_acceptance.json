@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-04",
+  "status": "completed_with_x12_experimental",
+  "native_network": {
+    "cells": 3,
+    "ues": 6,
+    "model": "fast",
+    "traffic_load": 1
+  },
+  "x01_10s": {
+    "accepted_relative_guards": true,
+    "model_sha256": "9baf497d3d84e01c0aaa609ec050f75fcbd24af33a39f8bd5fedf5e16ac15e2b",
+    "target_energy_saving_fraction": 0.13738596982644224,
+    "all_ue_energy_saving_fraction": 0.04300197591153852,
+    "ue0_task_on_time_counts": {
+      "off": [
+        137,
+        196
+      ],
+      "on": [
+        135,
+        196
+      ]
+    },
+    "evidence": "x01-10s-acceptance.json",
+    "html": [
+      "x01-off-10s.html",
+      "x01-on-10s.html"
+    ]
+  },
+  "x12": {
+    "status": "experimental",
+    "accepted": false,
+    "measured_training_rows": 28,
+    "fit_count": 15,
+    "validation_seconds": 1,
+    "validation_seed": 55,
+    "validation_role": "refinement_validation",
+    "offloaded_delay_ms": {
+      "off": 10.250000000000002,
+      "x12": 9.849999999999998
+    },
+    "latency_improvement_fraction": 0.03902439024390281,
+    "required_improvement_fraction": 0.05,
+    "independent_seed_77": "skipped",
+    "source_sha256": "f317fd2b10ae5546fd9654e87debe7067e3542766de30e7a03505961d61fb28e",
+    "evidence": "x12-final-acceptance.json"
+  },
+  "indirect_conflict": {
+    "convincing_case_observed": false,
+    "common_tasks": 20,
+    "common_task_outcomes_identical_x12_vs_both": true,
+    "target_energy_cross_cost_whole_run_fraction": 0.005708589245185802,
+    "target_energy_cross_cost_steady_window_fraction": 0.009684508252973734,
+    "efficacy_precondition_met": false,
+    "evidence": "x12-final-same-task-audit.json"
+  },
+  "validation": {
+    "tests_passed": 215,
+    "subtests_passed": 4,
+    "html_self_contained_audits": "passed",
+    "visual_browser_review_performed": false
+  },
+  "runtime_default_xapps": "off",
+  "run_pair": "bash scripts/orin/run-x01-x12-rf.sh --duration-s 1 --output outputs/my_pair_run"
+}

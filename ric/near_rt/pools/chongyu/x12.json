@@ -1,0 +1,56 @@
+{
+  "id": "X-12",
+  "implementation": "latency_scheduler_rf",
+  "algorithm": "RandomForestRegressor",
+  "target_ues": [
+    "ue_0",
+    "ue_4"
+  ],
+  "target_kpis": {
+    "ue_task_metrics.offloaded_mean_completion_latency_ms": {
+      "unit": "ms",
+      "direction": "minimize"
+    },
+    "ue_task_metrics.success_ratio": {
+      "unit": "ratio",
+      "direction": "guard"
+    }
+  },
+  "rcp": {
+    "scheduler_mode": {
+      "values": [
+        "round_robin",
+        "latency_aware"
+      ]
+    },
+    "ue_scheduler_weights": {
+      "values": [
+        0.5,
+        1,
+        2
+      ],
+      "native": 1,
+      "scope": "target UE"
+    }
+  },
+  "affected_kpis": {
+    "ue_task_metrics.mean_completion_latency_ms": "ms",
+    "ue_energy_total_j": "J",
+    "throughput_mbps": "Mbit/s",
+    "queue_bytes": "byte",
+    "hol_delay_ms": "ms",
+    "ue_task_metrics.success_ratio": "ratio"
+  },
+  "diagnostics": {
+    "fixed_mode": "--latency-xapp-mode fixed --latency-xapp-fixed-action 0|1|2|3",
+    "fixed_actions": {
+      "0": "native RR,weight1",
+      "1": "latency-aware,weight0.5",
+      "2": "latency-aware,weight1",
+      "3": "latency-aware,weight2"
+    },
+    "stage_metric": "ue_task_stage_metrics",
+    "study": "experiments/run_mec_stage_ablation.py",
+    "learning": "Fixed ablations never fit or predict."
+  }
+}

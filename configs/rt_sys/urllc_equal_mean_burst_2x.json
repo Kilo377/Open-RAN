@@ -1,0 +1,24 @@
+{
+  "profile_id": "urllc_equal_mean_burst_2x_20ms_on_60ms_off",
+  "provenance": "Independent pressure scenario. At traffic-load=2, native CBR offers UE2=175 and UE6=137 bytes per 0.5ms slot. Fourfold peak at 25% duty preserves these ACTUAL integer byte means over every 80ms cycle. Packet caps match native actual CBR arrival-chunk sizes, so each ON arrival creates four native-sized packets, preserving cycle packet counts and payload sizes as well as bytes. No extra burst bytes. Radio, motion, deadlines and non-URLLC arrivals are unchanged.",
+  "ues": {
+    "ue_2": {
+      "arrival_model": "on_off",
+      "arrival_rate_bps": 11200000,
+      "packet_size_bytes": 175,
+      "on_duration_slots": 40,
+      "off_duration_slots": 120,
+      "burst_size_bytes": 0,
+      "start_offset_slots": 0
+    },
+    "ue_6": {
+      "arrival_model": "on_off",
+      "arrival_rate_bps": 8768000,
+      "packet_size_bytes": 137,
+      "on_duration_slots": 40,
+      "off_duration_slots": 120,
+      "burst_size_bytes": 0,
+      "start_offset_slots": 0
+    }
+  }
+}

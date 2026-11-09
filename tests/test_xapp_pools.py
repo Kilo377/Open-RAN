@@ -10,12 +10,19 @@ from ric.near_rt.pools import pool_catalog, build_pool_xapp
 from test_live_xapp_test import fixture_sim
 
 
+def empty_chongyu_pool(monkeypatch):
+    """An empty catalog is a supported fixture, not the shipped pool contents."""
+    import ric.near_rt.pools as pools
+    original = pools.pool_catalog
+    monkeypatch.setattr(pools, 'pool_catalog', lambda name: {} if name == 'chongyu' else original(name))
+
+
 def test_default_pool_and_cli_override_preserve_identical_radio_and_traffic():
     from phy.rt_sys.scenario import build_case
     a = build_case(num_cells=2, num_ues=4, total_slots=20)
     b = build_case(num_cells=2, num_ues=4, total_slots=20, xapp_pool='yisong')
     assert a[1]['ric']['xapp_pool'] == 'chongyu'
-    assert not a[1]['ric']['xapps']
+    assert set(x['implementation_id'] for x in a[1]['ric']['xapps']) == {'ue_energy_rf', 'latency_scheduler_rf', 'mec_offload_budget_qgbdt', 'throughput_scheduler_mlp', 'latency_urllc_rf', 'ap_energy_rf'}
     assert b[1]['ric']['xapp_pool'] == 'yisong' and b[1]['ric']['xapps']
     assert a[0] == b[0] and a[1]['ue'] == b[1]['ue'] and a[1]['sim'] == b[1]['sim']
     with pytest.raises(ValueError, match='Unknown xApp pool'):
@@ -24,7 +31,9 @@ def test_default_pool_and_cli_override_preserve_identical_radio_and_traffic():
 
 def test_existing_catalog_is_yisong_and_chongyu_does_not_import_it():
     assert len(pool_catalog('yisong')) == 47
-    assert pool_catalog('chongyu') == {}
+    assert set(pool_catalog('chongyu')) == {'ue_energy_rf', 'latency_scheduler_rf', 'mec_offload_budget_qgbdt', 'throughput_scheduler_mlp', 'latency_urllc_rf', 'ap_energy_rf'}
+    assert all(v['pool'] == 'chongyu' for v in pool_catalog('chongyu').values())
+    assert not set(pool_catalog('chongyu')) & set(pool_catalog('yisong'))
     assert all(v['pool'] == 'yisong' for v in pool_catalog('yisong').values())
     with pytest.raises(ValueError, match='belongs to yisong'):
         build_controller_registry(dict(xapp_pool='chongyu', xapps=[dict(type='live_scheduler_test',cell_ids=['a'])]))
@@ -34,7 +43,32 @@ def test_existing_catalog_is_yisong_and_chongyu_does_not_import_it():
         build_pool_xapp(dict(implementation_id='ue_fairness:equal_share'), 'chongyu')
 
 
-def test_empty_pool_runs_baseline_and_rejects_activation_and_comparison(tmp_path):
+def test_real_chongyu_factory_identity_and_no_yisong_fallback(monkeypatch):
+    import ric.near_rt.pools as pools
+    from ric.near_rt.pools.chongyu.ue_energy_rf import UeEnergyRF
+    imports = []
+    original = pools.importlib.import_module
+    def guarded(name, *args, **kwargs):
+        imports.append(name)
+        if '.pools.yisong' in name or '.xapp_library.' in name:
+            raise AssertionError('Chongyu factory attempted a Yisong fallback')
+        return original(name, *args, **kwargs)
+    monkeypatch.setattr(pools.importlib, 'import_module', guarded)
+    spec = pools.pool_catalog('chongyu')['ue_energy_rf']
+    assert spec['factory'] == 'ric.near_rt.pools.chongyu.ue_energy_rf:UeEnergyRF'
+    app = pools.build_pool_xapp(dict(pool='chongyu', implementation_id='ue_energy_rf',
+                                    instance_id='ue_energy_rf', cell_ids=['cell_0']), 'chongyu')
+    assert isinstance(app, UeEnergyRF)
+    assert app.implementation_id == app.name == 'ue_energy_rf'
+    assert app.category_id == spec['category_id'] == 'ue_energy_saving'
+    assert app.descriptor()['pool'] == 'chongyu'
+    assert imports == ['ric.near_rt.pools.chongyu.ue_energy_rf']
+    with pytest.raises(ValueError, match='Unregistered implementation'):
+        pools.build_pool_xapp(dict(implementation_id='missing', cell_ids=['cell_0']), 'chongyu')
+
+
+def test_empty_pool_runs_baseline_and_rejects_activation_and_comparison(tmp_path, monkeypatch):
+    empty_chongyu_pool(monkeypatch)
     sim, session, step = fixture_sim(tmp_path, pool='chongyu')
     step(12)
     state = session.snapshot()
@@ -52,7 +86,8 @@ def test_empty_pool_runs_baseline_and_rejects_activation_and_comparison(tmp_path
         start_comparison(tmp_path / 'live.json', dict(xapp_test=state))
 
 
-def test_empty_pool_cannot_start_on_or_accept_a_foreign_implementation():
+def test_empty_pool_cannot_start_on_or_accept_a_foreign_implementation(monkeypatch):
+    empty_chongyu_pool(monkeypatch)
     manifest = dict(cells=[dict(cell_id='a')], slot_duration_ms=.5)
     args = NS(live_xapp_test=True, phase='integration', control_mode='baseline', xapp_pool='chongyu',
               xapp_test_start='on')
@@ -143,6 +178,9 @@ def test_cli_pool_override_and_default_outputs_are_separate(monkeypatch, capsys)
         report = json.loads(capsys.readouterr().out)
         assert report['xapp_pool'] == pool
         assert ('pool_' + pool) in report['output']
-        assert bool(report['registered_xapps']) == (pool == 'yisong')
+        assert report['registered_xapps']
+        if pool == 'chongyu':
+            assert 'ue_energy_rf' in str(report['registered_xapps'])
+            assert 'ue_fairness:equal_share' not in str(report['registered_xapps'])
         paths.append(report['output'])
     assert paths[0] != paths[1]

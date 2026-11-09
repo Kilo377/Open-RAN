@@ -83,6 +83,8 @@ class PaperEnvironment:
             getattr(r.cell,'ret_tilt_deg',0),getattr(r.cell,'ret_codebook_id',0),
             tuple(r.cell.prb_power_w) if getattr(r.cell,'prb_power_w',None) is not None else None)
             for cid,r in self.state.managed_cells.items())
+        if getattr(self.state,'ap_services',None) is not None:
+            radio += tuple((cid, bool(r.cell.ap_available)) for cid,r in self.state.managed_cells.items())
         report_beams=bool(self.config.get('beam_reports',False))
         beam_state=tuple((uid,c.serving_beam_id) for uid,c in sorted(self.state.connections.items())) if report_beams else ()
         key=(slot,id(snapshot),radio,snapshot.metadata.get('tx_rows'),snapshot.metadata.get('tx_cols'),
@@ -220,8 +222,21 @@ class PaperEnvironment:
         self.committed=slot
         # One common filtered/noisy reference report for all candidates/subbands.
         alpha=1-math.exp(-self.dt/max(float(self.adapter.config.get('mobility',{}).get('measurement_filter_ms',20)),1e-9))
+        observed={}
         for uid,cells in self.raw.items():
+            observed[uid]={}
             for cid,r in cells.items():
+                if getattr(self.state,'ap_services',None) is not None and r.get('ap_reference_unavailable',False):
+                    # Deliberate DTX is a missing reference, not a -300 dB
+                    # propagation sample. Keep the last valid EWMA untouched.
+                    old=self.filtered.get((uid,cid))
+                    missing=self.copy_report(old if old is not None else r)
+                    missing.update(no_path=True,ap_reference_unavailable=True)
+                    for beam in missing.get('beam_reference_reports',[]):
+                        beam['valid']=False
+                        beam['ap_reference_unavailable']=True
+                    observed[uid][cid]=missing
+                    continue
                 rng=random.Random(int(digest([self.adapter.seed,slot,uid,cid,'paper_reference_noise'])[:15],16))
                 noise=rng.gauss(0,float(getattr(self.sim.config,'measurement_sinr_noise_std_db',2)))
                 old=self.filtered.get((uid,cid));new=self.copy_report(r)
@@ -235,7 +250,8 @@ class PaperEnvironment:
                         key=(report['codebook_id'],report['beam_profile_id']);value=report['reference_sinr_db']+noise
                         report['reference_sinr_db']=value if key not in previous else previous[key]['reference_sinr_db']+alpha*(value-previous[key]['reference_sinr_db'])
                 self.filtered[uid,cid]=new
-        self.observed={uid:{cid:self.filtered[uid,cid] for cid in cells} for uid,cells in self.raw.items()}
+                observed[uid][cid]=new
+        self.observed=observed
         for ue in self.state.ues:
             uid=ue.ue_id;c=self.state.connections[uid];source=c.serving_cell_id;policy=self.state.managed_cells[source].cell
             c.candidate_cells=[]
@@ -245,7 +261,13 @@ class PaperEnvironment:
                     steering_score_db=r['rsrp_dbm']+float(policy.cio_offsets_db.get(cid,0))+(float(policy.mobility_bias_db) if preference=='edge_offload' and cid!=source else -abs(float(policy.mobility_bias_db)) if preference=='stay_put' and cid!=source else 0),candidate_beam_id=r['candidate_beam_id'],
                     is_serving=cid==source,measurement_produced_at_slot=slot,measurement_delivered_at_slot=slot,measurement_window_slots=max(1,round(20/self.dt))))
             if slot==0:
-                target=max(self.observed[uid],key=lambda cid:self.observed[uid][cid]['rsrp_dbm'])
+                candidates=self.observed[uid]
+                if getattr(self.state,'ap_services',None) is not None:
+                    candidates={cid:r for cid,r in candidates.items() if not r.get('ap_reference_unavailable',False)}
+                if not candidates:
+                    c.connection_state='out_of_sync'
+                    continue
+                target=max(candidates,key=lambda cid:candidates[cid]['rsrp_dbm'])
                 if not self.events_enabled or self.good(self.observed[uid][target]):self.attach(uid,target,'initial')
                 else:c.connection_state='out_of_sync'
                 continue
@@ -283,6 +305,8 @@ class PaperEnvironment:
             last=c.last_handover_slot
             if last is not None and (slot-last)*self.dt<float(self.adapter.config.get('mobility',{}).get('min_dwell_ms',100)):continue
             choices=[x for x in c.candidate_cells if x.cell_id in self.neighbors(c.serving_cell_id)]
+            if getattr(self.state,'ap_services',None) is not None:
+                choices=[x for x in choices if not self.observed[uid][x.cell_id].get('ap_reference_unavailable',False)]
             if not choices:continue
             best=max(choices,key=lambda x:x.steering_score_db)
             margin=best.steering_score_db-self.observed[uid][c.serving_cell_id]['rsrp_dbm']
@@ -356,9 +380,25 @@ class PaperEnvironment:
                 handover_rate_per_s=success/max(seconds,dt),handover_failure_rate=failure/(success+failure) if success+failure and self.events_enabled else None,
                 connection_drop_fraction=drops/denominator if denominator and self.events_enabled else None,
                 mobility_counts=dict(success=success,failure=failure,cancelled=sum(x['kind']=='handover_cancelled' for x in e),pending=int(uid in self.pending),drops=drops,sessions_at_risk=denominator,normal_ends=sum(x['kind']=='connection_normal_end' for x in e),active_sessions=int(uid in self.sessions)))
+            if getattr(self.state,'ap_services',None) is not None:
+                available={cid:not x.get('ap_reference_unavailable',False) for cid,x in self.observed[uid].items()}
+                reports['ue'][uid].update(reference_measurement_available=available[c.serving_cell_id],
+                    candidate_reference_available=available,
+                    candidate_sinr_db={cid:x['reference_sinr_db'] for cid,x in self.observed[uid].items() if available[cid]},
+                    candidate_rsrp_dbm={cid:x['rsrp_dbm'] for cid,x in self.observed[uid].items() if available[cid]})
+        services=getattr(self.state,'ue_services',None)
+        if services is not None:
+            for uid,values in services.reports.items():reports['ue'][uid].update(deepcopy(values))
         for cid in self.state.managed_cells:
             energy=sum(s['energy'][cid] for s in self.samples);bits=sum(s['bits'][cid] for s in self.samples)
             reports['cell'][cid]=dict(rf_energy_j=energy,rf_energy_total_j=self.rf_energy[cid],rf_efficiency_bit_per_j=bits/energy if energy>0 else None,whole_device_power_w=None,whole_device_efficiency_bit_per_j=None)
+            ap_services=getattr(self.state,'ap_services',None)
+            if ap_services is not None:
+                reports['cell'][cid].update(deepcopy(ap_services.reports[cid]))
+                reports['cell'][cid]['whole_device_power_w']=ap_services.reports[cid]['ap_power_w']
+                ap_energy=ap_services.reports[cid]['ap_energy_total_j']
+                total_bits=ap_services.reports[cid]['ap_delivered_bits_total']
+                reports['cell'][cid]['whole_device_efficiency_bit_per_j']=total_bits/ap_energy if ap_energy else None
         if self.config.get('rule_observations',False):
             from ric.near_rt.rule_based_v1.telemetry import augment
             augment(self,reports)

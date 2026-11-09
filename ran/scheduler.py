@@ -8,6 +8,7 @@ the abstract PHY / PDSCH execution path.
 
 from __future__ import annotations
 
+import math
 from typing import Any, List
 
 from core.debug import debug_print
@@ -223,6 +224,9 @@ class SimpleScheduler(SchedulerBase):
         return connection_state == "connected" and serving_cell_id in managed_cell_ids
 
     def _get_eligible_ues(self, state: Any) -> list:
+        cell = getattr(state, 'cell', None)
+        if getattr(cell, 'ap_service_enabled', False) and not cell.ap_available:
+            return []
         if str(getattr(getattr(state, "cell", None), "cell_sleep_mode", "active")).strip().lower() == "deep_sleep":
             return []
         eligible_ues = []
@@ -1038,6 +1042,10 @@ class SimpleScheduler(SchedulerBase):
             ue_id = str(getattr(ue, "ue_id", ""))
             if ue_id == "":
                 continue
+            cell = getattr(state, 'cell', None)
+            if getattr(cell, 'ap_service_enabled', False) and not cell.ap_available:
+                filtered_out_reasons[ue_id] = 'ap_unavailable'
+                continue
             if not self._is_ue_connected(state, ue):
                 filtered_out_reasons[ue_id] = "not_connected"
                 continue
@@ -1115,6 +1123,8 @@ class SimpleScheduler(SchedulerBase):
             return "selected_for_harq_retransmission"
         if scheduler_mode == "latency_aware":
             return "selected_for_latency_priority"
+        if scheduler_mode == "qos_deadline":
+            return "selected_for_qos_deadline_priority"
         if scheduler_mode == "slice_aware":
             return "selected_for_slice_priority"
         if scheduler_mode == "round_robin":
@@ -1136,6 +1146,8 @@ class SimpleScheduler(SchedulerBase):
             return "new_tx_preempted_by_retransmissions"
         if scheduler_mode == "latency_aware":
             return "new_tx_not_selected_under_latency_priority"
+        if scheduler_mode == "qos_deadline":
+            return "new_tx_not_selected_under_qos_deadline_priority"
         if scheduler_mode == "slice_aware":
             return "new_tx_not_selected_under_slice_priority"
         if scheduler_mode == "round_robin":
@@ -2130,7 +2142,7 @@ class SimpleScheduler(SchedulerBase):
         if scheduler_mode == "round_robin":
             return self._order_demands_round_robin(state, demands)
 
-        if scheduler_mode == "latency_aware":
+        if scheduler_mode in ("latency_aware", "qos_deadline"):
             return sorted(
                 demands,
                 key=lambda demand: self._score_for_mode(
@@ -2205,7 +2217,7 @@ class SimpleScheduler(SchedulerBase):
         poor_link_penalty = 0.0
         if self._is_poor_link_probe_candidate(ue, demand, is_retx=False):
             poor_link_penalty = 90.0
-        return (
+        score = (
             latency_component
             + hol_component
             + priority_component
@@ -2215,6 +2227,57 @@ class SimpleScheduler(SchedulerBase):
             - csi_staleness_penalty
             - poor_link_penalty
         )
+        # X-12's UE-specific priority is consumed only by latency_aware mode.
+        # Round-robin ordering/scores never call this function.
+        weight = float(getattr(ue, "scheduler_weight", 1.0))
+        if not 0.5 <= weight <= 2.0:
+            raise ValueError("Invalid UE scheduler weight")
+        return score * weight
+
+    def _refresh_qos_rate_history(self, state: Any) -> None:
+        """Only the opt-in QoS policy maintains a 20 ms delivered-rate EMA.
+
+        Read the previous slot's actual throughput once per slot. No channel
+        query, delivery or RNG is introduced, and legacy modes never call this.
+        """
+        scheduler = state.scheduler
+        if getattr(scheduler, "qos_rate_history_slot", None) == state.slot_id:
+            return
+        averages = getattr(scheduler, "qos_average_rate_mbps", {})
+        alpha = min(1., max(1e-6, float(getattr(state, "slot_duration_ms", .5))) / 20.)
+        for ue in state.ues:
+            rate = float(getattr(ue, "throughput_mbps", 0.) or 0.)
+            rate = rate if math.isfinite(rate) and rate >= 0. else 0.
+            previous = averages.get(ue.ue_id, max(.1, rate))
+            averages[ue.ue_id] = (1. - alpha) * previous + alpha * rate
+        scheduler.qos_average_rate_mbps = averages
+        scheduler.qos_rate_history_slot = state.slot_id
+
+    def _qos_deadline_score(self, state: Any, ue: Any, demand: UeSchedulingDemand | None = None) -> float:
+        """Bounded PF x service-priority x remaining-delay-budget weight.
+
+        Inspired by 5G-LENA's QoS DL policy. SINR gives a *ranking proxy* for
+        achievable rate, not an extra PHY computation or a delivered-bit claim.
+        Existing simulator priority increases with urgency (unlike 3GPP's
+        numeric priority level). Only PDB <=20 ms flows get the delay factor.
+        Queue bytes are intentionally absent. Clamps are explicit engineering
+        safeguards, not a calibrated URLLC reliability guarantee.
+        """
+        pdb = float(getattr(ue, "latency_budget_ms", 100.))
+        hol = float(getattr(demand, "hol_delay_ms", getattr(ue, "hol_delay_ms", 0.)))
+        priority = float(getattr(demand, "priority", getattr(ue, "priority", 1)))
+        priority += float(getattr(state.scheduler, "priority_boost_by_ue", {}).get(ue.ue_id, 0.))
+        sinr = float(getattr(ue, "sinr_db", 0.) or 0.)
+        weight = float(getattr(ue, "scheduler_weight", 1.))
+        if not all(math.isfinite(v) for v in (pdb, hol, priority, sinr, weight)) or not .5 <= weight <= 4.:
+            raise ValueError("Invalid QoS deadline scheduler input")
+        urgency = min(100., max(1., pdb / max(.1, pdb - max(0., hol)))) if 0. < pdb <= 20. else 1.
+        bandwidth_mhz = float(getattr(getattr(state, "cell", None), "bandwidth_hz", self.total_prbs_per_slot * 12 * 30000)) / 1e6
+        potential_mbps = max(.1, bandwidth_mhz) * math.log2(1. + 10. ** (max(-20., min(30., sinr)) / 10.))
+        average = float(getattr(state.scheduler, "qos_average_rate_mbps", {}).get(ue.ue_id,
+            max(.1, float(getattr(ue, "throughput_mbps", 0.) or 0.))))
+        pf = min(8., max(.25, potential_mbps / max(.1, average)))
+        return max(1., min(8., priority)) * pf * urgency * weight
 
     def _slice_score(self, state: Any, ue: Any, demand: UeSchedulingDemand | None = None) -> float:
         slice_weight_map = {
@@ -2280,6 +2343,8 @@ class SimpleScheduler(SchedulerBase):
     ) -> float:
         if scheduler_mode == "latency_aware":
             return self._latency_score(state, ue, demand=demand)
+        if scheduler_mode == "qos_deadline":
+            return self._qos_deadline_score(state, ue, demand=demand)
         if scheduler_mode == "slice_aware":
             return self._slice_score(state, ue, demand=demand)
         if round_robin_rank is None:
@@ -2909,7 +2974,10 @@ class SimpleScheduler(SchedulerBase):
                     int(self._derive_poor_link_probe_requested_bytes_cap(ue, demand)),
                 )
                 score *= float(self._poor_link_probe_score_scale(ue, demand))
-            byte_weight = float(max(0, int(requested_bytes))) / 100.0
+            # The old allocator adds backlog again after selection. The new
+            # QoS policy must keep deadline/PF priority through physical packing
+            # rather than silently reintroducing an unbounded byte score here.
+            byte_weight = 0.0 if scheduler_mode == "qos_deadline" else float(max(0, int(requested_bytes))) / 100.0
             selection_reason = stage_trace.selection_reasons_by_ue.get(
                 str(getattr(demand, "ue_id", "")),
                 self._build_selection_reason(
@@ -3194,6 +3262,8 @@ class SimpleScheduler(SchedulerBase):
         self._apply_policy_constraints(state, eligible_ues)
 
         scheduler_mode = str(getattr(getattr(state, "scheduler", None), "scheduler_mode", "round_robin"))
+        if scheduler_mode == "qos_deadline":
+            self._refresh_qos_rate_history(state)
         max_grants = self._max_grants_allowed(len(demands))
         if max_grants <= 0:
             for demand in demands:

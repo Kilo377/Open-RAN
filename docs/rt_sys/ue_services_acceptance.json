@@ -1,0 +1,41 @@
+{
+  "slots": 400,
+  "seed": 1,
+  "completed": true,
+  "means": {
+    "off": {
+      "simulation_wall_s": 19.19955691002542,
+      "internal_wall_s": 27.765840092557482,
+      "module_wall_s": 0,
+      "peak_rss_bytes": 1583032320,
+      "output_bytes": 3590087
+    },
+    "energy": {
+      "simulation_wall_s": 19.62180794798769,
+      "internal_wall_s": 28.222561295493506,
+      "module_wall_s": 0.0889719277038239,
+      "peak_rss_bytes": 1592678400,
+      "output_bytes": 4347063.5
+    },
+    "drx-mec": {
+      "simulation_wall_s": 19.710396450012922,
+      "internal_wall_s": 27.974659396510106,
+      "module_wall_s": 0.09298799285897985,
+      "peak_rss_bytes": 1596463104,
+      "output_bytes": 4577621
+    }
+  },
+  "simulation_ratios": {
+    "energy": 1.021992749100464,
+    "drx-mec": 1.0266068400631034
+  },
+  "energy_only_packet_and_harq_equal": true,
+  "device": "AGX1 Orin MAXN",
+  "ue_count": 6,
+  "repeats": 2,
+  "simulated_seconds_per_case": 0.2,
+  "source_sha256": "9b7cf6dab3d2fc34edde09f5cbcb7a31877a6f32acaa5a9d394a5518d5e90fcd",
+  "tests_passed": 83,
+  "html_audits_passed": true,
+  "result_directory": "outputs/ue_services_acceptance_20261103"
+}

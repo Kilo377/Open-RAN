@@ -293,7 +293,8 @@ def test_paired_runner_checks_exogenous_identity_and_reports_absolute_deltas(tmp
 
     monkeypatch.setattr(runner, 'run_case', fake_run)
     spec, result = tmp_path / 'spec.json', tmp_path / 'result.json'
-    atomic_json(spec, dict(arguments=dict(scene='munich', seed=73, cells=3, ues=12), slots=80))
+    atomic_json(spec, dict(arguments=dict(scene='munich', seed=73, cells=3, ues=12,
+                                         urllc_scenario='alternating', traffic_load=2), slots=80))
     if mismatch:
         with pytest.raises(ValueError, match='initial conditions changed'):
             compare(spec, tmp_path / 'outputs' / 'pair', result, app='ue_fairness:equal_share')
@@ -306,6 +307,7 @@ def test_paired_runner_checks_exogenous_identity_and_reports_absolute_deltas(tmp
     assert all(a.seed == 73 and a.slots == 80 and a.live_xapp_test for a in arguments)
     assert all(a.xapp_test_app == 'ue_fairness:equal_share' for a in arguments)
     assert all(a.xapp_pool == 'yisong' for a in arguments)
+    assert all(a.urllc_scenario == 'alternating' and a.traffic_load == 2 for a in arguments)
 
 
 def test_compare_client_deduplicates_running_worker_and_cleans_failed_start(tmp_path, monkeypatch):

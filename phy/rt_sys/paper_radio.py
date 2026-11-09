@@ -2,6 +2,7 @@
 import math
 import numpy as np
 from phy.rt_sys.numerics import beam_subspace
+from phy.rt_sys.ap_services import radio_available
 
 
 def ret_basis(rows, cols, tilt_deg, codebook=0, beam=0):
@@ -108,10 +109,10 @@ def references(snapshot,state,noise_figure_db=7):
             gain,best,alternative=(cache.get(snapshot,state,ui,ci,cell,nprb,beam_reports) if cache is not None else
                 probe_gains(snapshot,ui,ci,cell,nprb,beam_reports,state.connections[uid].serving_beam_id))
             p=prb_powers(cell,nprb)*gain/12
-            if cell.cell_sleep_mode=='deep_sleep':p=np.zeros(nprb)
+            if not radio_available(cell):p=np.zeros(nprb)
             powers[cid]=p;beams[cid]=best
             if beam_reports:
-                alternatives[cid]=[(cb,profile,prb_powers(cell,nprb)*g/12) for cb,profile,g in alternative]
+                alternatives[cid]=[(cb,profile,prb_powers(cell,nprb)*g/12 if not getattr(cell,'ap_service_enabled',False) or radio_available(cell) else np.zeros(nprb)) for cb,profile,g in alternative]
         result[uid]={}
         for cid,p in powers.items():
             inter=sum((v for c,v in powers.items() if c!=cid),np.zeros_like(p));ratio=p/(inter+noise)
@@ -120,9 +121,12 @@ def references(snapshot,state,noise_figure_db=7):
                 prb_sinr_db=(10*np.log10(np.maximum(ratio,1e-30))).tolist(),
                 reference_interference_w=float(inter.mean()),noise_per_subcarrier_w=noise,
                 no_path=not bool(np.any(p>0)),candidate_beam_id=beams[cid])
+            if getattr(state.managed_cells[cid].cell,'ap_service_enabled',False):
+                result[uid][cid]['ap_reference_unavailable']=not radio_available(state.managed_cells[cid].cell)
             if cid in alternatives:
                 result[uid][cid]['beam_reference_reports']=[dict(cell_id=cid,codebook_id=cb,beam_profile_id=profile,
                     reference_sinr_db=10*math.log10(max(float((signal/(inter+noise)).mean()),1e-30)),
-                    valid=bool(np.any(signal>0)) and state.managed_cells[cid].cell.cell_sleep_mode=='active')
+                    valid=bool(np.any(signal>0)) and (radio_available(state.managed_cells[cid].cell)
+                        if getattr(state.managed_cells[cid].cell,'ap_service_enabled',False) else state.managed_cells[cid].cell.cell_sleep_mode=='active'))
                     for cb,profile,signal in alternatives[cid]]
     return result

@@ -1,0 +1,20 @@
+{
+  "model_id": "x02",
+  "model_sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+  "training": {
+    "parent_rows": 34,
+    "new_online_observation_rows": 216,
+    "network_data_seed": 55
+  },
+  "evaluation": {
+    "duration_s_per_arm": 10,
+    "seed": 20261108,
+    "scenario": "AP services enabled;2xoffered load",
+    "metric": "network_ap_energy_j",
+    "base": 880.8794999998925,
+    "on": 573.9572857142592,
+    "relative_target_improvement": 0.3484270144618766,
+    "target_kpi_effect_verified": true
+  },
+  "scope": "Single matched seed evidence; no independent replicated confidence interval or claimed learned superiority. Other KPI costs remain part of the recorded experiment."
+}

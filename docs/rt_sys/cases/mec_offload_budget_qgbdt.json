@@ -1,0 +1,220 @@
+{
+  "id": "MEC-BUDGET-QGBDT",
+  "status": "implemented_m1_validated_short_run",
+  "pool": "chongyu",
+  "implementation": "mec_offload_budget_qgbdt",
+  "category_id": "mec_offload_budget",
+  "target_ues": [
+    "ue_4"
+  ],
+  "paper_reference": {
+    "table": "II",
+    "pdf_page": 8,
+    "inspiration": "X-13 conservative edge admission, QGBDT lower-quantile utility",
+    "paper_rcp": "alpha_adm: server-side admission probability",
+    "adapted_rcp": "ue_offload_fraction: UE routing probability",
+    "equivalence_claim": "algorithm-inspired adaptation, not an exact X-13 reproduction",
+    "paper_does_not_specify": [
+      "feature vector",
+      "utility formula",
+      "quantile level",
+      "tree hyperparameters"
+    ]
+  },
+  "target_kpis": {
+    "all_task_on_time_ratio": {
+      "direction": "guard",
+      "minimum": 0.95
+    },
+    "all_task_completed_mean_latency_ms": {
+      "direction": "guard",
+      "maximum": 30
+    },
+    "expected_offloaded_compute_demand_gflops": {
+      "direction": "upper_bound",
+      "limit": 0.75,
+      "scope": "UE4 configured expected offered demand, computed from actually executed routing probabilities at task arrivals"
+    }
+  },
+  "rcp": {
+    "ue_offload_fraction": {
+      "target_ues": [
+        "ue_4"
+      ],
+      "candidates": [
+        0,
+        0.5,
+        1
+      ]
+    }
+  },
+  "affected_kpis": [
+    "ue_energy_total_j",
+    "all_task_e2e_latency_ms",
+    "all_task_on_time_ratio",
+    "realized_offloaded_compute_demand_gflops",
+    "radio_goodput",
+    "queue_bytes"
+  ],
+  "decision": {
+    "budget_filter": "A_safe = {p in candidates: configured_task_rate_per_s * compute_gflop_per_task * p <= budget_gflops}",
+    "profile_validation": "Validate 20 tasks/s and 0.05 GFLOP/task against the run manifest; never estimate a safety limit from a lower demand quantile.",
+    "current_expected_demand_gflops": {
+      "0": 0,
+      "0.5": 0.5,
+      "1": 1
+    },
+    "current_feasible_candidates": [
+      0,
+      0.5
+    ],
+    "learned_selection": "argmax_p Q_0.20(U | public features, p) over A_safe",
+    "tie_break": "largest feasible p within 1e-9 of the best predicted utility",
+    "cold_start": "largest analytically feasible p; label the decision rules_only, not QGBDT inference",
+    "invalid_or_stale_input": "emit no new action and report not_evaluable; existing leased policy persists until normal expiry or explicit withdrawal; an empty decision is not rollback and gives no compliance guarantee",
+    "budget_semantics": "Expected-demand contract only. The realized route-count workload is separately reported with its window and is not a hard per-task quota."
+  },
+  "learner": {
+    "algorithm": "Quantile Gradient Boosted Decision Trees",
+    "implementation": "sklearn.ensemble.GradientBoostingRegressor",
+    "parameters": {
+      "loss": "quantile",
+      "alpha": 0.2,
+      "n_estimators": 32,
+      "learning_rate": 0.05,
+      "max_depth": 2,
+      "min_samples_leaf": 3,
+      "random_state": 137
+    },
+    "parameter_provenance": "predeclared implementation defaults, not settings reported by the paper",
+    "features": [
+      "task_arrival_rate_per_s",
+      "pending_offloaded_tasks",
+      "queue_kb",
+      "hol_delay_ms",
+      "reference_sinr_db",
+      "recent_all_task_bad_rate",
+      "recent_all_task_mean_ms_or_deadline",
+      "candidate_offload_fraction"
+    ],
+    "inputs": "delivered public observations and validated task-profile metadata only",
+    "label": {
+      "name": "measured_service_utility",
+      "formula": "U = on_time_completed/generated - 0.25 * deadline_penalized_all_task_mean_ms / deadline_ms",
+      "penalized_mean": "(actual_completed_latency_sum_ms + deadline_ms * (failed + overdue_pending)) / generated",
+      "zero_generated": "skip; do not create a zero-utility label",
+      "scope": "all generated tasks, local and offloaded; failures and overdue pending tasks remain in the denominator",
+      "penalty_disclosure": "Deadline penalties define training utility only; actual completed latency remains a separate KPI, N/A when no completions."
+    },
+    "small_data_limit": "The predicted lower quantile is a conservative score, not a calibrated confidence bound or a QoS guarantee. With two arrivals per cohort and p=0.5, P(all-local)=0.25: the 0.20 utility quantile can tie p=0 and reproduce the analytic tie-break. Do not retune alpha merely to force a learned gain.",
+    "compute": "small CPU fits and inference; no new GPU dependency",
+    "artifact": "versioned plain JSON containing feature/label schema, actual fit parameters, retained measured rows, initial prediction and additive trees; no pickle or RF relabelled as QGBDT",
+    "feature_timing": "Capture delivered features before requesting an action; use only already available recent mature cohorts, never the future outcome used as its label."
+  },
+  "online_collection": {
+    "mode": "isolated training without X01 or other competing controllers",
+    "cohort_ms": 100,
+    "action_window": "hold until actual execution/ownership confirmation and one complete future cohort has matured through its task deadlines",
+    "exploration": "alternate only budget-feasible actions 0 and 0.5; at least six measured rows per action",
+    "minimum_measured_rows": 12,
+    "maximum_measured_rows": 24,
+    "initial_training_simulated_s": 4,
+    "training_budget_cap_simulated_s": 6,
+    "refit_every_new_rows": 4,
+    "data_shortfall": "keep rules_only status and report insufficient measured data; do not fabricate samples or silently extend the budget",
+    "invalidations": [
+      "executed p differs from requested p",
+      "field ownership lost",
+      "handover changes controlled scope during the cohort",
+      "mixed action within the measured cohort",
+      "profile mismatch",
+      "stale or missing required observations"
+    ],
+    "record": [
+      "features before outcome",
+      "requested action",
+      "actual policy and owner",
+      "generation/cohort/deadline timestamps",
+      "real task outcomes",
+      "utility arithmetic",
+      "model hash and fit counts"
+    ],
+    "joint_evaluation": "frozen model; no new training samples or fits; random arbitration and rejected requests are conflict evidence, never training labels",
+    "network_seed": 137
+  },
+  "validation": {
+    "matched_arms": [
+      "OFF",
+      "X01",
+      "BUDGET_QGBDT",
+      "BOTH_RANDOM"
+    ],
+    "rules_only_ablation": "compare against the analytic largest-feasible-p guard before claiming value from learning",
+    "structural_M1": "Distinct active xApps request unequal ue_offload_fraction values for ue_4 in overlapping valid control intervals; record the contender set before random mitigation. Shared field names alone do not pass.",
+    "operational_conflict": "Record any energy or expected-demand contract violation before/after mitigation only from actual executed-policy and KPI evidence. A random-mitigated run satisfying both contracts is a mitigation success, not a failed structural-conflict case.",
+    "learned_app_evidence": [
+      "actual QGBDT fitting on measured rows",
+      "nonzero real prediction calls",
+      "frozen evaluation artifact unchanged"
+    ],
+    "native_scenario": "existing six-UE radio/traffic/DRX/MEC setup; explicit 0.75 GFLOP/s UE4 operator quota; no physical congestion claim",
+    "scope_limit": "Actual online fit and frozen four-arm 1 s calibration completed; structural M1 observed. Random mitigation met budget/QoS, missed the energy contract. No learned superiority, long-run generalization or M5 impossibility claim.",
+    "seed_roles": {
+      "existing_case_calibration": 55,
+      "online_training": 137,
+      "prospective_case_validation": [
+        211,
+        223
+      ],
+      "note": "Predeclare these case roles; do not claim that a seed is globally unseen by X01 without auditing its earlier provenance."
+    },
+    "random_mitigation": "Each conflicting decision selects exactly one unchanged valid candidate uniformly, using independent reproducible randomness; actual execution matches the selected request and unrelated actions remain intact.",
+    "post_mitigation_reporting": "Report whether both, one, or neither intent contract passes; do not require random mitigation to cause KPI harm.",
+    "mitigation_seeds": [
+      1701,
+      1702,
+      1703
+    ]
+  },
+  "realized_kpi": {
+    "name": "realized_offloaded_compute_demand_gflops",
+    "measurement": "sum(actual offloaded_generated) * validated compute_gflop_per_task / sum(creation_cohort_width_s)",
+    "classification": "stochastic diagnostic; do not classify a short-window overshoot alone as a guard failure or conflict"
+  },
+  "mitigation": {
+    "policy": "uniform_random",
+    "status": "implemented_opt_in_for_ue_offload_fraction",
+    "trigger": "distinct active xApps propose unequal values for the same target UE and RCP in overlapping valid control intervals",
+    "sampling": "uniform over unique valid proposing xApp IDs; two candidates each have probability 0.5; N candidates each have probability 1/N",
+    "decision_interval_ms": 100,
+    "choice_unit": "one atomic candidate request for the conflict key (UE ID, RCP); in this case select the complete scalar ue_offload_fraction value unchanged. Do not randomly choose or discard a whole cell ConfigAction/map.",
+    "unrelated_actions": "preserve other UE/cell requests and independent nonconflicting fields, including native DRX; do not average or combine competing values of the conflicted RCP",
+    "validity": "ordinary schema/range/scope/timing validation applies before sampling; do not exclude a contender merely because its action violates the other xApp intent",
+    "equal_or_single_candidate": "equal requested values are not an M1 conflict; deploy the agreed action, or the sole valid candidate, without consuming a random draw",
+    "ordering": "canonical stable order by unique xApp instance ID; duplicate refreshes never add sampling weight",
+    "hold": "draw once per explicit [start,end) 100 ms deployment decision window; keep the chosen request ID and value until that window ends or the request becomes invalid; identical refreshes and slot-level retransmissions never redraw",
+    "invalidation": "expire the selection on request expiry, withdrawal, invalid scope or handover; validate current candidates before any fresh deployment",
+    "seed": 1701,
+    "rng": "dedicated mitigation RNG, independent of traffic, channel, mobility, exploration and learner RNGs",
+    "randomization_unit": "deterministic per-conflict-key streams derived from mitigation seed and stable scope identity; record decision index and exact draw",
+    "priority": "priority does not choose among valid directly conflicting candidates in this policy",
+    "lease_consistency": "Implement random resolution on sanitized current and held per-UE requests. Existing RuleLeases priority reconciliation and whole-cell maps must not overwrite the random result or discard unrelated UID values; retain request validity and selection-generation metadata.",
+    "log": [
+      "conflict key and decision ID",
+      "all candidate instance IDs and unchanged actions",
+      "candidate validity and canonical order",
+      "mitigation seed, stream key, decision index and random draw",
+      "selected and rejected candidates",
+      "selection/expiry times",
+      "actual execution acknowledgement and reported policy",
+      "raw request IDs -> conflict/window draw -> selected UID/RCP request -> submitted control ID -> execution acknowledgement/policy timestamp"
+    ],
+    "fairness": "50/50 is per-decision sampling probability, not guaranteed equal finite-sample win counts, deployment time, or energy; report each separately",
+    "outcome": "random mitigation may preserve both intent contracts; report structural conflict before mitigation and actual KPI compliance after mitigation separately",
+    "window_validity": "At 0.5 ms/slot, 100 ms spans 200 slots; inclusive effective_until_slot must be window_end_slot-1, further limited by the source request validity.",
+    "queued_controls": "carry mitigation window/generation and validity through submission and delayed application; an old-window queued action must not overwrite a newer selected winner",
+    "no_valid_candidate": "explicitly restore the matched native parameter through the ordinary control path and confirm execution; message expiry or cache deletion alone does not undo a persistent applied value"
+  },
+  "implementation_document": "../MEC_BUDGET_CONFLICT.md",
+  "result_summary": "../mec_budget_random_acceptance.json"
+}

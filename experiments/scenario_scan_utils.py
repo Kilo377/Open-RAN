@@ -73,6 +73,9 @@ def build_runtime_scenario_config(
         non_rt_reselection_min_gap_slots=int(
             ric_config.get("non_rt_reselection_min_gap_slots", 10)
         ),
+        direct_conflict_mitigation=str(ric_config.get('direct_conflict_mitigation', 'priority')),
+        mitigation_seed=ric_config.get('mitigation_seed', 1),
+        mitigation_window_ms=ric_config.get('mitigation_window_ms', 100.),
     )
 
 

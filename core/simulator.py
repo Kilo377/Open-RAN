@@ -194,6 +194,22 @@ class Simulator:
                 self.state.paper=PaperEnvironment(self,self.phy_adapter.config['paper_interfaces'])
             for ue in self.state.ues:
                 ue.rt_feedback_mode = self.phy_adapter.config.get('feedback_mode', 'sys_abstraction')
+            service_config = self.phy_adapter.config.get('ue_services', {})
+            if service_config.get('enabled', False):
+                if not getattr(self.state, 'paper', None):
+                    raise ValueError('UE services require paper_interfaces.enabled')
+                from phy.rt_sys.ue_services import UeServices
+                self.state.ue_services = UeServices(self.state, service_config, config.slot_duration_ms, config.rng_seed)
+            ap_config = self.phy_adapter.config.get('ap_services', {})
+            if ap_config is None:
+                ap_config = {}
+            if not isinstance(ap_config, dict) or ('enabled' in ap_config and type(ap_config['enabled']) is not bool):
+                raise ValueError('Invalid ap_services configuration')
+            if ap_config.get('enabled', False):
+                if not getattr(self.state, 'paper', None):
+                    raise ValueError('AP services require paper_interfaces.enabled')
+                from phy.rt_sys.ap_services import ApServices
+                self.state.ap_services = ApServices(self.state, ap_config, config.slot_duration_ms)
             self.mobility_manager = RtMobilityManager(self.phy_adapter,
                 slot_duration_ms=config.slot_duration_ms, rng_seed=config.rng_seed,
                 delay_slots=config.measurement_queue_delay_slots,
@@ -276,7 +292,13 @@ class Simulator:
             non_rt_reselection_min_gap_slots=int(
                 getattr(config, "non_rt_reselection_min_gap_slots", 10) or 10
             ),
+            direct_conflict_mitigation=getattr(config, 'direct_conflict_mitigation', 'priority'),
+            mitigation_seed=getattr(config, 'mitigation_seed', 1),
+            mitigation_window_ms=getattr(config, 'mitigation_window_ms', 100.),
+            mitigation_slot_duration_ms=config.slot_duration_ms,
         )
+        if self.controller_manager.direct_conflict_arbiter is not None and not self._rt_sys_mode:
+            raise ValueError('uniform_random mitigation requires the RT/SYS executor')
         self.controller_manager.xapp_pool = getattr(controller_registry, 'xapp_pool', 'yisong')
         for interface in self.controller_manager.a1_interfaces:
             interface.rapp.rt_xapp_pool = self.controller_manager.xapp_pool
@@ -1433,6 +1455,9 @@ class Simulator:
         if self._rt_sys_mode:
             self.phy_adapter.current_snapshot.metadata["sleep_modes"] = {
                 r.cell_id: str(r.cell.cell_sleep_mode) for r, _, _ in phy_inputs_by_runtime}
+            if getattr(state, 'ap_services', None) is not None:
+                self.phy_adapter.current_snapshot.metadata['ap_availability'] = {
+                    r.cell_id: bool(r.cell.ap_available) for r, _, _ in phy_inputs_by_runtime}
             cluster_results = self.phy_adapter.run_cluster_slot(
                 [item[2] for item in phy_inputs_by_runtime], self.phy_adapter.current_snapshot)
         else:
@@ -2236,11 +2261,22 @@ class Simulator:
         self._refresh_managed_cell_runtime_views(self.state)
 
     def _apply_rt_config_action(self, action, apply_slot):
+        mitigation_reason=(self.controller_manager.validate_mitigation_actuation(action,self.state.slot_id,self.state)
+                           if getattr(action,'_mitigation_records',None) else None)
+        if mitigation_reason:
+            outcome=self._build_config_actuation_outcome(action=action,apply_slot=int(self.state.slot_id),
+                status='rejected',reason=mitigation_reason,target_cell_ids=self._resolve_config_target_cell_ids(action))
+            outcome['mitigation_records']=self.controller_manager.mitigation_actuation_receipts(action,self.state.slot_id,'rejected',mitigation_reason)
+            self.state.control.actuation_outcomes.append(outcome)
+            self._update_e2_control_request_status(action.control_request_id,status='rejected',reason=mitigation_reason)
+            return
         provenances=getattr(action,'_library_provenances',[])
         if any(not self.controller_manager.instance_selection.valid(p) for p in provenances):
             outcome=self._build_config_actuation_outcome(action=action,apply_slot=int(self.state.slot_id),
                 status='rejected',reason='stale_xapp_selection',target_cell_ids=self._resolve_config_target_cell_ids(action))
             outcome.update(slot_id=self.state.slot_id,provenance=provenances)
+            if getattr(action,'_mitigation_records',None):
+                outcome['mitigation_records']=self.controller_manager.mitigation_actuation_receipts(action,self.state.slot_id,'rejected','stale_xapp_selection')
             self.state.control.actuation_outcomes.append(outcome)
             self._update_e2_control_request_status(action.control_request_id,status='rejected',reason='stale_xapp_selection')
             return
@@ -2277,6 +2313,8 @@ class Simulator:
         outcome.update(requested_apply_slot=int(apply_slot),fields=fields,before=before,
             after=runtime_control_values(self.state,targets),validity_semantics='Persistent target state; expiry bounds admission, not automatic rollback')
         if provenances:outcome['provenance']=provenances
+        if getattr(action,'_mitigation_records',None):
+            outcome['mitigation_records']=self.controller_manager.mitigation_actuation_receipts(action,self.state.slot_id,'rejected' if reason else 'applied',reason)
         self.state.control.actuation_outcomes.append(outcome)
 
     def _build_config_actuation_outcome(
@@ -3116,6 +3154,8 @@ class Simulator:
             slot_records=self.slot_records,
             orchestration_epoch_history=orchestration_epoch_history,
         )
+        if getattr(self.state, 'ap_services', None) is not None:
+            summary['ap_services'] = self.state.ap_services.summary()
 
         return summary
 
@@ -3133,8 +3173,20 @@ class Simulator:
         self.state.slot_id = self.clock.current_slot
         self.state.sim_time_ms = self.clock.current_time_ms
 
+        ap_services = getattr(self.state, 'ap_services', None)
+        if ap_services is not None:
+            ap_services.begin_slot(self.state.slot_id)
+        services = getattr(self.state, 'ue_services', None)
+        if services is not None:
+            services.begin_slot(self.state.slot_id)
         # Traffic arrival: bytes arrive into UE queues before control/scheduling.
         arrivals_by_ue, arrivals_by_logical_channel = self.traffic_engine.apply_arrivals(self.state)
+        if services is not None:
+            for uid, amount in services.result_arrivals.items():
+                arrivals_by_ue[uid] = arrivals_by_ue.get(uid, 0) + amount
+                lc_id = services.users[uid].logical_channels[0].logical_channel_id
+                key = uid + ':' + lc_id
+                arrivals_by_logical_channel[key] = arrivals_by_logical_channel.get(key, 0) + amount
         if self._rt_sys_mode:
             self.phy_adapter.bind_state(self.state)
         self.mobility_manager.update(self.state)
@@ -3376,10 +3428,14 @@ class Simulator:
         self._refresh_control_lifecycle_outcomes()
 
         # Consume one-shot commands before scheduling.
+        if ap_services is not None:
+            ap_services.before_scheduling()
         if getattr(self.state,'paper',None):
             commands_to_apply=self.state.paper.consume_commands(commands_to_apply)
             self.state.paper.before_scheduling()
         self.command_consumer.apply_commands(self.state, commands_to_apply)
+        if services is not None:
+            services.before_scheduling()
 
         self._refresh_managed_cell_runtime_views(self.state)
         scoped_states = self._run_managed_cell_schedulers(self.state)
@@ -3392,6 +3448,10 @@ class Simulator:
                 self.phy_adapter.config.get('noise_figure_db', 7))
         self.measurement_updater.update(self.state)
 
+        if services is not None:
+            services.after_phy(self.phy_adapter.trace)
+        if ap_services is not None:
+            ap_services.after_phy(self.phy_adapter.trace)
         if getattr(self.state,'paper',None):self.state.paper.after_phy()
         post_phy_observation = build_observation(self.state)
         if getattr(self.state,'paper',None):self.state.paper.attach_observation(post_phy_observation)

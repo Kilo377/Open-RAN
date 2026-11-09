@@ -1,1 +1,38 @@
-{}
+{
+  "ue_energy_rf": {
+    "factory": "ric.near_rt.pools.chongyu.ue_energy_rf:UeEnergyRF",
+    "category_id": "ue_energy_saving",
+    "description": "X-01: online RF UE energy saving (DRX and task offloading)",
+    "commands": []
+  },
+  "latency_scheduler_rf": {
+    "factory": "ric.near_rt.pools.chongyu.latency_scheduler_rf:LatencySchedulerRF",
+    "category_id": "latency_scheduler",
+    "description": "X-12: online RF scheduler priority for task end-to-end latency",
+    "commands": []
+  },
+  "mec_offload_budget_qgbdt": {
+    "factory": "ric.near_rt.pools.chongyu.mec_offload_budget_qgbdt:MecOffloadBudgetQGBDT",
+    "category_id": "mec_offload_budget",
+    "description": "X-13-inspired expected MEC-workload guard with quantile boosting",
+    "commands": []
+  },
+  "throughput_scheduler_mlp": {
+    "factory": "ric.near_rt.pools.chongyu.throughput_scheduler_mlp:ThroughputSchedulerMLP",
+    "category_id": "throughput_scheduler",
+    "description": "X-08: measured all-UE network goodput MLP with existing priority-weight adapter",
+    "commands": []
+  },
+  "latency_urllc_rf": {
+    "factory": "ric.near_rt.pools.chongyu.latency_urllc_rf:LatencyUrllcRF",
+    "category_id": "latency_scheduler",
+    "description": "X-12 packet adaptation: measured UE6 original 10 ms URLLC deadline and latency RF",
+    "commands": []
+  },
+  "ap_energy_rf": {
+    "factory": "ric.near_rt.pools.chongyu.ap_energy_rf:ApEnergyRF",
+    "category_id": "ap_energy_saving",
+    "description": "X-02 5G adaptation: online RF whole-AP energy and explicit cell duty policies",
+    "commands": []
+  }
+}

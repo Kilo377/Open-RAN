@@ -1,0 +1,41 @@
+{
+  "id": "MEC-BUDGET-QGBDT",
+  "implementation": "mec_offload_budget_qgbdt",
+  "algorithm": "Quantile Gradient Boosted Decision Trees",
+  "paper_mapping": "X-13-inspired; UE routing is not server admission rejection",
+  "target_ues": [
+    "ue_4"
+  ],
+  "target_kpis": {
+    "expected_offloaded_compute_demand_gflops": {
+      "direction": "upper_bound",
+      "limit": 0.75
+    },
+    "ue_task_metrics.success_ratio": {
+      "direction": "guard",
+      "minimum": 0.95
+    },
+    "ue_task_metrics.mean_completion_latency_ms": {
+      "direction": "guard",
+      "maximum": 30
+    }
+  },
+  "rcp": {
+    "ue_offload_fraction": {
+      "target_ues": [
+        "ue_4"
+      ],
+      "feasible_values": [
+        0,
+        0.5
+      ]
+    }
+  },
+  "affected_kpis": {
+    "ue_energy_total_j": "J",
+    "realized_offloaded_compute_demand_gflops": "GFLOP/s",
+    "throughput_mbps": "Mbit/s",
+    "queue_bytes": "byte"
+  },
+  "guard_scope": "Success and latency thresholds are evaluation gates. Runtime selection ranks lower-quantile utility after the analytic expected-workload filter; these thresholds are not hard per-action runtime constraints."
+}

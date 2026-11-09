@@ -42,7 +42,62 @@
     "model": "fast",
     "fast_profile": "system",
     "fast_channel_mode": "sampled",
-    "rt_prefetch_workers": 2
+    "rt_prefetch_workers": 2,
+    "ue_services": {
+      "enabled": true,
+      "drx": {
+        "enabled": true,
+        "cycle_ms": 40,
+        "on_duration_ms": 4,
+        "inactivity_ms": 8,
+        "wakeup_ms": 0.5,
+        "offset_ms": 0
+      },
+      "drx_by_ue": {
+        "ue_2": {
+          "enabled": false
+        },
+        "ue_6": {
+          "enabled": false
+        }
+      },
+      "power": {
+        "sleep_w": 0.04,
+        "monitor_w": 0.25,
+        "receive_w": 0.9,
+        "transmit_w": 1.4,
+        "waking_w": 0.9,
+        "wakeup_j": 0.0002,
+        "cpu_idle_w": 0.05,
+        "cpu_compute_w": 0.8
+      },
+      "mec": {
+        "enabled": true,
+        "local_gflops": 2,
+        "server_gflops": 40,
+        "uplink_bps_per_cell": 5000000,
+        "backhaul_one_way_ms": 2,
+        "max_queued_tasks": 32,
+        "tasks_by_ue": {
+          "ue_0": {
+            "interval_ms": 50,
+            "input_bytes": 1000,
+            "result_bytes": 200,
+            "compute_gflop": 0.05,
+            "deadline_ms": 100,
+            "offload_fraction": 0.5
+          },
+          "ue_4": {
+            "interval_ms": 50,
+            "input_bytes": 1000,
+            "result_bytes": 200,
+            "compute_gflop": 0.05,
+            "deadline_ms": 100,
+            "offload_fraction": 0.5
+          }
+        }
+      }
+    }
   },
   "radio": {
     "carrier_frequency_hz": 3500000000,

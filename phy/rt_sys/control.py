@@ -7,7 +7,7 @@ SCHEDULER = {'scheduler_mode','scheduler_policy_hint','latency_bias','slice_weig
 ASSOCIATION = {'traffic_steering_preference','mobility_bias_db','handover_cost_db','handover_interruption_slots','steering_hysteresis_db','measurement_event_trigger','measurement_event_offset_db'}
 from phy.rt_sys.paper_controls import FIELDS as PAPER_FIELDS
 PHY |= {'prb_power_w','clear_prb_power','power_group_size_prbs','ret_enabled','ret_tilt_deg','ret_codebook_id'}
-SCHEDULER |= {'ue_prb_limits'}
+SCHEDULER |= {'ue_prb_limits','ue_drx_configs','ue_offload_fraction','ue_scheduler_weights'}
 ASSOCIATION |= {'neighbor_cell_ids','cio_offsets_db','time_to_trigger_ms'}
 ADMIN = {'apply_scope','target_cell_id','control_request_id','effective_from_slot','effective_until_slot','source_name','metadata'}
 
@@ -58,7 +58,14 @@ def runtime_control_values(state,cell_ids):
             'current_beam_profile_id','power_cap_dbm','cell_sleep_mode','traffic_steering_preference',
             'mobility_bias_db','handover_cost_db','handover_interruption_slots','steering_hysteresis_db',
             'measurement_event_trigger','measurement_event_offset_db')}
-        result[cid].update({name:getattr(c,name,None) for name in PAPER_FIELDS})
+        result[cid].update({name:getattr(c,name,None) for name in PAPER_FIELDS if name!='ue_scheduler_weights'})
+        result[cid]['ue_scheduler_weights']={u.ue_id:float(getattr(u,'scheduler_weight',1.))
+            for u in getattr(state,'ues',[]) if getattr(state,'connections',{}).get(u.ue_id) is not None
+            and state.connections[u.ue_id].serving_cell_id==cid}
+        services=getattr(state,'ue_services',None)
+        if services is not None:result[cid]['ue_service_policies']=services.policies(cid)
+        ap_services=getattr(state,'ap_services',None)
+        if ap_services is not None:result[cid].update(ap_services.policy_receipt(cid))
         result[cid].update({name:getattr(s,name,None) for name in ('scheduler_mode','scheduler_policy_hint',
             'latency_bias','slice_weight_adjustment')})
     return result

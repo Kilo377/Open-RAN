@@ -1,0 +1,39 @@
+{
+  "model_id": "x12_mec",
+  "model_sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+  "training": {
+    "retained_parent_rows": 28,
+    "new_online_observation_rows": 184,
+    "network_data_seed": 55,
+    "online_observation_horizon_s": 30,
+    "input_manifest_sha256": "132c1e913e4a7867fbb3e8c49ad809ba90ea8d05856be4083c28b6a323a6800d",
+    "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+    "actual_fit_xy_sha256": "84fd153f627fe4fa9ff3ea8a06adc56934c0126f1e1c75f962186e07639d8f84",
+    "source_fingerprint": "e2eb420f2fd8ce14cfb73559f3e24bc43a804b4fbb018d8efd8da15819653cdf",
+    "independent_refit_exact": true,
+    "independent_prediction_probes": 848,
+    "frozen_controller_load_passed": true
+  },
+  "verification": {
+    "schema": "oran.x12-long-refit-independent-verification.v1",
+    "passed": true,
+    "verified_at_utc": "2026-11-09T22:57:32.483938+00:00",
+    "model_sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+    "full_data_refit_identical": true,
+    "all_212_rows_used": true,
+    "original_algorithm_parameters_preserved": true,
+    "serialization_roundtrip_exact": true,
+    "frozen_controller_load_passed": true,
+    "independent_prediction_probes": 848,
+    "effectiveness_test_performed": false,
+    "target_semantics_preserved": true,
+    "raw_simulation_data_retained": true
+  },
+  "evaluation": {
+    "status": "fresh_network_evaluation_pending",
+    "effectiveness_test_performed": false,
+    "previous_28_row_model_results_not_attributed_to_this_checkpoint": true
+  },
+  "scope": "Fresh212-rowfit verified on a separate AGX2process. It has not yet undergone a fresh network Base/ON comparison."
+}

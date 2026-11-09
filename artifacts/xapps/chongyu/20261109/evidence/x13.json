@@ -1,0 +1,26 @@
+{
+  "model_id": "x13",
+  "model_sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+  "training": {
+    "network_training_seed": 137,
+    "online_simulated_seconds": 4,
+    "measured_rows": 13,
+    "fitted_prefix_rows": 12
+  },
+  "evaluation": {
+    "duration_s_per_arm": 10,
+    "seed": 211,
+    "scenario": "UE4offload-first; defaultp1; unchanged task20/s*.05GFLOP",
+    "metric": "UE4 expected-workload quota violations",
+    "base_expected_gflops": 1.0,
+    "on_expected_gflops": 0.5,
+    "quota_gflops": 0.75,
+    "base_violating_cohorts": 98,
+    "on_violating_cohorts": 0,
+    "cohorts_each": 98,
+    "target_kpi_effect_verified": true,
+    "analytic_guard_matches_QGBDT": true,
+    "quota_is_not_physical_server_capacity": true
+  },
+  "scope": "Single matched seed evidence; no independent replicated confidence interval or claimed learned superiority. Other KPI costs remain part of the recorded experiment."
+}

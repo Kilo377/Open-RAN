@@ -7,6 +7,22 @@ CONFIG_FIELDS=('tx_power_dbm','power_cap_dbm','nominal_tx_power_dbm','cell_sleep
  'ue_prb_limits','cio_offsets_db','neighbor_cell_ids','time_to_trigger_ms','steering_hysteresis_db',
  'ret_enabled','ret_tilt_deg','ret_codebook_id')
 
+PACKET_COUNTER_FIELDS={
+    'admitted_packets_total':'admitted_packets',
+    'deadline_missed_packets_total':'deadline_missed_packets',
+    'overflow_packets_total':'overflow_packets',
+    'completed_packets_total':'completed_packets',
+    'late_completed_packets_total':'late_completed_packets',
+    'on_time_completed_packets_total':'on_time_completed_packets',
+    'deadline_failed_packets_total':'deadline_failed_packets',
+    'completion_latency_ms_total':'completion_latency_ms_sum',
+}
+
+
+def packet_cumulative_counters(ledger):
+    """Snapshot packet outcomes and latency sum on the delayed public surface."""
+    return {public:ledger.stats[internal] for public,internal in PACKET_COUNTER_FIELDS.items()}
+
 
 def executed_configs(state):
     result={}
@@ -16,6 +32,14 @@ def executed_configs(state):
         values.update(n_prbs=r.resource_grid.n_prbs_total,
             scheduler_mode=r.scheduler.scheduler_mode,scheduler_policy_hint=r.scheduler.scheduler_policy_hint,latency_bias=r.scheduler.latency_bias,
             slice_weight_adjustment=deepcopy(r.scheduler.slice_weight_adjustment))
+        values['ue_scheduler_weights']={u.ue_id:float(getattr(u,'scheduler_weight',1.))
+            for u in getattr(state,'ues',[]) if getattr(state,'connections',{}).get(u.ue_id) is not None
+            and state.connections[u.ue_id].serving_cell_id==cid}
+        services=getattr(state,'ue_services',None)
+        if services is not None:
+            policies=services.policies(cid)
+            values['ue_drx_configs']={uid:v['drx'] for uid,v in policies.items()}
+            values['ue_offload_fraction']={uid:v['offload_fraction'] for uid,v in policies.items() if uid in services.profiles}
         result[cid]=values
     return result
 
@@ -37,6 +61,8 @@ def augment(paper,reports):
             resource_counter_start_slot=counter['start'],
             resource_window_start_slot=window[0][0] if window else slot,resource_window_end_slot=slot,
             resource_window_sample_count=len(window),delivered_bits_total=u.packet_ledger.stats['delivered_bytes']*8,
+            offered_bits_total=u.packet_ledger.stats['offered_bytes']*8,
+            **packet_cumulative_counters(u.packet_ledger),
             delivered_bits_window=sum(x[0] for x in seq)*8,
             arrival_bits_window=sum(x[1] for x in seq)*8,
             deadline_misses_window=sum(x[2] for x in seq),

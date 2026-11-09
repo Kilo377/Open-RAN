@@ -64,13 +64,14 @@ def test_default_fast_matches_validated_named_preset_and_freezes_live_arguments(
     base=['runner','--dry-run','--device','cuda','--rt-device','cpu','--scene','munich',
         '--cells','3','--ues','6','--slots','400','--model','fast']
     results=[]
-    for config in ['agx_munich_6ue_depth2_fast.json','agx_munich_6ue_depth2_fast_10ms.json']:
+    for config in ['agx_munich_6ue_depth2_fast.json','agx_munich_6ue_depth2_fast_10ms.json',
+                   'agx_munich_6ue_depth2_fast_candidate.json']:
         monkeypatch.setattr('sys.argv',base+['--config',str(ROOT/'configs/rt_sys'/config)])
         args=parse_args();run_case(args);results.append(json.loads(capsys.readouterr().out))
         assert args.path_update_ms==10 and args.max_geometry_displacement_m==.015
         assert args.rt_prefetch_workers==2 and args.fast_channel_mode=='sampled'
-    assert results[0]['manifest']==results[1]['manifest']
-    assert results[0]['phy_config']==results[1]['phy_config']
+    assert all(r['manifest']==results[0]['manifest'] for r in results[1:])
+    assert all(r['phy_config']==results[0]['phy_config'] for r in results[1:])
     from phy.rt_sys.channel import geometry_blocks
     assert geometry_blocks(results[0]['manifest'])[1]==20
 

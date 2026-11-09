@@ -1,0 +1,75 @@
+{
+  "id": "X-08",
+  "implementation": "throughput_scheduler_mlp",
+  "algorithm": "MLPRegressor",
+  "training": {
+    "collection": "online",
+    "label_window_ms": 100,
+    "minimum_fitted_windows": 24,
+    "minimum_windows_per_action": 6,
+    "maximum_retained_windows": 1024,
+    "objective": "mean-output MSE + L2",
+    "gradient_check": "finite differences before fitting"
+  },
+  "paper_mapping": "w5G priority via existing latency_aware base scores and NR packing",
+  "target_ues": [
+    "ue_0",
+    "ue_1",
+    "ue_2",
+    "ue_4",
+    "ue_6",
+    "ue_8"
+  ],
+  "target_kpis": {
+    "network_dl_goodput_mbps": {
+      "direction": "maximize",
+      "scope": "all six actual delivered-bit counters"
+    }
+  },
+  "rcp": {
+    "scheduler_mode": {
+      "values": [
+        "round_robin",
+        "latency_aware"
+      ]
+    },
+    "ue_scheduler_weights": {
+      "values": [
+        1,
+        1.5,
+        2
+      ],
+      "scope": "held public efficiency-priority snapshot"
+    }
+  },
+  "ablations": [
+    "native_RR",
+    "neutral_weighted_family",
+    "fixed_efficiency_rule"
+  ],
+  "affected_kpis": [
+    "per_UE_goodput",
+    "packet_delay",
+    "deadline_failure_fraction",
+    "queue_overflow",
+    "UE_radio_energy",
+    "MEC_task_end_to_end_latency"
+  ],
+  "scope": "Maximize network DL goodput; retain other KPIs for conflict experiments. Optional guarded policy applies QoS heuristics.",
+  "selection_policy": {
+    "default": "throughput",
+    "guarded": "training-reference QoS heuristics active",
+    "throughput": "default single-objective conflict research; all QoS outcomes recorded, not constrained"
+  },
+  "optional_guarded_constraints": {
+    "per_ue_delivery": {
+      "direction": "guard",
+      "matched_OFF_minimum_ratio": 0.95
+    },
+    "urllc_packet_deadline_failure": {
+      "direction": "guard",
+      "original_deadline_ms": 10,
+      "matched_OFF_max_increase": 0.05
+    }
+  }
+}

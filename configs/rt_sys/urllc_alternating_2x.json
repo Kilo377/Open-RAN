@@ -1,0 +1,25 @@
+{
+  "profile_id": "urllc_alternating_native_burst_2x_800ms",
+  "slot_duration_ms": 0.5,
+  "provenance": "Continuous-run adaptation scenario: repeat 800ms native CBR then 800ms equal-mean burst traffic. Global slot1 is phase-local slot0, so every burst phase starts with a full20ms ON segment followed by60ms OFF. Each phase contains10 complete80ms traffic cycles. UE2/UE6 preserve actual native means175/137 bytes per slot and static packet caps175/137 bytes. Queues, channel, mobility and xApp state continue across phase boundaries; radio resources and10ms deadlines do not change. Only URLLC arrival timing changes.",
+  "ues": {
+    "ue_2": {
+      "arrival_model": "phased",
+      "arrival_rate_bps": 2800000,
+      "packet_size_bytes": 175,
+      "arrival_phases": [
+        {"duration_slots": 1600, "arrival_model": "cbr", "arrival_rate_bps": 2800000},
+        {"duration_slots": 1600, "arrival_model": "on_off", "arrival_rate_bps": 11200000, "on_duration_slots": 40, "off_duration_slots": 120, "burst_size_bytes": 0, "start_offset_slots": 0}
+      ]
+    },
+    "ue_6": {
+      "arrival_model": "phased",
+      "arrival_rate_bps": 2192000,
+      "packet_size_bytes": 137,
+      "arrival_phases": [
+        {"duration_slots": 1600, "arrival_model": "cbr", "arrival_rate_bps": 2192000},
+        {"duration_slots": 1600, "arrival_model": "on_off", "arrival_rate_bps": 8768000, "on_duration_slots": 40, "off_duration_slots": 120, "burst_size_bytes": 0, "start_offset_slots": 0}
+      ]
+    }
+  }
+}

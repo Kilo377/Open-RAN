@@ -1,0 +1,16 @@
+{
+  "schema": "oran.x12-long-refit-independent-verification.v1",
+  "passed": true,
+  "verified_at_utc": "2026-11-09T22:57:32.483938+00:00",
+  "model_sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+  "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+  "full_data_refit_identical": true,
+  "all_212_rows_used": true,
+  "original_algorithm_parameters_preserved": true,
+  "serialization_roundtrip_exact": true,
+  "frozen_controller_load_passed": true,
+  "independent_prediction_probes": 848,
+  "effectiveness_test_performed": false,
+  "target_semantics_preserved": true,
+  "raw_simulation_data_retained": true
+}

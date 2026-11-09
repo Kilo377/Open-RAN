@@ -85,6 +85,11 @@ class ConfigAction:
     ret_tilt_deg: Optional[float] = None
     ret_codebook_id: Optional[int] = None
 
+    # UE service policies, scoped by current serving cell.
+    ue_drx_configs: Optional[dict[str, dict]] = None
+    ue_offload_fraction: Optional[dict[str, float]] = None
+    ue_scheduler_weights: Optional[dict[str, float]] = None
+
     # Capability-limited control surface.
     scheduler_policy_hint: Optional[str] = None
     latency_bias: Optional[float] = None

@@ -1,0 +1,207 @@
+{
+  "accepted": true,
+  "date": "2026-11-04",
+  "deployment_host": "AGX1",
+  "xapp": "chongyu/ue_energy_rf",
+  "model_sha256": "9baf497d3d84e01c0aaa609ec050f75fcbd24af33a39f8bd5fedf5e16ac15e2b",
+  "source_sha256": "d3540db48286097294b33709e50d92158e52b541c029676ebaa6b36fd4dda453",
+  "model_path": "outputs/models/ue_energy_rf/model.json",
+  "training": {
+    "samples": 24,
+    "fit_count": 7,
+    "fit_s": 0.27005769801326096,
+    "simulated_s": 4.0,
+    "simulation_wall_s": 506.0380553480936,
+    "initial_samples": 18,
+    "seeds": [
+      11,
+      44
+    ],
+    "cost_scope": "Training simulation only; excludes evaluation and setup"
+  },
+  "thresholds": {
+    "target_energy_reduction_min": 0.05,
+    "per_target_delivered_bytes_loss_max": 0.05,
+    "per_target_on_time_rate_drop_max": 0.05
+  },
+  "scope": "6UE Munich, 1-second early-mobility evaluation; modelled UE energy, not whole-network energy",
+  "evaluations": [
+    {
+      "seed": 22,
+      "role": "validation",
+      "duration_s": 1.0,
+      "accepted": true,
+      "target_energy_saving_fraction": 0.16236962128238527,
+      "all_ue_energy_saving_fraction": 0.05745081398317978,
+      "network_goodput_mbps": {
+        "off": 30.198576,
+        "rf": 30.227376
+      },
+      "task_cohort_scope": "100\u2013900 ms creation-time cohorts; 16 tasks per target UE; energy/goodput include entire 1 s",
+      "per_target": {
+        "ue_0": {
+          "off": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 19.562500000000004
+          },
+          "frozen": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 11.375000000000002
+          },
+          "task_rate_change": 0.0,
+          "off_energy_j": 1.106504999999973,
+          "frozen_energy_j": 0.9249049999999711,
+          "off_delivered_bytes": 1328197,
+          "frozen_delivered_bytes": 1330197,
+          "delivered_ratio": 1.0015058007208268,
+          "task_guard_passed": true,
+          "goodput_guard_passed": true
+        },
+        "ue_4": {
+          "off": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 13.874999999999996
+          },
+          "frozen": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 10.062499999999993
+          },
+          "task_rate_change": 0.0,
+          "off_energy_j": 0.8613199999999952,
+          "frozen_energy_j": 0.7234049999999925,
+          "off_delivered_bytes": 1126250,
+          "frozen_delivered_bytes": 1127850,
+          "delivered_ratio": 1.0014206437291897,
+          "task_guard_passed": true,
+          "goodput_guard_passed": true
+        }
+      },
+      "action_counts": {
+        "ue_0": {
+          "2": 4
+        },
+        "ue_4": {
+          "2": 4
+        }
+      }
+    },
+    {
+      "seed": 33,
+      "role": "independent_confirmation",
+      "duration_s": 1.0,
+      "accepted": true,
+      "target_energy_saving_fraction": 0.15574646772511108,
+      "all_ue_energy_saving_fraction": 0.05461020545128044,
+      "network_goodput_mbps": {
+        "off": 30.20024,
+        "rf": 30.22744
+      },
+      "task_cohort_scope": "100\u2013900 ms creation-time cohorts; 16 tasks per target UE; energy/goodput include entire 1 s",
+      "per_target": {
+        "ue_0": {
+          "off": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 17.937500000000004
+          },
+          "frozen": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 11.375000000000004
+          },
+          "task_rate_change": 0.0,
+          "off_energy_j": 1.0962499999999704,
+          "frozen_energy_j": 0.9344349999999688,
+          "off_delivered_bytes": 1328205,
+          "frozen_delivered_bytes": 1330005,
+          "delivered_ratio": 1.0013552124860243,
+          "task_guard_passed": true,
+          "goodput_guard_passed": true
+        },
+        "ue_4": {
+          "off": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 16.406249999999996
+          },
+          "frozen": {
+            "generated": 16,
+            "completed": 16,
+            "on_time_completed": 16,
+            "failed": 0,
+            "pending": 0,
+            "on_time_rate": 1.0,
+            "completed_task_mean_latency_ms": 10.062499999999996
+          },
+          "task_rate_change": 0.0,
+          "off_energy_j": 0.8493799999999952,
+          "frozen_energy_j": 0.7081699999999943,
+          "off_delivered_bytes": 1126450,
+          "frozen_delivered_bytes": 1128050,
+          "delivered_ratio": 1.0014203914954058,
+          "task_guard_passed": true,
+          "goodput_guard_passed": true
+        }
+      },
+      "action_counts": {
+        "ue_0": {
+          "2": 4
+        },
+        "ue_4": {
+          "2": 4
+        }
+      }
+    }
+  ],
+  "failed_pilot": {
+    "preserved": true,
+    "seed": 22,
+    "ue_0_delivered_bytes_loss_fraction": 0.0561964829,
+    "decision": "Keep native DRX at deployment; retain broad DRX only as research opt-in; do not relax thresholds"
+  },
+  "deployed_policy": "Frozen learned RF; native DRX; selected offload probability 1 for UE0 and UE4",
+  "fixed_reference": "Constant offload probability 1 matched the learned policy on seed 22. No RF superiority claim.",
+  "tests": {
+    "initial_regression": 124,
+    "refinement_related": 52
+  },
+  "launcher_dry_run_passed": true,
+  "limitations": [
+    "1 s evaluation per case; no long mobility or congestion validation",
+    "Modelled UE radio/CPU energy, uncalibrated powers; excludes gNB and server energy",
+    "Abstract shared MEC uplink; existing actual NR/SYS downlink for task results",
+    "Seed 22 informed refinement; only seed 33 is independent confirmation"
+  ]
+}

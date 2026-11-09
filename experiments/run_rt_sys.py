@@ -32,6 +32,51 @@ def close_run_resources(resources):
     return errors
 
 
+def attach_recorded_arrivals(snapshot, live_trace):
+    """Bridge the simulator's earlier shallow snapshot to recording-only data."""
+    snapshot['traffic_arrivals'] = live_trace['traffic_arrivals']
+
+
+def configure_mec_stage_metrics(configs,args):
+    requested=getattr(args,'mec_stage_metrics',None)
+    if requested is None:
+        return
+    if type(requested) is not bool:
+        raise ValueError('MEC stage metrics requires a boolean')
+    services=configs['phy']['rt_sys'].get('ue_services',{})
+    if requested and (not services.get('enabled') or not services.get('mec',{}).get('enabled')):
+        raise ValueError('MEC stage metrics requires enabled UE/MEC services')
+    services['stage_metrics']=requested
+
+
+def configure_ue_services(configs,manifest,args):
+    """Apply an explicit run-local service profile before xApp configuration."""
+    service_preset=getattr(args,'ue_services',None)
+    if service_preset is None:
+        service_preset=configs['phy']['rt_sys'].get('ue_services',{}).get('preset')
+    profile=getattr(args,'ue_services_config',None)
+    if profile is not None and service_preset not in ('energy','drx-mec'):
+        raise ValueError('--ue-services-config requires an enabled --ue-services preset')
+    if service_preset is None:
+        return None
+    path=Path(profile).resolve() if profile is not None else ROOT/'configs/rt_sys/ue_services.json'
+    raw=path.read_bytes()
+    service_cfg=json.loads(raw)
+    if (not isinstance(service_cfg,dict) or not isinstance(service_cfg.get('drx'),dict)
+            or not isinstance(service_cfg.get('mec'),dict)
+            or not isinstance(service_cfg.get('drx_by_ue',{}),dict)
+            or not isinstance(service_cfg['mec'].get('tasks_by_ue',{}),dict)):
+        raise ValueError('UE service profile requires drx/mec objects and per-UE mappings')
+    service_cfg['enabled']=service_preset!='off'
+    if service_preset=='energy':
+        service_cfg['drx']['enabled']=False;service_cfg['mec']['enabled']=False
+    selected_uids={u['ue_id'] for u in manifest['ues']}
+    service_cfg['drx_by_ue']={k:v for k,v in service_cfg.get('drx_by_ue',{}).items() if k in selected_uids}
+    service_cfg['mec']['tasks_by_ue']={k:v for k,v in service_cfg['mec'].get('tasks_by_ue',{}).items() if k in selected_uids}
+    configs['phy']['rt_sys']['ue_services']=service_cfg
+    return dict(path=str(path),sha256=hashlib.sha256(raw).hexdigest()) if profile is not None else None
+
+
 def parse_args():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--scene',choices=['simple_street_canyon','munich'],default='simple_street_canyon')
@@ -64,6 +109,8 @@ def parse_args():
     p.add_argument('--generate-only',action='store_true')
     p.add_argument('--deployment-id',type=int,choices=[0,1,2])
     p.add_argument('--traffic-load',type=float,default=1)
+    from experiments.urllc_scenarios import add_scenario_arguments
+    add_scenario_arguments(p)
     p.add_argument('--phase',choices=['integration','train','validation','test'],default='integration')
     p.add_argument('--selection-mode',choices=['reflective','fixed_plan'],default='reflective')
     p.add_argument('--control-mode',choices=['baseline','orchestrated'],default='baseline',
@@ -71,6 +118,47 @@ def parse_args():
     p.add_argument('--model-state',type=Path)
     p.add_argument('--initial-queue-bytes',type=int)
     p.add_argument('--ue-speed-mps',type=float)
+    p.add_argument('--ue-services',choices=['off','energy','drx-mec'],help='UE power/DRX/MEC system models; overrides the run config')
+    p.add_argument('--ue-services-config',type=Path,
+        help='Explicit run-local UE-service JSON profile; requires an enabled --ue-services preset')
+    p.add_argument('--mec-stage-metrics',action=argparse.BooleanOptionalAction,default=None,
+        help='Opt-in task-stage timings and backlog diagnostics; disabled by default to retain fast-model throughput')
+    p.add_argument('--energy-xapp-mode',choices=['off','online','frozen'],default='off')
+    p.add_argument('--energy-xapp-model',type=Path)
+    p.add_argument('--energy-xapp-window-ms',type=float,default=100)
+    p.add_argument('--energy-xapp-explore-windows',type=int,default=9)
+    p.add_argument('--latency-xapp-mode',choices=['off','online','frozen','fixed'],default='off')
+    p.add_argument('--latency-xapp-fixed-action',type=int,choices=range(4),default=3,
+        help='MEC scheduler fixed ablation: 0 native RR; 1/2/3 latency-aware target weights 0.5/1/2')
+    p.add_argument('--latency-xapp-model',type=Path)
+    p.add_argument('--latency-xapp-window-ms',type=float,default=100)
+    p.add_argument('--latency-xapp-explore-windows',type=int,default=8)
+    p.add_argument('--urllc-xapp-mode',choices=['off','online','frozen','fixed'],default='off')
+    p.add_argument('--urllc-xapp-model',type=Path)
+    p.add_argument('--urllc-xapp-window-ms',type=float,default=100)
+    p.add_argument('--urllc-xapp-policy-version',choices=['legacy','qos_v2'],default='legacy')
+    p.add_argument('--urllc-xapp-fixed-action',type=int,choices=range(4),default=3)
+    p.add_argument('--urllc-xapp-balanced-start-windows',type=int,default=0,
+        help='QoS online only: balanced measured exploration at the beginning of each training episode')
+    p.add_argument('--ap-services-profile',type=Path,help='Explicit opt-in AP power/availability profile JSON')
+    p.add_argument('--ap-xapp-mode',choices=['off','online','frozen','fixed'],default='off')
+    p.add_argument('--ap-xapp-model',type=Path)
+    p.add_argument('--ap-xapp-window-ms',type=float,default=100)
+    p.add_argument('--ap-xapp-fixed-action',type=int,choices=range(4),default=1)
+    p.add_argument('--budget-xapp-mode',choices=['off','online','frozen','rules'],default='off')
+    p.add_argument('--budget-xapp-model',type=Path)
+    p.add_argument('--budget-xapp-window-ms',type=float,default=100)
+    p.add_argument('--budget-xapp-gflops',type=float,default=.75,help='Expected UE4 MEC compute budget in GFLOP/s')
+    p.add_argument('--throughput-xapp-mode',choices=['off','online','frozen','fixed'],default='off')
+    p.add_argument('--throughput-xapp-model',type=Path)
+    p.add_argument('--throughput-xapp-window-ms',type=float,default=100)
+    p.add_argument('--throughput-xapp-policy',choices=['guarded','throughput'],default='throughput',
+        help='X08 throughput-first default for conflict research; guarded enables optional QoS heuristics')
+    p.add_argument('--throughput-xapp-fixed-action',type=int,choices=[1,3],default=3,
+        help='Fixed ablation: 1 neutral latency-aware weights, 3 strongest-user weight 2')
+    p.add_argument('--direct-conflict-mitigation',choices=['priority','uniform_random'],default='priority')
+    p.add_argument('--mitigation-seed',type=int)
+    p.add_argument('--mitigation-window-ms',type=float,default=100)
     model=p.add_mutually_exclusive_group()
     model.add_argument('--model',choices=['full','fast'],help='full: actual NR; fast: 10 ms geometry and on-demand SYS channels with explicit NR fallback (default full)')
     p.add_argument('--fast-profile',choices=['efficient','reference','system'],help='fast only: system (default, 2 ms gains), per-slot efficient, or full-grid reference')
@@ -111,11 +199,25 @@ def run_case(args):
         deployment_id=getattr(args,'deployment_id',None),traffic_load=getattr(args,'traffic_load',1),
         initial_queue_bytes=getattr(args,'initial_queue_bytes',None),ue_speed_mps=getattr(args,'ue_speed_mps',None),
         xapp_pool=getattr(args,'xapp_pool',None))
+    from experiments.urllc_scenarios import configure_arrivals
+    configure_arrivals(manifest,configs,args)
+    ap_profile_metadata=None
+    ap_profile=getattr(args,'ap_services_profile',None)
+    if ap_profile is not None:
+        ap_profile=ap_profile.resolve()
+        payload=json.loads(ap_profile.read_text())
+        if not isinstance(payload,dict) or not isinstance(payload.get('ap_services'),dict):
+            raise ValueError('AP profile requires an explicit ap_services object')
+        configs['phy']['rt_sys']['ap_services']=payload['ap_services']
+        ap_profile_metadata=dict(path=str(ap_profile),sha256=hashlib.sha256(ap_profile.read_bytes()).hexdigest(),
+            profile_id=payload.get('profile_id'),provenance=payload.get('provenance'))
     displacement=getattr(args,'max_geometry_displacement_m',None)
     if displacement is not None:
         import math
         if not math.isfinite(displacement) or displacement<=0:raise ValueError('Geometry displacement cap must be positive and finite')
         manifest['max_geometry_displacement_m']=displacement
+    ue_profile_metadata=configure_ue_services(configs,manifest,args)
+    configure_mec_stage_metrics(configs,args)
     args.xapp_pool=configs['ric']['xapp_pool']
     phase=getattr(args,'phase','integration');mode=getattr(args,'selection_mode','reflective')
     warmup=getattr(args,'warmup_ms',0)
@@ -221,13 +323,18 @@ def run_case(args):
         name+='_'+datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6]
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
+    from experiments.online_rf_xapps import configure as configure_rf_xapps
+    control_mode=configure_rf_xapps(configs,manifest,args,output,ROOT,live_test_enabled=live_test_enabled)
     live_path=getattr(args,'live_state',None)
     if live_path is not None and not live_path.resolve().is_relative_to(ROOT/'outputs'):
         raise ValueError('Live telemetry must stay under project outputs/')
     if args.dry_run:
-        print(json.dumps({'manifest':manifest,'output':str(output),'phy_config':configs['phy'],'model':selected_model,'automatic_html':getattr(args,'html',True),
+        dry_run={'manifest':manifest,'output':str(output),'phy_config':configs['phy'],'model':selected_model,'automatic_html':getattr(args,'html',True),
             'execution_devices':execution_devices,'platform_profile':platform_profile,
-            'xapp_pool':args.xapp_pool,'registered_xapps':configs['ric'].get('xapps',[])},indent=2)); return
+            'xapp_pool':args.xapp_pool,'registered_xapps':configs['ric'].get('xapps',[]),
+            'direct_conflict_mitigation':{k:configs['ric'].get(k) for k in ('direct_conflict_mitigation','mitigation_seed','mitigation_window_ms')}}
+        if ue_profile_metadata is not None:dry_run['ue_services_profile']=ue_profile_metadata
+        print(json.dumps(dry_run,indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
     if configs['phy']['rt_sys']['feedback_mode'] in ('nr_cached_reference','nr_bler_bank'):
         ref=configs['phy']['rt_sys'].setdefault('reference',{})
@@ -236,6 +343,8 @@ def run_case(args):
     source_hash=source_fingerprint(ROOT)
     compression=getattr(args,'record_compression','none')
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'record_compression':compression,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
+    if ap_profile_metadata is not None:snapshot['ap_services_profile']=ap_profile_metadata
+    if ue_profile_metadata is not None:snapshot['ue_services_profile']=ue_profile_metadata
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
     status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'fast_profile':fast_profile,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
@@ -386,10 +495,19 @@ def run_case(args):
                     adapter.trace['mobility_events']=simulator.mobility_manager.events
                     adapter.trace['handover_counts']={uid:c.handover_count for uid,c in simulator.state.connections.items()}
                     adapter.trace['connection_states']={uid:c.connection_state for uid,c in simulator.state.connections.items()}
+                    # Audit exogenous demand separately from actual MEC result
+                    # releases; neither value feeds a controller or generator.
+                    services=getattr(simulator.state,'ue_services',None)
+                    result_arrivals=getattr(services,'result_arrivals',{})
+                    offered_arrivals=simulator.state.traffic.arrival_bytes_by_ue
+                    adapter.trace['traffic_arrivals']={uid:{
+                        'exogenous_bytes':int(offered_arrivals.get(uid,0)-result_arrivals.get(uid,0)),
+                        'mec_result_bytes':int(result_arrivals.get(uid,0))} for uid in ue_by_id}
                     if simulator.state.sim_time_ms>warmup:
                         completed_handovers+=sum(e['handover_completed'] for e in simulator.mobility_manager.events)
                         evaluated_bytes+=sum(u['delivered_bytes'] for u in adapter.trace['ues']);evaluated_slots+=1
                     full=simulator.slot_records[-1]['rt_sys']
+                    attach_recorded_arrivals(full,adapter.trace)
                     full['xapp_bindings']=simulator.controller_manager.instance_selection.bindings or {}
                     if any(r.get('ack_source') in ('harq_incompatible_no_tb','unsupported_nr_code_no_tb') for r in adapter.trace['ues']) or any(e.get('status')=='rejected' for e in simulator.state.control.actuation_outcomes) or any(e.get('kind') in ('connection_drop','handover_failure') for e in getattr(getattr(simulator.state,'paper',None),'events',[])):
                         diagnostic_until=simulator.state.slot_id+window_slots
@@ -433,6 +551,13 @@ def run_case(args):
                 bindings=simulator.controller_manager.instance_selection.bindings)
         if hasattr(adapter.abstraction,'bank'):adapter.abstraction.bank.save()
         if hasattr(adapter.abstraction,'harq'):adapter.abstraction.statistics.update(adapter.abstraction.harq.stats)
+        for app in registry.xapps:
+            if getattr(app,'implementation_id',None)=='ue_energy_rf':summary['ue_energy_xapp']=app.summary()
+            if getattr(app,'implementation_id',None)=='latency_scheduler_rf':summary['latency_xapp']=app.summary()
+            if getattr(app,'implementation_id',None)=='mec_offload_budget_qgbdt':summary['budget_xapp']=app.summary()
+            if getattr(app,'implementation_id',None)=='throughput_scheduler_mlp':summary['throughput_xapp']=app.summary()
+            if getattr(app,'implementation_id',None)=='latency_urllc_rf':summary['urllc_xapp']=app.summary()
+            if getattr(app,'implementation_id',None)=='ap_energy_rf':summary['ap_xapp']=app.summary()
         summary['link_reference_statistics']=getattr(adapter.abstraction,'statistics',{})
         summary['steady_state']=steady.summary()
         summary['runtime_diagnostics']=diagnostics.summary(summary['steady_state'])
@@ -441,6 +566,8 @@ def run_case(args):
         (output/'runtime_diagnostics.json').write_text(json.dumps(summary['runtime_diagnostics'],indent=2,allow_nan=False))
         (output/'steady_state.json').write_text(json.dumps(summary['steady_state'],indent=2))
         summary['packet_metrics']={u.ue_id:u.packet_ledger.summary() for u in simulator.state.ues}
+        if getattr(simulator.state,'ue_services',None):
+            summary['ue_services']=simulator.state.ue_services.summary()
         summary['du_olla']={u.ue_id:u.du_olla.summary() for u in simulator.state.ues if hasattr(u,'du_olla')}
         summary['tb_outcomes']={u.ue_id:dict(successful_tbs=len(u.packet_ledger.completed_tbs),payload_flushes=u.harq.harq_flush_count,retx_deferred_resource=getattr(u.harq,'retx_deferred_resource',0),pending_tbs=len(u.packet_ledger.reservations)) for u in simulator.state.ues}
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,

@@ -63,6 +63,7 @@ class UeState:
     harq: HarqState = field(default_factory=HarqState)
     logical_channels: list[LogicalChannelState] = field(default_factory=list)
     logical_channel_groups: list[LogicalChannelGroupState] = field(default_factory=list)
+    scheduler_weight: float = field(default=1.0, kw_only=True)
 
     # Slot-level fields updated by StateUpdater / PHY.
     is_scheduled: bool = False

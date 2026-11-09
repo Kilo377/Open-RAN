@@ -1,0 +1,19 @@
+{
+  "id": "X-02",
+  "implementation": "ap_energy_rf",
+  "algorithm": "RandomForestRegressor",
+  "adaptation": "Paper RF AP-energy control adapted to 5G cells; no Wi-Fi model or exact paper hyperparameter claim.",
+  "target_kpis": {
+    "network_ap_power_w": "minimize actual window AP joules divided by time, under the explicit opt-in system power model",
+    "network_goodput_mbps": "report",
+    "urllc_unique_deadline_failure_events_per_s": "report UE2 and UE6 separately; original 10 ms deadlines unchanged"
+  },
+  "rcp": {
+    "cell_sleep_mode": ["active", "micro_sleep", "light_sleep", "deep_sleep"],
+    "actions": ["all cells active", "publicly empty cells deep sleep", "empty cells deep sleep and all occupied cells micro sleep", "empty cells deep sleep and all occupied cells light sleep"]
+  },
+  "measurement": "One global counter-delta row after real consumer owner/ACK confirmation and a full cycle of settling; complete equal-phase cycles, all 3 AP joule counters and all 6 UE deliveries.",
+  "training": "Balanced 24 measured global windows, six per action; cap 512, 32 depth-6 trees, safe JSON inference. Bad outcomes are retained; the larger cap supports long-run data and released 250-row checkpoints.",
+  "policy": "Energy-first research objective with QoS fully reported; no capacity or SLA guarantee. Frozen inference does not update the artifact.",
+  "affected_kpis": ["network_goodput_mbps", "per_ue_delivery", "urllc_packet_deadline_failure_fraction", "packet_completion_latency_ms", "queue_bytes", "ap_available_fraction"]
+}

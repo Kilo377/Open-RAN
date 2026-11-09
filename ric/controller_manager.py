@@ -53,6 +53,7 @@ class ControllerManager:
     """
 
     ACTION_FIELDS = [
+        "ue_drx_configs", "ue_offload_fraction", "ue_scheduler_weights",
         "prb_power_w", "clear_prb_power", "power_group_size_prbs", "ue_prb_limits",
         "neighbor_cell_ids", "cio_offsets_db", "ret_enabled", "ret_tilt_deg", "ret_codebook_id", "time_to_trigger_ms",
         "codebook_id",
@@ -98,6 +99,10 @@ class ControllerManager:
         non_rt_reselection_enabled: bool = False,
         non_rt_reselection_fallback_threshold: int = 2,
         non_rt_reselection_min_gap_slots: int = 10,
+        direct_conflict_mitigation: str = 'priority',
+        mitigation_seed: int = 1,
+        mitigation_window_ms: float = 100.,
+        mitigation_slot_duration_ms: float = 1.,
     ) -> None:
         """
         Initializes the controller manager.
@@ -115,6 +120,20 @@ class ControllerManager:
         self.a1_interfaces = a1_interfaces
         self.e2_interfaces = e2_interfaces
         self.xapp_interval_slots = xapp_interval_slots
+        if direct_conflict_mitigation not in ('priority', 'uniform_random'):
+            raise ValueError('Unsupported direct_conflict_mitigation: ' + str(direct_conflict_mitigation))
+        self.direct_conflict_mitigation = direct_conflict_mitigation
+        self.direct_conflict_arbiter = None
+        self.scheduler_conflict_arbiter = None
+        self._mitigation_executed_owners = {}
+        self._mitigation_executed_values = {}
+        self._scheduler_mitigation_executed = {}
+        self._scheduler_mitigation_uid_values = {}
+        self.mitigation_supported_fields = ('ue_offload_fraction','scheduler_mode','ue_scheduler_weights')
+        if direct_conflict_mitigation == 'uniform_random':
+            from ric.near_rt.rule_based_v1.random_arbiter import RandomOffloadArbiter,RandomSchedulerArbiter
+            self.direct_conflict_arbiter = RandomOffloadArbiter(mitigation_seed, mitigation_window_ms, mitigation_slot_duration_ms)
+            self.scheduler_conflict_arbiter = RandomSchedulerArbiter(mitigation_seed, mitigation_window_ms, mitigation_slot_duration_ms)
         self.rapp_interval_slots = rapp_interval_slots
         self.run_rapps_on_start = bool(run_rapps_on_start)
         self.orchestration_warmup_slots = max(0, int(orchestration_warmup_slots))
@@ -1042,10 +1061,18 @@ class ControllerManager:
         return field_value
 
     def _normalize_current_action_surface(self) -> None:
-        scheduler_hint = getattr(self.current_action, "scheduler_policy_hint", None)
-        if scheduler_hint != "slice_bias":
+        # LocalExecutor applies the hint first and the explicit mode last.
+        # A cached hint must not erase tuning for the mode that will execute.
+        scheduler_mode = getattr(self.current_action, "scheduler_mode", None)
+        if scheduler_mode is None or not str(scheduler_mode).strip():
+            scheduler_hint = str(getattr(self.current_action, "scheduler_policy_hint", None) or "").strip().lower()
+            scheduler_mode = {"balanced": "round_robin", "latency_bias": "latency_aware",
+                              "slice_bias": "slice_aware"}.get(scheduler_hint)
+        else:
+            scheduler_mode = str(scheduler_mode).strip()
+        if scheduler_mode != "slice_aware":
             self.current_action.slice_weight_adjustment = {}
-        if scheduler_hint != "latency_bias":
+        if scheduler_mode != "latency_aware":
             self.current_action.latency_bias = None
 
     def _normalize_scope_key(
@@ -1235,6 +1262,7 @@ class ControllerManager:
         }
         """
         self.rule_decisions=[]
+        self._mitigation_default_cell_id=getattr(observation,'cell_id',None)
         field_winners_by_scope: Dict[str, Dict[str, Tuple[int, object, str]]] = {}
         scope_specs_by_key: Dict[str, tuple[str, str | None]] = {}
         collected_commands: list[CommandAction] = []
@@ -1307,7 +1335,29 @@ class ControllerManager:
                 # Independent control-plane receipt, never a simulation state reference.
                 projected.control_ownership={}
                 for (cell,field),owner in getattr(getattr(self,'rule_leases',None),'owned',{}).items():
-                    projected.control_ownership.setdefault(cell,{})[field]=str(owner)
+                    projected.control_ownership.setdefault(cell,{})[field]=str(owner) if owner is not None else None
+                if self.direct_conflict_arbiter is not None:
+                    # Selection ownership is not an execution acknowledgement.
+                    # Explicit None prevents a scalar selected owner from
+                    # confirming another UID's still-queued control.
+                    for u in observation.ue_observations:
+                        cell=u.serving_cell_id;uid=u.ue_id
+                        owner=self._mitigation_executed_owners.get(uid)
+                        projected.control_ownership.setdefault(cell, {}).setdefault('ue_offload_fraction_by_ue', {})[uid]=owner
+                    for values in projected.control_ownership.values():
+                        owners=set(values.get('ue_offload_fraction_by_ue',{}).values())
+                        values['ue_offload_fraction']=next(iter(owners)) if len(owners)==1 else None
+                    for cell in getattr(getattr(self,'rule_leases',None),'scheduler_managed_cells',()):
+                        ack=self._scheduler_mitigation_executed.get(cell,{})
+                        owner=ack.get('owner');weights=ack.get('value',{}).get('ue_scheduler_weights',{})
+                        delivered_cell=next((c for c in getattr(projected,'cell_observations',[]) if c.cell_id==cell),None)
+                        produced=(getattr(delivered_cell,'kpi_metadata',{}) or {}).get('executed_config',{}).get('produced_at_slot')
+                        if produced is None or produced<ack.get('applied_slot',float('inf')):owner=None
+                        members={u.ue_id for u in observation.ue_observations if u.serving_cell_id==cell}
+                        values=projected.control_ownership.setdefault(cell,{})
+                        values['scheduler_mode']=owner
+                        values['ue_scheduler_weights']=owner if weights and set(weights)==members else None
+                        values['scheduler_bundle_generation']=ack.get('generation')
             xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
             if getattr(xapp,'rule_based_v1',False):
                 self.rule_decisions=getattr(self,'rule_decisions',[])+deepcopy(xapp.last_decisions)
@@ -1324,6 +1374,13 @@ class ControllerManager:
                     continue
             for action_index,item_action in enumerate(xapp_decision.config_actions):
                 xapp_action = item_action
+                if self.direct_conflict_arbiter is not None and xapp_action.ue_offload_fraction is not None and not getattr(xapp,'rule_based_v1',False):
+                    raise ValueError('uniform_random requires lease-backed UE offload xApps')
+                if self.scheduler_conflict_arbiter is not None:
+                    from ric.near_rt.rule_based_v1.random_arbiter import SCHEDULER_BUNDLE_FIELDS
+                    if SCHEDULER_BUNDLE_FIELDS<=set(xapp.controlled_fields) and (xapp_action.scheduler_mode is not None or xapp_action.ue_scheduler_weights is not None):
+                        if not getattr(xapp,'rule_based_v1',False):raise ValueError('uniform_random scheduler bundle requires lease-backed xApps')
+                        xapp_action._scheduler_bundle_candidate=True
 
                 self._stamp_metadata(
                     xapp_action,
@@ -1416,6 +1473,13 @@ class ControllerManager:
                         )
                         continue
 
+                    if self.direct_conflict_arbiter is not None and field_name == 'ue_offload_fraction':
+                        # Held, sanitized UID requests are arbitrated once below.
+                        # Do not emit a misleading priority decision here.
+                        continue
+                    if self.scheduler_conflict_arbiter is not None and getattr(xapp_action,'_scheduler_bundle_candidate',False) and field_name in SCHEDULER_BUNDLE_FIELDS:
+                        continue
+
                     if field_name not in scope_field_winners:
                         scope_field_winners[field_name] = (
                             xapp.priority,
@@ -1426,6 +1490,10 @@ class ControllerManager:
                         continue
 
                     current_priority, current_value, current_owner = scope_field_winners[field_name]
+                    if self.direct_conflict_arbiter is not None:
+                        from ric.near_rt.rule_based_v1.random_arbiter import overlaps_unequally
+                        if current_owner != xapp.name and overlaps_unequally(current_value, field_value):
+                            raise ValueError('uniform_random does not support direct conflict on ' + field_name)
                     if xapp.priority > current_priority:
                         dropped_items.append(DroppedControlItem(kind='field_write',source=str(current_owner),
                             reason='superseded_by_higher_priority',field_name=str(field_name),
@@ -1455,7 +1523,8 @@ class ControllerManager:
         if any(getattr(i.xapp,'rule_based_v1',False) for i in self.e2_interfaces):
             from ric.near_rt.rule_based_v1.leases import RuleLeases
             if not hasattr(self,'rule_leases'):self.rule_leases=RuleLeases()
-            self.rule_leases.reconcile(self,observation,field_winners_by_scope,scope_specs_by_key,received_config_actions,dropped_items)
+            self.rule_leases.reconcile(self,observation,field_winners_by_scope,scope_specs_by_key,received_config_actions,dropped_items,
+                                       slot_id=slot_id)
         return (
             field_winners_by_scope,
             scope_specs_by_key,
@@ -1504,6 +1573,66 @@ class ControllerManager:
             reason_parts.append("health_gate=" + "|".join(sorted(set(health_reasons))[:3]))
         return ";".join(reason_parts)
 
+    def validate_mitigation_actuation(self, action, slot_id, state):
+        """Recheck queued selections against current generation and real UID scope."""
+        records=getattr(action,'_mitigation_records',[])
+        if not records:return None
+        if self.direct_conflict_arbiter is None:return 'mitigation_mode_changed'
+        for record in records:
+            if record.get('field')=='scheduler_bundle':
+                cid=record['cell_id'];arbiter=self.scheduler_conflict_arbiter
+                if arbiter is None or not arbiter.valid_selection(record,slot_id,cid):return 'stale_mitigation_selection'
+                members={uid for uid,c in getattr(state,'connections',{}).items() if c.serving_cell_id==cid}
+                if set(record['serving_ue_ids'])!=members:return 'mitigation_scheduler_membership_changed'
+                if action.target_cell_id!=cid or action.apply_scope!='cell':return 'mitigation_action_mismatch'
+                expected=record['selected_value']
+                if action.scheduler_mode!=expected['scheduler_mode'] or action.ue_scheduler_weights!=expected['ue_scheduler_weights']:
+                    return 'mitigation_action_mismatch'
+                tuning=record.get('framework_tuning',{})
+                if action.scheduler_policy_hint is not None or action.latency_bias!=tuning.get('latency_bias') or action.slice_weight_adjustment!=tuning.get('slice_weight_adjustment',{}):
+                    return 'mitigation_scheduler_tuning_mismatch'
+            elif record.get('field')=='ue_offload_fraction':
+                uid=record['ue_id']
+                connection=getattr(state,'connections',{}).get(uid)
+                cid=getattr(connection,'serving_cell_id',None)
+                if cid!=action.target_cell_id or cid!=record['cell_id']:return 'mitigation_ue_moved_cell'
+                if not self.direct_conflict_arbiter.valid_selection(record,slot_id,cid):return 'stale_mitigation_selection'
+                if action.ue_offload_fraction!={uid:record['selected_value']}:return 'mitigation_action_mismatch'
+            else:return 'unsupported_mitigation_group'
+            if record['winner']!='rule_withdrawal' and not self._is_xapp_enabled(record['winner']):return 'mitigation_source_withdrawn'
+            provenance=record.get('provenance')
+            if provenance is not None:
+                snapshot=self.policy_store.get_snapshot();bindings=snapshot.xapp_bindings
+                if self.instance_selection.mode=='exclusive' and bindings is not None and bindings.get(cid,{}).get(provenance['category_id'])!=record['winner']:
+                    return 'mitigation_source_withdrawn'
+                active_sets=getattr(snapshot,'xapp_active_sets',None)
+                if self.instance_selection.mode=='conflict_experiment' and active_sets is not None and record['winner'] not in active_sets.get(cid,{}).get(provenance['category_id'],[]):
+                    return 'mitigation_source_withdrawn'
+                if not self.instance_selection.valid(provenance):return 'stale_mitigation_source'
+        return None
+
+    def mitigation_actuation_receipts(self, action, slot_id, status, reason=None):
+        from copy import deepcopy
+        if status=='applied':
+            for record in getattr(action,'_mitigation_records',[]):
+                if record.get('field')=='scheduler_bundle':
+                    previous=self._scheduler_mitigation_executed.get(record['cell_id'],{})
+                    ack=dict(
+                        owner=None if record['winner']=='rule_withdrawal' else record['winner'],
+                        value=deepcopy(record['selected_value']),framework_tuning=deepcopy(record.get('framework_tuning',{})),
+                        generation=record['generation'],applied_slot=slot_id)
+                    if all(previous.get(k)==ack[k] for k in ('owner','value','framework_tuning','generation')):
+                        ack['applied_slot']=previous['applied_slot']
+                    self._scheduler_mitigation_executed[record['cell_id']]=ack
+                    self._scheduler_mitigation_uid_values.update(record['selected_value']['ue_scheduler_weights'])
+                else:
+                    self._mitigation_executed_owners[record['ue_id']]=(None if record['winner']=='rule_withdrawal' else record['winner'])
+                    self._mitigation_executed_values[record['ue_id']]=record['selected_value']
+        return [dict(reason='direct_conflict_action_executed' if status=='applied' else 'direct_conflict_action_rejected',
+            slot_id=slot_id,status=status,rejection_reason=reason,
+            control_request_id=action.control_request_id,**deepcopy(record))
+            for record in getattr(action,'_mitigation_records',[])]
+
     def _apply_field_winners(
         self,
         field_winners_by_scope: Dict[str, Dict[str, Tuple[int, object, str]]],
@@ -1528,6 +1657,15 @@ class ControllerManager:
             if 'prb_power_w' in scope_field_winners:scope_action.clear_prb_power=None
             if scope_field_winners.get('clear_prb_power',(0,False,''))[1]:scope_action.prb_power_w=None
             for field_name, (_, field_value, _) in scope_field_winners.items():
+                from ric.near_rt.rule_based_v1.random_arbiter import SCHEDULER_RESERVED_FIELDS
+                actual_cell=target_cell_id if target_cell_id is not None else getattr(self,'_mitigation_default_cell_id',None)
+                managed=getattr(getattr(self,'rule_leases',None),'scheduler_managed_cells',())
+                if (actual_cell in managed or (apply_scope=='cluster' and managed)) and field_name in SCHEDULER_RESERVED_FIELDS:
+                    setattr(scope_action,field_name,{} if field_name=='slice_weight_adjustment' else None)
+                    continue
+                if self.direct_conflict_arbiter is not None and field_name == 'ue_offload_fraction':
+                    scope_action.ue_offload_fraction = None
+                    continue
                 setattr(scope_action, field_name, self._copy_action_field_value(field_value))
             self.current_action = self.current_action_by_scope.get("cell:__default__", self.current_action)
             if scope_key == "cell:__default__":
@@ -1549,6 +1687,13 @@ class ControllerManager:
             action=self.current_action_by_scope[scope_key]
             groups={}
             for field in self.ACTION_FIELDS:
+                if self.direct_conflict_arbiter is not None and field == 'ue_offload_fraction':continue
+                from ric.near_rt.rule_based_v1.random_arbiter import SCHEDULER_RESERVED_FIELDS
+                actual_cell=action.target_cell_id if action.target_cell_id is not None else getattr(self,'_mitigation_default_cell_id',None)
+                managed=getattr(getattr(self,'rule_leases',None),'scheduler_managed_cells',())
+                if (actual_cell in managed or (action.apply_scope=='cluster' and managed)) and field in SCHEDULER_RESERVED_FIELDS:
+                    setattr(action,field,{} if field=='slice_weight_adjustment' else None)
+                    continue
                 value=getattr(action,field)
                 if not self._action_field_has_value(field,value):continue
                 window=getattr(self,'_field_validities',{}).get((scope_key,field),(None,None))
@@ -1557,6 +1702,25 @@ class ControllerManager:
                         source_name=action.source_name,effective_from_slot=window[0],effective_until_slot=window[1])
                 setattr(groups[window],field,self._copy_action_field_value(value))
             grouped_actions.extend(groups.values() if groups else [action])
+        if self.direct_conflict_arbiter is not None:
+            for record in getattr(getattr(self, 'rule_leases', None), 'random_outputs', []):
+                start=max(record['window_start_slot'], record.get('effective_from_slot') or 0)
+                end=record['window_end_slot_exclusive']-1
+                if record.get('effective_until_slot') is not None:end=min(end,record['effective_until_slot'])
+                action=ConfigAction(target_cell_id=record['cell_id'],
+                    ue_offload_fraction={record['ue_id']:record['selected_value']},
+                    effective_from_slot=start,effective_until_slot=end)
+                action._mitigation_records=[self._copy_action_field_value(record)]
+                grouped_actions.append(action)
+            for record in getattr(getattr(self,'rule_leases',None),'random_scheduler_outputs',[]):
+                start=max(record['window_start_slot'],record.get('effective_from_slot') or 0)
+                end=record['window_end_slot_exclusive']-1
+                if record.get('effective_until_slot') is not None:end=min(end,record['effective_until_slot'])
+                action=ConfigAction(target_cell_id=record['cell_id'],effective_from_slot=start,effective_until_slot=end,
+                    **self._copy_action_field_value(record['selected_value']),
+                    **self._copy_action_field_value(record.get('framework_tuning',{})))
+                action._mitigation_records=[self._copy_action_field_value(record)]
+                grouped_actions.append(action)
         return grouped_actions
 
     def update(self, slot_id: int, observation: Observation) -> ControlDecision:
@@ -1674,9 +1838,13 @@ class ControllerManager:
             f"policy_constraints={len(policy_constraints)}."
         )
 
+        from copy import deepcopy
         stamped_config_actions: list[ConfigAction] = []
         for merged_scope_action in merged_config_actions:
             stamped_scope_action = ConfigAction(
+                ue_drx_configs=deepcopy(merged_scope_action.ue_drx_configs),
+                ue_offload_fraction=deepcopy(merged_scope_action.ue_offload_fraction),
+                ue_scheduler_weights=deepcopy(merged_scope_action.ue_scheduler_weights),
                 codebook_id=merged_scope_action.codebook_id,
                 beam_profile_id=merged_scope_action.beam_profile_id,
                 tx_power_dbm=merged_scope_action.tx_power_dbm,
@@ -1724,6 +1892,14 @@ class ControllerManager:
                     'fields':[field for (cid,field),owner in self.rule_leases.owned.items()
                         if owner==name and cid==stamped_scope_action.target_cell_id and self._action_field_has_value(field,getattr(stamped_scope_action,field,None))]}
                     for name in stamped_scope_action._rule_owners if name in apps]
+            records=deepcopy(getattr(merged_scope_action,'_mitigation_records',[]))
+            if records:
+                stamped_scope_action._mitigation_records=records
+                stamped_scope_action._rule_owners=tuple(sorted({r['winner'] for r in records if r['winner']!='rule_withdrawal'}))
+                stamped_scope_action._library_provenances=[{**r['provenance'],'fields':r.get('fields',['ue_offload_fraction'])}
+                    for r in records if r.get('provenance') is not None]
+                self.rule_decisions.extend(dict(reason='direct_conflict_action_submitted',slot_id=slot_id,
+                    control_request_id=stamped_scope_action.control_request_id,**deepcopy(r)) for r in records)
             stamped_config_actions.append(stamped_scope_action)
 
         decision_metadata = ControlMetadata(

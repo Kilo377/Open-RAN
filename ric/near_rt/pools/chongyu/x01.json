@@ -1,0 +1,23 @@
+{
+  "id": "X-01",
+  "implementation": "ue_energy_rf",
+  "algorithm": "RandomForestRegressor",
+  "training": "online_batched",
+  "target_ues": ["ue_0", "ue_4"],
+  "target_kpis": {
+    "ue_energy_total_j": {"unit": "J", "direction": "minimize", "evaluation": "matched_interval_delta"}
+  },
+  "rcp": {
+    "ue_drx_configs": {"deployed": "native_locked"},
+    "ue_offload_fraction": {"values": [0, 0.5, 1]}
+  },
+  "affected_kpis": {
+    "ue_task_metrics.mean_completion_latency_ms": "ms",
+    "ue_task_metrics.offloaded_mean_completion_latency_ms": "ms",
+    "ue_task_metrics.success_ratio": "ratio",
+    "throughput_mbps": "Mbit/s",
+    "queue_bytes": "byte",
+    "hol_delay_ms": "ms",
+    "ue_active_fraction": "ratio"
+  }
+}

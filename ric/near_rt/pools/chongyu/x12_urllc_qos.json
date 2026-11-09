@@ -1,0 +1,14 @@
+{
+  "id": "X-12-URLLC-QoS",
+  "implementation": "latency_urllc_rf",
+  "parameter": {"policy_version": "qos_v2"},
+  "algorithm": "RandomForestRegressor",
+  "target_kpis": ["UE2+UE6 unique deadline/overflow failure event rate", "completed-packet mean latency"],
+  "rcp": {"scheduler_mode": ["round_robin", "qos_deadline"], "ue_scheduler_weights": "UE2+UE6: 1/2/4; other UEs: 1"},
+  "training": {"minimum_rows": 40, "minimum_per_action": 10, "maximum_rows": 512, "trees": 64, "max_depth": 6, "min_samples_leaf": 5, "refit_rows": 20, "epsilon_after_coverage": 0.1},
+  "measurement": "All-cell executed ownership confirmation, 20 ms wash-in, then 100/200 ms public counter deltas. Includes carryover, not arrival-cohort SLA probability. Mean latency covers completions only.",
+  "checkpoint": "Atomic latest measured-data JSON plus immutable SHA-named checkpoint after every fit; frozen inference never writes.",
+  "affected_kpis": ["URLLC deadline failures", "per-UE latency", "eMBB goodput", "PRB allocation", "UE energy"],
+  "references": ["https://cttc-lena.gitlab.io/nr/html/nr-mac-scheduler-ue-info-qos_8h_source.html", "https://arxiv.org/html/2401.03059v1"],
+  "adaptation": "Our RF configuration-selection design over a QoS/PDB MAC policy; not a reproduction of either referenced implementation or neural admission controller."
+}

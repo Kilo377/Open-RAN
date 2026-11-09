@@ -15,7 +15,8 @@ class PacketLedger:
         self.stats = Counter(dict.fromkeys(('initial_bytes', 'offered_bytes', 'overflow_bytes',
             'overflow_packets', 'admitted_packets', 'delivered_bytes', 'completed_packets',
             'completion_latency_ms_sum', 'max_completion_latency_ms', 'late_completed_packets',
-            'on_time_completed_packets', 'deadline_missed_packets', 'pending_bytes', 'pending_packets'), 0))
+            'on_time_completed_packets', 'deadline_missed_packets', 'deadline_failed_packets',
+            'pending_bytes', 'pending_packets'), 0))
         self.events = []
         self.reservations = {}
         self.completed_tbs = set()
@@ -26,7 +27,7 @@ class PacketLedger:
             self.add(lc, int(lc.queue_bytes), 0, initial=True)
         self.refresh(0)
 
-    def add(self, lc, amount, slot, *, initial=False, packet_size=200):
+    def add(self, lc, amount, slot, *, initial=False, packet_size=200, service_task_id=None):
         queue = self.queues.setdefault(lc.logical_channel_id, deque())
         occupancy = sum(p['remaining_bytes'] for p in queue)
         cap = lc.max_queue_bytes
@@ -49,6 +50,8 @@ class PacketLedger:
                 continue
             queue.append(dict(packet_id=pid, arrival_slot=slot, size_bytes=size,
                               remaining_bytes=size, free_ranges=[(0, size)], deadline_ms=float(lc.packet_delay_budget_ms), overdue=False))
+            if service_task_id is not None:
+                queue[-1]['service_task_id'] = service_task_id
             occupancy += size
             admitted += size
             self.stats['admitted_packets'] += 1
@@ -67,6 +70,8 @@ class PacketLedger:
             taken = min(amount, packet['remaining_bytes'])
             amount -= taken
             packet['remaining_bytes'] -= taken
+            if 'service_task_id' in packet:
+                self.service_delivery_listener(packet['service_task_id'], taken, slot)
             packet['free_ranges']=[(packet['size_bytes']-packet['remaining_bytes'],packet['size_bytes'])] if packet['remaining_bytes'] else []
             self.stats['delivered_bytes'] += taken
             delay = (slot - packet['arrival_slot']) * self.dt
@@ -74,6 +79,8 @@ class PacketLedger:
                 logical_channel_id=lc.logical_channel_id, packet_id=packet['packet_id'],
                 slot_id=slot, bytes=taken, latency_ms=delay, completed=packet['remaining_bytes'] == 0))
             if not packet['remaining_bytes']:
+                if delay > packet['deadline_ms']:
+                    self._count_deadline_failure(packet)
                 queue.popleft()
                 self.stats['completed_packets'] += 1
                 self.stats['completion_latency_ms_sum'] += delay
@@ -125,6 +132,8 @@ class PacketLedger:
             p = next(p for p in queue if p['packet_id'] == pid)
             size = end-start
             p['remaining_bytes'] -= size
+            if 'service_task_id' in p:
+                self.service_delivery_listener(p['service_task_id'], size, slot)
             delivered[lc_id] += size
             self.stats['delivered_bytes'] += size
             delay = (slot-p['arrival_slot'])*self.dt
@@ -133,6 +142,8 @@ class PacketLedger:
                 byte_end=end, bytes=size, slot_id=slot, latency_ms=delay,
                 completed=p['remaining_bytes']==0))
             if p['remaining_bytes'] == 0:
+                if delay > p['deadline_ms']:
+                    self._count_deadline_failure(p)
                 queue.remove(p)
                 self.stats['completed_packets'] += 1
                 self.stats['completion_latency_ms_sum'] += delay
@@ -143,6 +154,13 @@ class PacketLedger:
             lc.queue_bytes = sum(p['remaining_bytes'] for p in self.queues[lc.logical_channel_id])
         self.refresh(slot)
         return dict(delivered)
+
+    def _count_deadline_failure(self, packet):
+        # Public first-failure event count: completion and overdue reporting
+        # may concern the same packet. Do not alter existing delivery/events.
+        if not packet.get('deadline_failure_counted', False):
+            packet['deadline_failure_counted'] = True
+            self.stats['deadline_failed_packets'] += 1
 
     def refresh(self, slot):
         self.slot = slot
@@ -155,6 +173,7 @@ class PacketLedger:
             for p in queue:
                 pending += p['remaining_bytes']
                 if not p['overdue'] and (slot - p['arrival_slot']) * self.dt > p['deadline_ms']:
+                    self._count_deadline_failure(p)
                     p['overdue'] = True
                     self.stats['deadline_missed_packets'] += 1
                     self.events.append(dict(kind='deadline_miss', ue_id=self.ue.ue_id,

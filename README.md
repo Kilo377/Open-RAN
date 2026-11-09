@@ -2,6 +2,18 @@
 
 A slot-driven O-RAN-style RAN simulator prototype in Python.
 
+The [trained Chongyu xApp release](artifacts/xapps/chongyu/20261109/README.md)
+contains six verified JSON checkpoints, including the X-12 MEC model retrained
+on the completed 30-second run. Install the versioned models with:
+
+```bash
+python scripts/orin/install-trained-xapps.py
+```
+
+The release records each model's target KPI, control parameters, training and
+evaluation status. Raw simulations are retained in verified external archives;
+their checksums are listed in the [data retention index](artifacts/xapps/chongyu/data-retention-20261109.json).
+
 Choose the execution platform explicitly with the same project entry point:
 
 ```bash

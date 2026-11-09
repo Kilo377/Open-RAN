@@ -160,6 +160,9 @@ class RtSysPhyAdapter:
             if p.cell_id not in snapshot.cell_ids:
                 raise ValueError(f'Unknown cell {p.cell_id}')
             active = []
+            ap_available=metadata.get('ap_availability',{}).get(p.cell_id,True)
+            if not ap_available and any(u.is_scheduled for u in p.ue_inputs):
+                raise ValueError('scheduled_grant_for_unavailable_ap')
             for ue in p.ue_inputs:
                 if ue.ue_id not in snapshot.ue_ids:
                     raise ValueError(f'Missing RT UE {ue.ue_id}')
@@ -187,7 +190,7 @@ class RtSysPhyAdapter:
             # average OFDM-symbol power sums to the configured cell budget.
             total = sum(e['mask'].sum()*e['layers'] for e in active)
             budget = 10**((float(p.tx_power_dbm)-30)/10)
-            if metadata.get('sleep_modes',{}).get(p.cell_id) == 'deep_sleep':
+            if not ap_available or (p.cell_id not in metadata.get('ap_availability',{}) and metadata.get('sleep_modes',{}).get(p.cell_id) == 'deep_sleep'):
                 budget = 0.0
             power = budget*ns/max(1,total)
             for e in active: e['power'] = power

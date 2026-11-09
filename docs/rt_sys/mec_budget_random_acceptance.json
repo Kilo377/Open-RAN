@@ -1,0 +1,100 @@
+{
+  "status": "completed_m1_observed",
+  "source_sha256": "ad49f113051fb568795375648a2c4b30b0bc8ac5b5d51a2ae263d64167ae66a4",
+  "training": {
+    "simulated_s": 4.0,
+    "measured_rows": 13,
+    "fitted_rows": 12,
+    "fit_count": 1,
+    "model_sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f"
+  },
+  "evaluation_network_seed": 55,
+  "evaluation_simulated_s_per_arm": 1,
+  "mitigation_seed": 1701,
+  "structural_m1_observed": true,
+  "individual_intent_case_evidence_passed": true,
+  "ue4_results": {
+    "off": {
+      "ue4_energy_j": 0.8362449999999926,
+      "ue4_energy_saving_fraction": 0.0,
+      "expected_offload_demand_gflops": 0.5,
+      "realized_offload_demand_gflops": 0.6875,
+      "task_on_time_ratio": 1.0,
+      "all_task_mean_latency_ms": 14.65625
+    },
+    "x01": {
+      "ue4_energy_j": 0.721559999999993,
+      "ue4_energy_saving_fraction": 0.1371428229765208,
+      "expected_offload_demand_gflops": 1.0,
+      "realized_offload_demand_gflops": 1.0,
+      "task_on_time_ratio": 1.0,
+      "all_task_mean_latency_ms": 9.968749999999996
+    },
+    "budget": {
+      "ue4_energy_j": 0.8362449999999926,
+      "ue4_energy_saving_fraction": 0.0,
+      "expected_offload_demand_gflops": 0.5,
+      "realized_offload_demand_gflops": 0.6875,
+      "task_on_time_ratio": 1.0,
+      "all_task_mean_latency_ms": 14.65625
+    },
+    "both_random": {
+      "ue4_energy_j": 0.8180849999999917,
+      "ue4_energy_saving_fraction": 0.02171612386322308,
+      "expected_offload_demand_gflops": 0.625,
+      "realized_offload_demand_gflops": 0.7500000000000001,
+      "task_on_time_ratio": 1.0,
+      "all_task_mean_latency_ms": 13.593749999999998
+    }
+  },
+  "energy_contract_max_j": 0.7944327499999929,
+  "expected_mec_budget_max_gflops": 0.75,
+  "random_mitigation_outcome": {
+    "energy_ue4_at_most_95pct_native": false,
+    "aggregate_expected_mec_budget_met": true,
+    "task_qos_met": true,
+    "delivery_met": true,
+    "all_intents_and_guards_met": false,
+    "every_cohort_within_budget_diagnostic": true
+  },
+  "arbitration": {
+    "unique_random_epochs": 11,
+    "all_selection_epochs": 11,
+    "executed_matching_receipts": 1950,
+    "rejected_receipts": 10,
+    "runtime_winner_receipts": {
+      "mec_offload_budget_qgbdt": 1552,
+      "ue_energy_rf": 398
+    },
+    "errors": [],
+    "expected_probability": 0.5,
+    "field": "ue_offload_fraction",
+    "ue_id": "ue_4",
+    "both_contenders_executed": true,
+    "seeded_rng_replay_passed": true,
+    "valid": true,
+    "note": "Repeated held-state actuation receipts are not independent random draws"
+  },
+  "random_windows": {
+    "policy": "uniform_random",
+    "seed": 1701,
+    "window_ms": 100,
+    "two_candidate_probability_each": 0.5,
+    "raw_draws": 11,
+    "deployed_windows": 10,
+    "deployed_window_winners": {
+      "budget": 8,
+      "x01": 2
+    }
+  },
+  "standalone_x01_vs_both_energy_increase_fraction": 0.1337726592383166,
+  "all_html_audits_passed": true,
+  "native_baseline_exactly_preserved": true,
+  "standalone_x01_exactly_preserved": true,
+  "limitations": [
+    "one short calibration seed",
+    "no demonstrated benefit of QGBDT over the analytic guard",
+    "random arbitration does not guarantee joint intent satisfaction",
+    "random UE offload conflicts supported; other conflicting fields fail explicitly"
+  ]
+}

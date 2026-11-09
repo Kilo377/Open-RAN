@@ -157,6 +157,17 @@ def test_leases_rearbitrate_disabled_and_restore_only_owned_fields():
     assert winners['cell:a']['clear_prb_power'][1] is True
 
 
+@pytest.mark.parametrize('arbiter_name',['direct_conflict_arbiter','scheduler_conflict_arbiter'])
+def test_timed_conflict_arbitration_requires_a_real_observation_clock(arbiter_name):
+    from ric.near_rt.rule_based_v1.leases import RuleLeases
+    manager=NS(e2_interfaces=[],_is_xapp_enabled=lambda name:True,current_action_by_scope={})
+    setattr(manager,arbiter_name,object())
+    leases=RuleLeases()
+    with pytest.raises(ValueError,match='actual slot_id'):
+        leases.reconcile(manager,NS(paper_report={}),{},{},[])
+    assert not leases.requests
+
+
 def test_public_rule_report_truth_isolation_and_partial_contract():
     from test_xapp_contract import fixture
     o=fixture();o.paper_report={'values':{'ue':{'u':{'mobility_events':[], 'beam_reference_reports':[]}},

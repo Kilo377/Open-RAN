@@ -1,5 +1,6 @@
 """Existing MAC priorities with RT-compatible resource packing and MCS."""
 from ran.scheduler import SimpleScheduler
+import math
 import numpy as np
 from phy.rt_sys.numerics import beam_subspace
 
@@ -38,6 +39,8 @@ class RtSysScheduler(SimpleScheduler):
         return result
 
     def _is_ue_connected(self,state,ue):
+        if not getattr(ue,'ue_radio_available',True):
+            return False
         if getattr(state,'paper',None):
             cell=state.cell
             blocked=(getattr(cell,'ue_prb_limits',{}).get(ue.ue_id,1)==0 or
@@ -117,12 +120,36 @@ class RtSysScheduler(SimpleScheduler):
             if not value and start is not None:runs.append([start,i-start]);start=None
         minimum=self.min_symbols_per_grant if time_first else (1 if self._paper else self.min_prbs_per_grant)
         members_list=list(groups.values())
+        mode=getattr(state.scheduler,'scheduler_mode','round_robin')
+        weighted=mode in ('latency_aware','qos_deadline')
+        if weighted:
+            weights=[]
+            for members in members_list:
+                # A shared MU rectangle is one resource consumer. In the new
+                # QoS policy, adding a second eMBB member cannot alone double
+                # its urgency relative to a single URLLC consumer.
+                scores=[max(0.,float(g.priority_score)) for g in members]
+                score=max(scores) if mode=='qos_deadline' else sum(scores)
+                weights.append(score if math.isfinite(score) else 0.)
         for index,members in enumerate(members_list):
             candidates=[r for r in runs if r[1]>=minimum]
             if not candidates:continue
             r=max(candidates,key=lambda r:r[1])
             remaining_groups=len(members_list)-index
-            size=max(minimum,r[1]//remaining_groups)
+            if weighted:
+                # Keep the latency priority produced by the MAC through the
+                # immutable-TB repacker. New MU members still share one shape;
+                # retransmission rectangles above are never resized.
+                available=sum(run[1] for run in candidates)
+                fit_groups=min(remaining_groups,sum(run[1]//minimum for run in candidates))
+                reserve=minimum*max(0,fit_groups-1)
+                remaining_weight=sum(weights[index:])
+                fraction=weights[index]/remaining_weight if remaining_weight>0 else 1./remaining_groups
+                proposed=max(minimum,int(available*fraction))
+                size=min(r[1],max(minimum,available-reserve),proposed)
+            else:
+                # Exact native round-robin (and legacy non-latency) behavior.
+                size=max(minimum,r[1]//remaining_groups)
             if self._paper:
                 size=min(size,*(limits.get(g.ue_id,self.total_prbs_per_slot) for g in members))
             initial_size=size
@@ -160,7 +187,10 @@ class RtSysScheduler(SimpleScheduler):
         minimum=self.min_symbols_per_grant if strategy=='time_first' else self.min_prbs_per_grant
         total=self.total_symbols_per_slot if strategy=='time_first' else self.total_prbs_per_slot
         if len(groups)*minimum>total:raise ValueError('RT grant groups exceed packed resource budget')
-        weights=[sum(max(0.,g.priority_score) for g in members) for members in groups.values()]
+        if getattr(state.scheduler,'scheduler_mode','round_robin')=='qos_deadline':
+            weights=[max(max(0.,g.priority_score) for g in members) for members in groups.values()]
+        else:
+            weights=[sum(max(0.,g.priority_score) for g in members) for members in groups.values()]
         remaining=total-len(groups)*minimum
         extras=(super()._allocate_extra_symbols(weights,remaining) if strategy=='time_first'
                 else super()._allocate_extra_prbs(weights,remaining)) or [0]*len(groups)

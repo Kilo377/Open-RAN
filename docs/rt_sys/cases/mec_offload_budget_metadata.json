@@ -1,0 +1,50 @@
+{
+  "id": "MEC-BUDGET-QGBDT",
+  "status": "implemented_m1_validated_short_run",
+  "paper_inspiration": "X-13; adapted from server admission to UE offload control",
+  "algorithm": "QGBDT utility ranking + analytic expected-demand budget filter",
+  "target_ues": [
+    "ue_4"
+  ],
+  "target_kpi": {
+    "expected_offloaded_compute_demand_gflops": {
+      "maximum": 0.75
+    }
+  },
+  "rcp": {
+    "ue_offload_fraction": {
+      "candidates": [
+        0,
+        0.5,
+        1
+      ]
+    }
+  },
+  "qos_guards": {
+    "all_task_on_time_ratio_min": 0.95,
+    "all_task_mean_latency_ms_max": 30
+  },
+  "affected_kpis": [
+    "ue_energy_total_j",
+    "task_e2e_latency_ms",
+    "task_on_time_ratio",
+    "radio_goodput",
+    "queue_bytes"
+  ],
+  "conflict_candidate": {
+    "xapp": "X-01",
+    "type": "M1",
+    "shared_rcp": "ue_offload_fraction"
+  },
+  "realized_workload": "reported separately; stochastic, not a per-window hard cap",
+  "mitigation": {
+    "policy": "uniform_random",
+    "two_xapps_probability_each": 0.5,
+    "decision_interval_ms": 100,
+    "seed": 1701,
+    "deploy": "one selected atomic action unchanged",
+    "status": "implemented_opt_in_for_ue_offload_fraction"
+  },
+  "implementation_document": "../MEC_BUDGET_CONFLICT.md",
+  "result_summary": "../mec_budget_random_acceptance.json"
+}

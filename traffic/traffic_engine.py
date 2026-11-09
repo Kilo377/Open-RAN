@@ -6,6 +6,7 @@ Applies per-slot traffic arrivals into UE queues.
 from __future__ import annotations
 
 import random
+from copy import deepcopy
 
 from traffic.arrival_model import TrafficProfile, ArrivalModel, build_arrival_model
 
@@ -42,6 +43,7 @@ class TrafficEngine:
                         "on_duration_slots": item.get("on_duration_slots", 50),
                         "off_duration_slots": item.get("off_duration_slots", 20),
                         "start_offset_slots": item.get("start_offset_slots", 0),
+                        "arrival_phases": deepcopy(item.get("arrival_phases")),
                         "max_queue_bytes": item.get("max_queue_bytes", None),
                     }
                 ]
@@ -74,6 +76,8 @@ class TrafficEngine:
                     start_offset_slots=int(
                         logical_channel_item.get("start_offset_slots", item.get("start_offset_slots", 0))
                     ),
+                    arrival_phases=deepcopy(logical_channel_item.get(
+                        "arrival_phases", item.get("arrival_phases"))),
                     max_queue_bytes=(
                         int(logical_channel_item["max_queue_bytes"])
                         if (

@@ -36,6 +36,7 @@ class LocalExecutor(ExecutorBase):
         "round_robin": "balanced",
         "latency_aware": "latency_bias",
         "slice_aware": "slice_bias",
+        "qos_deadline": "balanced",
     }
 
     _BEAM_PREFERENCE_TO_PROFILE = {
@@ -67,6 +68,7 @@ class LocalExecutor(ExecutorBase):
                             slot_id=state.slot_id,
                             cell=runtime_state.cell,
                             scheduler=runtime_state.scheduler,
+                            ap_services=getattr(state, 'ap_services', None),
                         ),
                     )
                 )
@@ -82,6 +84,7 @@ class LocalExecutor(ExecutorBase):
                             slot_id=state.slot_id,
                             cell=runtime_state.cell,
                             scheduler=runtime_state.scheduler,
+                            ap_services=getattr(state, 'ap_services', None),
                         ),
                     )
                 ]
@@ -210,14 +213,27 @@ class LocalExecutor(ExecutorBase):
         # In this simulator, the power cap is interpreted as the currently
         # effective transmit-power ceiling and applied immediately.
         state.cell.tx_power_dbm = float(state.cell.power_cap_dbm)
-        if str(getattr(state.cell, "cell_sleep_mode", "active")) == "active":
+        if str(getattr(state.cell, "cell_sleep_mode", "active")) == "active" or getattr(state.cell,'ap_service_enabled',False):
             state.cell.nominal_tx_power_dbm = float(state.cell.tx_power_dbm)
         debug_print(
             f"Applied power_cap_dbm={state.cell.power_cap_dbm:.2f} on {self._slot_cell_text(state)}. "
             f"effective_tx_power_dbm={state.cell.tx_power_dbm:.2f}."
         )
 
-    def _apply_cell_sleep_mode(self, state: Any, cell_sleep_mode: str) -> None:
+    def _apply_cell_sleep_mode(self, state: Any, cell_sleep_mode: str, *, policy_owner=None, request_id=None) -> None:
+        ap_services = getattr(state, 'ap_services', None)
+        if ap_services is not None:
+            normalized_mode = ap_services.validate_policy(cell_sleep_mode)
+            if state.cell.cell_sleep_mode == 'active':
+                state.cell.nominal_tx_power_dbm = float(state.cell.tx_power_dbm)
+            # A sleep policy gates availability. Awake slots use the same
+            # nominal TX budget, not the historical micro/light TX dimmer.
+            nominal = float(state.cell.nominal_tx_power_dbm)
+            cap = getattr(state.cell, 'power_cap_dbm', None)
+            state.cell.tx_power_dbm = nominal if cap is None else min(nominal, float(cap))
+            ap_services.set_policy(state.cell.cell_id, normalized_mode, int(state.slot_id),
+                owner=policy_owner, request_id=request_id)
+            return
         normalized_mode = str(cell_sleep_mode).strip().lower()
         if normalized_mode == "":
             return
@@ -306,7 +322,11 @@ class LocalExecutor(ExecutorBase):
                 self._apply_power_cap_dbm(target_state, action.power_cap_dbm)
 
             if action.cell_sleep_mode is not None:
-                self._apply_cell_sleep_mode(target_state, action.cell_sleep_mode)
+                owners = {p['instance_id'] for p in getattr(action, '_library_provenances', [])
+                    if p.get('cell_id') == target_cell_id and 'cell_sleep_mode' in p.get('fields', [])}
+                owner = next(iter(owners)) if len(owners) == 1 else None
+                self._apply_cell_sleep_mode(target_state, action.cell_sleep_mode,
+                    policy_owner=owner, request_id=getattr(action, 'control_request_id', None))
 
             if action.traffic_steering_preference is not None:
                 self._apply_traffic_steering_preference(target_state, action.traffic_steering_preference)
@@ -355,7 +375,7 @@ class LocalExecutor(ExecutorBase):
                         float(target_state.cell.power_cap_dbm),
                     )
                 target_state.cell.tx_power_dbm = requested_tx_power_dbm
-                if str(getattr(target_state.cell, "cell_sleep_mode", "active")) == "active":
+                if str(getattr(target_state.cell, "cell_sleep_mode", "active")) == "active" or getattr(target_state.cell,'ap_service_enabled',False):
                     target_state.cell.nominal_tx_power_dbm = requested_tx_power_dbm
                 debug_print(
                     f"Applied tx_power_dbm={requested_tx_power_dbm:.2f} on {self._slot_cell_text(target_state)}."

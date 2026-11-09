@@ -42,6 +42,32 @@ def test_partial_window_has_correct_rates_and_end_counters(tmp_path):
     assert data['frames'][-1]['decodes']==34 and data['meta']['actual_decodes']==0 and data['meta']['sampled_attempts']==34
     assert sum(f['g']*f['window_ms']/1000*1e6/8 for f in data['frames'][1:])==pytest.approx(3400)
     assert data['frames'][-1]['rf_energy_j']==pytest.approx(.017)
+    assert data['meta']['mec_stage_metrics_enabled'] is False
+
+
+def test_mec_stage_reports_survive_automatic_export_and_are_audited_against_final_state(tmp_path):
+    run=fixture_run(tmp_path/'run')
+    stage=dict(schema='oran.mec-stage-timing.v1',
+        completed=dict(count=1,by_route=dict(offloaded=dict(count=1,
+            stage_mean_ms=dict(upload=2,backhaul_to_edge=2,edge_compute=1.5,
+                               backhaul_to_result=2,downlink=.5)))),
+        failed=dict(count=0,terminal_stage_counts={}),
+        pending=dict(count=0,by_stage={}))
+    users={uid:dict(ue_energy_total_j=1,ue_task_stage_metrics=stage) for uid in ['ue_7','ue_19']}
+    p=run/'final_summary.json';summary=json.loads(p.read_text())
+    summary['ue_services']=dict(enabled=True,per_ue=users);p.write_text(json.dumps(summary))
+    p=run/'rt_sys_trace.jsonl';rows=[json.loads(l) for l in p.read_text().splitlines()]
+    for row in rows:row['ue_services']=users
+    p.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+    report=export_replay(run)
+    source=Path(report['html']).read_text()
+    payload=json.loads(re.search(r'<script id="replay-data" type="application/json">(.*?)</script>',source,re.S).group(1))
+    assert payload['meta']['mec_stage_metrics_enabled']
+    assert payload['frames'][-1]['ue_services'][0]['ue_task_stage_metrics']==stage
+    assert sum(stage['completed']['by_route']['offloaded']['stage_mean_ms'].values())==8
+    summary['ue_services']['per_ue']['ue_7']['ue_task_stage_metrics']['pending']['count']=1
+    (run/'final_summary.json').write_text(json.dumps(summary))
+    with pytest.raises(ValueError,match='UE-service audit'):build_data(run)
 
 
 @pytest.mark.parametrize('new_trace',[False,True])

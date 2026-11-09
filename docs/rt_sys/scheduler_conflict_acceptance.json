@@ -1,0 +1,573 @@
+{
+  "case": "X08 throughput / X12 URLLC scheduler",
+  "accepted_for_direct_conflict_demonstration": true,
+  "classification": "direct_conflict_observed_with_target_harm",
+  "source_sha256": "2e9e34729eb9cecd787b0dc55995930339fe16e95a6e0513ba73fe257be990d5",
+  "model": "fast/system",
+  "cells": 3,
+  "ues": 6,
+  "nominal_traffic_multiplier": 2,
+  "per_case_simulated_seconds": 1.0,
+  "network_seed": 55,
+  "mitigation": {
+    "policy": "uniform_random",
+    "window_ms": 100,
+    "scope": "one complete scheduler bundle per cell",
+    "seed": 1701
+  },
+  "rcp": [
+    "scheduler_mode",
+    "ue_scheduler_weights"
+  ],
+  "x08_model_sha256": "cad7cef4251983f1777dd4007be9ac14272757a46202fdf9bdeb1a795b96734d",
+  "urllc_model_sha256": "5b9b1c707c22faf59ce5d047100ebb9d87ac38eaec26c335114e6badb4c8f393",
+  "urllc_training": {
+    "simulated_seconds": 6,
+    "actual_stored_rows": 41,
+    "fitted_rows": 40,
+    "fit_count": 5,
+    "fitted_rows_per_arm": [
+      22,
+      6,
+      6,
+      6
+    ]
+  },
+  "kpis": {
+    "off": {
+      "network_goodput_mbps": 48.350416,
+      "ue6_mature_failure_fraction": 0.0,
+      "ue6_completed_packet_p95_ms": 0.0,
+      "ue6_pending_bytes": 0
+    },
+    "x08": {
+      "network_goodput_mbps": 57.164632000000005,
+      "ue6_mature_failure_fraction": 0.9348155634158666,
+      "ue6_completed_packet_p95_ms": 135.0,
+      "ue6_pending_bytes": 37379
+    },
+    "urllc": {
+      "network_goodput_mbps": 48.350416,
+      "ue6_mature_failure_fraction": 0.0,
+      "ue6_completed_packet_p95_ms": 0.0,
+      "ue6_pending_bytes": 0
+    },
+    "both_random": {
+      "network_goodput_mbps": 54.976008,
+      "ue6_mature_failure_fraction": 0.6124305204648812,
+      "ue6_completed_packet_p95_ms": 109.0,
+      "ue6_pending_bytes": 0
+    }
+  },
+  "target_harm": {
+    "both_goodput_change_vs_x08_fraction": -0.03828633061085751,
+    "both_ue6_failure_change_vs_urllc_pp": 61.243052046488124,
+    "x08_target_harmed": true,
+    "urllc_target_harmed": true
+  },
+  "executed_occupied_conflict_epochs": 20,
+  "executed_ue6_cell_conflict_epochs": 10,
+  "model_predictions_replayed": true,
+  "random_stream_replayed": true,
+  "original_packet_deadline_ms": 10,
+  "scope": "Single-seed calibration case. RF learns the native RR arm and preserves the native zero-failure floor; no improvement over OFF, indirect conflict, statistical significance or ML superiority is claimed. Zero recorded completion delay means same-slot delivery.",
+  "report_statistics_version": 2,
+  "statistic_definitions": {
+    "failure": "Unique mature packet union of overflow, overdue-pending, late-completed and logged deadline misses; mature age > each UE original deadline",
+    "pooled_failure": "Sum of failed packets / sum of mature offered packets, never mean of UE percentages",
+    "pooled_latency": "Union of actual completed-packet latency samples; linear sample quantiles, never mean of UE quantiles; pending/drop outcomes excluded",
+    "network_qos": "Each UE own 10/50/100 ms budget; traffic composition weighted, not an all-network 10 ms SLA",
+    "delivery": "Delivered bytes / all offered plus initial bytes, including late/partial delivery; not deadline satisfaction",
+    "fairness": "Jain index across UE delivered/offered byte ratios; raw-throughput Jain retained separately because traffic demands differ",
+    "scope": "Descriptive within-run statistics from one 1-second network seed and one mitigation seed, not multi-run confidence intervals",
+    "zero_latency": "Same recorded simulation slot, not zero physical end-to-end delay"
+  },
+  "postprocessing_packet_sha256": {
+    "off": "49f1beb0d9e433f2a951e038a8ea1026780ddac8b73ca86822a9f3f450e2cfbf",
+    "x08": "12367fdcc75badcfc2a12d15137a1e6534f2e28f118038f3361136d56138ef04",
+    "urllc": "1510bf45e57cbc0fbeb65cf50e6f5b01255f541c5a8e79f468e8048f72aec150",
+    "both_random": "1f82696eda7c8ebc887e900095dbff2ed85bd7ee172173f042cf37b16b79e291"
+  },
+  "network_and_traffic_statistics": {
+    "off": {
+      "network": {
+        "ue_ids": [
+          "ue_0",
+          "ue_1",
+          "ue_2",
+          "ue_4",
+          "ue_6",
+          "ue_8"
+        ],
+        "ue_count": 6,
+        "deadlines_ms": [
+          10.0,
+          50.0,
+          100.0
+        ],
+        "goodput_mbps": 48.350416,
+        "mature_packets": 38879,
+        "failed_mature_packets": 19240,
+        "failure_fraction": 0.49486869518248927,
+        "completed_packets": 34413,
+        "completed_mean_ms": 61.21369831168454,
+        "completed_p50_ms": 6.5,
+        "completed_p95_ms": 153.0,
+        "completed_p99_ms": 157.4399999999987,
+        "offered_bytes": 7636500,
+        "delivered_bytes": 6043802,
+        "delivery_ratio": 0.791436129116742,
+        "pending_bytes": 488448,
+        "overflow_bytes": 1104250,
+        "overflow_byte_fraction": 0.14460158449551497,
+        "worst_ue_id": "ue_8",
+        "worst_ue_failure_fraction": 0.8947801914959332,
+        "jain_goodput": 0.5997504447092342,
+        "jain_delivery_satisfaction": 0.9678331162521164
+      },
+      "traffic_classes": {
+        "embb": {
+          "ue_ids": [
+            "ue_0",
+            "ue_4",
+            "ue_8"
+          ],
+          "ue_count": 3,
+          "deadlines_ms": [
+            100.0
+          ],
+          "goodput_mbps": 42.798416,
+          "mature_packets": 33022,
+          "failed_mature_packets": 19240,
+          "failure_fraction": 0.5826418751135607,
+          "completed_packets": 28413,
+          "completed_mean_ms": 74.1402527012283,
+          "completed_p50_ms": 73.5,
+          "completed_p95_ms": 153.5,
+          "completed_p99_ms": 157.5,
+          "offered_bytes": 6942500,
+          "delivered_bytes": 5349802,
+          "delivery_ratio": 0.7705872524306806,
+          "pending_bytes": 488448,
+          "overflow_bytes": 1104250,
+          "overflow_byte_fraction": 0.1590565358300324,
+          "worst_ue_id": "ue_8",
+          "worst_ue_failure_fraction": 0.8947801914959332
+        },
+        "urllc": {
+          "ue_ids": [
+            "ue_2",
+            "ue_6"
+          ],
+          "ue_count": 2,
+          "deadlines_ms": [
+            10.0
+          ],
+          "goodput_mbps": 4.992,
+          "mature_packets": 3958,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 4000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 624000,
+          "delivered_bytes": 624000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_2",
+          "worst_ue_failure_fraction": 0.0
+        },
+        "voice": {
+          "ue_ids": [
+            "ue_1"
+          ],
+          "ue_count": 1,
+          "deadlines_ms": [
+            50.0
+          ],
+          "goodput_mbps": 0.56,
+          "mature_packets": 1899,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 2000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 70000,
+          "delivered_bytes": 70000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_1",
+          "worst_ue_failure_fraction": 0.0
+        }
+      }
+    },
+    "x08": {
+      "network": {
+        "ue_ids": [
+          "ue_0",
+          "ue_1",
+          "ue_2",
+          "ue_4",
+          "ue_6",
+          "ue_8"
+        ],
+        "ue_count": 6,
+        "deadlines_ms": [
+          10.0,
+          50.0,
+          100.0
+        ],
+        "goodput_mbps": 57.164632000000005,
+        "mature_packets": 38879,
+        "failed_mature_packets": 7129,
+        "failure_fraction": 0.18336376964428097,
+        "completed_packets": 40231,
+        "completed_mean_ms": 31.53488603315851,
+        "completed_p50_ms": 3.5,
+        "completed_p95_ms": 106.5,
+        "completed_p99_ms": 126.0,
+        "offered_bytes": 7636500,
+        "delivered_bytes": 7145579,
+        "delivery_ratio": 0.9357138741570091,
+        "pending_bytes": 280871,
+        "overflow_bytes": 210050,
+        "overflow_byte_fraction": 0.02750605643946834,
+        "worst_ue_id": "ue_6",
+        "worst_ue_failure_fraction": 0.9348155634158666,
+        "jain_goodput": 0.595428312379644,
+        "jain_delivery_satisfaction": 0.9942783501123785
+      },
+      "traffic_classes": {
+        "embb": {
+          "ue_ids": [
+            "ue_0",
+            "ue_4",
+            "ue_8"
+          ],
+          "ue_count": 3,
+          "deadlines_ms": [
+            100.0
+          ],
+          "goodput_mbps": 51.911664,
+          "mature_packets": 33022,
+          "failed_mature_packets": 5279,
+          "failure_fraction": 0.15986312155532675,
+          "completed_packets": 34504,
+          "completed_mean_ms": 32.155358798979826,
+          "completed_p50_ms": 10.0,
+          "completed_p95_ms": 105.5,
+          "completed_p99_ms": 108.5,
+          "offered_bytes": 6942500,
+          "delivered_bytes": 6488958,
+          "delivery_ratio": 0.9346716600648182,
+          "pending_bytes": 243492,
+          "overflow_bytes": 210050,
+          "overflow_byte_fraction": 0.030255671588044653,
+          "worst_ue_id": "ue_0",
+          "worst_ue_failure_fraction": 0.4292916971619094
+        },
+        "urllc": {
+          "ue_ids": [
+            "ue_2",
+            "ue_6"
+          ],
+          "ue_count": 2,
+          "deadlines_ms": [
+            10.0
+          ],
+          "goodput_mbps": 4.692968,
+          "mature_packets": 3958,
+          "failed_mature_packets": 1850,
+          "failure_fraction": 0.4674077817079333,
+          "completed_packets": 3727,
+          "completed_mean_ms": 42.713039978535015,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 133.0,
+          "completed_p99_ms": 135.5,
+          "offered_bytes": 624000,
+          "delivered_bytes": 586621,
+          "delivery_ratio": 0.9400977564102564,
+          "pending_bytes": 37379,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_6",
+          "worst_ue_failure_fraction": 0.9348155634158666
+        },
+        "voice": {
+          "ue_ids": [
+            "ue_1"
+          ],
+          "ue_count": 1,
+          "deadlines_ms": [
+            50.0
+          ],
+          "goodput_mbps": 0.56,
+          "mature_packets": 1899,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 2000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 70000,
+          "delivered_bytes": 70000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_1",
+          "worst_ue_failure_fraction": 0.0
+        }
+      }
+    },
+    "urllc": {
+      "network": {
+        "ue_ids": [
+          "ue_0",
+          "ue_1",
+          "ue_2",
+          "ue_4",
+          "ue_6",
+          "ue_8"
+        ],
+        "ue_count": 6,
+        "deadlines_ms": [
+          10.0,
+          50.0,
+          100.0
+        ],
+        "goodput_mbps": 48.350416,
+        "mature_packets": 38879,
+        "failed_mature_packets": 19240,
+        "failure_fraction": 0.49486869518248927,
+        "completed_packets": 34413,
+        "completed_mean_ms": 61.21369831168454,
+        "completed_p50_ms": 6.5,
+        "completed_p95_ms": 153.0,
+        "completed_p99_ms": 157.4399999999987,
+        "offered_bytes": 7636500,
+        "delivered_bytes": 6043802,
+        "delivery_ratio": 0.791436129116742,
+        "pending_bytes": 488448,
+        "overflow_bytes": 1104250,
+        "overflow_byte_fraction": 0.14460158449551497,
+        "worst_ue_id": "ue_8",
+        "worst_ue_failure_fraction": 0.8947801914959332,
+        "jain_goodput": 0.5997504447092342,
+        "jain_delivery_satisfaction": 0.9678331162521164
+      },
+      "traffic_classes": {
+        "embb": {
+          "ue_ids": [
+            "ue_0",
+            "ue_4",
+            "ue_8"
+          ],
+          "ue_count": 3,
+          "deadlines_ms": [
+            100.0
+          ],
+          "goodput_mbps": 42.798416,
+          "mature_packets": 33022,
+          "failed_mature_packets": 19240,
+          "failure_fraction": 0.5826418751135607,
+          "completed_packets": 28413,
+          "completed_mean_ms": 74.1402527012283,
+          "completed_p50_ms": 73.5,
+          "completed_p95_ms": 153.5,
+          "completed_p99_ms": 157.5,
+          "offered_bytes": 6942500,
+          "delivered_bytes": 5349802,
+          "delivery_ratio": 0.7705872524306806,
+          "pending_bytes": 488448,
+          "overflow_bytes": 1104250,
+          "overflow_byte_fraction": 0.1590565358300324,
+          "worst_ue_id": "ue_8",
+          "worst_ue_failure_fraction": 0.8947801914959332
+        },
+        "urllc": {
+          "ue_ids": [
+            "ue_2",
+            "ue_6"
+          ],
+          "ue_count": 2,
+          "deadlines_ms": [
+            10.0
+          ],
+          "goodput_mbps": 4.992,
+          "mature_packets": 3958,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 4000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 624000,
+          "delivered_bytes": 624000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_2",
+          "worst_ue_failure_fraction": 0.0
+        },
+        "voice": {
+          "ue_ids": [
+            "ue_1"
+          ],
+          "ue_count": 1,
+          "deadlines_ms": [
+            50.0
+          ],
+          "goodput_mbps": 0.56,
+          "mature_packets": 1899,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 2000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 70000,
+          "delivered_bytes": 70000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_1",
+          "worst_ue_failure_fraction": 0.0
+        }
+      }
+    },
+    "both_random": {
+      "network": {
+        "ue_ids": [
+          "ue_0",
+          "ue_1",
+          "ue_2",
+          "ue_4",
+          "ue_6",
+          "ue_8"
+        ],
+        "ue_count": 6,
+        "deadlines_ms": [
+          10.0,
+          50.0,
+          100.0
+        ],
+        "goodput_mbps": 54.976008,
+        "mature_packets": 38879,
+        "failed_mature_packets": 10315,
+        "failure_fraction": 0.26531032176753516,
+        "completed_packets": 38879,
+        "completed_mean_ms": 39.624655983950205,
+        "completed_p50_ms": 10.0,
+        "completed_p95_ms": 123.5,
+        "completed_p99_ms": 136.5,
+        "offered_bytes": 7636500,
+        "delivered_bytes": 6872001,
+        "delivery_ratio": 0.8998888234138676,
+        "pending_bytes": 291699,
+        "overflow_bytes": 472800,
+        "overflow_byte_fraction": 0.06191318012178354,
+        "worst_ue_id": "ue_6",
+        "worst_ue_failure_fraction": 0.6124305204648812,
+        "jain_goodput": 0.604205896709062,
+        "jain_delivery_satisfaction": 0.989937466456331
+      },
+      "traffic_classes": {
+        "embb": {
+          "ue_ids": [
+            "ue_0",
+            "ue_4",
+            "ue_8"
+          ],
+          "ue_count": 3,
+          "deadlines_ms": [
+            100.0
+          ],
+          "goodput_mbps": 49.424008,
+          "mature_packets": 33022,
+          "failed_mature_packets": 9103,
+          "failure_fraction": 0.275664708376234,
+          "completed_packets": 32879,
+          "completed_mean_ms": 44.58727455214574,
+          "completed_p50_ms": 17.0,
+          "completed_p95_ms": 125.5,
+          "completed_p99_ms": 137.5,
+          "offered_bytes": 6942500,
+          "delivered_bytes": 6178001,
+          "delivery_ratio": 0.8898813107670147,
+          "pending_bytes": 291699,
+          "overflow_bytes": 472800,
+          "overflow_byte_fraction": 0.06810226863521786,
+          "worst_ue_id": "ue_0",
+          "worst_ue_failure_fraction": 0.5859965845328129
+        },
+        "urllc": {
+          "ue_ids": [
+            "ue_2",
+            "ue_6"
+          ],
+          "ue_count": 2,
+          "deadlines_ms": [
+            10.0
+          ],
+          "goodput_mbps": 4.992,
+          "mature_packets": 3958,
+          "failed_mature_packets": 1212,
+          "failure_fraction": 0.3062152602324406,
+          "completed_packets": 4000,
+          "completed_mean_ms": 18.6455,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 100.5,
+          "completed_p99_ms": 111.5,
+          "offered_bytes": 624000,
+          "delivered_bytes": 624000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_6",
+          "worst_ue_failure_fraction": 0.6124305204648812
+        },
+        "voice": {
+          "ue_ids": [
+            "ue_1"
+          ],
+          "ue_count": 1,
+          "deadlines_ms": [
+            50.0
+          ],
+          "goodput_mbps": 0.56,
+          "mature_packets": 1899,
+          "failed_mature_packets": 0,
+          "failure_fraction": 0.0,
+          "completed_packets": 2000,
+          "completed_mean_ms": 0.0,
+          "completed_p50_ms": 0.0,
+          "completed_p95_ms": 0.0,
+          "completed_p99_ms": 0.0,
+          "offered_bytes": 70000,
+          "delivered_bytes": 70000,
+          "delivery_ratio": 1.0,
+          "pending_bytes": 0,
+          "overflow_bytes": 0,
+          "overflow_byte_fraction": 0.0,
+          "worst_ue_id": "ue_1",
+          "worst_ue_failure_fraction": 0.0
+        }
+      }
+    }
+  }
+}

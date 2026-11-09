@@ -9,6 +9,7 @@ The simulator models downlink/uplink backlog at the base-station side as
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import deepcopy
 import math
 import random
 
@@ -36,7 +37,7 @@ def _poisson_sample(rng: random.Random, lam: float) -> int:
 @dataclass
 class TrafficProfile:
     ue_id: str
-    arrival_model: str = "none"  # none | cbr | poisson | on_off
+    arrival_model: str = "none"  # none | cbr | poisson | on_off | phased
     arrival_rate_bps: float = 0.0
     packet_size_bytes: int = 200
     burst_size_bytes: int = 0
@@ -44,6 +45,7 @@ class TrafficProfile:
     off_duration_slots: int = 20
     start_offset_slots: int = 0
     max_queue_bytes: int | None = None
+    arrival_phases: list[dict] | None = None
 
 
 class ArrivalModel:
@@ -120,8 +122,75 @@ class OnOffArrivalModel(ArrivalModel):
         return int(base + burst)
 
 
+def validate_arrival_phases(phases: list[dict] | None) -> list[dict]:
+    """Validate explicit, complete phases without modifying the caller's data.
+
+    Phases vary arrival timing/rate only. Packet size remains the enclosing
+    profile's packet size. Whole ON/OFF periods prevent cut-off burst cycles.
+    """
+    if not isinstance(phases, list) or not phases:
+        raise ValueError('Phased arrivals require a nonempty arrival_phases list')
+    common = {'duration_slots', 'arrival_model', 'arrival_rate_bps'}
+    on_off = {'on_duration_slots', 'off_duration_slots', 'burst_size_bytes', 'start_offset_slots'}
+    for phase in phases:
+        if not isinstance(phase, dict) or not common <= set(phase):
+            raise ValueError('Each arrival phase requires duration, model and rate')
+        model = phase['arrival_model']
+        allowed = common | on_off if model == 'on_off' else common
+        if model not in ('cbr', 'on_off') or set(phase) - allowed:
+            raise ValueError('Arrival phases support only explicit CBR or ON/OFF parameters')
+        duration = phase['duration_slots']
+        rate = phase['arrival_rate_bps']
+        if type(duration) is not int or duration <= 0:
+            raise ValueError('Arrival phase duration must be a positive integer')
+        if type(rate) not in (int, float) or not math.isfinite(rate) or rate < 0:
+            raise ValueError('Invalid arrival phase rate')
+        if model == 'on_off':
+            if not {'on_duration_slots', 'off_duration_slots'} <= set(phase):
+                raise ValueError('ON/OFF arrival phases require explicit ON and OFF durations')
+            for key in on_off & set(phase):
+                minimum = 1 if key == 'on_duration_slots' else 0
+                if type(phase[key]) is not int or phase[key] < minimum:
+                    raise ValueError('Invalid integer arrival phase parameter')
+            period = phase['on_duration_slots'] + phase['off_duration_slots']
+            if duration % period:
+                raise ValueError('ON/OFF phase duration must contain whole traffic periods')
+    return deepcopy(phases)
+
+
+class PhasedArrivalModel(ArrivalModel):
+    """Repeat phases in one run, preserving queues/channel/controller state.
+
+    The simulator's first sampled slot is 1. Each phase's child sampler receives
+    a zero-based local clock, so an ON/OFF phase begins with its full ON segment.
+    Legacy standalone ON/OFF sampling keeps its original clock semantics.
+    """
+    def __init__(self, profile: TrafficProfile) -> None:
+        self._phases = []
+        self._period = 0
+        for phase in validate_arrival_phases(profile.arrival_phases):
+            duration = phase.pop('duration_slots')
+            child = build_arrival_model(TrafficProfile(
+                ue_id=profile.ue_id, packet_size_bytes=profile.packet_size_bytes, **phase))
+            self._phases.append((self._period, self._period + duration, child))
+            self._period += duration
+
+    def sample_bytes(self, *, slot_id: int, slot_duration_s: float, rng: random.Random) -> int:
+        if type(slot_id) is not int or slot_id < 1:
+            raise ValueError('Phased arrivals use simulator slots starting at 1')
+        position = (slot_id - 1) % self._period
+        for start, end, child in self._phases:
+            if position < end:
+                return child.sample_bytes(slot_id=position-start, slot_duration_s=slot_duration_s, rng=rng)
+        raise AssertionError('Unreachable phased arrival position')
+
+
 def build_arrival_model(profile: TrafficProfile) -> ArrivalModel:
     model = str(profile.arrival_model or "none").lower()
+    if model == 'phased':
+        return PhasedArrivalModel(profile)
+    if profile.arrival_phases is not None:
+        raise ValueError('arrival_phases requires arrival_model=phased')
     if model in ("none", "disabled", "off"):
         return NoneArrivalModel()
     if model in ("cbr", "constant"):

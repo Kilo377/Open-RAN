@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import math
 from phy.rt_sys.control import PHY, SCHEDULER, ASSOCIATION, ADMIN
 
-from phy.rt_sys.paper_controls import FIELDS as PAPER_FIELDS, COMMANDS as PAPER_COMMANDS
+from phy.rt_sys.paper_controls import FIELDS as PAPER_FIELDS, COMMANDS as PAPER_COMMANDS, scheduler_action_mode
 SUPPORTED_ACTIONS=frozenset(PHY|SCHEDULER|ASSOCIATION)
 
 
@@ -118,6 +118,7 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             value=getattr(u,name,None)
             if name=='candidate_rsrp_dbm':
                 candidates=[c for c in getattr(u,'candidate_cell_observations',[])
+                    if getattr(u,'candidate_reference_available',{}).get(c.cell_id,True)
                     if getattr(c,'measurement_produced_at_slot',None) is not None
                     and getattr(c,'measurement_delivered_at_slot',None) is not None
                     and c.measurement_produced_at_slot<=c.measurement_delivered_at_slot<=now
@@ -134,7 +135,8 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 window=paper.get('window_slots');samples=window if value is not None else 0
                 if name in ('association','requested_dl_rate_bps'):window=1;samples=1
                 if name=='resource_allocation':window=1;samples=1
-                if name in ('executed_prb_slots_total','delivered_bits_total'):
+                if name in ('reference_measurement_available','candidate_reference_available'):window=1;samples=1
+                if spec.window=='since_start' or name in ('executed_prb_slots_total','delivered_bits_total','offered_bits_total'):
                     window_kind='cumulative_since_counter_epoch' if name=='executed_prb_slots_total' else 'cumulative'
                     window=None;samples=1 if value is not None else 0
                 if name=='executed_prb_slots_window':
@@ -143,6 +145,10 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 if name=='connection_drop_fraction':samples=getattr(u,'mobility_counts',{}).get('sessions_at_risk',0)
                 if name in ('wideband_cqi','subband_cqi','candidate_sinr_db','reference_sinr_db','rsrp_dbm','candidate_rsrp_dbm'):
                     window=paper.get('reference_window_slots');samples=min(produced+1,window) if produced is not None and value is not None else 0
+            if name in _UE_SERVICE_UNITS:
+                window_kind='cumulative' if name in ('ue_energy_total_j','ue_active_fraction','ue_task_metrics','ue_task_cohorts') else 'slots'
+                window=None if window_kind=='cumulative' else 1
+                samples=1 if value is not None else 0
             age=None if produced is None else now-produced
             max_age=contract.max_age_slots
             if max_age is None:
@@ -154,7 +160,9 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                     'no_samples' if samples is None or samples<=0 else None)
             if isinstance(value,float) and not math.isfinite(value):reason='nonfinite'
             if getattr(observation,'paper_report',None) and value is None and spec.source.startswith('paper:'):
-                reason='service_requirement_not_configured' if name in ('requested_dl_rate_bps','sla_status') else 'model_disabled' if name in ('handover_failure_rate','connection_drop_fraction') and not observation.paper_report['connection_model_enabled'] else 'no_samples'
+                reason='model_disabled' if name in _UE_SERVICE_UNITS else 'service_requirement_not_configured' if name in ('requested_dl_rate_bps','sla_status') else 'model_disabled' if name in ('handover_failure_rate','connection_drop_fraction') and not observation.paper_report['connection_model_enabled'] else 'no_samples'
+            if name in ('reference_sinr_db','rsrp_dbm','wideband_cqi','subband_cqi') and getattr(u,'reference_measurement_available',True) is False:
+                reason='ap_reference_unavailable';samples=0
             valid=reason is None
             setattr(v,name,deepcopy(value) if valid else None)
             record=dict(name=name,entity='ue',entity_id=u.ue_id,unit=spec.unit,source=spec.source,
@@ -193,10 +201,13 @@ def project(observation,contract,interval_slots=5,now_slot=None):
             age=None if produced is None else now-produced
             limit=contract.max_age_slots if contract.max_age_slots is not None else (getattr(c,'measurement_window_slots',1) or 1)+interval_slots+(getattr(observation,'measurement_queue_delay_slots',0) or 0)
             valid=valid and age<=limit
+            available=getattr(u,'candidate_reference_available',{}).get(c.cell_id,True)
+            valid=valid and available
             if not valid:c.rsrp_dbm=None;c.candidate_beam_id=None
             c.kpi_metadata=dict(source='RT_candidate_reference_filtered_noisy_delayed',unit='dBm',
                 produced_at_slot=produced,delivered_at_slot=delivered,sample_count=1 if valid else 0,
-                window_slots=getattr(c,'measurement_window_slots',None),valid=valid,age_slots=age)
+                window_slots=getattr(c,'measurement_window_slots',None),valid=valid,age_slots=age,
+                **({'reason':'ap_reference_unavailable'} if not available else {}))
             c.steering_score_db=c.rsrp_dbm
             v.candidate_cell_observations.append(c)
         result.ue_observations.append(v)
@@ -219,8 +230,10 @@ def project(observation,contract,interval_slots=5,now_slot=None):
                 produced=paper.get('produced_at_slot')
                 reason='missing' if value is None or produced is None else 'future' if produced>now else 'stale' if now-produced>max_age else None
             if spec.source.startswith('paper:') and value is None:reason='whole_device_model_unavailable' if name.startswith('whole_device') else 'zero_rf_energy' if name=='rf_efficiency_bit_per_j' else 'missing'
+            cumulative=name=='rf_energy_total_j' or spec.window=='since_start'
+            size=None if cumulative else (1 if name.startswith('ap_') else (paper.get('window_slots') if spec.source.startswith('paper:') else 1))
             record=dict(name=name,entity='cell',entity_id=cell.cell_id,unit=spec.unit,source=spec.source,
-                window=dict(kind='cumulative' if name=='rf_energy_total_j' else 'slots',size=None if name=='rf_energy_total_j' else (paper.get('window_slots') if spec.source.startswith('paper:') else 1)),window_tbs=None,window_slots=None if name=='rf_energy_total_j' else (paper.get('window_slots') if spec.source.startswith('paper:') else 1),produced_at_slot=produced,delivered_at_slot=now,sample_count=1 if reason is None else 0,
+                window=dict(kind='cumulative' if cumulative else 'slots',size=size),window_tbs=None,window_slots=size,produced_at_slot=produced,delivered_at_slot=now,sample_count=1 if reason is None else 0,
                 valid=reason is None,reason=reason,age_slots=now-produced if produced is not None else None)
             c.kpi_metadata[name]=record;result.kpi_records.append(record)
             if name in contract.required_kpis and reason and not contract.partial_entities:errors.append(f'{cell.cell_id}:{name}:{reason}')
@@ -257,6 +270,30 @@ def validate_action(action,contract,observation):
         elif f.name not in SUPPORTED_ACTIONS:problems.append(f'{f.name}:unsupported_rt_action')
     cells={c.cell_id for c in observation.cell_observations}
     target=action.target_cell_id
+    weights=getattr(action,'ue_scheduler_weights',None)
+    if weights is not None:
+        if not isinstance(weights,dict):problems.append('ue_scheduler_weights:invalid_map')
+        else:
+            association={u.ue_id:u.serving_cell_id for u in observation.ue_observations}
+            targets=cells if action.apply_scope=='cluster' else {target or getattr(observation,'cell_id',None)}
+            modes={c.cell_id:(getattr(c,'executed_config',None) or {}).get('scheduler_mode','round_robin') for c in observation.cell_observations}
+            for uid,weight in weights.items():
+                if uid not in association or association[uid] not in targets:
+                    problems.append('ue_scheduler_weights:target_outside_cell_scope')
+                effective_mode=scheduler_action_mode(action) or modes.get(association.get(uid),'round_robin')
+                max_weight=4. if effective_mode=='qos_deadline' else 2.
+                if type(weight) not in (int,float) or not math.isfinite(weight) or not .5<=weight<=max_weight:
+                    problems.append('ue_scheduler_weights:invalid_weight')
+    if scheduler_action_mode(action) not in (None,'qos_deadline'):
+        targets=cells if action.apply_scope=='cluster' else {target or getattr(observation,'cell_id',None)}
+        for cell in observation.cell_observations:
+            if cell.cell_id not in targets:continue
+            existing=(getattr(cell,'executed_config',None) or {}).get('ue_scheduler_weights',{})
+            if not isinstance(existing,dict):continue
+            for uid,old in existing.items():
+                value=weights.get(uid,old) if isinstance(weights,dict) else old
+                if type(value) not in (int,float) or not math.isfinite(value) or not .5<=value<=2.:
+                    problems.append('ue_scheduler_weights:legacy_mode_requires_reset')
     if target is not None and (target not in cells or (contract.cell_ids and target not in contract.cell_ids)):
         problems.append('invalid_target_cell')
     if action.apply_scope not in ('cluster','cell'):
@@ -286,9 +323,11 @@ _PAPER_UE={
  'offered_rate_bps':'bit/s','requested_dl_rate_bps':'bit/s','sla_status':'record',
  'handover_rate_per_s':'1/s','handover_failure_rate':'ratio',
  'connection_drop_fraction':'ratio','mobility_counts':'record'}
+from phy.rt_sys.ue_services import KPI_UNITS as _UE_SERVICE_UNITS
+_PAPER_UE.update(_UE_SERVICE_UNITS)
 for _k,_unit in _PAPER_UE.items():
     if _k=='candidate_rsrp_dbm':continue  # Existing public field remains compatible.
-    KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:'+_k+':reference_or_executed_event_report','single_report' if _k in ('association','requested_dl_rate_bps') else 'throughput_window_slots')
+    KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:'+_k+(':system_UE_power_DRX_MEC_model' if _k in _UE_SERVICE_UNITS else ':reference_or_executed_event_report'),'single_report' if _k in ('association','requested_dl_rate_bps') or _k in _UE_SERVICE_UNITS else 'throughput_window_slots')
 for _k,_unit in {'rf_energy_j':'J','rf_energy_total_j':'J','rf_efficiency_bit_per_j':'bit/J',
                 'whole_device_power_w':'W','whole_device_efficiency_bit_per_j':'bit/J'}.items():
     KPI_REGISTRY[_k]=KpiSpec('cell',_unit,'paper:executed_RF_energy_counter','one_completed_slot')
@@ -334,7 +373,35 @@ for _k,_unit in {'mobility_events':'event record','beam_reference_reports':'dB/c
 KPI_REGISTRY['executed_config']=KpiSpec('cell','configuration','paper:executed_configuration_report','single_report')
 for _k,_unit in {'executed_prb_slots_total':'PRB*slot','executed_prb_slots_window':'PRB*slot',
     'resource_counter_epoch':'identity','resource_counter_start_slot':'slot','resource_window_start_slot':'slot','resource_window_end_slot':'slot',
-    'resource_window_sample_count':'count','delivered_bits_total':'bit'}.items():
+    'resource_window_sample_count':'count','delivered_bits_total':'bit','offered_bits_total':'bit'}.items():
     KPI_REGISTRY[_k]=KpiSpec('ue',_unit,'paper:actual_transmission_and_packet_counter','throughput_window_slots')
 KPI_REGISTRY['config_revision']=KpiSpec('cell','counter','paper:executed_configuration_change_counter','single_report')
 CELL_CONFIG.extend(['executed_config','config_fingerprint','config_produced_at_slot','config_revision'])
+
+# Primitive cumulative packet counters traverse the same delayed E2 projection.
+# They are event counters, not a unique-packet deadline-failure probability:
+# one packet may be marked overdue and subsequently complete late.
+for _k in ('admitted_packets_total','deadline_missed_packets_total',
+           'overflow_packets_total','completed_packets_total','late_completed_packets_total',
+           'on_time_completed_packets_total','deadline_failed_packets_total'):
+    KPI_REGISTRY[_k]=KpiSpec('ue','packet','paper:actual_packet_ledger_counter','since_start')
+KPI_REGISTRY['completion_latency_ms_total']=KpiSpec('ue','ms','paper:actual_packet_ledger_counter','since_start')
+
+# Optional AP model reports pass through the normal delayed E2 projection.
+# Initial owner/ACK/request can be None; controllers must not require them until
+# confirming execution. AP energy is modeled electronics energy, not RF-only.
+_AP_COUNTER_UNITS={'ap_energy_total_j':'J','ap_energy_components_j':'record',
+    'ap_available_fraction':'ratio','ap_available_slots_total':'slot',
+    'ap_sleep_slots_total':'slot','ap_waking_slots_total':'slot',
+    'ap_wake_transitions_total':'count','ap_delivered_bits_total':'bit'}
+_AP_STATE_UNITS={'ap_power_w':'W','ap_load_fraction':'ratio','ap_state':'state',
+    'ap_available':'boolean','ap_policy':'policy','ap_policy_owner':'identity',
+    'ap_policy_applied_slot':'slot','ap_policy_request_id':'identity',
+    'ap_policy_generation':'count','ap_cycle_period_slots':'slot',
+    'ap_cycle_index':'count','ap_cycle_start_slot':'slot','ap_cycle_phase_slot':'slot'}
+for _name,_unit in {**_AP_COUNTER_UNITS,**_AP_STATE_UNITS}.items():
+    KPI_REGISTRY[_name]=KpiSpec('cell',_unit,'paper:AP_system_power_and_availability',
+        'since_start' if _name in _AP_COUNTER_UNITS else 'single_report')
+    CELL_CONFIG.append(_name)
+for _name,_unit in {'reference_measurement_available':'boolean','candidate_reference_available':'record'}.items():
+    KPI_REGISTRY[_name]=KpiSpec('ue',_unit,'paper:AP_reference_measurement_opportunity','single_report')

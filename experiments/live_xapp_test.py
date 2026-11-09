@@ -17,8 +17,15 @@ import uuid
 APP = 'live_scheduler_test'
 ROOT = Path(__file__).resolve().parents[1]
 ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'max_geometry_displacement_m', 'fast_channel_mode', 'rt_prefetch_workers', 'platform',
-    'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load',
-    'initial_queue_bytes', 'ue_speed_mps', 'model', 'fast_profile', 'fast_gain_update_ms', 'feedback_mode', 'csi_error_nmse_db',
+    'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load', 'traffic_profile', 'urllc_scenario',
+    'initial_queue_bytes', 'ue_speed_mps', 'ue_services', 'ue_services_config', 'mec_stage_metrics', 'energy_xapp_mode', 'energy_xapp_model', 'energy_xapp_window_ms', 'energy_xapp_explore_windows',
+    'latency_xapp_mode', 'latency_xapp_model', 'latency_xapp_window_ms', 'latency_xapp_explore_windows', 'latency_xapp_fixed_action',
+    'urllc_xapp_mode', 'urllc_xapp_model', 'urllc_xapp_window_ms', 'urllc_xapp_policy_version', 'urllc_xapp_fixed_action', 'urllc_xapp_balanced_start_windows',
+    'ap_services_profile', 'ap_xapp_mode', 'ap_xapp_model', 'ap_xapp_window_ms', 'ap_xapp_fixed_action',
+    'budget_xapp_mode', 'budget_xapp_model', 'budget_xapp_window_ms', 'budget_xapp_gflops',
+    'throughput_xapp_mode', 'throughput_xapp_model', 'throughput_xapp_window_ms', 'throughput_xapp_fixed_action', 'throughput_xapp_policy',
+    'direct_conflict_mitigation', 'mitigation_seed', 'mitigation_window_ms',
+    'model', 'fast_profile', 'fast_gain_update_ms', 'feedback_mode', 'csi_error_nmse_db',
     'harq_combining', 'recording_mode', 'record_compression', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 
 
@@ -45,6 +52,9 @@ def configure(configs, manifest, args):
     period = max(1, math.ceil(20 / manifest['slot_duration_ms']))
     # Command-based mobility experiments cannot promise configuration withdrawal.
     apps = live_configs(pool, cells, manifest['slot_duration_ms'])
+    for item in apps:
+        if item.get('implementation_id') == 'throughput_scheduler_mlp':
+            item.setdefault('parameters', {})['policy'] = getattr(args, 'throughput_xapp_policy', 'throughput')
     names = [a.get('instance_id', a.get('name')) for a in apps]
     requested = getattr(args, 'xapp_test_app', None)
     if requested is not None and requested not in names:
@@ -97,6 +107,12 @@ class LiveXAppSession:
     def unavailable_reason(self, app):
         if not app.contract.available:
             return 'Backend does not provide the declared KPI/action contract'
+        if getattr(app,'implementation_id',None) in ('ue_energy_rf','latency_scheduler_rf','mec_offload_budget_qgbdt'):
+            services=getattr(self.simulator.state,'ue_services',None)
+            if services is None or not services.config.get('task_cohort_ms'):
+                return 'Enable UE energy/DRX/MEC models and task cohort telemetry'
+        if getattr(app,'implementation_id',None)=='ap_energy_rf' and getattr(self.simulator.state,'ap_services',None) is None:
+            return 'Enable the AP power/availability model with an explicit profile'
         required = set(app.contract.required_kpis)
         paper = getattr(self.simulator.state, 'paper', None)
         if app.name != APP and not paper:

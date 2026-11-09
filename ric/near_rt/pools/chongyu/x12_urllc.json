@@ -1,0 +1,20 @@
+{
+  "id": "X-12-URLLC",
+  "implementation": "latency_urllc_rf",
+  "algorithm": "RandomForestRegressor",
+  "adaptation": "Paper X-12 scheduler-priority idea adapted to UE6 URLLC packets; separate from the legacy AR/MEC X-12.",
+  "target_kpis": {
+    "ue_6_unique_deadline_failure_events_per_s": "minimize, including disjoint queue overflow",
+    "ue_6_completed_packet_mean_latency_ms": "minimize when completions exist; original deadline remains 10 ms",
+    "network_goodput_mbps": "tie-break; UE2 predicted failure rate guarded against same-context RR"
+  },
+  "rcp": {
+    "scheduler_mode": ["round_robin", "latency_aware"],
+    "ue_scheduler_weights": "Complete served-UE maps: UE6 weight 1, 1.5 or 2; all other weights 1. Empty cell map is {}.",
+    "mapping": "Existing latency-aware base scores and unchanged NR packing; native RR and neutral-family arms included."
+  },
+  "measurement": "Global 100 ms counter-delta windows after all-cell executed ownership confirmation and 20 ms wash-in. Outcome windows include carryover; they are not arrival-cohort failure probabilities.",
+  "training": "24 actual global rows, six per arm; balanced online collection, cap 48, batched 32-tree depth-6 RF. No labels from forecasts.",
+  "evaluation": "Frozen JSON inference; mature unique packet-ID 10 ms failure union is the authoritative offline SLA check. The RF peer guard is not a calibrated safety bound.",
+  "affected_kpis": ["network_goodput_mbps", "per_ue_goodput_mbps", "packet_completion_latency_ms", "packet_deadline_failure_fraction", "queue_bytes", "ue_energy_total_j"]
+}

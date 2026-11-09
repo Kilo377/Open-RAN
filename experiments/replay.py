@@ -140,7 +140,8 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None, allow_
                 nack=100*bad/n if n else None,decodes=cumulative[0]+cumulative[2],nacks=cumulative[1]+cumulative[3],
                 users=user_rows,link=[counts[u].copy() for u in ids],cells=[[cells[c]['bytes']*8/seconds/1e6,cells[c]['occupancy']/window_n,cells[c]['power']/window_n] for c in cell_ids],
                 hol_max_ms=[window[u]['hol'] for u in ids],offered_mbps=(offered-previous_offered)*8/seconds/1e6,
-                rf_power_w=sum(c['power'] for c in cells.values())/window_n,rf_energy_j=energy,xapps=row.get('xapp_bindings',{})))
+                rf_power_w=sum(c['power'] for c in cells.values())/window_n,rf_energy_j=energy,xapps=row.get('xapp_bindings',{}),
+                ue_services=[row.get('ue_services',{}).get(uid) for uid in ids]))
             previous_completed=completed;previous_latency=latency;previous_offered=offered;window_n=0;window,cells=empty_window()
     if expected!=total or frames[-1]['slot']!=total:raise ValueError('Incomplete replay trace')
     metrics=summary['packet_metrics'];totals={k:sum(m[k] for m in metrics.values()) for k in (
@@ -150,6 +151,10 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None, allow_
         for k in ['delivered_bytes','pending_bytes','overflow_bytes']:
             if last[uid]['packet_'+k]!=m[k]:raise ValueError(f'Replay/final packet counter mismatch: {uid}/{k}')
         if m['initial_bytes']+m['offered_bytes']!=m['delivered_bytes']+m['pending_bytes']+m['overflow_bytes']:raise ValueError('Packet byte conservation failed')
+    if summary.get('ue_services',{}).get('enabled'):
+        for uid,value in zip(ids,frames[-1]['ue_services']):
+            expected_value=summary['ue_services']['per_ue'][uid]
+            if value != expected_value:raise ValueError('Replay UE-service audit failed: '+uid)
     expected_energy=summary.get('paper_interfaces',{}).get('rf_energy_j')
     if expected_energy is not None and not math.isclose(sum(expected_energy.values()),energy,abs_tol=1e-7,rel_tol=1e-9):raise ValueError('Replay RF-energy audit failed')
     network=summary.get('link_statistics',{}).get('network',{})
@@ -166,6 +171,8 @@ def build_data(folder, *, max_frames=500, window_ms=None, mesh_path=None, allow_
     # Historical fast outputs used the full grid and predate profile metadata.
     fast_profile=phy.get('fast_profile','reference') if model=='fast' else None
     return dict(meta=dict(scene=manifest['scene'],model=model,fast_profile=fast_profile,completed=True,slots=total,slot_ms=slot_ms,simulation_s=duration,
+        ue_services_enabled=bool(summary.get('ue_services',{}).get('enabled')),
+        mec_stage_metrics_enabled=bool(summary.get('ue_services',{}).get('enabled')) and any(isinstance(v.get('ue_task_stage_metrics'),dict) for v in summary.get('ue_services',{}).get('per_ue',{}).values()),
         active_prbs=summary['n_prbs_total'],window_ms=window_slots*slot_ms,warmup_s=config.get('warmup_ms',0)/1000,wall_s=status.get('elapsed_s'),
         source_sha256=status.get('source_sha256'),source_run=folder.name,playback_speed=duration/20,
         first_overflow_s=first_overflow,actual_decodes=actual,sampled_attempts=sampled,xapp_pool=config['configs']['ric'].get('xapp_pool'),

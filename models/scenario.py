@@ -56,6 +56,9 @@ class ScenarioConfig:
     non_rt_reselection_enabled: bool = False
     non_rt_reselection_fallback_threshold: int = 2
     non_rt_reselection_min_gap_slots: int = 10
+    direct_conflict_mitigation: str = 'priority'
+    mitigation_seed: int = 1
+    mitigation_window_ms: float = 100.
 
 
 @dataclass
