@@ -1,0 +1,10 @@
+[
+  {"at_ms": 0, "operation": "set", "apps": ["x01", "x13"]},
+  {"at_ms": 100, "operation": "enable", "apps": ["x08", "x02"]},
+  {"at_ms": 200, "operation": "disable", "apps": ["x01"]},
+  {"at_ms": 300, "operation": "set", "apps": ["all"]},
+  {"at_ms": 450, "operation": "disable", "apps": ["x12_mec"]},
+  {"at_ms": 550, "operation": "disable_all"},
+  {"at_ms": 650, "operation": "enable", "apps": ["x08", "x12_urllc"]},
+  {"at_ms": 750, "operation": "disable_all"}
+]

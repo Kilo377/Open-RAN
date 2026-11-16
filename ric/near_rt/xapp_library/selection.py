@@ -110,14 +110,13 @@ class InstanceSelection:
             if cid not in known or not isinstance(categories,dict):raise ValueError('Unknown cell or malformed active sets')
             result[cid]={}
             for category,ids in categories.items():
-                from .catalog import category_catalog
-                if category not in category_catalog():raise ValueError('Unknown category in active sets')
+                if category not in {a.category_id for a in apps.values()}:raise ValueError('Unknown category in active sets')
                 if not isinstance(ids,list) or any(not isinstance(i,str) for i in ids) or len(ids)!=len(set(ids)):raise ValueError('Unique instance list required')
                 goals=set()
                 for ident in ids:
                     app=apps.get(ident)
                     if app is None or app.category_id!=category or cid not in app.allowed_cells or not app.contract.available:raise ValueError('Invalid instance category, scope or capability')
-                    objective=app.spec['objective_id']
+                    objective=(getattr(app,'spec',{}) or {}).get('objective_id',app.implementation_id)
                     if objective in goals:raise ValueError('Duplicate objective in same cell/category')
                     goals.add(objective)
                 result[cid][category]=sorted(ids)
@@ -132,7 +131,7 @@ class InstanceSelection:
             presets=[a.initial_active_sets for a in apps.values() if a.initial_active_sets is not None]
             if presets and any(p!=presets[0] for p in presets):raise ValueError('Inconsistent initial active sets')
             requested=presets[0] if presets else {}
-        new=self.validate(None,active_sets=requested);old=self.bindings or {}
+        new=self.validate(None,active_sets=requested);old=self.bindings or {};removed_instances=set()
         if old!=new:self.version+=1
         for cid in sorted(set(old)|set(new)):
             for category in sorted(set(old.get(cid,{}))|set(new.get(cid,{}))):
@@ -142,6 +141,7 @@ class InstanceSelection:
                     key=(cid,category,ident);self.generation[key]=self.version
                     self.receipts.append(dict(slot_id=slot,kind='xapp_selection',cell_id=cid,category_id=category,
                         instance_id=ident,status='applied',operation='added' if ident in after else 'removed',selection_version=self.version))
+                    if ident in before:removed_instances.add(ident)
                     if ident in before and leases:
                         for req in list(leases.requests):
                             if req[0]==ident and req[1]==cid:del leases.requests[req]
@@ -150,6 +150,10 @@ class InstanceSelection:
                         cached=self.manager.current_action_by_scope.get('cell:'+cid)
                         for (cell,field),owner in list(leases.owned.items()):
                             if cell==cid and owner==ident and cached:setattr(cached,field,{} if field=='slice_weight_adjustment' else None)
+        # Even OFF and ON in the same control tick must break measurement
+        # windows from the old generation. Keep the loaded learner intact.
+        for ident in removed_instances:
+            if hasattr(apps[ident],'reset'):apps[ident].reset()
         self.bindings=deepcopy(new)
         for ident,app in apps.items():
             cells={cid for cid,groups in new.items() if ident in groups.get(app.category_id,[])}

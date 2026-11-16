@@ -38,6 +38,13 @@ def compare(spec_path, output, result, cell='*', app=APP):
         args.slots = int(spec['slots'])
         args.live_xapp_test, args.xapp_test_start, args.xapp_test_cell = True, arm, cell
         args.xapp_test_app = app
+        if getattr(args,'live_xapps',False):
+            args.live_xapp_test=False
+            args.xapps_start=app if arm=='on'else''
+            args.xapp_toggle_timeline=None
+            args.xapp_test_start='off'
+            for kind in ('energy','latency','budget','throughput','urllc','ap'):
+                setattr(args,kind+'_xapp_mode','off')
         args.output = output / arm
         args.live_state = args.output / 'live.json'
         run_case(args)
@@ -50,7 +57,7 @@ def compare(spec_path, output, result, cell='*', app=APP):
         segment = summary['xapp_test']['segments'][-1]
         if segment['slots'] < 1:
             raise ValueError('Run needs more slots after the 20 ms control warm-up')
-        arms[arm] = dict(metrics=segment, environment_sha256=initial['environment_sha256'],
+        arms[arm] = dict(metrics=segment, environment_sha256=initial.get('exogenous_environment_sha256',initial['environment_sha256']),
             output=str(args.output), per_ue_packets=summary['packet_metrics'],
             executed_schedulers={c['cell_id']: c['scheduler']['scheduler_mode'] for c in live['cell_metrics']},
             decisions=summary['xapp_test']['last_decisions'], source_sha256=status['source_sha256'])

@@ -342,7 +342,9 @@ class Dashboard:
 
     def xapp_test(self, d, focus):
         from experiments.live_xapp_test import submit, start_comparison
+        from experiments.hot_xapps import submit_many
         x = d['xapp_test']
+        multi=x.get('multi_activation',False)
         ui.TextUnformatted('xApp pool: ' + x.get('pool', 'yisong'))
         if not x.get('catalog') and not x.get('app'):
             ui.TextWrapped('No xApps registered in this pool. The native network is running without xApps.')
@@ -357,14 +359,16 @@ class Dashboard:
         pending = x.get('pending_activation')
         live = d.get('stage') == 'simulating' and bool(self.state_path)
         ui.TextColored(ACCENT, 'xAPPS / CLICK TO TURN ON OR OFF')
-        ui.TextWrapped('One xApp at a time. Click another to switch automatically. Green = ON, amber = switching.')
+        ui.TextWrapped('Each button independently enables or disables its xApp. Multiple xApps can run together. ON means enabled; execution receipts below identify applied actions.' if multi else
+            'One xApp at a time. Click another to switch automatically. Green = ON, amber = switching.')
         ui.TextColored(WARN if pending else ACCENT, banner(d))
         if not live:
             ui.TextWrapped('This run has ended. The buttons show its final state; start a new live run to operate xApps.')
         if live and (active or pending):
-            if ui.Button('Cancel switch' if pending else 'Turn off current xApp'):
+            if ui.Button('Turn off all xApps' if multi else 'Cancel switch' if pending else 'Turn off current xApp'):
                 try:
-                    self.test_request_id = submit(self.state_path, d, 'disable', '*', x['app']['instance_id'])
+                    self.test_request_id = (submit_many(self.state_path,d,'disable_all') if multi else
+                        submit(self.state_path, d, 'disable', '*', x['app']['instance_id']))
                     self.test_message = 'Stopping; original parameters will restore automatically.'
                 except (OSError, ValueError) as error:self.test_message = str(error)
         cells = ['All cells'] + [c['cell_id'] for c in d.get('cells', [])]
@@ -409,6 +413,7 @@ class Dashboard:
                     except (OSError, ValueError) as error:self.test_message = str(error)
                 if ui.IsItemHovered():
                     ui.SetTooltip(candidate['instance_id'] + '\n' + candidate.get('description', '') + '\n' + row['execution'])
+                if multi:ui.TextWrapped(row['execution'])
             ui.EndTable()
         ui.EndDisabled()
         selected = catalog[self.test_app]
@@ -421,7 +426,7 @@ class Dashboard:
         if ui.CollapsingHeader('Execution details / advanced'):
             for row in active:
                 ui.TextWrapped(row['instance_id'] + ': ' + row['execution'])
-            table('test-effective', ['Cell', 'Binding ON/OFF', 'Effective scheduler'], [
+            table('test-effective', ['Cell', 'Any xApp selected' if multi else 'Binding ON/OFF', 'Effective scheduler'], [
                 [c['cell_id'], 'ON' if c['cell_id'] in x['selected_cells'] else 'OFF', c['scheduler'].get('scheduler_mode', '--')]
                 for c in d.get('cell_metrics', [])])
             tree('Latest measured inputs / xApp decisions', x.get('last_decisions', []))
@@ -433,7 +438,7 @@ class Dashboard:
             [s['label'], fmt(s['duration_ms'], 1), fmt(s['throughput_mbps']),
              fmt(s['mean_queue_bytes']), fmt(s['mean_completion_delay_ms'])] for s in x['segments']])
         ui.TextWrapped('Segments omit transition warm-up. Live before/after is observational: mobility, traffic, HARQ and queues keep evolving. Delay covers completed packets only.')
-        tree('Segment xApp identities', [dict(phase=s['label'], app=s.get('app_id'),
+        tree('Segment xApp identities', [dict(phase=s['label'], app=s.get('app_id'),apps=s.get('app_ids'),
             start_slot=s['start_slot']) for s in x['segments']])
         ui.Separator()
         ui.TextColored(ACCENT, 'MATCHED OFF / ON REPLAY')

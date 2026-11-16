@@ -71,4 +71,9 @@ def build_pool_xapp(item, pool):
         raise ValueError('Pool catalog and command contract disagree: ' + ident)
     app.xapp_pool = pool
     app.initial_bindings = deepcopy(item.get('initial_bindings', {}))
+    mode = item.get('selection_mode', 'exclusive')
+    if mode not in ('exclusive', 'conflict_experiment'):
+        raise ValueError('Unsupported pool selection mode: ' + str(mode))
+    app.selection_mode = mode
+    app.initial_active_sets = deepcopy(item.get('initial_active_sets', {}))
     return app

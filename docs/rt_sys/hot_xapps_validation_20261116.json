@@ -1,0 +1,230 @@
+{
+  "date": "2026-11-16",
+  "scope": "Runtime activation/lifecycle validation; not a new target-KPI performance evaluation.",
+  "tested_runtime_source_sha256": "9ccc86dfa8aef9a0250a877410d71fed6a9a7954367021330c6c598a2af2eb96",
+  "trained_release": "20261109",
+  "regression": {
+    "AGX_affected_suite_passed": 273,
+    "CLI_static_and_live_default_cases_passed": 3
+  },
+  "runs": {
+    "hot_smoke": {
+      "completed": true,
+      "slots": 1600,
+      "simulated_seconds": 0.8,
+      "source_sha256": "9bf5bcf50d9aa4dd89856bc5509dfdf57e67bfb274032081d8f6ceee91091a75",
+      "six_simultaneous": true,
+      "final_all_off": true,
+      "models_unchanged": {
+        "ue_energy_rf": {
+          "sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+          "samples": 221,
+          "trained_samples": 221
+        },
+        "ap_energy_rf": {
+          "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+          "samples": 250,
+          "trained_samples": 250
+        },
+        "throughput_scheduler_mlp": {
+          "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+          "samples": 254,
+          "trained_samples": 254
+        },
+        "latency_scheduler_rf": {
+          "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+          "samples": 212,
+          "trained_samples": 212
+        },
+        "latency_urllc_rf": {
+          "sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+          "samples": 207,
+          "trained_samples": 200
+        },
+        "mec_offload_budget_qgbdt": {
+          "sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+          "samples": 13,
+          "trained_samples": 12
+        }
+      },
+      "network_not_reset": true,
+      "packet_conservation": true,
+      "switch_requests": 9,
+      "all_switches_accepted": true,
+      "applied_sources": {
+        "ue_energy_rf": 1640,
+        "ap_energy_rf": 2578,
+        "throughput_scheduler_mlp": 3118,
+        "mec_offload_budget_qgbdt": 200
+      },
+      "correctly_rejected_stale_actions": {
+        "stale_xapp_selection": 8
+      },
+      "other_rejection_reasons": [],
+      "direct_conflict_mitigation": "priority",
+      "final_control_fields_restored": true,
+      "random_offload_draws": 0,
+      "random_scheduler_draws": 0,
+      "automatic_html_audits_passed": true
+    },
+    "rapid_smoke": {
+      "completed": true,
+      "slots": 400,
+      "simulated_seconds": 0.2,
+      "source_sha256": "bcf064031e5124fc047c1ee86f8db7367c7d22f10369f660f92b70fff613603e",
+      "six_simultaneous": true,
+      "final_all_off": true,
+      "models_unchanged": {
+        "ue_energy_rf": {
+          "sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+          "samples": 221,
+          "trained_samples": 221
+        },
+        "ap_energy_rf": {
+          "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+          "samples": 250,
+          "trained_samples": 250
+        },
+        "throughput_scheduler_mlp": {
+          "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+          "samples": 254,
+          "trained_samples": 254
+        },
+        "latency_scheduler_rf": {
+          "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+          "samples": 212,
+          "trained_samples": 212
+        },
+        "latency_urllc_rf": {
+          "sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+          "samples": 207,
+          "trained_samples": 200
+        },
+        "mec_offload_budget_qgbdt": {
+          "sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+          "samples": 13,
+          "trained_samples": 12
+        }
+      },
+      "network_not_reset": true,
+      "packet_conservation": true,
+      "switch_requests": 7,
+      "all_switches_accepted": true,
+      "applied_sources": {
+        "mec_offload_budget_qgbdt": 179,
+        "throughput_scheduler_mlp": 659,
+        "ap_energy_rf": 180,
+        "ue_energy_rf": 120
+      },
+      "correctly_rejected_stale_actions": {
+        "stale_xapp_selection": 7
+      },
+      "other_rejection_reasons": [],
+      "direct_conflict_mitigation": "priority",
+      "final_control_fields_restored": true,
+      "random_offload_draws": 0,
+      "random_scheduler_draws": 0,
+      "automatic_html_audits_passed": true
+    },
+    "random_smoke": {
+      "completed": true,
+      "slots": 1600,
+      "simulated_seconds": 0.8,
+      "source_sha256": "9ccc86dfa8aef9a0250a877410d71fed6a9a7954367021330c6c598a2af2eb96",
+      "six_simultaneous": true,
+      "final_all_off": true,
+      "models_unchanged": {
+        "ue_energy_rf": {
+          "sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+          "samples": 221,
+          "trained_samples": 221
+        },
+        "ap_energy_rf": {
+          "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+          "samples": 250,
+          "trained_samples": 250
+        },
+        "throughput_scheduler_mlp": {
+          "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+          "samples": 254,
+          "trained_samples": 254
+        },
+        "latency_scheduler_rf": {
+          "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+          "samples": 212,
+          "trained_samples": 212
+        },
+        "latency_urllc_rf": {
+          "sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+          "samples": 207,
+          "trained_samples": 200
+        },
+        "mec_offload_budget_qgbdt": {
+          "sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+          "samples": 13,
+          "trained_samples": 12
+        }
+      },
+      "network_not_reset": true,
+      "packet_conservation": true,
+      "switch_requests": 12,
+      "all_switches_accepted": true,
+      "applied_sources": {
+        "ue_energy_rf": 2913,
+        "mec_offload_budget_qgbdt": 418,
+        "ap_energy_rf": 2578,
+        "throughput_scheduler_mlp": 2130,
+        "latency_scheduler_rf": 259,
+        "latency_urllc_rf": 696
+      },
+      "correctly_rejected_stale_actions": {
+        "stale_xapp_selection": 7,
+        "stale_mitigation_source": 100,
+        "stale_mitigation_selection": 24,
+        "mitigation_source_withdrawn": 220
+      },
+      "other_rejection_reasons": [],
+      "direct_conflict_mitigation": "uniform_random",
+      "final_control_fields_restored": true,
+      "random_offload_draws": 8,
+      "random_scheduler_draws": 17,
+      "automatic_html_audits_passed": true
+    }
+  },
+  "retained_data": {
+    "archive": "agx1-hot-xapp-validation.tgz",
+    "archive_sha256": "3db46890f6cced7d1f4b7210f165087a9ff8a55b3f7d218f464410d28a9b688a",
+    "verified_files": 132,
+    "bytes": 39519709,
+    "raw_runs": [
+      "hot_smoke",
+      "rapid_smoke",
+      "random_smoke"
+    ],
+    "original_AGX_copies_retained": true
+  },
+  "cache_cleanup": {
+    "agx1": {
+      "projects": 5,
+      "cache_bytes": 136392367,
+      "net_free_bytes_gained": 340996096,
+      "protected_files": 9895,
+      "protected_data_unchanged": true
+    },
+    "agx2": {
+      "projects": 14,
+      "cache_bytes": 177071021,
+      "net_free_bytes_gained": 312111104,
+      "protected_files": 14627,
+      "protected_data_unchanged": true
+    },
+    "local": {
+      "cache_bytes": 7804747,
+      "free_bytes_before": 1602256175104,
+      "free_bytes_after": 1602264993792,
+      "protected_data_inventory_sha256": "744c926bcfdc34f363d9981b705a604f0f4a614b045a07d202510a37f202682f",
+      "protected_files": 103,
+      "protected_data_unchanged": true
+    }
+  }
+}

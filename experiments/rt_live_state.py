@@ -97,4 +97,6 @@ def control_snapshot(simulator):
         active_constraints=plain(getattr(control, 'active_policy_constraints', [])),
         arbitration=plain(getattr(control, 'arbitration_trace', None)),
         observation=plain(getattr(control, 'input_observation_trace', {})),
-        xapp_bindings=plain(getattr(selection, 'bindings', {})))
+        xapp_bindings=plain(getattr(selection, 'bindings', {})),
+        xapp_selection_mode=getattr(selection,'mode','exclusive'),
+        xapp_active_sets=plain(getattr(selection,'bindings',{})) if getattr(selection,'mode','exclusive')=='conflict_experiment' else {})

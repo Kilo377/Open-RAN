@@ -51,6 +51,11 @@ def banner(data):
 
 
 def button_title(app):
+    trained=dict(ue_energy_rf='X-01 / UE energy',ap_energy_rf='X-02 / AP energy',
+        throughput_scheduler_mlp='X-08 / Network throughput',latency_scheduler_rf='X-12 / MEC latency',
+        latency_urllc_rf='X-12 / URLLC latency',mec_offload_budget_qgbdt='X-13 / MEC quota')
+    ident=app.get('implementation_id',app['instance_id'])
+    if ident in trained:return trained[ident]
     titles = dict(live_scheduler_test='Queue / HOL demo', throughput_power='Frequency power',
         rf_energy='RF energy', load_balancing='Load balancing', ue_fairness='UE fairness',
         slice_sla='Slice scheduling', latency_guard='Latency guard', interference_coordination='Interference',

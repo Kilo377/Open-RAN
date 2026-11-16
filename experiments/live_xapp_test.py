@@ -25,6 +25,7 @@ ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'max_ge
     'budget_xapp_mode', 'budget_xapp_model', 'budget_xapp_window_ms', 'budget_xapp_gflops',
     'throughput_xapp_mode', 'throughput_xapp_model', 'throughput_xapp_window_ms', 'throughput_xapp_fixed_action', 'throughput_xapp_policy',
     'direct_conflict_mitigation', 'mitigation_seed', 'mitigation_window_ms',
+    'live_xapps','xapp_model_dir','xapps_start','xapp_toggle_timeline',
     'model', 'fast_profile', 'fast_gain_update_ms', 'feedback_mode', 'csi_error_nmse_db',
     'harq_combining', 'recording_mode', 'record_compression', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 

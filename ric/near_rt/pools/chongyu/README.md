@@ -1,5 +1,11 @@
 # Chongyu xApp pool
 
+For trained-model **warm multi-xApp switches**, use `--live-xapps`; see
+[HOT_XAPPS.md](../../../../docs/rt_sys/HOT_XAPPS.md). Independent buttons and
+atomic batch commands can run several controllers, including both X-12
+objectives, through normal conflict arbitration. Models and network state stay
+loaded. The older `--live-xapp-test` interface below remains a single-app mode.
+
 Develop new xApps in this directory. `catalog.json` registers `ue_energy_rf`
 (X-01), `latency_scheduler_rf` (X-12), and `mec_offload_budget_qgbdt`
 (MEC expected-workload guard), `throughput_scheduler_mlp` (X-08), and

@@ -100,6 +100,8 @@ def parse_args():
     p.add_argument('--output',type=Path)
     p.add_argument('--live-state',type=Path,help='Atomically publish actual slot state for the read-only live viewer')
     p.add_argument('--live-xapp-test',action='store_true',help='Register reversible live test xApps, initially disabled')
+    from experiments.hot_xapps import add_arguments as add_hot_xapp_arguments
+    add_hot_xapp_arguments(p)
     p.add_argument('--xapp-pool',choices=['yisong','chongyu'],help='Select the xApp owner pool; overrides config xapp_pool')
     p.add_argument('--xapp-test-app',help='Implementation in the selected pool to activate or compare')
     p.add_argument('--xapp-test-start',choices=['off','on'],default='off')
@@ -156,7 +158,8 @@ def parse_args():
         help='X08 throughput-first default for conflict research; guarded enables optional QoS heuristics')
     p.add_argument('--throughput-xapp-fixed-action',type=int,choices=[1,3],default=3,
         help='Fixed ablation: 1 neutral latency-aware weights, 3 strongest-user weight 2')
-    p.add_argument('--direct-conflict-mitigation',choices=['priority','uniform_random'],default='priority')
+    p.add_argument('--direct-conflict-mitigation',choices=['priority','uniform_random'],default=None,
+        help='Default priority for static runs; uniform_random for --live-xapps')
     p.add_argument('--mitigation-seed',type=int)
     p.add_argument('--mitigation-window-ms',type=float,default=100)
     model=p.add_mutually_exclusive_group()
@@ -179,6 +182,8 @@ def parse_args():
     p.add_argument('--replay-window-ms',type=float,help='Optional KPI aggregation window; default adapts to run duration')
     p.add_argument('--replay-max-frames',type=int,default=500,help='Target replay time windows; raw data is retained')
     args=p.parse_args()
+    if args.direct_conflict_mitigation is None:
+        args.direct_conflict_mitigation='uniform_random'if args.live_xapps else'priority'
     if args.slots is None:args.slots=40
     return args
 
@@ -290,8 +295,11 @@ def run_case(args):
         configs['phy']['rt_sys']['initial_association']='strongest_rt_reference'
     if control_mode == 'baseline' and phase != 'integration':
         raise ValueError('Fixed environment baseline is an integration run, not algorithm training/evaluation')
+    hot_xapps=getattr(args,'live_xapps',False)
+    if not hot_xapps and (getattr(args,'xapp_toggle_timeline',None) is not None or getattr(args,'xapps_start','')):
+        raise ValueError('xApp activation settings require --live-xapps')
     from experiments.live_xapp_test import configure as configure_live_test
-    live_test_enabled=configure_live_test(configs,manifest,args)
+    live_test_enabled=True if hot_xapps else configure_live_test(configs,manifest,args)
     if live_test_enabled:control_mode='xapp_test'
     if model_path:
         configs['ric'].update(persistent_memory_enabled=True,memory_store_path=str(model_path))
@@ -323,8 +331,12 @@ def run_case(args):
         name+='_'+datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6]
     output=(args.output or ROOT/'outputs/rt_sys'/name).resolve()
     if not output.is_relative_to(ROOT): raise ValueError('Outputs must stay in the independent copy')
-    from experiments.online_rf_xapps import configure as configure_rf_xapps
-    control_mode=configure_rf_xapps(configs,manifest,args,output,ROOT,live_test_enabled=live_test_enabled)
+    if hot_xapps:
+        from experiments.hot_xapps import configure as configure_hot_xapps
+        control_mode=configure_hot_xapps(configs,manifest,args,output,ROOT)
+    else:
+        from experiments.online_rf_xapps import configure as configure_rf_xapps
+        control_mode=configure_rf_xapps(configs,manifest,args,output,ROOT,live_test_enabled=live_test_enabled)
     live_path=getattr(args,'live_state',None)
     if live_path is not None and not live_path.resolve().is_relative_to(ROOT/'outputs'):
         raise ValueError('Live telemetry must stay under project outputs/')
@@ -421,6 +433,9 @@ def run_case(args):
             simulator.state.snapshot_final_slot=args.slots
         if live_test_enabled:
             from experiments.live_xapp_test import LiveXAppSession
+            if hot_xapps:
+                from experiments.hot_xapps import HotXAppSession
+                LiveXAppSession=HotXAppSession
             args._live_slot_ms=manifest['slot_duration_ms']
             simulator.live_xapp_test=LiveXAppSession(simulator,args,output,live_path)
         for obj,method,label in ((simulator,'step','slot_total'),
@@ -436,6 +451,8 @@ def run_case(args):
             'ues':[{"ue_id":u.ue_id,"serving_cell_id":simulator.state.connections[u.ue_id].serving_cell_id,"beam_id":u.serving_beam_id,"queue_bytes":u.queue_bytes} for u in simulator.state.ues]}
         from phy.rt_sys.contracts import digest
         initial['environment_sha256']=digest(initial)
+        initial['exogenous_environment_sha256']=digest({k:v for k,v in initial.items()
+            if k not in ('xapp_bindings','environment_sha256')})
         (output/'initial_conditions.json').write_text(json.dumps(initial,indent=2))
         DebugConfig.SLOT_METRICS=False
         status.update(stage='simulating',cache_key=provider.key); write_status()
@@ -572,7 +589,9 @@ def run_case(args):
         summary['tb_outcomes']={u.ue_id:dict(successful_tbs=len(u.packet_ledger.completed_tbs),payload_flushes=u.harq.harq_flush_count,retx_deferred_resource=getattr(u.harq,'retx_deferred_resource',0),pending_tbs=len(u.packet_ledger.reservations)) for u in simulator.state.ues}
         summary['harq_lifecycle']={u.ue_id:{'payload_flushes':u.harq.harq_flush_count,
             'empty_process_cleanup_count':u.harq.empty_process_cleanup_count} for u in simulator.state.ues}
-        if live_test_enabled:summary['xapp_test']=simulator.live_xapp_test.snapshot()
+        if live_test_enabled:
+            if hot_xapps:simulator.live_xapp_test.verify_models()
+            summary['xapp_test']=simulator.live_xapp_test.snapshot()
         summary['rt_sys']={'model':selected_model,'fast_profile':fast_profile,'environment':environment,'cache_key':provider.key,'ideal_csi':configs['phy']['rt_sys'].get('csi_error_nmse_db') is None,
             'harq_soft_combining':configs['phy']['rt_sys'].get('harq_combining','none')=='chase','full_phy_calibrated':False,
             'feedback_mode':configs['phy']['rt_sys'].get('feedback_mode','sys_abstraction'),

@@ -52,11 +52,13 @@ class LatencySchedulerRF(PoolXApp):
         super().validate_parameters(p)
         allowed = {'mode', 'model_path', 'log_path', 'window_ms', 'explore_windows',
                    'min_samples', 'trees', 'seed', 'min_delivery_ratio',
-                   'max_task_bad_rate', 'bad_task_penalty_ms', 'max_features', 'fixed_action'}
+                   'max_task_bad_rate', 'bad_task_penalty_ms', 'max_features', 'fixed_action', 'complete_scheduler_bundle'}
         if set(p) - allowed:
             raise ValueError('Unknown latency RF parameters: ' + str(sorted(set(p) - allowed)))
         if p.get('mode', 'online') not in ('online', 'frozen', 'fixed'):
             raise ValueError('Latency RF mode must be online, frozen or fixed')
+        if type(p.get('complete_scheduler_bundle',False)) is not bool:
+            raise ValueError('complete_scheduler_bundle must be boolean')
         if type(p.get('fixed_action',3)) is not int or not 0 <= p.get('fixed_action',3) < len(ACTIONS):
             raise ValueError('Invalid fixed scheduler action')
         if p.get('window_ms', 100) != 100:
@@ -317,9 +319,15 @@ class LatencySchedulerRF(PoolXApp):
             self.pending[cid] = dict(action=index, prediction=prediction,
                 features=self._features(users, cell, index), ue_ids=tuple(u.ue_id for u in users),
                 service_policies=self._policies(users), requested_slot=observation.slot_id, confirmed=False)
+            weights={u.ue_id:ACTIONS[index]['weight'] for u in users}
+            if self.parameters.get('complete_scheduler_bundle',False):
+                # Non-target UEs already have neutral weight in this policy.
+                # Spell it out for atomic whole-scheduler conflict arbitration.
+                weights={u.ue_id:weights.get(u.ue_id,1.) for u in observation.ue_observations
+                         if u.serving_cell_id==cid}
             action = ConfigAction(source_name=self.name, target_cell_id=cid,
                                   scheduler_mode=ACTIONS[index]['scheduler_mode'],
-                                  ue_scheduler_weights={u.ue_id:ACTIONS[index]['weight'] for u in users})
+                                  ue_scheduler_weights=weights)
             action._library_provenance = self.identity(cid)
             actions.append(action)
             decision = dict(slot_id=observation.slot_id, action=index,
