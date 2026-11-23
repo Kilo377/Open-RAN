@@ -135,13 +135,58 @@ def test_missing_or_invalid_target_cannot_be_dropped():
     assert evaluate(c)['after']['score']is None
 
 
-def test_extrema_contract_applies_to_gain_and_violation():
+def test_window_value_controls_gain_while_extrema_control_violation():
     c=comparison([target('load',upper=2)],[2.5],[1.5])
     c['rows'][0]['after'].update(status='above_range',measurement=dict(constraint_uses_extrema=True,minimum=1,maximum=3))
     r=evaluate(c)
-    assert r['after']['score']==-20 and r['violation']['after']['max']==40
+    assert r['after']['score']==40 and r['violation']['after']['max']==40
+    assert r['metrics'][0]['improvement_statistic']=='recorded_window_value'
+    assert r['metrics'][0]['after']['constraint_statistic']=='full_window_extrema'
+    assert not r['after']['all_satisfied']
     c['rows'][0]['after']['measurement'].pop('maximum')
     assert evaluate(c)['after']['score']is None
+
+
+def test_mec_startup_peak_does_not_erase_mean_reduction():
+    c=comparison([target('mec_expected_gflops',upper=1.3)],[1.3],[1.024])
+    c['rows'][0]['before']['measurement']=dict(constraint_uses_extrema=True,minimum=1.3,maximum=1.3)
+    c['rows'][0]['after']['measurement']=dict(constraint_uses_extrema=True,minimum=1.,maximum=1.3)
+    original=deepcopy(c);r=evaluate(c)
+    assert r['after']['score']==pytest.approx(21.23076923076923)
+    assert r['after']['all_satisfied'] and r['violation']['after']['max']==0
+    assert r['metrics'][0]['before']['value']==r['metrics'][0]['after']['value']==0
+    assert c==original
+
+
+def test_mean_improvement_does_not_hide_a_new_peak_violation():
+    c=comparison([target('load',upper=2)],[1.5],[1.2])
+    c['rows'][0]['before']['measurement']=dict(constraint_uses_extrema=True,minimum=1.,maximum=1.8)
+    c['rows'][0]['after'].update(status='above_range',measurement=dict(constraint_uses_extrema=True,minimum=1.,maximum=2.2))
+    r=evaluate(c)
+    assert r['after']['score']==pytest.approx(20)
+    assert not r['after']['all_satisfied']
+    assert r['violation']['after']['max']==pytest.approx(100*.2/1.5)
+
+
+def test_mean_regression_survives_an_unchanged_or_improved_peak():
+    c=comparison([target('load',upper=3)],[1.3],[1.4])
+    c['rows'][0]['before']['measurement']=dict(constraint_uses_extrema=True,minimum=1.,maximum=2.)
+    c['rows'][0]['after']['measurement']=dict(constraint_uses_extrema=True,minimum=1.,maximum=1.8)
+    r=evaluate(c)
+    assert r['after']['score']==pytest.approx(-100*.1/1.3)
+    assert r['regression_kpis']==['load'] and not r['admissible']
+    assert r['after']['all_satisfied'] and r['violation']['after']['max']==0
+
+
+def test_band_improvement_uses_value_distance_and_preserves_extrema_violation():
+    c=comparison([target('load',1,2)],[3.],[1.5])
+    c['rows'][0]['before'].update(status='above_range',measurement=dict(constraint_uses_extrema=True,minimum=2.5,maximum=3.5))
+    c['rows'][0]['after'].update(status='above_range',measurement=dict(constraint_uses_extrema=True,minimum=1.,maximum=2.5))
+    r=evaluate(c)
+    assert r['after']['score']==pytest.approx(100/3)
+    assert r['metrics'][0]['target_progress_percent']==100
+    assert r['violation']['after']['max']==pytest.approx(100*.5/3)
+    assert not r['after']['all_satisfied']
 
 
 def test_batch_scales_frozen_order_independent_and_copied():

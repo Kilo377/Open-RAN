@@ -1,7 +1,7 @@
 # Observed intent results
 
-`baseline_relative_intent_v2` in `smo/result_evaluation.py` evaluates only the
-unique frozen intent KPI set from actual equal-window BEFORE/AFTER readings.
+`baseline_relative_intent_v3` in `smo/result_evaluation.py` evaluates only the
+unique frozen intent KPI set from actual declared BEFORE/AFTER windows.
 It does not read KG gains, proposals, conflict scores or unrequested KPIs.
 Every BEFORE improvement score is zero. A positive result indicates observed
 partial benefit; it does not by itself establish full interval attainment.
@@ -17,12 +17,22 @@ and improvement are zero; it does not create a missing-boundary error. If an
 extreme scale causes nonfinite normalized violation, the complete result is
 unavailable rather than reporting a misleading zero-change score.
 
-For one effective requested boundary, the oriented improvement is
+Improvement uses the recorded KPI value shown in the UI (the window mean for
+expected MEC load), independently of any extrema-based constraint contract.
+Compute its signed boundary margin and point-to-interval distance from that
+value. For one effective requested boundary, the oriented improvement is
 `delta = after - before` for a lower bound and `before - after` for an upper
 bound. A half-line therefore rewards useful movement even after its boundary
-is reached. For a genuine band or point, `delta = d_before - d_after`: movement
+is reached. For a genuine band or point, use the recorded-value distances:
+`delta = d_value_before - d_value_after`. Movement
 inside an already satisfied band is neutral, with no invented preference for
 the middle. Each KPI improvement is `g = 100 * delta / s`.
+Full-window extrema still determine attainment and remaining violation when
+required. A positive mean improvement can therefore coexist with an unmet
+peak constraint; it never changes the original pass/fail assessment. For
+example, MEC load 1.3 → 1.024 GFLOP/s scores +21.23% even if deployment delay
+leaves a 1.3 GFLOP/s sample in the AFTER window. That sample remains in both
+the mean and the constraint check; no startup slots are discarded.
 
 The same nonzero `s` is frozen from the durable common BEFORE reference for all
 members/windows, normally its absolute magnitude. A preconfigured positive
@@ -67,7 +77,10 @@ admissibility flag is false even when its geometric improvement is 0.
 The compatibility fields are `before.score = 0`, `after.score = E` and
 `change = E`. Per-metric phase values retain raw signed boundary margin,
 `distance`, `normalized_violation` and the original assessment status;
-`improvement_score` / `change` carries g. The normalized margin is available
+`improvement_score` / `change` carries g. Per-phase `improvement_value`,
+`improvement_margin` and `improvement_distance` identify the distinct
+recorded-value calculation; `constraint_statistic` identifies any use of
+full-window extrema. The normalized constraint margin is available
 only as `margin_score` and is not the primary evaluation score.
 
 All score computation is a read/export-time derived copy. Original frozen
@@ -104,4 +117,6 @@ The first application receipt remains separate evidence and cannot shift a
 group's observation window. Legacy batches have an explicit unaligned-origin
 audit flag; read-time rescoring does not retroactively repair their origins.
 For extrema-constrained KPIs, the UI shows the window mean and explicitly
-states that the full-window bounds determine both attainment and scoring.
+states that improvement uses that mean while full-window bounds determine
+attainment and remaining violation. Historical v2 scores can be recomputed
+as derived v3 views without rewriting the archived results.

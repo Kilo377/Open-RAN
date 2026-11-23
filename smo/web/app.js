@@ -1135,7 +1135,7 @@ if(typeof document!=='undefined') (() => {
         `<small>剩余违背 ${esc(metricValue(row.kpi,m.after.distance))} ${esc(unit)} · 归一化 ${esc(resultScoreValue(m.after.normalized_violation))} 分</small>`+
         (m.target_progress_percent!=null?`<small>区间差距缩减 ${esc(fmt(m.target_progress_percent,2))}%</small>`:'')+
         `<small>${esc(rangeText(row))} · ${esc(status)}${b?.strict_boundary_violation?' · 严格端点未满足':''}</small>`+
-        (extrema?`<small>约束按整窗范围判定：${esc(metricValue(row.kpi,b.measurement.minimum))}–${esc(metricValue(row.kpi,b.measurement.maximum))} ${esc(unit)}；上方为窗口均值</small>`:'')+
+        (extrema?`<small>改善分按窗口均值；达标按整窗范围：${esc(metricValue(row.kpi,b.measurement.minimum))}–${esc(metricValue(row.kpi,b.measurement.maximum))} ${esc(unit)}</small>`:'')+
         (a?.measurement?.sample_count!=null||b?.measurement?.sample_count!=null?`<small>样本 ${esc(fmt(a?.measurement?.sample_count,0))} → ${esc(fmt(b?.measurement?.sample_count,0))}</small>`:'')+'</div>';
     }).join('')+'</details>';
   }
@@ -1378,7 +1378,7 @@ if(typeof document!=='undefined') (() => {
     const basis={before_window_magnitude:'部署前窗口值',nonzero_requested_bound:'非零目标边界',measurement_resolution:'测量分辨率',normalization_unavailable:'无有效尺度'};
     $('comparison-body').innerHTML=(current?.result_evaluation?.metrics||[]).map(m=>{
       const row=current.rows.find(r=>r.kpi===m.kpi),unit=metricUnit(row.kpi,row.unit);
-      return `<tr><th scope="row">${esc(chineseKpis[row.kpi]||row.label)}<small>${esc(unit)}</small></th><td><code>${esc(row.empty?'∅':rangeText(row))}</code></td><td>${reading(row.before,row.kpi)}</td><td>${reading(row.after,row.kpi)}</td><td><code>改善 ${esc(resultScoreValue(m.improvement_score))}${m.score_unit==='percentage_points'?' 个百分点':'%'}</code><small>${m.regression?'目标退步，不可用其他收益抵消':'相对部署前未退步'}</small><small>剩余违背 ${esc(metricValue(row.kpi,m.after.distance))} ${esc(unit)} · ${esc(fmt(m.after.normalized_violation,2))} 分</small>${m.target_progress_percent==null?'':`<small>区间差距缩减 ${esc(fmt(m.target_progress_percent,2))}%</small>`}${row.after?.measurement?.constraint_uses_extrema?'<small>区间约束按整窗最小/最大值判定</small>':''}</td></tr>`;
+      return `<tr><th scope="row">${esc(chineseKpis[row.kpi]||row.label)}<small>${esc(unit)}</small></th><td><code>${esc(row.empty?'∅':rangeText(row))}</code></td><td>${reading(row.before,row.kpi)}</td><td>${reading(row.after,row.kpi)}</td><td><code>改善 ${esc(resultScoreValue(m.improvement_score))}${m.score_unit==='percentage_points'?' 个百分点':'%'}</code><small>${m.regression?'目标退步，不可用其他收益抵消':'相对部署前未退步'}</small><small>剩余违背 ${esc(metricValue(row.kpi,m.after.distance))} ${esc(unit)} · ${esc(fmt(m.after.normalized_violation,2))} 分</small>${m.target_progress_percent==null?'':`<small>区间差距缩减 ${esc(fmt(m.target_progress_percent,2))}%</small>`}${row.after?.measurement?.constraint_uses_extrema?'<small>改善分按窗口均值；区间约束按整窗最小/最大值判定</small>':''}</td></tr>`;
     }).join('');
     $('comparison-intents').innerHTML=(current?.intents||[]).map(row=>`<div class="comparison-intent-row"><strong>${esc(row.text)}</strong><p>部署前 ${esc(stat(row.before))} → 部署后 ${esc(stat(row.after))}${row.after?' · '+esc(outcomes[row.quality.state]||''):''}</p></div>`).join('');
   }

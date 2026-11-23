@@ -214,13 +214,18 @@ def test_units_preserve_the_same_normalized_envelope_geometry():
         assert results[0]['score']==pytest.approx(results[1]['score'])
 
 
-def test_abstract_window_evaluation_matches_when_given_the_reference_envelope():
+def test_observed_mean_score_is_separate_from_the_static_reference_envelope():
     data=analytic(extrema=(.7,1.4),drives=(-.1,.2));r=run(**data);q=r['groups'][0];c=q['goal_components'][0]
     target=data['catalog']['ranges'][0];after=dict(states={'kpi:k':dict(value=1.1,minimum=c['reference_interval'][0],
         maximum=c['reference_interval'][1],constraint_uses_extrema=True)})
     comparison=dict(rows=[dict(**target,before=assess(target,data['frame']),after=assess(target,after))])
-    metric=evaluate(comparison,ranges=[target])['after']['score']
-    assert q['reference_effect_score']==pytest.approx(metric)
+    observed=evaluate(comparison,ranges=[target])
+    # The frozen static method still measures its conservative range. The
+    # observed result now scores the recorded mean and checks peaks separately.
+    assert q['reference_effect_score']==pytest.approx(-20)
+    assert observed['after']['score']==pytest.approx(-10)
+    assert observed['violation']['after']['max']==pytest.approx(60)
+    assert not observed['after']['all_satisfied']
 
 
 def test_future_history_and_after_named_options_are_not_inputs_to_static_reference():

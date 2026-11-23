@@ -9,7 +9,7 @@ import math
 from smo.runtime import number
 from smo.intent_quality import VALID
 
-METHOD = 'baseline_relative_intent_v2'
+METHOD = 'baseline_relative_intent_v3'
 
 
 def normalized(value,scale):
@@ -43,7 +43,7 @@ def boundaries(row):
     return result
 
 
-def margin(row, reading):
+def margin(row, reading, *, use_extrema=True):
     if not reading or reading.get('status') not in VALID or not number(reading.get('value')):
         return dict(value=None, reason='measurement_unavailable')
     if row.get('empty') or row['kpi'] == 'ue_energy_j':
@@ -51,8 +51,9 @@ def margin(row, reading):
     m = reading.get('measurement') or {}
     if m.get('reason'):
         return dict(value=None, reason=m['reason'])
-    low = m.get('minimum') if m.get('constraint_uses_extrema') else reading['value']
-    high = m.get('maximum') if m.get('constraint_uses_extrema') else reading['value']
+    extrema = use_extrema and m.get('constraint_uses_extrema')
+    low = m.get('minimum') if extrema else reading['value']
+    high = m.get('maximum') if extrema else reading['value']
     if not number(low) or not number(high) or low > high:
         return dict(value=None, reason='measurement_unavailable')
     domain = row.get('domain', [0, None])
@@ -94,14 +95,20 @@ def evaluate(comparison, *, reference_values=None, reference_scales=None, ranges
         limits=boundaries(target)
         result = dict(kpi=k, unit=target.get('unit'), **norm, active_boundaries=limits,
             score_unit='percentage_points' if k=='urllc_failure_fraction' else 'relative_percent',
+            improvement_statistic='recorded_window_value',
             weight=1.,weight_basis='equal_kpi_value',
             mode='directional_change' if len(limits)==1 else 'interval_distance_reduction',
             improvement_score=None,change=None,regression=None,target_progress_percent=None)
         for phase in ('before', 'after'):
             reading = row.get(phase)
             m = margin(target, reading)
+            observation = margin(target, reading, use_extrema=False)
             distance=max(0.,-m['value']) if m['value'] is not None else None
             result[phase] = dict(**m, distance=distance,
+                improvement_value=(reading or {}).get('value') if observation['value'] is not None else None,
+                improvement_margin=observation['value'],
+                improvement_distance=max(0.,-observation['value']) if observation['value'] is not None else None,
+                constraint_statistic='full_window_extrema' if (reading or {}).get('measurement',{}).get('constraint_uses_extrema') else 'recorded_window_value',
                 normalized_violation=normalized(distance,scale),
                 margin_score=normalized(m['value'],scale),
                 score=0. if phase=='before' and m['value'] is not None and scale is not None else None,
@@ -110,13 +117,18 @@ def evaluate(comparison, *, reference_values=None, reference_scales=None, ranges
                 result[phase]['reason'] = norm['scale_basis'] if k=='urllc_failure_fraction' else 'explicit_scale_required'
             elif m['value'] is not None and result[phase]['normalized_violation'] is None:
                 result[phase].update(score=None,reason='nonfinite_normalized_violation')
+            if observation['value'] is None:
+                result[phase].update(score=None,reason=observation['reason'])
         a,b=result['before'],result['after']
-        complete=all(p['value'] is not None and p['normalized_violation'] is not None for p in (a,b)) and scale is not None
+        complete=all(p['value'] is not None and p['improvement_margin'] is not None and p['normalized_violation'] is not None for p in (a,b)) and scale is not None
         if complete:
             # Half-lines have a natural direction and retain useful benefit
             # after crossing their boundary. Genuine bands/points reward only
             # reduced distance, never an unrequested preference for the centre.
-            delta=b['value']-a['value'] if len(limits)==1 else a['distance']-b['distance']
+            # Improvement follows the displayed KPI value (usually its window
+            # mean). Extrema remain exclusive to constraint/violation checks;
+            # startup samples must not erase a genuine mean improvement.
+            delta=b['improvement_margin']-a['improvement_margin'] if len(limits)==1 else a['improvement_distance']-b['improvement_distance']
             strict_regression=bool(a.get('satisfied') and b.get('strict_boundary_violation'))
             gain=normalized(delta,scale)
             if gain is None:
@@ -126,8 +138,8 @@ def evaluate(comparison, *, reference_values=None, reference_scales=None, ranges
             result.update(improvement_score=gain,change=gain,
                 strict_boundary_regression=strict_regression,regression=gain<0 or strict_regression)
             b['score']=gain
-            if a['distance']>0:
-                result['target_progress_percent']=normalized(a['distance']-b['distance'],a['distance'])
+            if a['improvement_distance']>0:
+                result['target_progress_percent']=normalized(a['improvement_distance']-b['improvement_distance'],a['improvement_distance'])
         metrics.append(result)
 
     def aggregate(phase):

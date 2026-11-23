@@ -77,5 +77,5 @@
   "raw_run_data_included": false,
   "raw_run_data_deleted": false,
   "certificate_paths": "Original certificates are retained verbatim as historical provenance. Their absolute paths describe the archived experiment, not a new checkout.",
-  "deployment_configuration_example": "configs/smo/dual-agx.example.json"
+  "deployment_configuration_example": "docs/examples/dual-agx.example.json"
 }

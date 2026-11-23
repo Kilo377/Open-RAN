@@ -45,7 +45,7 @@ session key in the UI or set `DEEPSEEK_API_KEY` in the service environment.
 1. Install the platform-specific simulator environment on each AGX using the
    existing [RT/SYS guide](../../README_SIONNA_RT_SYS.md). Keep each worker in
    its own project folder and use the same source and frozen model bundle.
-2. Copy `configs/smo/dual-agx.example.json` to an operator-owned location under
+2. Copy `docs/examples/dual-agx.example.json` to an operator-owned location under
    `outputs/`. Set both SSH targets, authenticated ControlMaster sockets,
    absolute project/interpreter paths, and a local output directory.
 3. Install the selected model bundle on each worker:
