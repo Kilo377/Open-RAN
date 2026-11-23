@@ -181,7 +181,10 @@ def test_language_catalog_explains_both_task_populations_and_keeps_model_kpi(key
     assert 'local + offloaded' in catalog['task_latency_ms']['label']
     assert 'completed tasks' in catalog['task_latency_ms']['aggregation']
     assert 'Both are E2E metrics' in seen['system_prompt']
-    assert provenance['kpi_semantics_version']=='mec-task-populations.v1'
+    assert 'MEC task delay' in catalog['mec_offloaded_latency_ms']['aliases']
+    assert 'all-task E2E latency' in catalog['task_latency_ms']['aliases']
+    assert 'explicit all-task scope takes precedence' in seen['system_prompt']
+    assert provenance['kpi_semantics_version']=='mec-task-populations.v2'
 
 
 def test_extra_top_level_commentary_is_not_an_action_or_range():

@@ -1072,7 +1072,13 @@ if(typeof document!=='undefined') (() => {
     if(initial)$('catalog-note').textContent=initial.text+' '+$('catalog-note').textContent;
     if(!batch&&measuredBatch)$('catalog-note').textContent=(initial?.text||'')+` 下表复用原批次 ${measuredBatch.total} 组中已有的对应实测结果。`;
     renderActionExclusions(catalog);
-    $('catalog-body').innerHTML=(!batch&&needsClarification)?'<tr><td colspan="3">'+esc('意图待澄清：'+state.intent.questions.join(' '))+'</td></tr>':(!batch&&blocked)?'<tr><td colspan="3">共同约束尚未解决，暂不枚举组合。</td></tr>':!countReady?'<tr><td colspan="3">请更新观测以读取图结构分析。</td></tr>':!groups.length?'<tr><td colspan="3">'+(catalog?.direct_action_filter?.removed_primary_count?'主候选已全部因反向直接冲突被剔除。':graph().statistical_filter?.enabled?'仅按显著关系筛选后，暂无覆盖全部意图的主候选；这不表示网络在理论上不可实现。':catalog?.selection_algorithm==='semantic_influence_coverage_v2'?'尚无覆盖全部目标能力方向的主候选；未确认的组合保留在备选中。':graph().statistical_filter?.enabled?'当前显著关系不足以覆盖全部意图 KPI，未生成主候选；这不表示网络在理论上不可实现。':'当前没有关联覆盖全部 KPI 的组合。')+'</td></tr>':groups.map(g=>{
+    const missingDirections=catalog?.direction_missing_kpis||[];
+    const emptyMessage=catalog?.direct_action_filter?.removed_primary_count?'主候选已全部因反向直接冲突被剔除。'
+      :missingDirections.length?'尚无已确认能力方向覆盖：'+missingDirections.map(k=>chineseKpis[k]||find('kpi:'+k)?.label||k).join('、')+'。关联组合保留在备选中。'
+      :graph().statistical_filter?.enabled?'仅按显著关系筛选后，暂无覆盖全部意图的主候选；这不表示网络在理论上不可实现。'
+      :catalog?.selection_algorithm==='semantic_influence_coverage_v2'?'尚无覆盖全部目标能力方向的主候选；未确认的组合保留在备选中。'
+      :'当前没有关联覆盖全部 KPI 的组合。';
+    $('catalog-body').innerHTML=(!batch&&needsClarification)?'<tr><td colspan="3">'+esc('意图待澄清：'+state.intent.questions.join(' '))+'</td></tr>':(!batch&&blocked)?'<tr><td colspan="3">共同约束尚未解决，暂不枚举组合。</td></tr>':!countReady?'<tr><td colspan="3">请更新观测以读取图结构分析。</td></tr>':!groups.length?'<tr><td colspan="3">'+esc(emptyMessage)+'</td></tr>':groups.map(g=>{
       const apps=g.app_ids.map(id=>intentCandidates().find(c=>c.app_id===id)||find(id)).sort((a,b)=>a.label.localeCompare(b.label));
       const member=measuredBatch?.members.find(m=>m.group_id===g.id&&[...m.app_ids].sort().join('|')===[...g.app_ids].sort().join('|'));
       const outcome=memberOutcome(member,(measuredBatch?.ranges||[]).map(r=>r.kpi));

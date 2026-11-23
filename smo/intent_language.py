@@ -14,18 +14,31 @@ RATIOS = {'urllc_failure_fraction', 'task_success_ratio',
 # Shared semantic context for the native client and the legacy loopback relay.
 # These definitions describe both catalog populations for every request; they
 # never rewrite an output KPI based on words found in the user's intent.
-MEC_LATENCY_GLOSSARY_VERSION = 'mec-task-populations.v1'
+MEC_LATENCY_GLOSSARY_VERSION = 'mec-task-populations.v2'
 MEC_LATENCY_GLOSSARY = (
     'KPI population definitions: '
     'mec_offloaded_latency_ms is mean end-to-end completion latency of offloaded MEC tasks only '
     '(MEC 卸载任务), excluding locally executed tasks. '
     'task_latency_ms is mean end-to-end completion latency of all MEC-workload tasks '
-    '(全部任务: local + offloaded). Both are E2E metrics; preserve the requested task population.'
+    '(全部任务: local + offloaded). Both are E2E metrics; preserve the requested task population. '
+    'In this UI, the name "MEC task delay" and unqualified "MEC task latency" / '
+    '"MEC任务时延" refer to mec_offloaded_latency_ms. Thus "Reduce MEC task delay" '
+    'and "降低MEC task delay" request a decrease in mec_offloaded_latency_ms. '
+    'Use task_latency_ms when the user explicitly requests all workload tasks, '
+    'including local execution (全部任务，包含本地和卸载). An explicit all-task scope '
+    'takes precedence over the shorter MEC task delay alias. These are KPI '
+    'naming conventions, not instructions to choose an xApp or claim effectiveness.'
 )
 MEC_LATENCY_GLOSSARY_SHA256 = hashlib.sha256(MEC_LATENCY_GLOSSARY.encode()).hexdigest()
 MEC_LATENCY_LABELS = {
     'mec_offloaded_latency_ms': 'Mean offloaded MEC task E2E latency (offloaded only)',
     'task_latency_ms': 'Mean all-task E2E latency (local + offloaded)',
+}
+MEC_LATENCY_ALIASES = {
+    'mec_offloaded_latency_ms': ['MEC task delay', 'MEC task latency', 'MEC任务时延',
+        'MEC卸载任务平均端到端时延'],
+    'task_latency_ms': ['all-task E2E latency', 'all workload tasks including local execution',
+        '全部任务平均端到端时延（本地和卸载）'],
 }
 
 POWER_GLOSSARY = (
@@ -206,6 +219,7 @@ class IntentLanguage:
                              extra_body={'response_format': {'type': 'json_object'},
                                          'thinking': {'type': 'disabled'}})
             catalog = [dict(kpi=n['key'], label=MEC_LATENCY_LABELS.get(n['key'], n['label']),
+                            aliases=MEC_LATENCY_ALIASES.get(n['key'], [n['label']]),
                             unit=n['unit'], scope=n['scope'], aggregation=n.get('aggregation', ''),
                             domain=[0, 1 if n['key'] in RATIOS else None])
                        for n in graph['nodes'] if n['kind'] == 'kpi' and n['key']!='ue_energy_j']
@@ -232,6 +246,10 @@ EXAMPLE: reduce total UE power, do not increase MEC demand.
 {"ranges":[{"kpi":"ue_power_w","lower":"minimum","upper":"current","lower_inclusive":true,"upper_inclusive":false},{"kpi":"mec_expected_gflops","lower":"minimum","upper":"current","lower_inclusive":true,"upper_inclusive":true}],"questions":[]}
 EXAMPLE: ambiguous latency type.
 {"ranges":[],"questions":["Do you mean URLLC packet latency or offloaded MEC task latency?"]}
+EXAMPLE: Reduce MEC task delay.
+{"ranges":[{"kpi":"mec_offloaded_latency_ms","lower":"minimum","upper":"current","lower_inclusive":true,"upper_inclusive":false}],"questions":[]}
+EXAMPLE: Reduce mean E2E latency of all MEC-workload tasks, including local execution.
+{"ranges":[{"kpi":"task_latency_ms","lower":"minimum","upper":"current","lower_inclusive":true,"upper_inclusive":false}],"questions":[]}
 The exact output keys are ranges and questions; not targets, objectives, KPI_ranges or desired_ranges.'''
             prompt += '\n' + MEC_LATENCY_GLOSSARY + '\n' + POWER_GLOSSARY + '\n' + URLLC_FAILURE_GLOSSARY
             request = dict(kpi_catalog=catalog, user_intent=text.strip())

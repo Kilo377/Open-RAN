@@ -53,6 +53,12 @@ The 500 ms calibration context remains explicit and is not treated as an exact
 The language catalog includes aggregation and task population definitions.
 `mec_offloaded_latency_ms` is E2E completion delay of offloaded MEC tasks only;
 `task_latency_ms` includes local plus offloaded completions. Both are E2E metrics.
+The UI alias `MEC task delay` (including `Reduce MEC task delay` and
+`降低MEC task delay`) refers to the offloaded-only KPI. An explicit request for
+all tasks including local execution takes precedence and retains the all-task
+KPI. The LLM receives these aliases and examples; its returned keys are not
+rewritten by keyword rules. Saved intent records retain their original parsing
+version, population and frozen anchors.
 The legacy loopback language relay provides the same versioned semantic glossary
 for every request without rewriting returned KPI keys. It preserves the original
 text and semantic-context hashes. If the original text plus glossary exceeds
