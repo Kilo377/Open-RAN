@@ -1,0 +1,66 @@
+{
+  "schema": "oran.x12-long-refit-report.v1",
+  "status": "completed",
+  "started_at_utc": "2026-11-09T22:57:29.450114+00:00",
+  "app": "latency_scheduler_rf",
+  "runtime_source": {
+    "source_fingerprint": "e2eb420f2fd8ce14cfb73559f3e24bc43a804b4fbb018d8efd8da15819653cdf",
+    "modules": {
+      "online_rf": {
+        "path": "ric/near_rt/pools/chongyu/online_rf.py",
+        "sha256": "55a8df6a1f66ced0c7e54af86bcae633e354b8c7d2eb5ade42d83d88948602e3"
+      },
+      "latency_scheduler_rf": {
+        "path": "ric/near_rt/pools/chongyu/latency_scheduler_rf.py",
+        "sha256": "205f783edab7d9027b497b22efde98e1b59e0ca8befe0b326bd5c6b65ea7a4e1"
+      }
+    }
+  },
+  "environment": {
+    "python": "3.12.3",
+    "numpy": "2.5.4",
+    "sklearn": "1.7.2",
+    "fit_device": "CPU"
+  },
+  "input_manifest_sha256": "132c1e913e4a7867fbb3e8c49ad809ba90ea8d05856be4083c28b6a323a6800d",
+  "retained_parent_rows": 28,
+  "new_measured_rows": 184,
+  "fit_rows": 212,
+  "learner_seed": 99,
+  "network_data_seed": 55,
+  "scope": "Measured-data reuse and unchanged RF algorithm; no new network simulation or effectiveness improvement claimed.",
+  "algorithm": {
+    "name": "RandomForestRegressor",
+    "n_estimators": 32,
+    "max_depth": 6,
+    "min_samples_leaf": 2,
+    "n_jobs": 1,
+    "random_state": 99,
+    "max_features": 0.5
+  },
+  "completed_at_utc": "2026-11-09T22:57:29.859943+00:00",
+  "fit_s": 0.24064151500351727,
+  "model": "models/x12_mec.json",
+  "model_sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+  "dataset": "dataset.json",
+  "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+  "actual_fit_xy_sha256": "84fd153f627fe4fa9ff3ea8a06adc56934c0126f1e1c75f962186e07639d8f84",
+  "learned_state_sha256": "a5f1124969a63105ee79c38d6ac4721c5f0c80c549e6bb698e8a897d3303694d",
+  "fit_parameters": {
+    "max_features": 0.5
+  },
+  "save_reload_exact": true,
+  "probe_rows": 1060,
+  "action_counts": {
+    "0": 14,
+    "1": 47,
+    "2": 31,
+    "3": 120
+  },
+  "new_action_counts": {
+    "0": 10,
+    "1": 39,
+    "2": 26,
+    "3": 109
+  }
+}

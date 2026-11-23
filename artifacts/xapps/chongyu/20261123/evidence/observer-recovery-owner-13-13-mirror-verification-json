@@ -1,0 +1,8 @@
+{
+  "schema": "oran.observer-recovery-mirror.v1",
+  "supplemental_manifest_sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+  "files_verified": 78,
+  "verified_utc": "2026-11-23T10:32:51.191572+00:00",
+  "remote_pruned": false,
+  "original_failed_seal_not_claimed_valid": true
+}

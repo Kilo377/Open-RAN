@@ -1,0 +1,109 @@
+{
+  "schema": "oran.current-calibration-origin-equivalence.v1",
+  "environment_id": "validated_common_v1",
+  "seed": 20261214,
+  "reference_origin_sha256": "f2b0dacb355d69b65f68a6b7e7c5c93a7062a7a7cbbd2e39b504fa4d101df78f",
+  "reference_origin_id": "57c986ef6507a002b8bd2df77edff884f2bc14bcf09555ea77f7db00215920f0",
+  "runtime_recipe_sha256": "a0fa6e34835e8a070022306c6ac76e7b4c6f65eb6effbc97d7f02b1a52498479",
+  "checked_slots": 2040,
+  "all_target_kpis_exactly_equal": true,
+  "physical_prefixes": [
+    {
+      "sha256": "479ff7a8c95fdfff161da8df09dd4ba7f7153a3d73c53142841f1b1e48d76074",
+      "slots": 2040
+    },
+    {
+      "sha256": "479ff7a8c95fdfff161da8df09dd4ba7f7153a3d73c53142841f1b1e48d76074",
+      "slots": 2040
+    }
+  ],
+  "physical_prefix_hashes_equal": true,
+  "kpis": [
+    {
+      "kpi": "ue_power_w",
+      "calibration": 5.37251499999984,
+      "ui": 5.37251499999984,
+      "certified": 5.37251499999984
+    },
+    {
+      "kpi": "ap_power_w",
+      "calibration": 89.49625000000084,
+      "ui": 89.49625000000084,
+      "certified": 89.49625000000084
+    },
+    {
+      "kpi": "network_goodput_mbps",
+      "calibration": 49.662327999999995,
+      "ui": 49.662327999999995,
+      "certified": 49.662327999999995
+    },
+    {
+      "kpi": "mec_offloaded_latency_ms",
+      "calibration": 9.590909090909092,
+      "ui": 9.590909090909092,
+      "certified": 9.590909090909092
+    },
+    {
+      "kpi": "urllc_failure_fraction",
+      "calibration": 0.077,
+      "ui": 0.077,
+      "certified": 0.077
+    },
+    {
+      "kpi": "urllc_packet_latency_ms",
+      "calibration": 7.769614835948645,
+      "ui": 7.769614835948645,
+      "certified": 7.769614835948645
+    },
+    {
+      "kpi": "mec_expected_gflops",
+      "calibration": 1.3000000000000171,
+      "ui": 1.3000000000000171,
+      "certified": 1.3000000000000171
+    }
+  ],
+  "controller_difference": "Fixed identification instrument every5slots vs registered-but-OFF trained policies every40slots; native physical prefix is directly compared, not assumed equivalent.",
+  "deployed_combination_after_kpis_used": false,
+  "hardware_consistency": {
+    "workers": [
+      "agx1",
+      "agx2"
+    ],
+    "relative_tolerance": 1e-09,
+    "absolute_tolerance": 1e-09,
+    "seed_pairs": [
+      {
+        "seed": 20261214,
+        "checked_prefix_slots": 2040,
+        "native_prefix_and_all_post_kpis_compatible": true,
+        "maximum_absolute_numeric_difference": 2.220446049250313e-13
+      },
+      {
+        "seed": 20261215,
+        "checked_prefix_slots": 2040,
+        "native_prefix_and_all_post_kpis_compatible": true,
+        "maximum_absolute_numeric_difference": 4.440892098500626e-13
+      },
+      {
+        "seed": 20261216,
+        "checked_prefix_slots": 2040,
+        "native_prefix_and_all_post_kpis_compatible": true,
+        "maximum_absolute_numeric_difference": 2.220446049250313e-13
+      }
+    ],
+    "all_compatible": true
+  },
+  "native_continuation_check": {
+    "checked_through_slot": 2940,
+    "physical_hashes": [
+      "ee8108cecf8d1076cadf3eb37aa8aeda4584158c043880c2ce95c4406cd0fced",
+      "ee8108cecf8d1076cadf3eb37aa8aeda4584158c043880c2ce95c4406cd0fced"
+    ],
+    "slot_counts": [
+      2940,
+      2940
+    ],
+    "exactly_equal": true,
+    "interpretation": "Writing the complete native vector in the experimental REF arm is compared directly to UI all-xApps-OFF continuation; no-op parameter writes must not introduce a physical baseline confound."
+  }
+}

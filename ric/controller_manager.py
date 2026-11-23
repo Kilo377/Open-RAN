@@ -173,7 +173,8 @@ class ControllerManager:
         self.e2_subscriptions_by_id: Dict[str, E2Subscription] = {}
         self.e2_subscription_id_by_subscriber: Dict[str, str] = {}
         self.e2_indications_by_id: Dict[str, E2Indication] = {}
-        self.e2_control_requests_by_id: Dict[str, E2ControlRequest] = {}
+        from models.e2_request_index import FactoryRequestStore
+        self.e2_control_requests_by_id: Dict[str, E2ControlRequest] = FactoryRequestStore()
         self._register_default_e2_subscriptions()
 
     def _to_serializable(self, value):
@@ -1002,7 +1003,7 @@ class ControllerManager:
 
     def _build_oran_lifecycle_resources(self) -> OranLifecycleResources:
         a1_resources = self.policy_store.get_lifecycle_resources()
-        return OranLifecycleResources(
+        resources = OranLifecycleResources(
             a1_policy_types=list(a1_resources.a1_policy_types),
             a1_policy_instances=list(a1_resources.a1_policy_instances),
             a1_policy_statuses=list(a1_resources.a1_policy_statuses),
@@ -1012,6 +1013,8 @@ class ControllerManager:
             e2_indications=list(self.e2_indications_by_id.values()),
             e2_control_requests=list(self.e2_control_requests_by_id.values()),
         )
+        from models.e2_request_index import index_published_requests
+        return index_published_requests(resources, self.e2_control_requests_by_id)
 
     def _stamp_metadata(
         self,
@@ -1234,6 +1237,34 @@ class ControllerManager:
 
         return xapp_name in policy_snapshot.enabled_xapps
 
+    def _attach_control_ownership(self, projected, observation):
+        # Independent control-plane receipt, never a simulation state reference.
+        projected.control_ownership={}
+        for (cell,field),owner in getattr(getattr(self,'rule_leases',None),'owned',{}).items():
+            projected.control_ownership.setdefault(cell,{})[field]=str(owner) if owner is not None else None
+        if self.direct_conflict_arbiter is not None:
+            # Selection ownership is not an execution acknowledgement.
+            # Explicit None prevents a scalar selected owner from
+            # confirming another UID's still-queued control.
+            for u in observation.ue_observations:
+                cell=u.serving_cell_id;uid=u.ue_id
+                owner=self._mitigation_executed_owners.get(uid)
+                projected.control_ownership.setdefault(cell, {}).setdefault('ue_offload_fraction_by_ue', {})[uid]=owner
+            for values in projected.control_ownership.values():
+                owners=set(values.get('ue_offload_fraction_by_ue',{}).values())
+                values['ue_offload_fraction']=next(iter(owners)) if len(owners)==1 else None
+            for cell in getattr(getattr(self,'rule_leases',None),'scheduler_managed_cells',()):
+                ack=self._scheduler_mitigation_executed.get(cell,{})
+                owner=ack.get('owner');weights=ack.get('value',{}).get('ue_scheduler_weights',{})
+                delivered_cell=next((c for c in getattr(projected,'cell_observations',[]) if c.cell_id==cell),None)
+                produced=(getattr(delivered_cell,'kpi_metadata',{}) or {}).get('executed_config',{}).get('produced_at_slot')
+                if produced is None or produced<ack.get('applied_slot',float('inf')):owner=None
+                members={u.ue_id for u in observation.ue_observations if u.serving_cell_id==cell}
+                values=projected.control_ownership.setdefault(cell,{})
+                values['scheduler_mode']=owner
+                values['ue_scheduler_weights']=owner if weights and set(weights)==members else None
+                values['scheduler_bundle_generation']=ack.get('generation')
+
     def _collect_xapp_outputs(
         self,
         slot_id: int,
@@ -1290,7 +1321,12 @@ class ControllerManager:
                 dropped_items,
             )
 
+        preview_sink = getattr(self, 'decision_preview_sink', None)
+        if preview_sink is not None and hasattr(preview_sink,'before_selection'):
+            preview_sink.before_selection(self,observation,slot_id)
         self.instance_selection.sync(slot_id,observation)
+        if preview_sink is not None:
+            preview_sink(self, observation, slot_id)
         policy_snapshot = self.policy_store.get_snapshot()
 
         interfaces=self.e2_interfaces
@@ -1332,32 +1368,7 @@ class ControllerManager:
                     continue
             from copy import deepcopy
             if getattr(xapp,'library_instance',False):
-                # Independent control-plane receipt, never a simulation state reference.
-                projected.control_ownership={}
-                for (cell,field),owner in getattr(getattr(self,'rule_leases',None),'owned',{}).items():
-                    projected.control_ownership.setdefault(cell,{})[field]=str(owner) if owner is not None else None
-                if self.direct_conflict_arbiter is not None:
-                    # Selection ownership is not an execution acknowledgement.
-                    # Explicit None prevents a scalar selected owner from
-                    # confirming another UID's still-queued control.
-                    for u in observation.ue_observations:
-                        cell=u.serving_cell_id;uid=u.ue_id
-                        owner=self._mitigation_executed_owners.get(uid)
-                        projected.control_ownership.setdefault(cell, {}).setdefault('ue_offload_fraction_by_ue', {})[uid]=owner
-                    for values in projected.control_ownership.values():
-                        owners=set(values.get('ue_offload_fraction_by_ue',{}).values())
-                        values['ue_offload_fraction']=next(iter(owners)) if len(owners)==1 else None
-                    for cell in getattr(getattr(self,'rule_leases',None),'scheduler_managed_cells',()):
-                        ack=self._scheduler_mitigation_executed.get(cell,{})
-                        owner=ack.get('owner');weights=ack.get('value',{}).get('ue_scheduler_weights',{})
-                        delivered_cell=next((c for c in getattr(projected,'cell_observations',[]) if c.cell_id==cell),None)
-                        produced=(getattr(delivered_cell,'kpi_metadata',{}) or {}).get('executed_config',{}).get('produced_at_slot')
-                        if produced is None or produced<ack.get('applied_slot',float('inf')):owner=None
-                        members={u.ue_id for u in observation.ue_observations if u.serving_cell_id==cell}
-                        values=projected.control_ownership.setdefault(cell,{})
-                        values['scheduler_mode']=owner
-                        values['ue_scheduler_weights']=owner if weights and set(weights)==members else None
-                        values['scheduler_bundle_generation']=ack.get('generation')
+                self._attach_control_ownership(projected, observation)
             xapp_decision = e2_interface.send_context(projected, deepcopy(policy_snapshot))
             if getattr(xapp,'rule_based_v1',False):
                 self.rule_decisions=getattr(self,'rule_decisions',[])+deepcopy(xapp.last_decisions)

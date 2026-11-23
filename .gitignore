@@ -10,3 +10,4 @@ __pycache__/
 .local-llvm/
 
 validation_candidates/
+.finesse/

@@ -1,0 +1,80 @@
+{
+  "schema": "oran.validation-lane-case-plan.v1",
+  "validation_version": "v5",
+  "physical_worker_id": "agx1",
+  "lane_id": "lane-1",
+  "max_validation_lanes_per_host": 2,
+  "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+  "python": "/home/lboroldn/Desktop/oran_slot_sim_sionna_fast/.venv-orin/bin/python",
+  "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+  "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+  "request": {
+    "schema": "oran.throughput-improvement-job.v1",
+    "id": "9ca87f904d75424aad23c0821cf8b1c7",
+    "worker_id": "agx1",
+    "stage": "holdout",
+    "mode": "frozen",
+    "seed": 341721,
+    "slots": 22440,
+    "balanced_start_windows": 0,
+    "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+    "profiles": {
+      "traffic_profile": {
+        "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+        "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+      },
+      "ue_services_config": {
+        "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+        "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+      },
+      "ap_services_profile": {
+        "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+        "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+      },
+      "base_config": {
+        "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+        "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      }
+    },
+    "frozen_models": {
+      "artifacts/xapps/chongyu/20261117/models/x01.json": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+      "artifacts/xapps/chongyu/20261117/models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+      "artifacts/xapps/chongyu/20261117/models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "artifacts/xapps/chongyu/20261117/models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+      "artifacts/xapps/chongyu/20261117/models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+      "artifacts/xapps/chongyu/20261117/models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f"
+    },
+    "deadline_utc": "2026-11-23T11:40:00+00:00",
+    "train_stop_utc": "2026-11-23T09:20:00+00:00",
+    "initial_model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+    "estimated_wall_seconds": 2400,
+    "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b"
+  },
+  "source_archive": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/source.tgz",
+    "sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5"
+  },
+  "source_members": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/source-members.json",
+    "sha256": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4"
+  },
+  "protocol": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/protocol-v5-validation.json",
+    "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2"
+  },
+  "model": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/cases/9ca87f904d75424aad23c0821cf8b1c7/model.json",
+    "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+  },
+  "selection": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/cases/9ca87f904d75424aad23c0821cf8b1c7/selection.json",
+    "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+  },
+  "root_go": {
+    "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/cases/9ca87f904d75424aad23c0821cf8b1c7/root-go.json",
+    "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+  },
+  "local_model_source": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/source/artifacts/xapps/chongyu/20261117/models/x08.json",
+  "local_selection_source": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/joint-selection-v5.json"
+}

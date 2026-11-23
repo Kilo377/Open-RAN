@@ -1,0 +1,101 @@
+{
+  "schema": "oran.xapp-comparison-plan.v1",
+  "role": "holdout",
+  "synthetic_fixture": false,
+  "selection": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/joint-selection-v5.json",
+    "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+  },
+  "seeds": [
+    {
+      "seed": 341721,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/8591f846e6454f64bfb75c0d98b50167",
+      "on_cases": [
+        {
+          "actor": "power",
+          "label": "selected",
+          "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/54df72513c5a4e1e89da4c4782706de2",
+          "prefix_certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-power-holdout-v5.json",
+            "sha256": "4b0147c64e364f75cf3dc8d260bdfe4c62bc0ea04993c4db4c27b0dad60ef758"
+          }
+        },
+        {
+          "actor": "throughput",
+          "label": "selected",
+          "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+          "prefix_certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-throughput-holdout-v5.json",
+            "sha256": "d6d9b65412cb4f4bb503671660fd0c8735f6440997fe0863c50f75ab33f9e11c"
+          }
+        }
+      ]
+    },
+    {
+      "seed": 341722,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/0d5947a31a784472a7a828cf921f722f",
+      "on_cases": [
+        {
+          "actor": "power",
+          "label": "selected",
+          "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/4d3306c60f3346e2a5af5aeaa4c27320",
+          "prefix_certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-power-holdout-v5.json",
+            "sha256": "739364a186cdc8556858a9a5cbd9620f3fbed394a03a4b4e25b310c2f3c72b30"
+          }
+        },
+        {
+          "actor": "throughput",
+          "label": "selected",
+          "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/b7f511e077794bed9f1f7af189026b9a",
+          "prefix_certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-throughput-holdout-v5.json",
+            "sha256": "880a74f425b356ae63a33cd5bcc11137926412e4c62b35850bdbc7556b236b28"
+          }
+        }
+      ]
+    }
+  ],
+  "power_semantic_certificates": [
+    {
+      "seed": 341721,
+      "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/semantics/341721-power-holdout-v5.json",
+      "sha256": "0b4d291cc2501285f3e0e8da5b4d4e1fbe4b4d66a1bfa72e539ec54e8f776e54"
+    },
+    {
+      "seed": 341722,
+      "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/semantics/341722-power-holdout-v5.json",
+      "sha256": "de8b41c4f4bf46fa573e7b0ec002bfc1badac225a2e35f9ac9aa08d5bb3b9c28"
+    }
+  ],
+  "joint_plan_sha256": "336087882b4738a7e382e1ba08ae7866bd8ec20a2c622f1b306e222a44e56515",
+  "weights_origin": {
+    "power": "new_target_scaled_rf_144_train_rows",
+    "throughput": "retained_legacy"
+  },
+  "release_weight_composition": {
+    "new": [
+      "x01"
+    ],
+    "unchanged": [
+      "x02",
+      "x08",
+      "x12_mec",
+      "x12_urllc",
+      "x13"
+    ]
+  },
+  "observer_recovery_registration": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+    "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+  },
+  "observer_recovery_reader_amendment": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+    "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+  },
+  "canonical_report_adapter": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v2.py",
+    "sha256": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec"
+  },
+  "original_worker_failure_preserved": true
+}

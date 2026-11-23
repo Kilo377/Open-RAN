@@ -1,0 +1,11 @@
+{
+  "observed_utc": "2026-11-23T10:26:26.581604+00:00",
+  "pid": 25336,
+  "start_ticks": 15559801,
+  "exit_code": null,
+  "exit_code_status": "unavailable_non_child",
+  "producer_completed": true,
+  "last_completed_slot": 22440,
+  "new_simulations": 0,
+  "no_restart": true
+}

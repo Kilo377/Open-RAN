@@ -1,0 +1,26 @@
+{
+  "model_id": "x08",
+  "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+  "training": {
+    "parent_rows": 48,
+    "new_online_observation_rows": 206,
+    "deduplicated_parent_lineage": true,
+    "network_data_seed": 55,
+    "training_evaluation_scope": "The30s seed55data became development data; seed20261108test labels were not fitted."
+  },
+  "evaluation": {
+    "duration_s_per_arm": 10,
+    "seed": 20261108,
+    "scenario": "AP services enabled;2xoffered load",
+    "metric": "network_goodput_mbps",
+    "base": 44.00474,
+    "on": 49.3036176,
+    "relative_target_improvement": 0.12041606426944007,
+    "target_kpi_effect_verified": true,
+    "urllc_observed_failure_fraction": [
+      0.0528,
+      0.187975
+    ]
+  },
+  "scope": "Single matched seed evidence; no independent replicated confidence interval or claimed learned superiority. Other KPI costs remain part of the recorded experiment."
+}

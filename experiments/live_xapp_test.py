@@ -18,14 +18,14 @@ APP = 'live_scheduler_test'
 ROOT = Path(__file__).resolve().parents[1]
 ARGUMENTS = ('scene', 'cells', 'ues', 'seed', 'slots', 'path_update_ms', 'max_geometry_displacement_m', 'fast_channel_mode', 'rt_prefetch_workers', 'platform',
     'device', 'rt_device', 'algebra_backend', 'config', 'deployment_id', 'traffic_load', 'traffic_profile', 'urllc_scenario',
-    'initial_queue_bytes', 'ue_speed_mps', 'ue_services', 'ue_services_config', 'mec_stage_metrics', 'energy_xapp_mode', 'energy_xapp_model', 'energy_xapp_window_ms', 'energy_xapp_explore_windows',
+    'initial_queue_bytes', 'ue_speed_mps', 'ue_services', 'ue_services_config', 'mec_stage_metrics', 'energy_xapp_mode', 'energy_xapp_model', 'energy_xapp_window_ms', 'energy_xapp_explore_windows', 'energy_xapp_deploy_drx',
     'latency_xapp_mode', 'latency_xapp_model', 'latency_xapp_window_ms', 'latency_xapp_explore_windows', 'latency_xapp_fixed_action',
     'urllc_xapp_mode', 'urllc_xapp_model', 'urllc_xapp_window_ms', 'urllc_xapp_policy_version', 'urllc_xapp_fixed_action', 'urllc_xapp_balanced_start_windows',
     'ap_services_profile', 'ap_xapp_mode', 'ap_xapp_model', 'ap_xapp_window_ms', 'ap_xapp_fixed_action',
     'budget_xapp_mode', 'budget_xapp_model', 'budget_xapp_window_ms', 'budget_xapp_gflops',
     'throughput_xapp_mode', 'throughput_xapp_model', 'throughput_xapp_window_ms', 'throughput_xapp_fixed_action', 'throughput_xapp_policy',
     'direct_conflict_mitigation', 'mitigation_seed', 'mitigation_window_ms',
-    'live_xapps','xapp_model_dir','xapps_start','xapp_toggle_timeline',
+    'live_xapps','xapp_model_dir','xapps_start','xapp_toggle_timeline','xapp_decision_preview',
     'model', 'fast_profile', 'fast_gain_update_ms', 'feedback_mode', 'csi_error_nmse_db',
     'harq_combining', 'recording_mode', 'record_compression', 'nr_execution', 'diagnostic_window_slots', 'channel_cache_root', 'xapp_pool')
 
@@ -54,6 +54,8 @@ def configure(configs, manifest, args):
     # Command-based mobility experiments cannot promise configuration withdrawal.
     apps = live_configs(pool, cells, manifest['slot_duration_ms'])
     for item in apps:
+        if item.get('implementation_id') == 'ue_energy_rf':
+            item.setdefault('parameters', {})['deploy_drx'] = getattr(args, 'energy_xapp_deploy_drx', True)
         if item.get('implementation_id') == 'throughput_scheduler_mlp':
             item.setdefault('parameters', {})['policy'] = getattr(args, 'throughput_xapp_policy', 'throughput')
     names = [a.get('instance_id', a.get('name')) for a in apps]

@@ -1,0 +1,23 @@
+{
+  "schema": "oran.locked-final-report-observer-recovery-registration.v1",
+  "role": "holdout",
+  "archival_registration": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-coordinator-v5-v1/registration.json",
+    "sha256": "e4340b2d461a50747334e7635ae44ac50fb0f2079c2c0f48639a46362d347a74"
+  },
+  "archival_reader_sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6",
+  "archival_coordinator_sha256": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70",
+  "canonical_adapter": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v1.py",
+    "sha256": "56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423"
+  },
+  "coordinator_sha256": "e60b2a499093dc60c4dcc547f2383d571685f7aeb1b4eeec35a21d6b66eb5846",
+  "total_deadline_utc": "2026-11-23T11:40:00+00:00",
+  "observer_recovery_registration": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+    "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+  },
+  "approved_case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "plan_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-comparison-plan-observer-recovery-v1.json",
+  "output": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-holdout-observer-recovery-v1"
+}

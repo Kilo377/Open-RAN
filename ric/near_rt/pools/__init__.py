@@ -59,10 +59,22 @@ def build_pool_xapp(item, pool):
     spec = pool_catalog(pool).get(ident)
     if spec is None or 'factory' not in spec:
         raise ValueError(f'Unregistered implementation in {pool} pool: {ident}')
-    module, class_name = spec['factory'].split(':')
+    variant = item.get('implementation_variant', 'legacy9')
+    parameters = deepcopy(item.get('parameters') or {})
+    factory = spec['factory']
+    if variant != 'legacy9':
+        if (pool, ident) != ('chongyu', 'ue_energy_rf') or variant not in ('extended24','balanced42'):
+            raise ValueError('Unknown reviewed implementation variant')
+        if parameters.get('action_set_version') != variant:
+            raise ValueError('The extended factory requires its explicit action set')
+        factory = 'ric.near_rt.pools.chongyu.ue_energy_rf_action_sets:UeEnergyRF'
+    elif ident == 'ue_energy_rf':
+        if parameters.pop('action_set_version', 'legacy9') != 'legacy9':
+            raise ValueError('Extended actions cannot run through the legacy factory')
+    module, class_name = factory.split(':')
     cls = getattr(importlib.import_module(module), class_name)
     app = cls(cell_ids=item['cell_ids'], name=item.get('instance_id', ident),
-              slot_duration_ms=item.get('slot_duration_ms', .5), parameters=item.get('parameters'))
+              slot_duration_ms=item.get('slot_duration_ms', .5), parameters=parameters)
     from .base import PoolXApp
     if not isinstance(app, PoolXApp):raise ValueError('Pool xApps must implement PoolXApp')
     if app.implementation_id != ident or app.category_id != spec['category_id']:
@@ -70,6 +82,8 @@ def build_pool_xapp(item, pool):
     if set(app.contract.commands) != set(spec['commands']):
         raise ValueError('Pool catalog and command contract disagree: ' + ident)
     app.xapp_pool = pool
+    app.implementation_variant = variant
+    app.runtime_factory = factory
     app.initial_bindings = deepcopy(item.get('initial_bindings', {}))
     mode = item.get('selection_mode', 'exclusive')
     if mode not in ('exclusive', 'conflict_experiment'):

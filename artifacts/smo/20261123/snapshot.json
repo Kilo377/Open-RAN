@@ -1,0 +1,81 @@
+{
+  "schema": "oran.repository-runtime-snapshot.v1",
+  "release": "20261123",
+  "environment_id": "validated_common_v1",
+  "model_bundle": "artifacts/xapps/chongyu/20261123",
+  "files": {
+    "network/traffic.json": {
+      "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+      "source_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/ui-promotion-v1/environment/traffic.json",
+      "bytes": 2631
+    },
+    "network/ue-services.json": {
+      "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+      "source_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/ui-promotion-v1/environment/ue-services.json",
+      "bytes": 1086
+    },
+    "network/ap-services.json": {
+      "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+      "source_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/ui-promotion-v1/environment/ap-services.json",
+      "bytes": 2514
+    },
+    "network/base.json": {
+      "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+      "source_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/ui-promotion-v1/environment/base.json",
+      "bytes": 3703
+    },
+    "calibration/design.json": {
+      "sha256": "f51cc1c12989a6fc22e58e6657695721006eac8ff96975c5abba3072b16c6182",
+      "source_path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/design.json",
+      "bytes": 61491
+    },
+    "calibration/influences.json": {
+      "sha256": "430be93ca30badd16451bc197c5e261b70f0f97afd335e17685b0f0dd491e57a",
+      "source_path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/influences.json",
+      "bytes": 892558
+    },
+    "calibration/measurement-dataset.json": {
+      "sha256": "d23bdf551d4abd6a0e7bf2654be83db29eec323ef3d23bc2ff0926a7742ef278",
+      "source_path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/measurement-dataset.json",
+      "bytes": 1068538
+    },
+    "calibration/origin-equivalence.json": {
+      "sha256": "0f7ec571bb8520aa3c1eac145458be9fd12abcbfdb16f16902140748ee9da1fb",
+      "source_path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/origin-equivalence.json",
+      "bytes": 3480
+    },
+    "provenance/calibration.original.json": {
+      "sha256": "b5e74374226f23143ac4083f7d8092ff4f322c5f1704015e0a82120f7b4e782a",
+      "source_path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/ui-v2/calibration.json",
+      "bytes": 2603
+    },
+    "provenance/runtime-recipe.original.json": {
+      "sha256": "a0fa6e34835e8a070022306c6ac76e7b4c6f65eb6effbc97d7f02b1a52498479",
+      "source_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/ui-promotion-v1/runtime-recipe.json",
+      "bytes": 2935
+    }
+  },
+  "network_profiles": {
+    "traffic_profile": {
+      "path": "network/traffic.json",
+      "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+    },
+    "ue_services_config": {
+      "path": "network/ue-services.json",
+      "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+    },
+    "ap_services_profile": {
+      "path": "network/ap-services.json",
+      "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+    },
+    "base_config": {
+      "path": "network/base.json",
+      "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+    }
+  },
+  "original_physical_source_archive_sha256": "ae0bc342e5a308d85dc240ea2e596fb778bceb196607a826df75c2d04f9f98ff",
+  "raw_run_data_included": false,
+  "raw_run_data_deleted": false,
+  "certificate_paths": "Original certificates are retained verbatim as historical provenance. Their absolute paths describe the archived experiment, not a new checkout.",
+  "deployment_configuration_example": "configs/smo/dual-agx.example.json"
+}

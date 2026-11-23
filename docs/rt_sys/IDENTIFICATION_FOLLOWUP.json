@@ -1,0 +1,110 @@
+{
+  "schema": "oran.identification-followup-plan.v1",
+  "created_date": "2026-11-17",
+  "status": "retained_proposal_not_started",
+  "reference_dataset": "/Users/kilobao/Desktop/ORAN/SMO/population-grid-20261116/measurement-dataset.json",
+  "reference_dataset_sha256": "d697b1c15b98102b5086f927c952d7eb0f42207292830f736b038abc3cceece9",
+  "purpose": "Validate rough first-order gains at relevant operating states; preserve nonlinear and context-dependent relationships.",
+  "existing_design": {
+    "conditions_per_seed": 30,
+    "seeds": [
+      20261116,
+      20261117,
+      20261118
+    ],
+    "observations": 90,
+    "duration_s": 0.8,
+    "scoring_start_s": 0.2,
+    "scoring_end_s": 0.7,
+    "grid_levels": {
+      "mec_offload_probability": [
+        0,
+        0.2,
+        0.4,
+        0.5,
+        0.6,
+        0.8,
+        1
+      ],
+      "drx_inactivity_ms": [
+        0,
+        2,
+        4,
+        8,
+        16,
+        24,
+        32,
+        40
+      ],
+      "mec_relative_priority": [
+        0.5,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        1.75,
+        2
+      ],
+      "urllc_relative_priority": [
+        0.5,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  "priorities": [
+    {
+      "priority": 1,
+      "task": "Validate selected important control-response conditions with longer windows.",
+      "proposed_duration_s": 3,
+      "rationale": "Current 500 ms scoring window generates only 20 MEC tasks per case.",
+      "protocol": "Define a new scoring/follow-up window before launch; do not silently pool different horizons."
+    },
+    {
+      "priority": 2,
+      "task": "Add traffic-state coverage, including an appropriate URLLC-pressure scenario.",
+      "protocol": "Keep the native scene separately; label pressure conditions and estimate gains per traffic state.",
+      "required_by_user": true,
+      "existing_scenario_entrypoint": "scripts/orin/run-urllc-scenario.sh",
+      "planned_protocol": {
+        "contexts": [
+          "native",
+          "burst"
+        ],
+        "pilot_duration_s": 3.2,
+        "seeds": [
+          20261116,
+          20261117,
+          20261118
+        ],
+        "radio_and_ue_resources": "Keep six UEs and identical radio resources between matched native/burst cases.",
+        "traffic": "Use the existing equal-mean burst preset; keep scenario load identical in the native comparator.",
+        "controllers": "All xApps off while measuring controlled parameter perturbations.",
+        "acceptance": "Observe nonconstant, nonsaturated URLLC failure responses before identifying gains; retain zero or uncertain outcomes honestly.",
+        "storage": "Keep native and pressure measurements and gain matrices separate with explicit scenario context.",
+        "execution_status": "Planned; no new simulation launched in this UI correction."
+      }
+    },
+    {
+      "priority": 3,
+      "task": "Increase independent seeds for material but uncertain responses.",
+      "proposed_seed_count": 5,
+      "protocol": "Target selected relations rather than repeating the entire matrix."
+    }
+  ],
+  "reuse_without_new_simulation": "Estimate local or piecewise first-order gains from the retained grid near the operating point.",
+  "interpretation_rules": [
+    "Low linear R-squared alone does not establish no influence.",
+    "A small average slope must be checked against measured nonlinear excursions.",
+    "All-zero failures or saturated success represent the observed regime, not global independence.",
+    "Weak effects may be de-emphasized; large uncertain or nonlinear effects remain candidates.",
+    "Group-control gains do not identify arbitrary individual-user action magnitudes."
+  ],
+  "retention": "Preserve all completed data, checkpoints, caches and trained model files.",
+  "execution": "No new simulation is launched by retaining this proposal."
+}

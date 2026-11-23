@@ -235,7 +235,7 @@ class UeEnergyRF(PoolXApp):
 
     def summary(self):
         n = len(self.prediction_errors)
-        return dict(mode=self.mode, algorithm='RandomForestRegressor_batched_online',
+        return dict(mode=self.mode, deploy_drx=self.parameters.get('deploy_drx',False), algorithm='RandomForestRegressor_batched_online',
                     samples=self.learner.sample_count, trained_samples=self.learner.trained_samples,
                     fit_count=self.learner.fit_count, fit_s=self.learner.fit_s,
                     predict_s=self.learner.predict_s, decision_s=self.decision_seconds,

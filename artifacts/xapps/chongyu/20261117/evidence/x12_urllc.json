@@ -1,0 +1,33 @@
+{
+  "model_id": "x12_urllc",
+  "model_sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+  "training": {
+    "network_training_seeds": [
+      179,
+      180,
+      181,
+      182,
+      183,
+      184
+    ],
+    "online_simulated_seconds": 30,
+    "native_seconds": 10,
+    "equal_mean_burst_seconds": 20,
+    "training_partitions_sha256": "412eb683daa3aa9dcfb13910540964d08c108c1557eb099dbb9c0529c1235dac",
+    "independent_raw_packet_window_and_applied_ACK_audit_passed": true
+  },
+  "evaluation": {
+    "duration_s_per_arm": 1.6,
+    "seed": 56,
+    "scenario": "equal-mean burst2x",
+    "metric": "count-pooled mature UE2+UE6 packet deadline-success fraction",
+    "base": 0.8557571964956195,
+    "on": 1,
+    "base_failed_packets": 922,
+    "on_failed_packets": 0,
+    "mature_packets_each": 6392,
+    "target_kpi_effect_verified": true,
+    "fixed_weak_QoS_matches_RF": true
+  },
+  "scope": "Single matched seed evidence; no independent replicated confidence interval or claimed learned superiority. Other KPI costs remain part of the recorded experiment."
+}

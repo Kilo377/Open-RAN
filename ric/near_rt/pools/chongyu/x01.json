@@ -3,13 +3,56 @@
   "implementation": "ue_energy_rf",
   "algorithm": "RandomForestRegressor",
   "training": "online_batched",
-  "target_ues": ["ue_0", "ue_4"],
+  "target_ues": [
+    "ue_0",
+    "ue_4"
+  ],
   "target_kpis": {
-    "ue_energy_total_j": {"unit": "J", "direction": "minimize", "evaluation": "matched_interval_delta"}
+    "ue_energy_total_j": {
+      "unit": "J",
+      "direction": "minimize",
+      "evaluation": "matched_interval_delta"
+    }
   },
   "rcp": {
-    "ue_drx_configs": {"deployed": "native_locked"},
-    "ue_offload_fraction": {"values": [0, 0.5, 1]}
+    "ue_drx_configs": {
+      "deployed": "controllable",
+      "default_enabled": true,
+      "profiles": [
+        {
+          "enabled": true,
+          "cycle_ms": 40.0,
+          "on_duration_ms": 4.0,
+          "inactivity_ms": 8.0,
+          "wakeup_ms": 0.5,
+          "offset_ms": 0.0
+        },
+        {
+          "enabled": true,
+          "cycle_ms": 20.0,
+          "on_duration_ms": 4.0,
+          "inactivity_ms": 1.0,
+          "wakeup_ms": 0.5,
+          "offset_ms": 0.0
+        },
+        {
+          "enabled": true,
+          "cycle_ms": 80.0,
+          "on_duration_ms": 4.0,
+          "inactivity_ms": 1.0,
+          "wakeup_ms": 0.5,
+          "offset_ms": 0.0
+        }
+      ],
+      "scope": "UE0 and UE4 MEC workload; URLLC DRX-disabled protection unchanged"
+    },
+    "ue_offload_fraction": {
+      "values": [
+        0,
+        0.5,
+        1
+      ]
+    }
   },
   "affected_kpis": {
     "ue_task_metrics.mean_completion_latency_ms": "ms",

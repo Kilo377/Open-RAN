@@ -1,0 +1,76 @@
+{
+  "profile_id": "env-common-validation-loaded-20261122_light0_hot4_200_rare6_route80_ue0p65",
+  "slot_duration_ms": 0.5,
+  "provenance": "Explicit arrival and INITIAL TASK ROUTING environment discovery. Global load remains1.5; eMBB mean/burst multipliers={\"ue_0\": 0.5, \"ue_4\": 2.0, \"ue_8\": 0.85}; URLLC pattern=rare6. Different temporal shape; rare6 has20ms sixfold high and980ms low(44 on/5 off slots); identical C3 mean bytes, fixed packet sizes and packet totals in every registered1s/2s observation window. Whole run startup/tail need not contain full cycles. No deadlines, physical resources or trained actions change. INITIAL TASK ROUTING: only UE4 initial offload fraction=0.8; UE0 routing, task work/timing, radio and frozen autonomous action logic remain unchanged.",
+  "ues": {
+    "ue_2": {
+      "arrival_model": "phased",
+      "packet_size_bytes": 131,
+      "burst_size_bytes": 0,
+      "arrival_phases": [
+        {
+          "duration_slots": 40,
+          "arrival_model": "cbr",
+          "arrival_rate_bps": 12576000
+        },
+        {
+          "duration_slots": 1960,
+          "arrival_model": "on_off",
+          "arrival_rate_bps": 2096000,
+          "on_duration_slots": 44,
+          "off_duration_slots": 5,
+          "burst_size_bytes": 0,
+          "start_offset_slots": 0
+        }
+      ]
+    },
+    "ue_6": {
+      "arrival_model": "phased",
+      "packet_size_bytes": 103,
+      "burst_size_bytes": 0,
+      "arrival_phases": [
+        {
+          "duration_slots": 40,
+          "arrival_model": "cbr",
+          "arrival_rate_bps": 9888000
+        },
+        {
+          "duration_slots": 1960,
+          "arrival_model": "on_off",
+          "arrival_rate_bps": 1648000,
+          "on_duration_slots": 44,
+          "off_duration_slots": 5,
+          "burst_size_bytes": 0,
+          "start_offset_slots": 0
+        }
+      ]
+    },
+    "ue_0": {
+      "arrival_model": "on_off",
+      "arrival_rate_bps": 10500000.0,
+      "packet_size_bytes": 200,
+      "burst_size_bytes": 1650,
+      "on_duration_slots": 40,
+      "off_duration_slots": 16,
+      "start_offset_slots": 0
+    },
+    "ue_4": {
+      "arrival_model": "on_off",
+      "arrival_rate_bps": 36000000.0,
+      "packet_size_bytes": 200,
+      "burst_size_bytes": 6600,
+      "on_duration_slots": 40,
+      "off_duration_slots": 16,
+      "start_offset_slots": 0
+    },
+    "ue_8": {
+      "arrival_model": "on_off",
+      "arrival_rate_bps": 12750000.0,
+      "packet_size_bytes": 200,
+      "burst_size_bytes": 2805,
+      "on_duration_slots": 40,
+      "off_duration_slots": 16,
+      "start_offset_slots": 0
+    }
+  }
+}

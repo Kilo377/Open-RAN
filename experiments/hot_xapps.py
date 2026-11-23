@@ -17,7 +17,7 @@ import uuid
 from experiments.live_xapp_test import LiveXAppSession, atomic_json
 
 ROOT=Path(__file__).resolve().parents[1]
-RELEASE='20261109'
+RELEASE='20261117'
 KINDS=dict(x01='energy',x02='ap',x08='throughput',x12_mec='latency',x12_urllc='urllc',x13='budget')
 
 
@@ -95,6 +95,19 @@ def configure(configs,manifest,args,output,root=ROOT):
     if not model_dir.is_relative_to(root/'outputs'):raise ValueError('Model directory must remain under outputs/')
     if target is None and not model_dir.exists():installer.install(root/'artifacts/xapps/chongyu'/RELEASE,model_dir,root)
     release=installer.load_release(model_dir)
+    action_set=getattr(args,'energy_xapp_action_set_version','legacy9')
+    if action_set not in ('legacy9','extended24','balanced42'):
+        raise ValueError('Unknown energy action set')
+    released_action_set=release['models']['x01'].get('runtime_parameters',{}).get('action_set_version','legacy9')
+    if action_set!=released_action_set:
+        raise ValueError('The selected model release and energy action set differ')
+    if action_set!='legacy9':
+        from smo.model_release import energy_catalogue,catalogue_sha256
+        entry=release['models']['x01']
+        if (entry.get('action_catalogue')!=energy_catalogue(action_set)
+                or entry.get('action_catalogue_sha256')!=catalogue_sha256(action_set)
+                or entry.get('implementation_variant')!=action_set):
+            raise ValueError('The model release must pin its exact reviewed action variant')
     lookup=aliases(release);initial=resolve_ids(getattr(args,'xapps_start',''),lookup)
     for key,kind in KINDS.items():
         mode=getattr(args,kind+'_xapp_mode','off')
@@ -119,6 +132,9 @@ def configure(configs,manifest,args,output,root=ROOT):
         kind=KINDS[key];model=(model_dir/entry['path']).resolve()
         params=dict(mode='frozen',model_path=str(model),log_path=str(output/(kind+'_rf_events.jsonl')),
             window_ms=getattr(args,kind+'_xapp_window_ms',100),seed=args.seed)
+        if key=='x01':
+            params['deploy_drx']=getattr(args,'energy_xapp_deploy_drx',True)
+            if action_set!='legacy9':params['action_set_version']=action_set
         if key=='x08':params.update(log_path=str(output/'throughput_mlp_events.jsonl'),policy=getattr(args,'throughput_xapp_policy','throughput'))
         if key=='x12_urllc':params.update(policy_version='qos_v2',balanced_start_windows=0)
         if key=='x12_mec':params['complete_scheduler_bundle']=True
@@ -130,7 +146,10 @@ def configure(configs,manifest,args,output,root=ROOT):
         apps.append(dict(type='pool_xapp',pool='chongyu',implementation_id=ident,instance_id=ident,
             cell_ids=cells,slot_duration_ms=manifest['slot_duration_ms'],parameters=params,
             selection_mode='conflict_experiment',initial_active_sets={}))
+        if key=='x01' and action_set!='legacy9':apps[-1]['implementation_variant']=action_set
         pins[ident]=dict(path=str(model),sha256=entry['sha256'],release=release['release'],mode='frozen',label=entry['id'])
+        if key=='x01':
+            pins[ident].update(action_set_version=action_set,implementation_variant=action_set)
     configs['ric'].update(xapp_pool='chongyu',rapps=[],run_rapps_on_start=False,freeze_learning=True,
         xapp_interval_slots=max(1,round(20/manifest['slot_duration_ms'])),xapps=apps,
         direct_conflict_mitigation=mitigation,mitigation_seed=seed,mitigation_window_ms=window)

@@ -37,6 +37,15 @@ def attach_recorded_arrivals(snapshot, live_trace):
     snapshot['traffic_arrivals'] = live_trace['traffic_arrivals']
 
 
+def ue_csv_record(slot,row):
+    """Keep the optional scheduled-link column in the CSV's initial schema.
+
+    Unscheduled UEs do not have an effective SINR measurement. A blank field
+    preserves that absence without changing the canonical trace or PHY state.
+    """
+    return {'slot_id':slot,'effective_sinr_db':None,**row}
+
+
 def configure_mec_stage_metrics(configs,args):
     requested=getattr(args,'mec_stage_metrics',None)
     if requested is None:
@@ -97,8 +106,13 @@ def parse_args():
         help='Algebra/channel reconstruction backend. Efficient fast always uses CPU RZF/LMMSE.')
     p.add_argument('--config',type=Path)
     p.add_argument('--control-timeline',type=Path)
+    p.add_argument('--perturbation-spec',type=Path,help='Independent fixed RCP intervention; disables unrelated controllers')
+    p.add_argument('--sleep-profile-spec',type=Path,help='Independent one-shot per-cell sleep-profile calibration')
     p.add_argument('--output',type=Path)
     p.add_argument('--live-state',type=Path,help='Atomically publish actual slot state for the read-only live viewer')
+    p.add_argument('--xapp-decision-preview',action='store_true',help='Record isolated frozen xApp shadow decisions every 100 ms; never enable or deploy them')
+    p.add_argument('--xapp-preview-before-slot',type=int,action='append',default=[],help='Also record shadow decisions before hot selection at this RIC slot (evaluation baseline)')
+    p.add_argument('--evaluation-origin-file',type=Path,help=argparse.SUPPRESS)
     p.add_argument('--live-xapp-test',action='store_true',help='Register reversible live test xApps, initially disabled')
     from experiments.hot_xapps import add_arguments as add_hot_xapp_arguments
     add_hot_xapp_arguments(p)
@@ -126,9 +140,12 @@ def parse_args():
     p.add_argument('--mec-stage-metrics',action=argparse.BooleanOptionalAction,default=None,
         help='Opt-in task-stage timings and backlog diagnostics; disabled by default to retain fast-model throughput')
     p.add_argument('--energy-xapp-mode',choices=['off','online','frozen'],default='off')
+    p.add_argument('--energy-xapp-action-set-version',choices=['legacy9','extended24','balanced42'],default='legacy9')
     p.add_argument('--energy-xapp-model',type=Path)
     p.add_argument('--energy-xapp-window-ms',type=float,default=100)
     p.add_argument('--energy-xapp-explore-windows',type=int,default=9)
+    p.add_argument('--energy-xapp-deploy-drx',action=argparse.BooleanOptionalAction,default=True,
+        help='Allow X-01 to choose DRX profiles; --no-energy-xapp-deploy-drx retains the legacy native-DRX ablation')
     p.add_argument('--latency-xapp-mode',choices=['off','online','frozen','fixed'],default='off')
     p.add_argument('--latency-xapp-fixed-action',type=int,choices=range(4),default=3,
         help='MEC scheduler fixed ablation: 0 native RR; 1/2/3 latency-aware target weights 0.5/1/2')
@@ -337,6 +354,12 @@ def run_case(args):
     else:
         from experiments.online_rf_xapps import configure as configure_rf_xapps
         control_mode=configure_rf_xapps(configs,manifest,args,output,ROOT,live_test_enabled=live_test_enabled)
+    from experiments.rcp_perturbation import configure as configure_rcp_perturbation
+    perturbation_spec=configure_rcp_perturbation(configs,manifest,args)
+    if perturbation_spec is not None:control_mode='rcp_perturbation'
+    from experiments.sleep_profile_probe import configure as configure_sleep_profile_probe
+    sleep_profile_spec=configure_sleep_profile_probe(configs,manifest,args)
+    if sleep_profile_spec is not None:control_mode='sleep_profile_probe'
     live_path=getattr(args,'live_state',None)
     if live_path is not None and not live_path.resolve().is_relative_to(ROOT/'outputs'):
         raise ValueError('Live telemetry must stay under project outputs/')
@@ -346,6 +369,8 @@ def run_case(args):
             'xapp_pool':args.xapp_pool,'registered_xapps':configs['ric'].get('xapps',[]),
             'direct_conflict_mitigation':{k:configs['ric'].get(k) for k in ('direct_conflict_mitigation','mitigation_seed','mitigation_window_ms')}}
         if ue_profile_metadata is not None:dry_run['ue_services_profile']=ue_profile_metadata
+        if perturbation_spec is not None:dry_run['rcp_perturbation']=perturbation_spec
+        if sleep_profile_spec is not None:dry_run['sleep_profile_probe']=sleep_profile_spec
         print(json.dumps(dry_run,indent=2)); return
     output.mkdir(parents=True,exist_ok=True)
     if configs['phy']['rt_sys']['feedback_mode'] in ('nr_cached_reference','nr_bler_bank'):
@@ -357,6 +382,8 @@ def run_case(args):
     snapshot={'source_sha256':source_hash,'manifest':manifest,'configs':configs,'intent':intent,'phase':phase,'control_mode':control_mode,'warmup_ms':warmup,'input_model_sha256':model_hash,'platform_profile':platform_profile,'record_compression':compression,'validation':'integration or protocol execution; not an automatic generalization conclusion'}
     if ap_profile_metadata is not None:snapshot['ap_services_profile']=ap_profile_metadata
     if ue_profile_metadata is not None:snapshot['ue_services_profile']=ue_profile_metadata
+    if perturbation_spec is not None:snapshot['rcp_perturbation']=perturbation_spec
+    if sleep_profile_spec is not None:snapshot['sleep_profile_probe']=sleep_profile_spec
     (output/'config_snapshot.json').write_text(json.dumps(snapshot,indent=2))
     status={'completed':False,'spark_verified':False,'stage':'initializing','model':selected_model,'fast_profile':fast_profile,'source_sha256':source_hash,'xapp_pool':args.xapp_pool,
         'platform_profile':platform_profile,
@@ -415,6 +442,14 @@ def run_case(args):
             environment['algebra_gpu_name']=cp.cuda.runtime.getDeviceProperties(0)['name'].decode()
         adapter=RtSysPhyAdapter(configs['phy']['rt_sys'],channel_provider=provider)
         registry=build_controller_registry(configs['ric'])
+        if perturbation_spec is not None:
+            from experiments.rcp_perturbation import build_controller as build_rcp_stimulus
+            registry.register_xapp(build_rcp_stimulus(perturbation_spec,output))
+            (output/'perturbation_spec.json').write_text(json.dumps(perturbation_spec,indent=2))
+        if sleep_profile_spec is not None:
+            from experiments.sleep_profile_probe import build_controller as build_sleep_profile_probe
+            registry.register_xapp(build_sleep_profile_probe(sleep_profile_spec,output))
+            (output/'sleep_profile_spec.json').write_text(json.dumps(sleep_profile_spec,indent=2))
         if getattr(args,'policy_timeline',None):
             from experiments.fixed_policy_timeline import FixedPolicyTimeline
             registry.register_rapp(FixedPolicyTimeline(args.policy_timeline))
@@ -438,6 +473,15 @@ def run_case(args):
                 LiveXAppSession=HotXAppSession
             args._live_slot_ms=manifest['slot_duration_ms']
             simulator.live_xapp_test=LiveXAppSession(simulator,args,output,live_path)
+        if args.xapp_decision_preview or hot_xapps:
+            from experiments.xapp_preview import PreviewRecorder
+            simulator.decision_preview = PreviewRecorder(simulator, output, manifest, configs,
+                before_slots=args.xapp_preview_before_slot)
+        evaluation_origin_guard=None
+        if getattr(args,'evaluation_origin_file',None) is not None:
+            if not hot_xapps:raise ValueError('A prepared evaluation origin requires isolated hot xApps')
+            from smo.evaluation_origin_guard import OriginGuard
+            evaluation_origin_guard=OriginGuard(json.loads(args.evaluation_origin_file.read_text()),snapshot,output)
         for obj,method,label in ((simulator,'step','slot_total'),
             (simulator,'_run_managed_cell_schedulers','scheduling'),
             (adapter,'run_cluster_slot','precoding_interference_and_tb_inclusive'),
@@ -526,6 +570,7 @@ def run_case(args):
                     full=simulator.slot_records[-1]['rt_sys']
                     attach_recorded_arrivals(full,adapter.trace)
                     full['xapp_bindings']=simulator.controller_manager.instance_selection.bindings or {}
+                    if evaluation_origin_guard is not None:evaluation_origin_guard.observe(full)
                     if any(r.get('ack_source') in ('harq_incompatible_no_tb','unsupported_nr_code_no_tb') for r in adapter.trace['ues']) or any(e.get('status')=='rejected' for e in simulator.state.control.actuation_outcomes) or any(e.get('kind') in ('connection_drop','handover_failure') for e in getattr(getattr(simulator.state,'paper',None),'events',[])):
                         diagnostic_until=simulator.state.slot_id+window_slots
                     # Full audit output is a single stream, not duplicated in
@@ -536,7 +581,7 @@ def run_case(args):
                     simulator.slot_records[-1].pop('rt_sys')
                     for row in adapter.trace['ues']:
                         if recording=='experiment' and simulator.state.slot_id%window_slots and simulator.state.slot_id!=args.slots:continue
-                        row={'slot_id':simulator.state.slot_id,**row}
+                        row=ue_csv_record(simulator.state.slot_id,row)
                         if uw is None: uw=csv.DictWriter(ufile,fieldnames=list(row)); uw.writeheader()
                         uw.writerow(row)
                     for cid,row in adapter.trace['cells'].items():

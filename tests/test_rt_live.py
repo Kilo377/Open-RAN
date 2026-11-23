@@ -34,6 +34,9 @@ def test_live_telemetry_uses_actual_slot_results_and_counts_only_decodes(tmp_pat
     assert result['link_statistics']['network']['retx_error_rate'] is None
     assert result['ues'][0]['position_m'] == pytest.approx([.001, 0, 1])
     assert result['ues'][0]['queue_bytes'] == 17
+    assert result['graph_telemetry']['sampled_at_slot'] == 1
+    assert result['graph_telemetry']['source'] == 'executed_simulator_state'
+    assert result['graph_telemetry']['ue_services'] == {}
     assert user.queue_bytes == 17 and adapter.trace['ues'][0] == row
     state.slot_id, state.sim_time_ms = 2, 1.
     row.update(delivered_bytes=0, actual_decode=False, scheduled=False, ack=False)

@@ -1,0 +1,23 @@
+{
+  "label": "Two AGX simulation workers",
+  "local_output": "/absolute/path/to/Open-RAN/outputs/smo-deployments",
+  "seed": 20261214,
+  "workers": [
+    {
+      "id": "agx1",
+      "host": "user@agx1",
+      "socket": "/tmp/open-ran-agx1.sock",
+      "project_root": "/home/user/open-ran-worker/source",
+      "python": "/home/user/open-ran-venv/bin/python",
+      "label": "AGX1"
+    },
+    {
+      "id": "agx2",
+      "host": "user@agx2",
+      "socket": "/tmp/open-ran-agx2.sock",
+      "project_root": "/home/user/open-ran-worker/source",
+      "python": "/home/user/open-ran-venv/bin/python",
+      "label": "AGX2"
+    }
+  ]
+}

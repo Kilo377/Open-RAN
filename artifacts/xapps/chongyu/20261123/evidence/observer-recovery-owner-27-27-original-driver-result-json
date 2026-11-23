@@ -1,0 +1,15 @@
+{
+  "schema": "oran.validation-lane-driver-result.v1",
+  "passed": false,
+  "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "physical_worker_id": "agx1",
+  "lane_id": "lane-1",
+  "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+  "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+  "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+  "worker_returncode": 0,
+  "worker_seal_sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+  "all_source_members_rechecked": 1432,
+  "actual_profile_bytes_rechecked": true,
+  "finished_utc": "2026-11-23T09:57:08.058878+00:00"
+}

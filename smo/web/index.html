@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>O-RAN · Knowlege Graph</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./goal_obstruction.js" defer></script>
+  <script src="./intent_obstruction.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="O-RAN Knowlege Graph">
+      <svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 10L27 18 9 26"/><circle cx="9" cy="10" r="4"/><circle cx="27" cy="18" r="4"/><circle cx="9" cy="26" r="4"/></svg>
+      <span>O-RAN <span class="brand-divider">/</span> <strong>SMO</strong></span>
+    </a>
+  </header>
+  <main id="main">
+    <div class="page-heading">
+      <div><h1>Knowlege Graph</h1></div>
+      <button id="download" class="button" disabled>Export <span aria-hidden="true">↗</span></button>
+    </div>
+    <details class="research-framework" lang="zh-CN">
+      <summary id="framework-heading">研究框架</summary>
+      <ol class="framework-stages" aria-label="四个研究模块">
+        <li>
+          <h3><span>KG · 知识图谱</span></h3>
+          <p class="framework-purpose">实时状态与离线统计关系</p>
+          <p>编码 xApp、RCP（控制参数）与 KPI 的关系，支持查看网络状态及静态统计影响。</p>
+        </li>
+        <li>
+          <h3><span>组合预选择</span></h3>
+          <p class="framework-purpose">剪枝，保留可能实现意图的组合</p>
+          <p>为控制组合空间的指数增长，从目标 KPI 逆向溯源，按能力方向与统计影响剪枝；剔除同一对象、同一参数上的反向直接冲突。</p>
+        </li>
+        <li>
+          <h3><span>冲突量化</span><span class="framework-status">当前研究重点</span></h3>
+          <p class="framework-purpose">利用已有信息推理组合风险</p>
+          <p>对筛选前的图谱组合独立量化，使用意图区间、同一快照拟动作与 KG 一阶增益；部署准入与实测结果分开处理。</p>
+        </li>
+        <li class="framework-pending">
+          <h3><span>最终选择</span><span class="framework-status framework-status-pending">待开发</span></h3>
+          <p class="framework-purpose">确定最终部署的 xApp 组合</p>
+          <p>先验证冲突量化与效果评价方法，再设计选择策略。当前不自动选择组合。</p>
+        </li>
+      </ol>
+      <dl class="framework-notes">
+        <div><dt>关系估计</dt><dd>参数 → KPI 的函数关系可由已有网络运行记录估计；当前通过预扰动实验获得，采用一阶近似。</dd></div>
+        <div><dt>研究边界</dt><dd>量化只依赖当前已有的状态、语义与 KG 信息；不以候选组合在实际网络中的试部署结果训练模型或反推风险评分。</dd></div>
+        <div><dt>独立验证</dt><dd>在受控仿真中部署全部候选组合，对比意图相关 KPI 的部署前后满足程度，检验“冲突风险越高，实际结果偏离期望越大”的相关性。验证结果不参与本轮评分。</dd></div>
+      </dl>
+    </details>
+    <div id="error" class="error" role="alert" hidden><span></span><button id="retry" class="button">Retry</button></div>
+    <section class="source-bar" aria-label="Simulation source">
+      <div id="scenario-control" class="scenario-control" hidden><label for="scenario-select">Scenario</label><select id="scenario-select" aria-describedby="scenario-message"></select><span id="scenario-message" role="status" aria-live="polite"></span></div>
+      <div id="runtime-environment" class="runtime-environment" lang="zh-CN" hidden><span id="runtime-environment-label"></span><details class="environment-details"><summary>配置</summary><div id="runtime-environment-details" class="environment-content"></div></details><span id="runtime-environment-statistics" class="runtime-environment-statistics" hidden></span></div>
+      <div class="playback" id="playback" hidden>
+        <button id="play" class="icon-button" aria-label="Play recorded simulation">▶</button>
+        <label class="sr-only" for="timeline">Recorded simulation time</label>
+        <input id="timeline" type="range" min="0" max="0" value="0" step="1">
+        <output id="clock" for="timeline">0.000 s</output>
+      </div>
+      <details class="source-details"><summary>Run details</summary><div class="source-content"><div class="source-name"><span class="mode" id="mode">Connecting</span><span id="source-name">Reading contracts…</span><span id="stage" class="muted"></span></div><p id="window-note"></p></div></details>
+    </section>
+    <section class="intent-panel" aria-labelledby="intent-heading" lang="zh-CN">
+      <div class="intent-heading"><h2 id="intent-heading">Intent</h2><button id="intent-clear" type="button" class="text-button" hidden>清空意图</button></div>
+      <div class="evaluation-origin-control"><button id="evaluation-origin" type="button" class="button">对齐评估起点</button><span id="evaluation-origin-status" role="status" aria-live="polite"></span></div>
+      <form id="intent-form">
+        <div class="intent-preset-row"><label for="intent-case">预设意图</label><select id="intent-case" aria-describedby="intent-case-note"><option value="">手动输入</option></select><button id="intent-preset-edit" class="button intent-preset-edit-button" type="button" aria-controls="intent-preset-editor" aria-expanded="false" disabled>编辑</button></div>
+        <p id="intent-case-note" class="intent-case-note" aria-live="polite" hidden></p>
+        <label for="intent-text">意图与 KPI 要求</label>
+        <div class="intent-input-row"><textarea id="intent-text" rows="2" maxlength="2000" placeholder="例如：降低所有 UE 的总功率" aria-describedby="intent-message"></textarea><button id="intent-submit" class="button primary" type="submit">分析</button></div>
+      </form>
+      <form id="intent-preset-editor" class="intent-preset-editor" aria-labelledby="intent-preset-editor-heading" hidden>
+        <h3 id="intent-preset-editor-heading">编辑预设意图</h3>
+        <label for="intent-preset-edit-text">意图内容</label>
+        <textarea id="intent-preset-edit-text" rows="3" maxlength="2000" required aria-describedby="intent-preset-edit-message"></textarea>
+        <div class="intent-preset-editor-tag"><label for="intent-preset-edit-tag">备注标签</label><input id="intent-preset-edit-tag" type="text" maxlength="120" placeholder="例如：待验证"></div>
+        <div class="intent-preset-editor-actions"><button id="intent-preset-delete" class="text-button intent-preset-delete" type="button">删除预设</button><button id="intent-preset-save" class="button primary" type="submit">保存预设</button><button id="intent-preset-cancel" class="text-button" type="button">取消</button><button id="intent-preset-reset" class="text-button" type="button" hidden>恢复原始</button></div>
+        <p id="intent-preset-edit-message" class="intent-preset-editor-message" role="status" aria-live="polite" hidden></p>
+      </form>
+      <div id="intent-feedback" class="intent-foot" hidden><p id="intent-message" role="status" aria-live="polite"></p></div>
+      <div id="intent-preset-trash" class="intent-preset-trash" hidden><span id="intent-preset-deleted-note"></span><button id="intent-preset-undo-delete" class="text-button" type="button">撤销删除</button></div>
+      <details id="llm-settings" class="llm-settings"><summary>模型连接</summary><p id="llm-status" class="muted">DeepSeek</p>
+        <form id="llm-form"><div><label for="llm-model">模型</label><input id="llm-model" value="deepseek-v4-pro" maxlength="96" required autocomplete="off"></div><div><label for="llm-key">API 密钥（仅本次会话）</label><input id="llm-key" type="password" required autocomplete="off" spellcheck="false" maxlength="512" placeholder="仅保存在服务内存中"></div><button class="button" id="llm-connect" type="submit">连接</button><button class="text-button" id="llm-disconnect" type="button">清除会话密钥</button></form>
+        <p>使用项目的 DeepSeek 接口，密钥不会写入图谱导出文件或日志。</p>
+      </details>
+      <section id="intent-history" class="intent-history" aria-label="生效中的意图" hidden><div class="combination-heading"><h3>生效中的意图 <span id="intent-active-count" class="intent-active-count"></span></h3><button id="intent-refresh" type="button" class="text-button">更新观测</button></div><p class="catalog-note">约束持续生效，直至停用。</p><ul id="intent-records"></ul></section>
+      <div id="intent-results" hidden><p id="intent-snapshot" class="intent-evidence"></p><h3 class="intent-merged-title">共同允许区间</h3><p id="intent-constraints" class="intent-constraint-status" role="status" hidden></p><div id="intent-ranges" class="intent-ranges"></div><div id="intent-candidates" class="intent-candidates" aria-label="候选 xApp"></div></div>
+      <section id="intent-comparison" class="intent-comparison" aria-labelledby="comparison-heading" hidden>
+        <div class="combination-heading"><h3 id="comparison-heading">Intent 达成对比</h3><span id="comparison-state" role="status" aria-live="polite"></span></div>
+        <div class="comparison-controls"><label id="comparison-window-label" for="comparison-slots">前后窗口</label><input id="comparison-slots" type="number" min="1" max="20000" step="1" value="500" aria-describedby="comparison-window-duration"><output id="comparison-window-duration" for="comparison-slots">slots = 0.25 s</output><button id="comparison-validated-window" class="text-button" type="button" hidden>10秒已验证窗口</button><button id="comparison-capture" class="button" type="button">记录部署前</button><button id="comparison-refresh" class="text-button" type="button">更新对比</button></div>
+        <div id="deployment-panel" class="deployment-panel" aria-label="部署 xApp 组合">
+          <p id="deployment-selection">评估所有候选组合。</p>
+          <div class="deployment-actions"><button id="deployment-start" class="button primary deployment-button" type="button" disabled>评估全部组合</button><button id="deployment-stop" class="text-button deployment-button" type="button" hidden>暂停批次</button><button id="deployment-resume" class="text-button deployment-button" type="button" hidden>继续未完成组合</button><button id="deployment-reconnect" class="text-button deployment-button" type="button" hidden>重新连接</button><a id="deployment-export-json" class="text-button" hidden download="all-combination-results.json">导出批次 JSON</a><a id="deployment-result" class="text-button" target="_blank" rel="noopener" hidden>打开本次回放</a></div>
+          <p id="deployment-status" role="status" aria-live="polite"></p><div id="deployment-outcomes" class="deployment-outcomes" role="status" aria-live="polite" hidden></div><details class="deployment-details"><summary>运行详情</summary><p id="deployment-audit"></p><div id="deployment-workers" class="deployment-workers" role="list" aria-label="仿真设备"></div><progress id="deployment-progress" max="1" value="0" aria-label="本次仿真进度" hidden></progress></details>
+        </div>
+        <p id="comparison-note" class="catalog-note"></p><p id="comparison-message" class="catalog-note" role="status" aria-live="polite"></p>
+        <details class="evaluation-method"><summary>Evaluation metric</summary><p>仅评价意图涉及的 KPI。部署前为 0；没有退步时取等权平均改善，任何目标退步则取最差退步。单边目标比较方向变化，双边区间与点目标比较到区间的距离。一般 KPI 按共同部署前值归一化；URLLC 错误率直接比较百分点。剩余违背与是否达标独立报告，缺数据不记作 0。</p></details>
+        <div id="comparison-summary" class="comparison-summary"></div>
+        <table class="comparison-table"><thead><tr><th scope="col">目标 KPI</th><th scope="col">期望范围</th><th scope="col">部署前</th><th scope="col">部署后</th><th scope="col">满足程度与变化</th></tr></thead><tbody id="comparison-body"></tbody></table>
+        <div id="comparison-intents"></div>
+      </section>
+
+    </section>
+    <div class="workbench">
+      <section class="graph-panel" aria-labelledby="graph-heading">
+        <div class="graph-toolbar">
+          <div class="graph-heading"><h2 id="graph-heading">xApps · RCPs · KPIs</h2><p id="graph-statistics-source" class="graph-statistics-source" hidden></p><p id="preview-status" class="graph-preview-status" role="status" aria-live="polite"></p></div>
+          <div class="graph-options">
+            <button id="preview-run" class="text-button" type="button">更新拟动作</button>
+            <label class="sr-only" for="app-focus">Focus on xApp</label>
+            <select id="app-focus"><option value="">All xApps</option></select>
+            <div class="segments" role="group" aria-label="KPI visibility"><button id="targets" aria-pressed="true">Targets</button><button id="all-kpis" aria-pressed="false">All KPIs</button></div>
+            <button id="show-dashed" class="text-button" aria-pressed="false" aria-controls="graph catalog-body catalog-count" title="Show uncalibrated candidate links; measured gains and declared target paths remain visible, including variable or observed-zero responses">Show dashed</button>
+            <button id="reset" class="text-button">Reset</button>
+          </div>
+        </div>
+        <details id="pk-filter-panel" class="pk-filter-panel" lang="zh-CN" hidden><summary>关系筛选</summary>
+          <p id="pk-filter-summary"></p>
+          <details><summary>查看已排除关系</summary><p>仅按已有置信区间筛选，未做多重比较校正。被排除表示当前证据未确认影响，不等于真实影响为零；原始数据保留。</p><div id="pk-filter-list"></div></details>
+        </details>
+        <div class="graph-scroll" id="graph-scroll" aria-label="Graph canvas; all nodes displayed">
+          <svg id="graph" role="group" aria-label="xApp to RCP to KPI graph"></svg>
+          <div id="loading" class="empty-state"><strong>Building the graph</strong><span>Reading the released xApp contracts.</span></div>
+        </div>
+        <footer class="graph-footer">
+          <div class="legend"><span data-dashed-legend hidden><i class="line contract"></i>Uncalibrated</span><span><i class="line measured"></i>Estimated influence</span><span><i class="line unresolved"></i>Gain may vary</span><span><i class="line locked"></i>Locked</span></div>
+          <span>Arrows: target direction</span>
+          <div id="intent-legend" class="legend" hidden><span id="intent-path-view">All candidate paths</span><span><i class="line measured"></i>Related path</span><span><i class="line side"></i>Shared KPI path</span></div>
+          <div id="conflict-legend" class="legend" aria-label="Conflict types"><span id="direct-conflict-legend" class="conflict-key direct"><i class="line direct"></i>Direct</span><span id="indirect-conflict-legend" class="conflict-key indirect"><i class="line indirect"></i>Indirect</span><span id="implicit-conflict-legend" class="conflict-key implicit"><i class="line implicit"></i>Implicit</span></div>
+        </footer>
+      </section>
+      <details class="inspector inspector-disclosure" id="inspector-disclosure">
+        <summary>选中项详情</summary>
+        <aside aria-label="Selected graph element" id="inspector">
+        <div class="inspector-heading"><span class="kind-badge">Graph</span><h2>Select a node</h2><p>Inspect its current state, connected controls and relationship evidence.</p></div>
+        </aside>
+      </details>
+    </div>
+    <noscript>This visualization requires JavaScript. The underlying graph is available at /api/graph.</noscript>
+      <section id="combination-catalog" class="combination-review" aria-label="主要待选组合、冲突量化分与实测 Metric" hidden>
+        <div class="combination-heading"><h3 id="catalog-heading">主要待选组合</h3><span id="catalog-count" role="status" aria-live="polite"></span><button id="catalog-export" class="text-button" type="button">导出列表</button></div>
+        <details class="catalog-settings"><summary>设置与说明</summary>
+<p id="initial-selection-method" class="catalog-note" hidden></p>
+        <p id="catalog-note" class="catalog-note">候选组合覆盖全部目标 KPI；实际效果由全部组合部署评估获得。</p>
+        <p id="action-filter-note" class="catalog-note" hidden></p>
+        <details id="action-exclusions" class="action-exclusions" hidden><summary id="action-exclusions-summary">查看剔除原因</summary><div id="action-exclusions-body"></div></details>
+        <p class="result-score-key">意图改善分：部署前为 0；无退步时等权平均改善，存在退步则取最差退步。剩余违背和区间达标独立报告。</p>
+        </details>
+        <div class="catalog-table-wrap"><table class="catalog-table deployment-catalog-table"><caption class="sr-only">每个主要待选组合的独立冲突量化分与实测 Metric</caption><thead><tr><th scope="col">xApp 组合</th><th scope="col">冲突量化分<span class="score-column-hint">越低越好 · /100</span></th><th scope="col">Metric<span class="score-column-hint">越高越好</span></th></tr></thead><tbody id="catalog-body"></tbody></table></div>
+      </section>
+      <section id="conflict-quantification-panel" class="combination-review quantification-panel" aria-labelledby="conflict-quantification-heading" lang="zh-CN">
+        <div class="combination-heading"><h3 id="conflict-quantification-heading">冲突量化</h3><span id="quantification-count" role="status" aria-live="polite"></span><button id="conflict-quantification-refresh" class="text-button" type="button">更新量化</button></div>
+        <details class="quantification-settings"><summary>方法与依据</summary>
+        <p id="quantification-summary" class="catalog-note" role="status" aria-live="polite">量化与部署 Metric 分开呈现；缺少依据时显示 —。</p>
+        <div class="conflict-method"><label for="conflict-method">量化方法</label><select id="conflict-method"><option value="goal_obstruction_v2">目标受阻强度（新）</option><option value="net_intent_obstruction_v1">净目标受阻（参考）</option><option value="goal_obstruction_v1">目标增益损失比例（旧）</option><option value="intent_control_dynamics_v4">控制动力抵消（旧）</option></select><span id="conflict-quantification-status" role="status" aria-live="polite"></span><button id="conflict-align-snapshot" class="text-button" type="button" hidden>对齐最近决策快照</button><button id="conflict-quantification-export" class="text-button" type="button" disabled>导出量化 JSON</button></div>
+        </details>
+        <p id="quantification-alert" class="quant-warning" role="status" hidden></p>
+        <details id="quantification-full" class="quantification-full"><summary id="quantification-full-summary">完整组合量化</summary>
+        <div class="catalog-table-wrap"><table class="catalog-table quantification-table"><caption class="sr-only">覆盖意图的组合、量化分及依据，独立于部署候选与真实 Metric</caption><thead><tr><th scope="col">xApp 组合</th><th scope="col">量化分</th><th scope="col">简短依据</th></tr></thead><tbody id="quantification-body"><tr><td colspan="3" class="quant-unavailable">选择意图后显示组合量化。</td></tr></tbody></table></div>
+        </details>
+      </section>
+  </main>
+</body>
+</html>

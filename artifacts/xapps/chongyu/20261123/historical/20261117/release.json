@@ -1,0 +1,375 @@
+{
+  "schema": "oran.chongyu-trained-model-release.v1",
+  "release": "20261117",
+  "complete": true,
+  "pool": "chongyu",
+  "models": {
+    "x01": {
+      "id": "X-01",
+      "implementation_id": "ue_energy_rf",
+      "algorithm": "RandomForestRegressor",
+      "target_kpi": "UE0+UE4 modeled radio/CPU energy, minimize",
+      "rcp": [
+        "ue_offload_fraction",
+        "ue_drx_configs"
+      ],
+      "cli_mode": "energy",
+      "runtime_parameters": {
+        "deploy_drx": true
+      },
+      "training_provenance": {
+        "parent_rows": 24,
+        "new_online_observation_rows": 197,
+        "parent_model_sha256": "9baf497d3d84e01c0aaa609ec050f75fcbd24af33a39f8bd5fedf5e16ac15e2b",
+        "network_data_seed": 55
+      },
+      "loader_max_rows_required": 221,
+      "status": "trained_and_verified",
+      "path": "models/x01.json",
+      "sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+      "format": "chongyu.online-energy-rf",
+      "format_version": 2,
+      "measured_rows": 221,
+      "fitted_rows": 221,
+      "learner_seed": 11,
+      "fit_parameters": {
+        "max_features": 1.0
+      },
+      "evaluation_status": "completed_matched_drx_unlock_evaluation",
+      "evidence": "evidence/x01.json",
+      "configuration_change": "Unlock existing DRX profiles; the 221-row frozen RF checkpoint is byte-identical to the parent release.",
+      "policy_evaluation": {
+        "status": "completed",
+        "duration_s": 3,
+        "seeds": [
+          20261119,
+          20261120
+        ],
+        "metrics": [
+          {
+            "key": "network_energy_j",
+            "label": "Total UE energy",
+            "unit": "J",
+            "base": 16.521159999999462,
+            "native_drx": 15.766329999999336,
+            "unlocked_drx": 15.6600349999994
+          },
+          {
+            "key": "target_energy_j",
+            "label": "X-01 target UE energy",
+            "unit": "J",
+            "base": 5.76668750000001,
+            "native_drx": 5.011369999999886,
+            "unlocked_drx": 4.918759999999944
+          },
+          {
+            "key": "network_goodput_mbps",
+            "label": "Network DL goodput",
+            "unit": "Mbit/s",
+            "base": 29.028292,
+            "native_drx": 28.936332,
+            "unlocked_drx": 28.60142533333333
+          },
+          {
+            "key": "packet_mean_ms",
+            "label": "Mean DL packet latency",
+            "unit": "ms",
+            "base": 23.49191022089256,
+            "native_drx": 23.1080873846485,
+            "unlocked_drx": 25.949803343500147
+          },
+          {
+            "key": "packet_p95_ms",
+            "label": "DL packet P95",
+            "unit": "ms",
+            "base": 184.0,
+            "native_drx": 181.75,
+            "unlocked_drx": 189.75
+          },
+          {
+            "key": "task_mean_ms",
+            "label": "MEC workload task latency",
+            "unit": "ms",
+            "base": 45.85267857142856,
+            "native_drx": 41.171874999999986,
+            "unlocked_drx": 43.17194570135746
+          },
+          {
+            "key": "task_on_time_pct",
+            "label": "MEC on-time completion",
+            "unit": "%",
+            "base": 90.17857142857143,
+            "native_drx": 89.73214285714286,
+            "unlocked_drx": 87.94642857142857
+          }
+        ],
+        "mean_change_pct_vs_native_drx": {
+          "network_energy_j": -0.6741898717072425,
+          "target_energy_j": -1.8479976533351983,
+          "network_goodput_mbps": -1.1573915680351932,
+          "packet_mean_ms": 12.297495294826932,
+          "packet_p95_ms": 4.4016506189821225,
+          "task_mean_ms": 4.85785673194985,
+          "task_on_time_pct": -1.9900497512437831
+        },
+        "scope": {
+          "energy": "Whole run, including startup; all-six population and UE0+UE4 target reported separately",
+          "goodput": "All delivered payload; all six UEs",
+          "packet_latency": "Completed DL packets; P95 is mean of per-seed P95",
+          "task_latency": "Completion-weighted mean of mature matched MEC creation cohorts; start >=100 ms",
+          "task_rate": "On-time completed / generated, including failed and pending demand",
+          "evidence": "Two paired evaluation seeds; no population confidence interval or broad generalization claim",
+          "attribution": "Effect of enabling joint DRX control; do not present it as a scalar inactivity-timer derivative"
+        },
+        "evidence": "evidence/x01.json"
+      }
+    },
+    "x02": {
+      "id": "X-02",
+      "implementation_id": "ap_energy_rf",
+      "algorithm": "RandomForestRegressor",
+      "target_kpi": "Whole-network modeled AP energy, minimize",
+      "rcp": [
+        "cell_sleep_mode"
+      ],
+      "cli_mode": "ap",
+      "runtime_parameters": {},
+      "training_provenance": {
+        "parent_rows": 34,
+        "new_online_observation_rows": 216,
+        "network_data_seed": 55
+      },
+      "loader_max_rows_required": 250,
+      "status": "trained_and_verified",
+      "path": "models/x02.json",
+      "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+      "format": "chongyu.online-ap-rf",
+      "format_version": 1,
+      "measured_rows": 250,
+      "fitted_rows": 250,
+      "learner_seed": 181,
+      "fit_parameters": {
+        "n_estimators": 32,
+        "max_depth": 6,
+        "min_samples_leaf": 2,
+        "max_features": 1.0,
+        "n_jobs": 1,
+        "bootstrap": true
+      },
+      "evaluation_status": "completed_matched_evaluation",
+      "evidence": "evidence/x02.json"
+    },
+    "x08": {
+      "id": "X-08",
+      "implementation_id": "throughput_scheduler_mlp",
+      "algorithm": "MLPRegressor (8 tanh hidden units; corrected mean-output MSE gradient)",
+      "target_kpi": "All-six-UE delivered downlink goodput, maximize",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "throughput",
+      "runtime_parameters": {
+        "policy": "throughput"
+      },
+      "training_provenance": {
+        "parent_rows": 48,
+        "new_online_observation_rows": 206,
+        "deduplicated_parent_lineage": true,
+        "network_data_seed": 55,
+        "training_evaluation_scope": "The30s seed55data became development data; seed20261108test labels were not fitted."
+      },
+      "loader_max_rows_required": 254,
+      "status": "trained_and_verified",
+      "path": "models/x08.json",
+      "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "format": "chongyu.online-throughput-mlp",
+      "format_version": 2,
+      "measured_rows": 254,
+      "fitted_rows": 254,
+      "learner_seed": 173,
+      "fit_parameters": {
+        "hidden_layer_sizes": [
+          8
+        ],
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "alpha": 1.0,
+        "max_iter": 300,
+        "max_fun": 5000,
+        "tol": 1e-05,
+        "random_state": 173
+      },
+      "evaluation_status": "completed_matched_evaluation",
+      "evidence": "evidence/x08.json"
+    },
+    "x12_mec": {
+      "id": "X-12-MEC",
+      "implementation_id": "latency_scheduler_rf",
+      "algorithm": "RandomForestRegressor",
+      "target_kpi": "Mean E2E latency of completed offloaded tasks on UE0+UE4, minimize",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "latency",
+      "runtime_parameters": {},
+      "status": "trained_and_verified",
+      "path": "models/x12_mec.json",
+      "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+      "evaluation_status": "fresh_network_evaluation_pending",
+      "format": "chongyu.online-energy-rf",
+      "format_version": 2,
+      "measured_rows": 212,
+      "fitted_rows": 212,
+      "learner_seed": 99,
+      "fit_parameters": {
+        "max_features": 0.5
+      },
+      "loader_max_rows_required": 212,
+      "evidence": "evidence/x12_mec.json",
+      "training_provenance": {
+        "retained_parent_rows": 28,
+        "new_online_observation_rows": 184,
+        "network_data_seed": 55,
+        "online_observation_horizon_s": 30,
+        "input_manifest_sha256": "132c1e913e4a7867fbb3e8c49ad809ba90ea8d05856be4083c28b6a323a6800d",
+        "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+        "actual_fit_xy_sha256": "84fd153f627fe4fa9ff3ea8a06adc56934c0126f1e1c75f962186e07639d8f84",
+        "source_fingerprint": "e2eb420f2fd8ce14cfb73559f3e24bc43a804b4fbb018d8efd8da15819653cdf",
+        "independent_refit_exact": true,
+        "independent_prediction_probes": 848,
+        "frozen_controller_load_passed": true
+      },
+      "training_dataset": "training/x12_mec/dataset.json",
+      "training_report": "training/x12_mec/training-report.json",
+      "independent_verification": "training/x12_mec/independent-verification.json"
+    },
+    "x12_urllc": {
+      "id": "X-12-URLLC",
+      "implementation_id": "latency_urllc_rf",
+      "algorithm": "RandomForestRegressor (QoS/PDB action family)",
+      "target_kpi": "UE2+UE6 original10ms deadline/overflow failures and completed-packet latency, minimize",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "urllc",
+      "runtime_parameters": {
+        "policy_version": "qos_v2"
+      },
+      "training_provenance": {
+        "network_training_seeds": [
+          179,
+          180,
+          181,
+          182,
+          183,
+          184
+        ],
+        "online_simulated_seconds": 30,
+        "native_seconds": 10,
+        "equal_mean_burst_seconds": 20,
+        "training_partitions_sha256": "412eb683daa3aa9dcfb13910540964d08c108c1557eb099dbb9c0529c1235dac",
+        "independent_raw_packet_window_and_applied_ACK_audit_passed": true
+      },
+      "loader_max_rows_required": 207,
+      "status": "trained_and_verified",
+      "path": "models/x12_urllc.json",
+      "sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+      "format": "chongyu.online-urllc-qos-rf",
+      "format_version": 1,
+      "measured_rows": 207,
+      "fitted_rows": 200,
+      "learner_seed": 179,
+      "fit_parameters": {
+        "n_estimators": 64,
+        "max_depth": 6,
+        "min_samples_leaf": 5,
+        "max_features": 1.0,
+        "n_jobs": 1,
+        "bootstrap": true
+      },
+      "evaluation_status": "completed_matched_evaluation",
+      "evidence": "evidence/x12_urllc.json"
+    },
+    "x13": {
+      "id": "X-13",
+      "implementation_id": "mec_offload_budget_qgbdt",
+      "algorithm": "GradientBoostingRegressor(loss=quantile,alpha=0.2) + analytic workload filter",
+      "target_kpi": "UE4 expected offloaded compute demand <=0.75GFLOP/s",
+      "rcp": [
+        "ue_offload_fraction"
+      ],
+      "cli_mode": "budget",
+      "runtime_parameters": {
+        "budget_gflops": 0.75,
+        "task_profile": {
+          "interval_ms": 50.0,
+          "compute_gflop": 0.05,
+          "deadline_ms": 100.0
+        }
+      },
+      "training_provenance": {
+        "network_training_seed": 137,
+        "online_simulated_seconds": 4,
+        "measured_rows": 13,
+        "fitted_prefix_rows": 12
+      },
+      "loader_max_rows_required": 13,
+      "status": "trained_and_verified",
+      "path": "models/x13.json",
+      "sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+      "format": "chongyu.online-qgbdt",
+      "format_version": 1,
+      "measured_rows": 13,
+      "fitted_rows": 12,
+      "learner_seed": 137,
+      "fit_parameters": {
+        "loss": "quantile",
+        "alpha": 0.2,
+        "n_estimators": 32,
+        "learning_rate": 0.05,
+        "max_depth": 2,
+        "min_samples_leaf": 3,
+        "random_state": 137
+      },
+      "evaluation_status": "completed_matched_evaluation",
+      "evidence": "evidence/x13.json"
+    }
+  },
+  "files_sha256": {
+    "README.md": "96eb4ccf2e4232e066131a313a8279d431972f8a0acd678f7dd6f20bb0d09778",
+    "data-retention.json": "0820d28e484ba2ec28d8af9135d82eb57ce3d8b4a5655386c4fd311146d515dc",
+    "evidence/x01-legacy-locked.json": "a96fd27407a07d2aab0311b5a3ed29e37672f5baacb2bde70c0f827d81a3f9f8",
+    "evidence/x01.json": "e295d95473f409ed8108d1d7fc3bda2dffaecefbdd43aed6db889e8ce61bbd03",
+    "evidence/x02.json": "8087e32811746491b21d3443721296d12556625eaabc89a740f25910839f9f06",
+    "evidence/x08.json": "5fc95c04e3b4d6f82cbeb48765dd3e2f182e9b4f80705cb8a0be0908f90bce2e",
+    "evidence/x12_mec.json": "a636a731c96a6c3910f0622d7d6c12750bcb67a3c4f8788361a6e63e6996266a",
+    "evidence/x12_urllc.json": "494ca4c03bbc5695e8b545869a7f140f45105242b315521f8d9909219d8700c0",
+    "evidence/x13.json": "baf18e311ec12fd53f0050c20dc9f488e167a4ec1b1efff1bc3bfd8e11c14c1e",
+    "models/x01.json": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+    "models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+    "models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+    "models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+    "models.json": "3842bdbcf4b40b749f2f2386958f15520b94bc4965ee960d02f0376c3b336036",
+    "training/x12_mec/dataset.json": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+    "training/x12_mec/independent-verification.json": "e53f2cc47c13c453babf44ad81b947fee281f2829d7e0c169d8146bb6bbfb824",
+    "training/x12_mec/training-report.json": "e2db24113d7ed27a9cbba09eed8adbadbe5feaf863f10670b0fceffa3c4d4cee"
+  },
+  "data_policy": {
+    "model_datasets": "Measured numeric x/y rows are embedded in each JSON checkpoint.",
+    "simulation_raw_records": "Retained on the original AGX and in verified Mac archives; not placed in Git.",
+    "deletion_authorized": false
+  },
+  "retained_raw_archive_sha256": {
+    "X08_30s": "a3747af0a19d13fdcd32c7811e3a961d9bfaaa45fee79b9fff195d664d0056c7",
+    "X12MEC_30s_and_final_checkpoints": "5d818c64ed2954ead380557bdb583e45d3364d3edb42489b9160b1774e3e96b9",
+    "URLLC_30s_training_and_1_6s_validation": "2421f7ee802a9bb7e662270a0c8ced01c655c3b73bc8c7b705d1a2c33237aa8a",
+    "DRX_unlock_3s_2seeds": "53cb417015e2fcf0cd1a65779f736cd2738e51229b863e9398d0e77e905b188c"
+  },
+  "acceptance": "Target-KPI effect is primary; other KPI changes are recorded tradeoffs. A completed fit is distinct from fresh network validation.",
+  "parent_release": "20261109"
+}

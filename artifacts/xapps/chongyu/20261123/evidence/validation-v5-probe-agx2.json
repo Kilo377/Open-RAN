@@ -1,0 +1,183 @@
+{
+  "schema": "oran.parallel-probe-final-report.v2",
+  "worker": "agx2",
+  "slots": 2000,
+  "seed": 341701,
+  "scope": "/dev/shm/oran_xapp_parallel_probe_20261123/1fedf46938594e4d9a46df597f338d90",
+  "source_archive_sha256": "ff29827e59ff9aeba5a998f307789160dc5e85c8c681dabec5ff76b9ea8cc46f",
+  "script_sha256": "d9e88e0f05447072a12338978c7672b0e907367951467ff4e360fb7c284e8dc4",
+  "plan_sha256": "c198afa806574e14c28fe230ce42e4733078733cbfde0432445ccaaa47d2adae",
+  "result_sha256": "aa2e82c758bf3015a787201c263b930bfa618203fad88a81527de1fe9c8c1c71",
+  "sealed_manifest_sha256": "c0e970ab5f84ba9565e527544a69cae7fa43852a6ff810ba4ea0c06404db4473",
+  "mirror_sha256": "998550575607d537287992035be7845bf0ec50d689cd831772f4bcf2f6975f99",
+  "serial_end_to_end_s": 125.8948015649803,
+  "parallel_end_to_end_s": [
+    128.8269303870038,
+    130.28229243899113
+  ],
+  "parallel_makespan_s": 130.28403944300953,
+  "serial_simulation_only_s": 108.03136627498316,
+  "parallel_simulation_only_s": [
+    111.03676267201081,
+    112.41499367001234
+  ],
+  "end_to_end_aggregate_execution_speedup": 1.9326204821896202,
+  "simulation_only_execution_speedup_estimate": 1.9220099160811757,
+  "simulation_only_estimate_scope": "Recorded loop durations; exact common loop start times not independently sampled.",
+  "all_actual_integer_float_geometry_control_source_checks_passed": true,
+  "independent_mac_parity_checks": 2,
+  "same_seed_current_training_reference_checked": false,
+  "agx2_reference_note": "AGX2 compares only its own three seed341701 cases; its currentTRAIN seed341702 is never used as a physical reference.",
+  "observed_live_affinity": {
+    "probe_operator": {
+      "pid": 50641,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 9
+    },
+    "serial": {
+      "pid": 50642,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "current_v4_training": {
+      "pid": 46592,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 4
+    },
+    "parallel-a": {
+      "pid": 50698,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 6
+    },
+    "parallel-b": {
+      "pid": 50699,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 0
+    }
+  },
+  "minimum_sampled_MemAvailable_bytes": 33668173824,
+  "current_training_before": {
+    "id": "910707c9157248878a4575f571c3115d",
+    "pid": 46592,
+    "phase": "running",
+    "last_completed_slot": 47000,
+    "simulation_wall_s_so_far": 4280.873783219984,
+    "sched_getaffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "current_training_after": {
+    "observed_utc": "2026-11-23T07:10:28.272988+00:00",
+    "existing_train_pid": 46592,
+    "existing_train_phase": "running",
+    "last_completed_slot": 50000,
+    "simulation_wall_s_so_far": 4692.835695578979,
+    "sched_getaffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "MemAvailable_bytes": 39961391104,
+    "existing_training_signalled": false,
+    "affinity_modified": false
+  },
+  "training_impact_statement": "Current training continued under the same PID and unchanged affinity/worker lock. No signal or parameter change was made; these observations do not causally quantify any wall-time slowdown from shared resources.",
+  "actual_holdout_read": false,
+  "production_parallelism_authorized": false,
+  "remote_data_retained": true,
+  "interpretation": "Aggregate simulator execution rate, not network goodput or xApp benefit. Serial-first and cold/JIT effects remain bounded short-probe confounders."
+}

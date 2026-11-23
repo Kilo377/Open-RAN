@@ -47,13 +47,17 @@ def test_independent_cell_streams_select_unchanged_whole_requests_once_per_windo
     assert random.getstate()==global_state
 
 
-def test_new_same_source_value_defers_but_membership_or_validity_revokes_whole_snapshot():
+def test_single_source_fresh_value_passes_immediately_and_membership_revokes_whole_snapshot():
     arb=RandomSchedulerArbiter(2,100,.5)
     first,_=arb.choose('c',0,[candidate('a',bundle(ue_0=1.5),effective_until_slot=120)],None,['ue_0'])
     changed=candidate('a',bundle('round_robin',ue_0=1.),request_marker='new')
-    held,_=arb.choose('c',100,[changed],None,['ue_0'])
-    assert held==first and held['request_id']=='a-raw'
-    refreshed,_=arb.choose('c',121,[changed],None,['ue_0'])
+    changed['request_id']='a-fresh'
+    refreshed,event=arb.choose('c',100,[changed],None,['ue_0'])
+    assert refreshed['selected_value']==changed['value'] and refreshed['request_id']=='a-fresh'
+    assert refreshed['draw'] is None and event['selection_cause']=='single_source_proposal_refresh'
+    assert not arb.valid_selection(first,100,'c') and arb.valid_selection(refreshed,100,'c')
+    repeated,notice=arb.choose('c',121,[changed],None,['ue_0'])
+    assert repeated==refreshed and notice is None
     assert refreshed['selected_value']==changed['value'] and not arb.valid_selection(first,121,'c')
     moved,_=arb.choose('c',122,[candidate('a',bundle())],None,[])
     assert moved['serving_ue_ids']==() and moved['selected_value']['ue_scheduler_weights']=={}

@@ -129,6 +129,7 @@ def command_for(args, arm, models=None):
         '--duration-s', str(args.duration_s), '--seed', str(args.seed), '--traffic-load', '1',
         '--ue-services', 'drx-mec', '--ue-services-config', str(args.service_config),
         '--xapp-pool', 'chongyu', '--record-compression', 'gzip',
+        '--no-energy-xapp-deploy-drx',  # Preserve this historical offload-only conflict protocol.
         '--direct-conflict-mitigation', 'uniform_random' if arm == 'both_random' else 'priority',
         '--mitigation-seed', str(args.mitigation_seed), '--mitigation-window-ms', '100',
         '--budget-xapp-gflops', '.75', '--budget-xapp-window-ms', '100',

@@ -393,6 +393,7 @@ def command_for(args, output, energy_model, budget_model, name, seed, seconds, e
         '--duration-s', str(seconds), '--seed', str(seed), '--xapp-pool', 'chongyu',
         '--ue-services', 'drx-mec', '--record-compression', 'gzip',
         '--energy-xapp-mode', energy_mode, '--latency-xapp-mode', 'off',
+        '--no-energy-xapp-deploy-drx',  # Historical study keeps its original action constraint.
         '--budget-xapp-mode', budget_mode, '--budget-xapp-gflops', str(args.budget_gflops),
         '--budget-xapp-window-ms', '100', '--direct-conflict-mitigation',
         'uniform_random' if name.endswith('both_random') else 'priority',

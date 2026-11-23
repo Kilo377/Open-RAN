@@ -506,6 +506,7 @@ def main():
                    '--duration-s', str(seconds), '--seed', str(seed), '--traffic-load', str(args.traffic_load),
                    '--ue-services', 'drx-mec', '--record-compression', 'gzip',
                    '--energy-xapp-mode', energy_mode, '--latency-xapp-mode', latency_mode,
+        '--no-energy-xapp-deploy-drx',  # Historical study keeps its original action constraint.
                    '--latency-xapp-window-ms', str(args.window_ms),
                    '--latency-xapp-explore-windows', str(args.explore_windows),
                    '--channel-cache-root', str(ROOT / 'channel_cache' / output.name / f'seed_{seed}'),

@@ -2356,6 +2356,14 @@ class Simulator:
         normalized_request_id = "" if request_id is None else str(request_id).strip()
         if normalized_request_id == "":
             return
+        from models.e2_request_index import published_request
+        indexed, request = published_request(resources, normalized_request_id)
+        if indexed:
+            if request is not None:
+                request.status = str(status)
+                request.reason = str(reason)
+                request.updated_at_slot = int(self.state.slot_id)
+            return
         for request in list(getattr(resources, "e2_control_requests", []) or []):
             if str(getattr(request, "request_id", "")) != normalized_request_id:
                 continue

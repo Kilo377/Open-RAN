@@ -127,6 +127,10 @@ class LivePublisher:
         self.latest['history'] = list(self.history)
         if hasattr(simulator, 'live_xapp_test'):
             self.latest['xapp_test'] = plain(simulator.live_xapp_test.snapshot())
+        from smo.telemetry import compact_telemetry
+        self.latest['graph_telemetry'] = compact_telemetry(state, adapter.trace)
+        if getattr(simulator, 'decision_preview', None) is not None:
+            self.latest['decision_preview'] = simulator.decision_preview.latest
         self._write()
 
     def finish(self, stage, error=None):

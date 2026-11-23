@@ -1,0 +1,72 @@
+{
+  "schema": "oran.joint-model-selection.v1",
+  "locked_utc": "2026-11-23T09:16:01.522129+00:00",
+  "both_models_locked": true,
+  "holdout_results_used": false,
+  "development_seeds": [
+    341710
+  ],
+  "holdout_seeds": [
+    341721,
+    341722
+  ],
+  "validation_version": "v5",
+  "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "operator_driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+  "models": {
+    "power": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "throughput": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+  },
+  "power_model": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/offline-rf-candidates-v1/x01_target_scaled_rf_frozen.json",
+  "throughput_model": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/source/artifacts/xapps/chongyu/20261117/models/x08.json",
+  "power_action_set_version": "legacy9",
+  "power_action_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+  "power_policy_sha256": "2406c5912b10f312d8f1c403d39c7fa78d1b00814e53b036cb0ff78a3b10263b",
+  "power_candidate_kind": "target_scaled_rf",
+  "power_training_source_archive_sha256": "1e009c97cb75896af5d990fc66da999e1d468b9c3544fb6f4ed4fc509e971794",
+  "power_training_seeds": [
+    341701,
+    341702
+  ],
+  "power_training_rows": 144,
+  "power_sidecar": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/offline-rf-candidates-v1/x01_target_scaled_rf_frozen.sidecar.json",
+    "sha256": "173faa24a72fd8c86bef5ab81297663032f1d3e3568150837a0295b3e7a13ae9"
+  },
+  "power_selection_criterion": "Highest actual six-UE total average power reduction among the complete preregistered development comparisons; preserve all side-effect and missing KPI evidence.",
+  "power_development_reduction_percent": 5.11359,
+  "new_balanced42_development_report": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/power-development-complete-v5-v1/report.json",
+    "sha256": "86a25b5ab869a7ea4d11c54210177c4db814381a24ad38553e9f14e0dabaa177",
+    "all_five_complete_cases": true,
+    "candidates": {
+      "scaled": {
+        "reduction_percent": 4.759933,
+        "model_sha256": "3e1724ee75d21c4ad53aba971494cb0e2356a6fc014a4ab5efcd94822d24b744"
+      },
+      "independent4": {
+        "reduction_percent": 4.074649,
+        "model_sha256": "319f448e545fad2067dd5a1ff33521ae14056838fc46236e67a2ccbfba040f6f"
+      },
+      "pooled_scaled": {
+        "reduction_percent": 4.403276,
+        "model_sha256": "3aa1a2374aea82772338e55dc92681629cdae20c33024c7ba410981fbcd94ce6"
+      }
+    },
+    "none_beat_selected_legacy9_candidate": true
+  },
+  "throughput_development_selection": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/throughput-development-selection-v1.json",
+    "sha256": "b377416dbdae68af3d73002678f0f3fca1726475fb3538cc3fc762297eb82405",
+    "selected_kind": "retained_legacy",
+    "new_weights_selected": false
+  },
+  "development_ten_percent_targets_met": {
+    "power": false,
+    "throughput": false
+  },
+  "final_outcomes_not_observed": true,
+  "holdout_authorized": false,
+  "final_start_requires_separate_exact_root_go": true
+}

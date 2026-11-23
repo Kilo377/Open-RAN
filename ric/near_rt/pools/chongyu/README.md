@@ -90,7 +90,7 @@ executed-action outcomes and refit small RF batches; use `--energy-xapp-mode fro
 --energy-xapp-model outputs/.../model.json` for deployment without learning.
 Training requires the UE service models and 100 ms task-cohort telemetry,
 automatically configured by the finite runner with the six-UE services preset.
-The accepted algorithm controls UE0/UE4; it never changes UE2/UE6 DRX.
+The algorithm controls UE0/UE4; it never changes UE2/UE6 DRX. Current run launchers enable the full DRX/offload action set by default; use `--no-energy-xapp-deploy-drx` for the historical native-DRX ablation. The old release and evidence remain under `20261109`.
 
 ## X-12 online RF
 

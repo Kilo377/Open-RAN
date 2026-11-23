@@ -1,0 +1,55 @@
+{
+  "schema": "oran.locked-final-report-registration.v1",
+  "role": "holdout",
+  "joint_plan": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/joint-holdout-plan-v5.json",
+    "sha256": "336087882b4738a7e382e1ba08ae7866bd8ec20a2c622f1b306e222a44e56515"
+  },
+  "selection": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/joint-selection-v5.json",
+    "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+  },
+  "protocol": {
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/protocol-v1.json",
+    "sha256": "3595959b9ef48daa17faa89a6267df371c67bf0c3b94b3faf3fc2f71a6f8e4ed"
+  },
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "models": {
+    "power": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "throughput": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+  },
+  "canonical_report_sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6",
+  "coordinator_sha256": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70",
+  "total_deadline_utc": "2026-11-23T11:40:00+00:00",
+  "plan_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-comparison-plan-v5-v1.json",
+  "output": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-holdout-complete-v5-v1",
+  "prefix_certificates": {
+    "341721": {
+      "power": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-power-holdout-v5.json",
+      "throughput": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-throughput-holdout-v5.json"
+    },
+    "341722": {
+      "power": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-power-holdout-v5.json",
+      "throughput": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-throughput-holdout-v5.json"
+    }
+  },
+  "power_semantic_certificates": {
+    "341721": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/semantics/341721-power-holdout-v5.json",
+    "341722": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/semantics/341722-power-holdout-v5.json"
+  },
+  "all_six_complete_before_kpi_read": true,
+  "partial_outcomes_used": false,
+  "model_selection_performed": false,
+  "release_weight_composition": {
+    "new": [
+      "x01"
+    ],
+    "unchanged": [
+      "x02",
+      "x08",
+      "x12_mec",
+      "x12_urllc",
+      "x13"
+    ]
+  }
+}

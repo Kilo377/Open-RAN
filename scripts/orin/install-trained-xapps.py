@@ -11,7 +11,7 @@ import shutil
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-RELEASE = "20261109"
+RELEASE = "20261117"
 MODELS = ("x01", "x02", "x08", "x12_mec", "x12_urllc", "x13")
 FOUR_MODELS = MODELS[:4]
 FORMATS = {
@@ -86,6 +86,8 @@ def install(bundle, output, project_root=ROOT):
         flag = entry["cli_mode"]
         model = str((output / entry["path"]).relative_to(root))
         values = ["--" + flag + "-xapp-mode", "frozen", "--" + flag + "-xapp-model", model]
+        if name == "x01":
+            values += ["--energy-xapp-deploy-drx" if entry.get("runtime_parameters",{}).get("deploy_drx",False) else "--no-energy-xapp-deploy-drx"]
         if name == "x12_urllc":
             values += ["--urllc-xapp-policy-version", "qos_v2"]
         if name == "x08":

@@ -2,12 +2,33 @@
 
 A slot-driven O-RAN-style RAN simulator prototype in Python.
 
-The [trained Chongyu xApp release](artifacts/xapps/chongyu/20261109/README.md)
-contains six verified JSON checkpoints, including the X-12 MEC model retrained
-on the completed 30-second run. Install the versioned models with:
+The current [SMO and dual-AGX workflow](docs/rt_sys/DUAL_AGX_WORKFLOW.md)
+includes the knowledge graph, intent KPI intervals, candidate pruning,
+pre-deployment conflict quantification, and independent combination evaluation
+on two SSH workers. Automatic final combination selection is not enabled.
+The [runtime snapshot](artifacts/smo/20261123/README.md) preserves the current
+network profiles and independently measured parameter-to-KPI gains. Raw run
+archives stay outside Git and are retained locally.
+
+The [lightweight SMO intent graph](docs/rt_sys/INTENT_GRAPH.md) visualizes the
+released xApp → RCP → KPI contracts and attaches read-only live or recorded
+network state. Start it with `python -m smo --port 8891`; no GPU packages are
+required. Parameter-effect strengths remain unestimated until controlled
+perturbation results are supplied.
+The [multi-point calibration workflow](docs/rt_sys/MULTIPOINT_RCP_IDENTIFICATION.md)
+samples group controls across declared ranges and exports first-order fits
+with measured points, seed-level uncertainty and linearity diagnostics.
+
+The latest [Chongyu model bundle](artifacts/xapps/chongyu/20261123/README.md)
+contains six checksum-verified JSON checkpoints and their training/evaluation
+provenance. Models retained from earlier releases are identified in its
+manifest; the [20261117 release](artifacts/xapps/chongyu/20261117/README.md)
+is also preserved. Install the current version explicitly with:
 
 ```bash
-python scripts/orin/install-trained-xapps.py
+python scripts/orin/install-trained-xapps.py \
+  --bundle artifacts/xapps/chongyu/20261123 \
+  --output outputs/trained_xapps/20261123
 ```
 
 The release records each model's target KPI, control parameters, training and

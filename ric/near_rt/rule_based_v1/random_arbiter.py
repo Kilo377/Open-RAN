@@ -2,6 +2,8 @@
 
 This chooses a request, never a blended parameter. Requests remain held until
 withdrawal or source expiry; a choice is a snapshot valid for one decision window.
+One valid source has no application conflict: a fresh original proposal passes
+immediately. Identical repeats keep their generation while E2 is in flight.
 """
 from copy import deepcopy
 import math
@@ -12,6 +14,15 @@ SCHEDULER_BUNDLE_FIELDS = frozenset({'scheduler_mode', 'ue_scheduler_weights'})
 SCHEDULER_RESERVED_FIELDS = SCHEDULER_BUNDLE_FIELDS | frozenset({
     'scheduler_policy_hint', 'latency_bias', 'slice_weight_adjustment'})
 SUPPORTED_FIELDS = frozenset({'ue_offload_fraction'}) | SCHEDULER_BUNDLE_FIELDS
+
+
+def _same_single_proposal(record, candidate):
+    """Compare held xApp proposals, never the per-TTI merged E2 request ID."""
+    return (record.get('winner') == candidate['source']
+        and record.get('selected_value') == candidate['value']
+        and all(record.get(key) == candidate.get(key) for key in
+            ('request_id', 'effective_from_slot', 'effective_until_slot', 'priority', 'provenance'))
+        and record.get('framework_tuning', {}) == candidate.get('framework_tuning', {}))
 
 
 def overlaps_unequally(left, right):
@@ -55,6 +66,8 @@ class RandomOffloadArbiter:
         still_valid = old and old['window_index'] == window and old['cell_id'] == cid and old['sources'] == source_set
         if still_valid and old['winner'] != 'rule_withdrawal':
             still_valid = old_source is not None and self.request_valid(old, slot) and old_source.get('provenance') == old.get('provenance')
+        single_refresh = bool(still_valid and len(candidates) == 1 and not _same_single_proposal(old, candidates[0]))
+        if single_refresh:still_valid = False
         if still_valid:
             return deepcopy(old), None
         if not candidates and baseline is None:
@@ -84,7 +97,7 @@ class RandomOffloadArbiter:
                 request_id=c.get('request_id'),effective_from_slot=c.get('effective_from_slot'),
                 effective_until_slot=c.get('effective_until_slot'),provenance=deepcopy(c.get('provenance'))) for c in candidates], draw=draw,
             stream_key=stream_key,draw_index=self.draw_indices.get(uid) if conflict else None,
-            selection_cause='initial' if old is None else 'window_advance' if old['window_index']!=window else 'candidate_set_or_validity_change',
+            selection_cause='single_source_proposal_refresh' if single_refresh else 'initial' if old is None else 'window_advance' if old['window_index']!=window else 'candidate_set_or_validity_change',
             probability=1 / len(candidates) if conflict else 1., conflict=conflict)
         self.current[uid] = deepcopy(result)
         event = dict(reason='direct_conflict_random_selection' if conflict else 'direct_conflict_request_selection',
@@ -118,6 +131,8 @@ class RandomSchedulerArbiter(RandomOffloadArbiter):
         held=bool(old and old['window_index']==window and old['sources']==sources and old['serving_ue_ids']==members)
         if held and old['winner']!='rule_withdrawal':
             held=bool(source and self.request_valid(old,slot) and source.get('provenance')==old.get('provenance'))
+        single_refresh=bool(held and len(candidates)==1 and not _same_single_proposal(old,candidates[0]))
+        if single_refresh:held=False
         if held:return deepcopy(old),None
         if not candidates and baseline is None:
             self.invalidate(cid)
@@ -147,7 +162,7 @@ class RandomSchedulerArbiter(RandomOffloadArbiter):
                 provenance=deepcopy(c.get('provenance'))) for c in candidates],draw=draw,
             stream_key=stream_key,draw_index=self.draw_indices.get(cid) if conflict else None,
             probability=1/len(candidates) if conflict else 1.,conflict=conflict,
-            selection_cause='initial' if old is None else 'window_advance' if old['window_index']!=window else 'source_validity_or_membership_change')
+            selection_cause='single_source_proposal_refresh' if single_refresh else 'initial' if old is None else 'window_advance' if old['window_index']!=window else 'source_validity_or_membership_change')
         self.current[cid]=deepcopy(result)
         return result,dict(reason='direct_conflict_random_selection' if conflict else 'direct_conflict_request_selection',slot_id=slot,**deepcopy(result))
 

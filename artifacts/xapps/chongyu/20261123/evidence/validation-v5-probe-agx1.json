@@ -1,0 +1,183 @@
+{
+  "schema": "oran.parallel-probe-final-report.v2",
+  "worker": "agx1",
+  "slots": 2000,
+  "seed": 341701,
+  "scope": "/dev/shm/oran_xapp_parallel_probe_20261123/b120615c078e4727974503a24d3da6cc",
+  "source_archive_sha256": "ff29827e59ff9aeba5a998f307789160dc5e85c8c681dabec5ff76b9ea8cc46f",
+  "script_sha256": "d9e88e0f05447072a12338978c7672b0e907367951467ff4e360fb7c284e8dc4",
+  "plan_sha256": "334e6c326b3aff9552e45a2f400842717e70d72f61a36da196b1a907fe1016ce",
+  "result_sha256": "4f0712edf97406023a9f996032df93de68086b1a2a8a3290bc199a62af9c8969",
+  "sealed_manifest_sha256": "2f83b97f194dd62c547196c37ab2ff3deb42f98032eb2d6aa9a47785c1f54320",
+  "mirror_sha256": "1635ba6f5cf0fef44d4f56f7623a8d5ad88a80f168db058d78d5947c5c5e556d",
+  "serial_end_to_end_s": 150.93324748100713,
+  "parallel_end_to_end_s": [
+    153.0671008930076,
+    153.87076103501022
+  ],
+  "parallel_makespan_s": 153.87474217600538,
+  "serial_simulation_only_s": 132.06628247001208,
+  "parallel_simulation_only_s": [
+    133.93987224801094,
+    134.76304673301638
+  ],
+  "end_to_end_aggregate_execution_speedup": 1.9617676734543774,
+  "simulation_only_execution_speedup_estimate": 1.9599776893090441,
+  "simulation_only_estimate_scope": "Recorded loop durations; exact common loop start times not independently sampled.",
+  "all_actual_integer_float_geometry_control_source_checks_passed": true,
+  "independent_mac_parity_checks": 3,
+  "same_seed_current_training_reference_checked": true,
+  "agx2_reference_note": null,
+  "observed_live_affinity": {
+    "probe_operator": {
+      "pid": 23937,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 2
+    },
+    "serial": {
+      "pid": 23938,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "current_v4_training": {
+      "pid": 23369,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 4
+    },
+    "parallel-a": {
+      "pid": 23998,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 2
+    },
+    "parallel-b": {
+      "pid": 23999,
+      "observed": true,
+      "Cpus_allowed_list": "0-11",
+      "sched_getaffinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "last_cpu_number": 9
+    }
+  },
+  "minimum_sampled_MemAvailable_bytes": 36073508864,
+  "current_training_before": {
+    "id": "0d977f3c4dfc41e0b0cbc0313bfdcfac",
+    "pid": 23369,
+    "phase": "running",
+    "last_completed_slot": 38000,
+    "simulation_wall_s_so_far": 4516.907381296012,
+    "sched_getaffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "current_training_after": {
+    "observed_utc": "2026-11-23T07:11:01.307634+00:00",
+    "existing_train_pid": 23369,
+    "existing_train_phase": "running",
+    "last_completed_slot": 40000,
+    "simulation_wall_s_so_far": 4899.5406585530145,
+    "sched_getaffinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "MemAvailable_bytes": 41929302016,
+    "existing_training_signalled": false,
+    "affinity_modified": false
+  },
+  "training_impact_statement": "Current training continued under the same PID and unchanged affinity/worker lock. No signal or parameter change was made; these observations do not causally quantify any wall-time slowdown from shared resources.",
+  "actual_holdout_read": false,
+  "production_parallelism_authorized": false,
+  "remote_data_retained": true,
+  "interpretation": "Aggregate simulator execution rate, not network goodput or xApp benefit. Serial-first and cold/JIT effects remain bounded short-probe confounders."
+}

@@ -1,0 +1,1597 @@
+{
+  "schema": "oran.actual-xapp-comparison-report.v1",
+  "role": "holdout",
+  "synthetic_fixture": false,
+  "plan_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-comparison-plan-observer-recovery-v2.json",
+  "plan_sha256": "ecdc8bfa0fd5477987a851bc577ad6f63a6ed61893ca66c452af5799d6383158",
+  "protocol_sha256": "3595959b9ef48daa17faa89a6267df371c67bf0c3b94b3faf3fc2f71a6f8e4ed",
+  "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+  "registered_seeds": [
+    341721,
+    341722
+  ],
+  "comparisons": [
+    {
+      "role": "holdout",
+      "seed": 341721,
+      "actor": "power",
+      "label": "selected",
+      "metric": "ue_power_w",
+      "unit": "W",
+      "off": 5.244869999999355,
+      "on": 4.965384499999544,
+      "gain_percent": 5.32874027382652,
+      "target_percent": 10.0,
+      "target_met": false,
+      "normalized_improvement_factor": 1.0532874027382653,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/8591f846e6454f64bfb75c0d98b50167",
+      "on_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/54df72513c5a4e1e89da4c4782706de2",
+      "model_sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+      "weight_origin": "frozen_artifact",
+      "prefix_certificate": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-power-holdout-v5.json",
+        "sha256": "4b0147c64e364f75cf3dc8d260bdfe4c62bc0ea04993c4db4c27b0dad60ef758",
+        "schema": "oran.study-prefix-compatibility.v1",
+        "passed": true,
+        "off_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "on_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5"
+      },
+      "side_effects_off": {
+        "ue_power_w": 5.244869999999355,
+        "network_goodput_mbps": 48.7515408,
+        "urllc_failure_fraction": 0.0847,
+        "task_success_ratio": 0.9292929292929293,
+        "mec_offloaded_latency_ms": 32.21912350597603
+      },
+      "side_effects_on": {
+        "ue_power_w": 4.965384499999544,
+        "network_goodput_mbps": 48.7309248,
+        "urllc_failure_fraction": 0.079775,
+        "task_success_ratio": 0.9116161616161617,
+        "mec_offloaded_latency_ms": 39.66857142857138
+      }
+    },
+    {
+      "role": "holdout",
+      "seed": 341721,
+      "actor": "throughput",
+      "label": "selected",
+      "metric": "network_goodput_mbps",
+      "unit": "Mbit/s",
+      "off": 48.7515408,
+      "on": 49.4536784,
+      "gain_percent": 1.4402367360664021,
+      "target_percent": 10.0,
+      "target_met": false,
+      "normalized_improvement_factor": 1.014402367360664,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/8591f846e6454f64bfb75c0d98b50167",
+      "on_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+      "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "weight_origin": "retained_legacy",
+      "prefix_certificate": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341721-throughput-holdout-v5.json",
+        "sha256": "d6d9b65412cb4f4bb503671660fd0c8735f6440997fe0863c50f75ab33f9e11c",
+        "schema": "oran.study-prefix-compatibility.v1",
+        "passed": true,
+        "off_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "on_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5"
+      },
+      "side_effects_off": {
+        "ue_power_w": 5.244869999999355,
+        "network_goodput_mbps": 48.7515408,
+        "urllc_failure_fraction": 0.0847,
+        "task_success_ratio": 0.9292929292929293,
+        "mec_offloaded_latency_ms": 32.21912350597603
+      },
+      "side_effects_on": {
+        "ue_power_w": 5.333897499999469,
+        "network_goodput_mbps": 49.4536784,
+        "urllc_failure_fraction": 0.0855,
+        "task_success_ratio": 0.9696969696969697,
+        "mec_offloaded_latency_ms": 20.63779527559052
+      }
+    },
+    {
+      "role": "holdout",
+      "seed": 341722,
+      "actor": "power",
+      "label": "selected",
+      "metric": "ue_power_w",
+      "unit": "W",
+      "off": 5.320316499999538,
+      "on": 5.055205999999606,
+      "gain_percent": 4.982983625127473,
+      "target_percent": 10.0,
+      "target_met": false,
+      "normalized_improvement_factor": 1.0498298362512748,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/0d5947a31a784472a7a828cf921f722f",
+      "on_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/4d3306c60f3346e2a5af5aeaa4c27320",
+      "model_sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+      "weight_origin": "frozen_artifact",
+      "prefix_certificate": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-power-holdout-v5.json",
+        "sha256": "739364a186cdc8556858a9a5cbd9620f3fbed394a03a4b4e25b310c2f3c72b30",
+        "schema": "oran.study-prefix-compatibility.v1",
+        "passed": true,
+        "off_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "on_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5"
+      },
+      "side_effects_off": {
+        "ue_power_w": 5.320316499999538,
+        "network_goodput_mbps": 47.9235328,
+        "urllc_failure_fraction": 0.10615,
+        "task_success_ratio": 0.9368686868686869,
+        "mec_offloaded_latency_ms": 48.58057851239664
+      },
+      "side_effects_on": {
+        "ue_power_w": 5.055205999999606,
+        "network_goodput_mbps": 47.7381016,
+        "urllc_failure_fraction": 0.107475,
+        "task_success_ratio": 0.8863636363636364,
+        "mec_offloaded_latency_ms": 52.56395348837205
+      }
+    },
+    {
+      "role": "holdout",
+      "seed": 341722,
+      "actor": "throughput",
+      "label": "selected",
+      "metric": "network_goodput_mbps",
+      "unit": "Mbit/s",
+      "off": 47.9235328,
+      "on": 49.5751272,
+      "gain_percent": 3.4463118712316647,
+      "target_percent": 10.0,
+      "target_met": false,
+      "normalized_improvement_factor": 1.0344631187123166,
+      "off_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/0d5947a31a784472a7a828cf921f722f",
+      "on_case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/b7f511e077794bed9f1f7af189026b9a",
+      "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "weight_origin": "retained_legacy",
+      "prefix_certificate": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/audit/prefix/341722-throughput-holdout-v5.json",
+        "sha256": "880a74f425b356ae63a33cd5bcc11137926412e4c62b35850bdbc7556b236b28",
+        "schema": "oran.study-prefix-compatibility.v1",
+        "passed": true,
+        "off_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "on_archive": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5"
+      },
+      "side_effects_off": {
+        "ue_power_w": 5.320316499999538,
+        "network_goodput_mbps": 47.9235328,
+        "urllc_failure_fraction": 0.10615,
+        "task_success_ratio": 0.9368686868686869,
+        "mec_offloaded_latency_ms": 48.58057851239664
+      },
+      "side_effects_on": {
+        "ue_power_w": 5.327494999999555,
+        "network_goodput_mbps": 49.5751272,
+        "urllc_failure_fraction": 0.103725,
+        "task_success_ratio": 0.9797979797979798,
+        "mec_offloaded_latency_ms": 20.930041152263303
+      }
+    }
+  ],
+  "means": [
+    {
+      "role": "holdout",
+      "actor": "power",
+      "label": "selected",
+      "seeds": [
+        341721,
+        341722
+      ],
+      "n_seeds": 2,
+      "mean_off": 5.282593249999446,
+      "mean_on": 5.010295249999575,
+      "unit": "W",
+      "mean_gain_percent": 5.155861949476996,
+      "minimum_gain_percent": 4.982983625127473,
+      "maximum_gain_percent": 5.32874027382652,
+      "mean_target_met": false,
+      "all_seed_targets_met": false,
+      "normalized_improvement_factor": 1.05155861949477
+    },
+    {
+      "role": "holdout",
+      "actor": "throughput",
+      "label": "selected",
+      "seeds": [
+        341721,
+        341722
+      ],
+      "n_seeds": 2,
+      "mean_off": 48.337536799999995,
+      "mean_on": 49.5144028,
+      "unit": "Mbit/s",
+      "mean_gain_percent": 2.4432743036490336,
+      "minimum_gain_percent": 1.4402367360664021,
+      "maximum_gain_percent": 3.4463118712316647,
+      "mean_target_met": false,
+      "all_seed_targets_met": false,
+      "normalized_improvement_factor": 1.0244327430364903
+    }
+  ],
+  "validation_protocol": {
+    "validation_version": "v5",
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/protocol-v5-validation.json",
+    "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+    "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+    "source_archive_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/source.tgz",
+    "driver_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+    "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+    "execution": {
+      "mode": "isolated_validation_lanes",
+      "max_validation_lanes_per_host": 2,
+      "lane_ids": [
+        "lane-0",
+        "lane-1"
+      ],
+      "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+      "minimum_memavailable_before_launch_bytes": 30064771072,
+      "minimum_shm_free_bytes": 8589934592,
+      "passed_2000_probe_certificates": {
+        "agx1": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811",
+        "agx2": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13"
+      },
+      "old_v4_worker_must_be_inactive": true,
+      "final_per_host_order": [
+        "off",
+        [
+          "power",
+          "throughput"
+        ]
+      ]
+    },
+    "probe_certificates": [
+      {
+        "worker": "agx1",
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/probe-certificates/agx1.json",
+        "sha256": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811"
+      },
+      {
+        "worker": "agx2",
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/probe-certificates/agx2.json",
+        "sha256": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13"
+      }
+    ],
+    "retained_throughput_model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "model_selection_stop_utc": "2026-11-23T09:20:00+00:00",
+    "development_stop_utc": "2026-11-23T09:20:00+00:00",
+    "total_deadline_utc": "2026-11-23T11:40:00+00:00"
+  },
+  "mean_10pct_met_for_every_reported_actor_candidate": false,
+  "every_seed_10pct_met_for_every_reported_actor_candidate": false,
+  "case_evidence": [
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/8591f846e6454f64bfb75c0d98b50167",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/8591f846e6454f64bfb75c0d98b50167/run",
+      "seed": 341721,
+      "actor": null,
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 5.244869999999355,
+        "network_goodput_mbps": 48.7515408,
+        "urllc_failure_fraction": 0.0847,
+        "task_success_ratio": 0.9292929292929293,
+        "mec_offloaded_latency_ms": 32.21912350597603
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 5.244869999999354,
+        "network_goodput_mbps": 48.7515408,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.9420099999999887,
+              "ue_1": 0.9689999999999581,
+              "ue_2": 0.8659749999999752,
+              "ue_4": 0.9534799999999742,
+              "ue_6": 0.8679249999999739,
+              "ue_8": 0.9183099999999662
+            },
+            "delivered_bytes": {
+              "ue_0": 1020355,
+              "ue_1": 52000,
+              "ue_2": 290800,
+              "ue_4": 3531000,
+              "ue_6": 218521,
+              "ue_8": 1247555
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 10.893689999997466,
+              "ue_1": 10.365975000000915,
+              "ue_2": 9.6880249999998,
+              "ue_4": 9.456569999998267,
+              "ue_6": 9.260324999999039,
+              "ue_8": 8.300814999997895
+            },
+            "delivered_bytes": {
+              "ue_0": 10499884,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 37840550,
+              "ue_6": 2282107,
+              "ue_8": 13193276
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": null,
+      "seal_sha256": "c5327959779c9380cdff85531d0f113738dc0ec57853609c524ebe6b0160af90",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "b7859911d448a954490e9c0328f1563b82a1b0f53ec2988aa4b16a615a8df9f6",
+      "files_verified": 49,
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-0",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/8591f846e6454f64bfb75c0d98b50167/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/8591f846e6454f64bfb75c0d98b50167/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/8591f846e6454f64bfb75c0d98b50167/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/8591f846e6454f64bfb75c0d98b50167/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/8591f846e6454f64bfb75c0d98b50167/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+        "reader_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      }
+    },
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/54df72513c5a4e1e89da4c4782706de2",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/54df72513c5a4e1e89da4c4782706de2/run",
+      "seed": 341721,
+      "actor": "power",
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 4.965384499999544,
+        "network_goodput_mbps": 48.7309248,
+        "urllc_failure_fraction": 0.079775,
+        "task_success_ratio": 0.9116161616161617,
+        "mec_offloaded_latency_ms": 39.66857142857138
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 4.965384499999544,
+        "network_goodput_mbps": 48.730924800000004,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.9420099999999887,
+              "ue_1": 0.9689999999999581,
+              "ue_2": 0.8659749999999752,
+              "ue_4": 0.9534799999999742,
+              "ue_6": 0.8679249999999739,
+              "ue_8": 0.9183099999999662
+            },
+            "delivered_bytes": {
+              "ue_0": 1020355,
+              "ue_1": 52000,
+              "ue_2": 290800,
+              "ue_4": 3531000,
+              "ue_6": 218521,
+              "ue_8": 1247555
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 8.972214999998686,
+              "ue_1": 10.365000000000911,
+              "ue_2": 9.692899999999812,
+              "ue_4": 8.531754999998958,
+              "ue_6": 9.269749999999053,
+              "ue_8": 8.338924999997863
+            },
+            "delivered_bytes": {
+              "ue_0": 10454329,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 37806870,
+              "ue_6": 2279923,
+              "ue_8": 13248925
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+      "seal_sha256": "b6bac4326cae4bbf6529267b85496c2c3c966b4f9ca0b8e0ab5e5dba4ba2a494",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "a250ac6c7295f8772e66326dcdb5b21327fc0a59296e378ac1aa5dcd163c8f49",
+      "files_verified": 52,
+      "power_action_semantics": {
+        "passed": true,
+        "power_action_set_version": "legacy9",
+        "power_action_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "actual_config_action_set_version": "legacy9",
+        "startup_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "summary_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "action_count": 9,
+        "startup_log": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/54df72513c5a4e1e89da4c4782706de2/run/energy_rf_events.jsonl",
+        "startup_log_sha256": "6e380ee8d429d54525c6960faa42888e25b3414c2b93ee672a344cf771043b7f",
+        "startup_catalogue_events": 1,
+        "config_sha256": "029e4755e63f3fedec315ab509c241c50536770cdd00a8cc0d5d33b420abd905",
+        "final_summary_sha256": "b8ca250bbc43c58dd5adea95e38ad585de91ca0b2b319d4878baeef6482293c5",
+        "external_semantics_certificate_used_as_substitute": false
+      },
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-0",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/54df72513c5a4e1e89da4c4782706de2/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/54df72513c5a4e1e89da4c4782706de2/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/54df72513c5a4e1e89da4c4782706de2/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/54df72513c5a4e1e89da4c4782706de2/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-0/54df72513c5a4e1e89da4c4782706de2/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+        "reader_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      }
+    },
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/run",
+      "seed": 341721,
+      "actor": "throughput",
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 5.333897499999469,
+        "network_goodput_mbps": 49.4536784,
+        "urllc_failure_fraction": 0.0855,
+        "task_success_ratio": 0.9696969696969697,
+        "mec_offloaded_latency_ms": 20.63779527559052
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 5.333897499999468,
+        "network_goodput_mbps": 49.4536784,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.9420099999999887,
+              "ue_1": 0.9689999999999581,
+              "ue_2": 0.8659749999999752,
+              "ue_4": 0.9534799999999742,
+              "ue_6": 0.8679249999999739,
+              "ue_8": 0.9183099999999662
+            },
+            "delivered_bytes": {
+              "ue_0": 1020355,
+              "ue_1": 52000,
+              "ue_2": 290800,
+              "ue_4": 3531000,
+              "ue_6": 218521,
+              "ue_8": 1247555
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 11.642169999998488,
+              "ue_1": 10.372475000000938,
+              "ue_2": 9.685424999999801,
+              "ue_4": 9.408734999998112,
+              "ue_6": 9.415674999999336,
+              "ue_8": 8.331194999997845
+            },
+            "delivered_bytes": {
+              "ue_0": 10696558,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 38072200,
+              "ue_6": 2283774,
+              "ue_8": 13640957
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "seal_sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+      "seal_type": "explicit_observer_recovery_supplemental",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977",
+      "audit_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+      "files_verified": 78,
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-1",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": false,
+        "supplementary_seal_audited": true,
+        "original_worker_lane_inputs_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+        "reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+      },
+      "observer_recovery": {
+        "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+        "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+        "original_worker_phase": "failed",
+        "same_native_simulation_completed": true,
+        "no_restart": true,
+        "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+        "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+        "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+        "original_failed_status_sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+        "original_failed_seal_sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+        "failure_envelope_sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040",
+        "root_go_sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c",
+        "supplemental_seal_sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+        "supplemental_files_verified": 78,
+        "recovery_certificate_sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69",
+        "pid_continuity": {
+          "pid": 25336,
+          "start_ticks": 15559801,
+          "cmdline_sha256": "38273a9b7ce8070f943a9d8b7e8a60813d3defe7d34558eb6b65338ef425c6cc",
+          "before_observed_utc": "2026-11-23T10:05:06.404339+00:00",
+          "before_producer_slot": 18000,
+          "process_end_observed_utc": "2026-11-23T10:26:26.581604+00:00",
+          "exit_code": null,
+          "exit_code_status": "unavailable_non_child"
+        },
+        "audit_function": "audit_run",
+        "audit_worker_sha256": "3620462901153dffa7e67c1c68b0b847ff689d70cbbf97ba6dd32e24eb9ecdf6",
+        "reader_amendment": {
+          "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+          "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3",
+          "original_reader_sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726",
+          "actual_reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783",
+          "original_registration_sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f",
+          "original_case_files_changed": false
+        },
+        "exit_code": null,
+        "exit_code_status": "unavailable_non_child",
+        "validation_lane": {
+          "passed": true,
+          "lane_id": "lane-1",
+          "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+          "profiles": {
+            "traffic_profile": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+              "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+              "sealed_copy": "operator-profiles/traffic.json"
+            },
+            "ue_services_config": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+              "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+              "sealed_copy": "operator-profiles/ue-services.json"
+            },
+            "ap_services_profile": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+              "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+              "sealed_copy": "operator-profiles/ap-services.json"
+            },
+            "base_config": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+              "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+              "sealed_copy": "operator-profiles/base.json"
+            }
+          },
+          "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+          "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+          "original_worker_seal_audited": false,
+          "supplementary_seal_audited": true,
+          "original_worker_lane_inputs_audited": true,
+          "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+          "reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+        },
+        "evidence_files": {
+          "owner-00-00-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+            "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+          },
+          "owner-01-01-observer-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/observer.py",
+            "sha256": "015f3799f9f38e5963b9dc260572857d852784ca70ec28b98fd58d9fbe4e8320"
+          },
+          "owner-02-02-pid-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/pid-before.json",
+            "sha256": "ed46947be2128e706e7202f1359aa065480f1cca29ce43693d9fb9be930ff0e9"
+          },
+          "owner-03-03-checks-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-before.json",
+            "sha256": "058157c1943600a4412b9618bcf2626c9be1d54bbe33aac50784ea4958214418"
+          },
+          "owner-04-04-checks-after-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-after.json",
+            "sha256": "99117f6bb0556e0477f0e90ac9aa098c7fe32e6e58a5826d83fb5a5713e0de8c"
+          },
+          "owner-05-05-producer-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-before.json",
+            "sha256": "762ae026f571e730e1b750a7dbe02505d228daac73b463154621e74d64a0cf13"
+          },
+          "owner-06-06-producer-ended-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-ended.json",
+            "sha256": "c37b04024ff0fbc0f70d72d79d7b80a156ae95464164839a3b26e3756e55533e"
+          },
+          "owner-07-07-approved-registration-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/approved-registration.json",
+            "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+          },
+          "owner-08-08-complete-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+            "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+          },
+          "owner-09-09-audit-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+            "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+          },
+          "owner-10-10-supplemental-seal-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+            "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+          },
+          "owner-11-11-recovery-certificate-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+            "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+          },
+          "owner-12-12-recovery-certificate-json-sha256-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+            "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+          },
+          "owner-13-13-mirror-verification-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+            "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+          },
+          "owner-14-14-envelope-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/envelope.json",
+            "sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040"
+          },
+          "owner-15-15-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "owner-16-16-sealed-manifest-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "owner-17-17-request-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/request.json",
+            "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+          },
+          "owner-18-18-command-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/command.json",
+            "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+          },
+          "owner-19-19-observer-recovery-reader-v2-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+            "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+          },
+          "owner-20-20-observer-recovery-reader-amendment-v2-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+            "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+          },
+          "owner-21-21-original-operator-plan-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-operator-plan.json",
+            "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+          },
+          "owner-22-22-original-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-root-go.json",
+            "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+          },
+          "owner-23-23-original-selection-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-selection.json",
+            "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+          },
+          "owner-24-24-original-command-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-command.json",
+            "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+          },
+          "owner-25-25-original-request-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-request.json",
+            "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+          },
+          "owner-26-26-original-driver-process-log": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-process.log",
+            "sha256": "d96c921fcaa1f77d415156ae99c7b6928e14c63522026b8a19a0d84bb2d07063"
+          },
+          "owner-27-27-original-driver-result-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-result.json",
+            "sha256": "a57112a8581eec2872362851b6bfd61843614fba0cc8f20494cfdf4071b02bec"
+          },
+          "owner-28-28-original-driver-error-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-error.json",
+            "sha256": "2a39364e8a47f5d7bee13369fa95112ec8ebb289b77a9110c0628eeb27041510"
+          },
+          "owner-29-29-original-failed-seal-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-failed-seal.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "owner-30-30-original-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "original-failed-status": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "original-failed-seal": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "root-go": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+            "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+          },
+          "supplemental-seal": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+            "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+          },
+          "recovery-certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+            "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+          },
+          "recovery-certificate-receipt": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+            "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+          },
+          "recovery-mirror": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+            "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+          },
+          "recovery-complete-status": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+            "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+          },
+          "recovery-audit": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+            "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+          },
+          "recovery-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+            "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+          },
+          "recovery-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+            "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+          },
+          "canonical-base-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons.py",
+            "sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6"
+          },
+          "recovery-reader-amendment": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+            "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+          },
+          "original-recovery-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v1.py",
+            "sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726"
+          },
+          "superseded-recovery-adapter": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v1.py",
+            "sha256": "56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423"
+          },
+          "superseded-recovery-coordinator": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_observer_recovery_v1.py",
+            "sha256": "e60b2a499093dc60c4dcc547f2383d571685f7aeb1b4eeec35a21d6b66eb5846"
+          },
+          "superseded-recovery-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-observer-recovery-coordinator-v1/registration.json",
+            "sha256": "8497695c5534c978ab75b15adda58187059823eb06642e300384e2e40de9eb79"
+          },
+          "canonical-recovery-adapter": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v2.py",
+            "sha256": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec"
+          },
+          "archival-coordinator": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_v5_v1.py",
+            "sha256": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70"
+          },
+          "archival-coordinator-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-coordinator-v5-v1/registration.json",
+            "sha256": "e4340b2d461a50747334e7635ae44ac50fb0f2079c2c0f48639a46362d347a74"
+          },
+          "original-operator-driver-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.json",
+            "sha256": "c69ca6b5d4c40e0e64dfc41961633b8bafcdecea6f1925c7ff06b1b628192b9b"
+          },
+          "original-operator-driver-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.py",
+            "sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+          },
+          "original-operator-protocol-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-protocol.json",
+            "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2"
+          },
+          "original-operator-case-plan-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-case-plan.json",
+            "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+          },
+          "original-operator-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-root-go.json",
+            "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+          },
+          "original-operator-source-members-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-source-members.json",
+            "sha256": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4"
+          },
+          "original-operator-selection-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-selection.json",
+            "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+          },
+          "original-profile-traffic-profile": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+          },
+          "original-profile-ue-services-config": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+          },
+          "original-profile-ap-services-profile": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "original-profile-base-config": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+          }
+        }
+      }
+    },
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/0d5947a31a784472a7a828cf921f722f",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/0d5947a31a784472a7a828cf921f722f/run",
+      "seed": 341722,
+      "actor": null,
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 5.320316499999538,
+        "network_goodput_mbps": 47.9235328,
+        "urllc_failure_fraction": 0.10615,
+        "task_success_ratio": 0.9368686868686869,
+        "mec_offloaded_latency_ms": 48.58057851239664
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 5.320316499999537,
+        "network_goodput_mbps": 47.9235328,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.8887999999999887,
+              "ue_1": 0.9654249999999591,
+              "ue_2": 0.9049749999999686,
+              "ue_4": 1.1347599999999574,
+              "ue_6": 0.8971749999999699,
+              "ue_8": 0.8182599999999823
+            },
+            "delivered_bytes": {
+              "ue_0": 1022584,
+              "ue_1": 53040,
+              "ue_2": 276280,
+              "ue_4": 2750327,
+              "ue_6": 224195,
+              "ue_8": 1262019
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 11.129374999997792,
+              "ue_1": 10.361750000000944,
+              "ue_2": 9.755299999999908,
+              "ue_4": 10.359334999999026,
+              "ue_6": 9.428024999999325,
+              "ue_8": 7.778774999998208
+            },
+            "delivered_bytes": {
+              "ue_0": 10543124,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 35561100,
+              "ue_6": 2263840,
+              "ue_8": 13640957
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": null,
+      "seal_sha256": "796b71826187787581e192339e5fdc41c414de58eb6b3545f29e97c509f79e85",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "715dab05d72c988ef4c1c289e5ff0b12bb5f6236abf471989816e841373b4d12",
+      "files_verified": 49,
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-0",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/0d5947a31a784472a7a828cf921f722f/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/0d5947a31a784472a7a828cf921f722f/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/0d5947a31a784472a7a828cf921f722f/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/0d5947a31a784472a7a828cf921f722f/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/0d5947a31a784472a7a828cf921f722f/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+        "reader_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      }
+    },
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/4d3306c60f3346e2a5af5aeaa4c27320",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/4d3306c60f3346e2a5af5aeaa4c27320/run",
+      "seed": 341722,
+      "actor": "power",
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 5.055205999999606,
+        "network_goodput_mbps": 47.7381016,
+        "urllc_failure_fraction": 0.107475,
+        "task_success_ratio": 0.8863636363636364,
+        "mec_offloaded_latency_ms": 52.56395348837205
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 5.055205999999606,
+        "network_goodput_mbps": 47.7381016,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.8887999999999887,
+              "ue_1": 0.9654249999999591,
+              "ue_2": 0.9049749999999686,
+              "ue_4": 1.1347599999999574,
+              "ue_6": 0.8971749999999699,
+              "ue_8": 0.8182599999999823
+            },
+            "delivered_bytes": {
+              "ue_0": 1022584,
+              "ue_1": 53040,
+              "ue_2": 276280,
+              "ue_4": 2750327,
+              "ue_6": 224195,
+              "ue_8": 1262019
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 9.5291299999981,
+              "ue_1": 10.352975000000919,
+              "ue_2": 9.757574999999912,
+              "ue_4": 9.32009999999946,
+              "ue_6": 9.401049999999291,
+              "ue_8": 7.800624999998198
+            },
+            "delivered_bytes": {
+              "ue_0": 10453046,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 35417568,
+              "ue_6": 2265661,
+              "ue_8": 13640957
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+      "seal_sha256": "11dbae5ee5d4a08094e9da3a15e51e3f8d1f8b402f7c2f493803404d54e5ba25",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "a8a6771e4e378c0a2db268d0bb69be3bebd22ea1fb3bc72bcbd7b3a7d3302a14",
+      "files_verified": 52,
+      "power_action_semantics": {
+        "passed": true,
+        "power_action_set_version": "legacy9",
+        "power_action_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "actual_config_action_set_version": "legacy9",
+        "startup_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "summary_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+        "action_count": 9,
+        "startup_log": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/4d3306c60f3346e2a5af5aeaa4c27320/run/energy_rf_events.jsonl",
+        "startup_log_sha256": "5cb23bff97fc40b8fbcdebcaf602c1ff2761e2798da706007db18f75833f0af3",
+        "startup_catalogue_events": 1,
+        "config_sha256": "3bd38a639817ae2f407650bf569ee7023ef87482b176a312bccdc86372e2d4eb",
+        "final_summary_sha256": "5cd25a5bd6db82ca49f9f4644c72b976891c47b0dd75ee19fdc04ae199dbc75b",
+        "external_semantics_certificate_used_as_substitute": false
+      },
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-0",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/4d3306c60f3346e2a5af5aeaa4c27320/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/4d3306c60f3346e2a5af5aeaa4c27320/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/4d3306c60f3346e2a5af5aeaa4c27320/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/4d3306c60f3346e2a5af5aeaa4c27320/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-0/4d3306c60f3346e2a5af5aeaa4c27320/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+        "reader_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      }
+    },
+    {
+      "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/b7f511e077794bed9f1f7af189026b9a",
+      "run": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx2/b7f511e077794bed9f1f7af189026b9a/run",
+      "seed": 341722,
+      "actor": "throughput",
+      "profiles_sha256": {
+        "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+        "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+        "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+        "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      },
+      "values": {
+        "ue_power_w": 5.327494999999555,
+        "network_goodput_mbps": 49.5751272,
+        "urllc_failure_fraction": 0.103725,
+        "task_success_ratio": 0.9797979797979798,
+        "mec_offloaded_latency_ms": 20.930041152263303
+      },
+      "raw_endpoint_verification": {
+        "ue_power_w": 5.327494999999554,
+        "network_goodput_mbps": 49.5751272,
+        "endpoints": {
+          "2040": {
+            "energy_j": {
+              "ue_0": 0.8887999999999887,
+              "ue_1": 0.9654249999999591,
+              "ue_2": 0.9049749999999686,
+              "ue_4": 1.1347599999999574,
+              "ue_6": 0.8971749999999699,
+              "ue_8": 0.8182599999999823
+            },
+            "delivered_bytes": {
+              "ue_0": 1022584,
+              "ue_1": 53040,
+              "ue_2": 276280,
+              "ue_4": 2750327,
+              "ue_6": 224195,
+              "ue_8": 1262019
+            }
+          },
+          "22040": {
+            "energy_j": {
+              "ue_0": 11.520844999998326,
+              "ue_1": 10.36792500000097,
+              "ue_2": 9.753674999999907,
+              "ue_4": 10.018364999998454,
+              "ue_6": 9.505049999999459,
+              "ue_8": 7.718484999998253
+            },
+            "delivered_bytes": {
+              "ue_0": 10663616,
+              "ue_1": 573040,
+              "ue_2": 2910800,
+              "ue_4": 37502100,
+              "ue_6": 2266841,
+              "ue_8": 13640957
+            }
+          }
+        },
+        "contiguous_slots_verified": 22040,
+        "window_seconds": 10.0
+      },
+      "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "seal_sha256": "87ad0753bf98170e2bc0a749fc3bdff3ddb3ad4823eef63d0a9d4a22dfd043a2",
+      "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+      "recorded_source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+      "audit_sha256": "70f7a5df6cba43a5ab03672b5e8e4db19d8c0e757b45dd64ad24c2250ebad8a0",
+      "files_verified": 52,
+      "validation_lane": {
+        "passed": true,
+        "lane_id": "lane-1",
+        "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-1/b7f511e077794bed9f1f7af189026b9a/source-v5",
+        "profiles": {
+          "traffic_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-1/b7f511e077794bed9f1f7af189026b9a/profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "sealed_copy": "operator-profiles/traffic.json"
+          },
+          "ue_services_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-1/b7f511e077794bed9f1f7af189026b9a/profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "sealed_copy": "operator-profiles/ue-services.json"
+          },
+          "ap_services_profile": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-1/b7f511e077794bed9f1f7af189026b9a/profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+            "sealed_copy": "operator-profiles/ap-services.json"
+          },
+          "base_config": {
+            "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx2/lane-1/b7f511e077794bed9f1f7af189026b9a/profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+            "sealed_copy": "operator-profiles/base.json"
+          }
+        },
+        "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+        "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+        "original_worker_seal_audited": true,
+        "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+        "reader_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      }
+    }
+  ],
+  "window": {
+    "total_slots": 22440,
+    "start_slot_exclusive": 2040,
+    "end_slot_inclusive": 22040,
+    "duration_s": 10.0
+  },
+  "methods": {
+    "power_gain": "100*(OFF-ON)/OFF",
+    "throughput_gain": "100*(ON-OFF)/OFF",
+    "mean": "Arithmetic mean of same-role per-seed paired relative gains; no pooling across roles or actors.",
+    "normalization": "1 + relative target improvement/100. OFF=1; registered target=1.10.",
+    "range": "Minimum to maximum across registered seeds, not a confidence interval.",
+    "observer_recovery": "One unchanged native simulation completed after its file-stat observer failed; a separately approved supplemental seal is verified. The original failed worker status/seal are preserved."
+  },
+  "limitations": [
+    "Five worker-window KPIs retained; no extra task_latency_ms or mec_expected_gflops rescore is performed.",
+    "Missing side-effect observations remain null, not zero.",
+    "Training losses, predictions and model selection scores are not used as actual performance.",
+    "Development and holdout results are never combined into one mean.",
+    "One throughput run has an explicit observer recovery; its native simulation was not restarted, and its OS exit code is unavailable because the observer was not its parent. No successful original-worker exit is claimed. A separately pinned v2 reader-only amendment accepts legal confined tar directory headers; original failed metadata, registration, supplemental seal and certificate remain unchanged."
+  ],
+  "new_simulations": 0,
+  "model_fitting_performed": false,
+  "observer_recovery": {
+    "admitted_case_count": 1,
+    "cases": [
+      {
+        "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+        "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+        "original_worker_phase": "failed",
+        "same_native_simulation_completed": true,
+        "no_restart": true,
+        "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+        "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+        "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+        "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+        "original_failed_status_sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+        "original_failed_seal_sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+        "failure_envelope_sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040",
+        "root_go_sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c",
+        "supplemental_seal_sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+        "supplemental_files_verified": 78,
+        "recovery_certificate_sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69",
+        "pid_continuity": {
+          "pid": 25336,
+          "start_ticks": 15559801,
+          "cmdline_sha256": "38273a9b7ce8070f943a9d8b7e8a60813d3defe7d34558eb6b65338ef425c6cc",
+          "before_observed_utc": "2026-11-23T10:05:06.404339+00:00",
+          "before_producer_slot": 18000,
+          "process_end_observed_utc": "2026-11-23T10:26:26.581604+00:00",
+          "exit_code": null,
+          "exit_code_status": "unavailable_non_child"
+        },
+        "audit_function": "audit_run",
+        "audit_worker_sha256": "3620462901153dffa7e67c1c68b0b847ff689d70cbbf97ba6dd32e24eb9ecdf6",
+        "reader_amendment": {
+          "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+          "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3",
+          "original_reader_sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726",
+          "actual_reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783",
+          "original_registration_sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f",
+          "original_case_files_changed": false
+        },
+        "exit_code": null,
+        "exit_code_status": "unavailable_non_child",
+        "validation_lane": {
+          "passed": true,
+          "lane_id": "lane-1",
+          "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+          "profiles": {
+            "traffic_profile": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+              "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+              "sealed_copy": "operator-profiles/traffic.json"
+            },
+            "ue_services_config": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+              "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+              "sealed_copy": "operator-profiles/ue-services.json"
+            },
+            "ap_services_profile": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+              "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+              "sealed_copy": "operator-profiles/ap-services.json"
+            },
+            "base_config": {
+              "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+              "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+              "sealed_copy": "operator-profiles/base.json"
+            }
+          },
+          "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+          "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+          "original_worker_seal_audited": false,
+          "supplementary_seal_audited": true,
+          "original_worker_lane_inputs_audited": true,
+          "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+          "reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+        },
+        "evidence_files": {
+          "owner-00-00-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+            "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+          },
+          "owner-01-01-observer-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/observer.py",
+            "sha256": "015f3799f9f38e5963b9dc260572857d852784ca70ec28b98fd58d9fbe4e8320"
+          },
+          "owner-02-02-pid-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/pid-before.json",
+            "sha256": "ed46947be2128e706e7202f1359aa065480f1cca29ce43693d9fb9be930ff0e9"
+          },
+          "owner-03-03-checks-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-before.json",
+            "sha256": "058157c1943600a4412b9618bcf2626c9be1d54bbe33aac50784ea4958214418"
+          },
+          "owner-04-04-checks-after-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-after.json",
+            "sha256": "99117f6bb0556e0477f0e90ac9aa098c7fe32e6e58a5826d83fb5a5713e0de8c"
+          },
+          "owner-05-05-producer-before-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-before.json",
+            "sha256": "762ae026f571e730e1b750a7dbe02505d228daac73b463154621e74d64a0cf13"
+          },
+          "owner-06-06-producer-ended-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-ended.json",
+            "sha256": "c37b04024ff0fbc0f70d72d79d7b80a156ae95464164839a3b26e3756e55533e"
+          },
+          "owner-07-07-approved-registration-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/approved-registration.json",
+            "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+          },
+          "owner-08-08-complete-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+            "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+          },
+          "owner-09-09-audit-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+            "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+          },
+          "owner-10-10-supplemental-seal-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+            "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+          },
+          "owner-11-11-recovery-certificate-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+            "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+          },
+          "owner-12-12-recovery-certificate-json-sha256-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+            "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+          },
+          "owner-13-13-mirror-verification-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+            "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+          },
+          "owner-14-14-envelope-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/envelope.json",
+            "sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040"
+          },
+          "owner-15-15-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "owner-16-16-sealed-manifest-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "owner-17-17-request-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/request.json",
+            "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+          },
+          "owner-18-18-command-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/command.json",
+            "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+          },
+          "owner-19-19-observer-recovery-reader-v2-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+            "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+          },
+          "owner-20-20-observer-recovery-reader-amendment-v2-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+            "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+          },
+          "owner-21-21-original-operator-plan-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-operator-plan.json",
+            "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+          },
+          "owner-22-22-original-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-root-go.json",
+            "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+          },
+          "owner-23-23-original-selection-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-selection.json",
+            "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+          },
+          "owner-24-24-original-command-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-command.json",
+            "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+          },
+          "owner-25-25-original-request-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-request.json",
+            "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+          },
+          "owner-26-26-original-driver-process-log": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-process.log",
+            "sha256": "d96c921fcaa1f77d415156ae99c7b6928e14c63522026b8a19a0d84bb2d07063"
+          },
+          "owner-27-27-original-driver-result-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-result.json",
+            "sha256": "a57112a8581eec2872362851b6bfd61843614fba0cc8f20494cfdf4071b02bec"
+          },
+          "owner-28-28-original-driver-error-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-error.json",
+            "sha256": "2a39364e8a47f5d7bee13369fa95112ec8ebb289b77a9110c0628eeb27041510"
+          },
+          "owner-29-29-original-failed-seal-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-failed-seal.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "owner-30-30-original-status-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "original-failed-status": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+            "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+          },
+          "original-failed-seal": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+            "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+          },
+          "root-go": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+            "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+          },
+          "supplemental-seal": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+            "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+          },
+          "recovery-certificate": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+            "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+          },
+          "recovery-certificate-receipt": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+            "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+          },
+          "recovery-mirror": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+            "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+          },
+          "recovery-complete-status": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+            "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+          },
+          "recovery-audit": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+            "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+          },
+          "recovery-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+            "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+          },
+          "recovery-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+            "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+          },
+          "canonical-base-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons.py",
+            "sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6"
+          },
+          "recovery-reader-amendment": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+            "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+          },
+          "original-recovery-reader": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v1.py",
+            "sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726"
+          },
+          "superseded-recovery-adapter": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v1.py",
+            "sha256": "56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423"
+          },
+          "superseded-recovery-coordinator": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_observer_recovery_v1.py",
+            "sha256": "e60b2a499093dc60c4dcc547f2383d571685f7aeb1b4eeec35a21d6b66eb5846"
+          },
+          "superseded-recovery-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-observer-recovery-coordinator-v1/registration.json",
+            "sha256": "8497695c5534c978ab75b15adda58187059823eb06642e300384e2e40de9eb79"
+          },
+          "canonical-recovery-adapter": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v2.py",
+            "sha256": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec"
+          },
+          "archival-coordinator": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_v5_v1.py",
+            "sha256": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70"
+          },
+          "archival-coordinator-registration": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-coordinator-v5-v1/registration.json",
+            "sha256": "e4340b2d461a50747334e7635ae44ac50fb0f2079c2c0f48639a46362d347a74"
+          },
+          "original-operator-driver-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.json",
+            "sha256": "c69ca6b5d4c40e0e64dfc41961633b8bafcdecea6f1925c7ff06b1b628192b9b"
+          },
+          "original-operator-driver-py": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.py",
+            "sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+          },
+          "original-operator-protocol-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-protocol.json",
+            "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2"
+          },
+          "original-operator-case-plan-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-case-plan.json",
+            "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+          },
+          "original-operator-root-go-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-root-go.json",
+            "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+          },
+          "original-operator-source-members-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-source-members.json",
+            "sha256": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4"
+          },
+          "original-operator-selection-json": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-selection.json",
+            "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+          },
+          "original-profile-traffic-profile": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/traffic.json",
+            "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+          },
+          "original-profile-ue-services-config": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ue-services.json",
+            "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+          },
+          "original-profile-ap-services-profile": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ap-services.json",
+            "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "original-profile-base-config": {
+            "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/base.json",
+            "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+          }
+        }
+      }
+    ]
+  },
+  "canonical_report_source": {
+    "base_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons.py",
+    "base_sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6",
+    "adapter_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v2.py",
+    "adapter_sha256": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec",
+    "recovery_registration": {
+      "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+      "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+    },
+    "reader_amendment": {
+      "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+      "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+    }
+  }
+}

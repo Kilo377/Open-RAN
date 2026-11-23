@@ -188,3 +188,28 @@ correct six-UE configuration. See
 [online_ue_energy_acceptance.json](online_ue_energy_acceptance.json) for hashes,
 scope and compact results. Full commands, failed-pilot results, action records,
 cohort audits and self-contained HTMLs remain in the study output directories.
+
+
+## DRX control unlocked, 2026-11-17
+
+The current launchers expose `--energy-xapp-deploy-drx` (default enabled) and
+`--no-energy-xapp-deploy-drx` for the historical native-DRX ablation. The
+controller's low-level constructor retains its conservative default for direct
+legacy instantiations; finite and warm/live launchers pass the explicit setting.
+The 221-row frozen RF checkpoint is unchanged. Release 20261117 records the
+new action availability rather than claiming additional training. The historical
+study drivers explicitly retain their original native-DRX protocol.
+
+`experiments/run_drx_unlock_study.py` compares Base, frozen X-01 with native DRX,
+and the same frozen X-01 with DRX control. Runs use matched seeds, traffic,
+movement, radio, initial state and observation/control delays. Raw records,
+model checkpoints and self-contained HTMLs are retained. The former five-percent
+throughput guard is reported diagnostically; it does not stop this tradeoff
+experiment or remove an unfavorable seed. The analysis checks executed DRX
+profiles as well as selected actions and reports whole-network and target-group
+energy separately, goodput, completed-packet mean/P95 latency, and mature MEC
+cohort completion latency and on-time rate.
+
+The graph includes all structured DRX profiles, and no longer marks X-01's
+DRX interface locked. Joint-profile policy effects must not be substituted for
+a scalar inactivity-timer derivative.

@@ -1,0 +1,13 @@
+{
+  "id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "stage": "holdout",
+  "mode": "frozen",
+  "phase": "failed",
+  "slot": 8865,
+  "started_utc": "2026-11-23T09:44:35.215986+00:00",
+  "new_simulations": 1,
+  "updated_unix_s": 1795427827.9484522,
+  "pid": 25336,
+  "error": "[Errno 2] No such file or directory: '/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run/live.tmp'",
+  "sealed": true
+}

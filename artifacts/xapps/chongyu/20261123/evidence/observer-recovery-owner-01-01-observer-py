@@ -1,0 +1,111 @@
+"""Metadata-only guardian for the one already running native TH process.
+
+No simulator spawn, restart, signal, source/model write, or old-metadata rewrite.
+"""
+from pathlib import Path
+import fcntl,hashlib,json,os,shutil,stat,time
+from datetime import datetime,timezone
+
+ID='9ca87f904d75424aad23c0821cf8b1c7';PID=25336;START=15559801
+SCOPE=Path('/dev/shm/oran_xapp_improvement_20261123')
+ROOT=SCOPE/'validation-v5/agx1/lane-1'/ID/'source-v5'
+JOB=ROOT/'outputs/throughput_improvement'/ID
+REC=JOB/'observer-recovery-v1'
+SOURCE='c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5'
+SELECTION='b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf'
+MODEL='cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe'
+REQUEST='94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b'
+FAILED='ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013'
+
+def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def read(p):return json.loads(Path(p).read_text())
+def stamp():return datetime.now(timezone.utc).isoformat()
+def write(p,x,replace=False):
+ p=Path(p);p.parent.mkdir(parents=True,exist_ok=True)
+ if replace:
+  q=p.with_name(p.name+'.observer.tmp');q.write_text(json.dumps(x,indent=2));os.replace(q,p)
+ else:
+  with p.open('x')as f:json.dump(x,f,indent=2)
+  p.chmod(0o444)
+
+def pid_state():
+ p=Path('/proc')/str(PID)
+ if not(p/'stat').exists():return None
+ raw=(p/'stat').read_text();v=raw[raw.rfind(')')+2:].split()
+ if int(v[19])!=START:raise ValueError('PID was reused; never adopt another process')
+ argv=(p/'cmdline').read_bytes().rstrip(b'\0').split(b'\0')
+ argv=[x.decode()for x in argv]
+ command=read(JOB/'command.json')['argv'];start=command.index('experiments/run_rt_sys.py')
+ if v[0]!='Z'and(argv[1:]!=command[start:]or(p/'cwd').resolve()!=ROOT):raise ValueError('The native process command/source changed')
+ return dict(pid=PID,start_ticks=int(v[19]),state=v[0],ppid=int(v[1]),argv=argv,
+  cmdline_sha256=hashlib.sha256((p/'cmdline').read_bytes()).hexdigest(),observed_utc=stamp())
+
+def bytes_used(folder):
+ total=0
+ for p in Path(folder).rglob('*'):
+  try:info=p.stat(follow_symlinks=False)
+  except FileNotFoundError:
+   if p.name.endswith('.tmp'):continue
+   raise
+  if stat.S_ISREG(info.st_mode):total+=info.st_size
+ return total
+
+def checks():
+ r=read(JOB/'request.json');plan=read(JOB/'operator-case-plan.json');members=read(JOB/'operator-source-members.json')
+ if r['id']!=ID or r['request_sha256']!=REQUEST or r['source_archive_sha256']!=SOURCE or r['selection_sha256']!=SELECTION or r['initial_model_sha256']!=MODEL or r['seed']!=341721 or r['slots']!=22440 or r['mode']!='frozen':raise ValueError('The exact original request changed')
+ if len(members)!=1432 or any(sha(ROOT/n)!=v['sha256']or(ROOT/n).stat().st_size!=v['bytes']for n,v in members.items()):raise ValueError('The actual 1432 source members changed')
+ if sha(plan['source_archive']['path'])!=SOURCE:raise ValueError('The actual registered archive changed')
+ if sha(JOB/'run/throughput_mlp_model.json')!=MODEL or sha(JOB/'operator-selection.json')!=SELECTION:raise ValueError('Frozen model/joint lock changed')
+ profiles={key:sha(value['path'])for key,value in r['profiles'].items()}
+ if any(profiles[k]!=v['sha256']for k,v in r['profiles'].items()):raise ValueError('Actual profile bytes changed')
+ if any(sha(ROOT/n)!=v for n,v in r['frozen_models'].items()):raise ValueError('An original six-model pin changed')
+ mem=int(next(x.split()[1]for x in Path('/proc/meminfo').read_text().splitlines()if x.startswith('MemAvailable:')))*1024
+ return dict(observed_utc=stamp(),source_members_verified=1432,source_archive_sha256=SOURCE,
+  selection_sha256=SELECTION,model_sha256=MODEL,profiles_sha256=profiles,
+  original_failed_status_sha256=sha(JOB/'status.json'),original_failed_seal_sha256=sha(JOB/'sealed-manifest.json'),
+  memory_available_bytes=mem,shm_free_bytes=shutil.disk_usage('/dev/shm').free,emmc_free_bytes=shutil.disk_usage('/').free)
+
+def main():
+ import argparse
+ p=argparse.ArgumentParser();p.add_argument('--root-go',type=Path,required=True);a=p.parse_args();go=read(a.root_go)
+ if(go.get('schema')!='oran.observer-recovery-root-go.v1'or go.get('approved')is not True or go.get('case_id')!=ID
+  or go.get('pid')!=PID or go.get('pid_start_ticks')!=START or go.get('request_sha256')!=REQUEST
+  or go.get('source_archive_sha256')!=SOURCE or go.get('selection_sha256')!=SELECTION or go.get('model_sha256')!=MODEL
+  or go.get('original_failed_seal_sha256')!=FAILED or go.get('observer_script_sha256')!=sha(__file__)
+  or go.get('simulation_restart_authorized')is not False):raise ValueError('Exact metadata-only root GO required')
+ state=read(JOB/'status.json')
+ if(state.get('phase')!='failed'or state.get('slot')!=8865 or sha(JOB/'sealed-manifest.json')!=FAILED
+  or '[Errno 2]'not in state.get('error','')or not state['error'].endswith("/run/live.tmp'")):raise ValueError('Only the exact observed temporary-rename observer failure is admitted')
+ first=pid_state()
+ if first is None or first['state']=='Z':raise ValueError('Capture the same continuing native process before recovery')
+ lane=(SCOPE/'validation-v5/locks/lane-1.lock').open('a');legacy=(SCOPE/'worker.lock').open('r')
+ fcntl.flock(lane,fcntl.LOCK_EX|fcntl.LOCK_NB);fcntl.flock(legacy,fcntl.LOCK_SH|fcntl.LOCK_NB)
+ REC.mkdir(exist_ok=False);env=REC/'failure-envelope';env.mkdir()
+ originals={'original-status.json':JOB/'status.json','original-failed-seal.json':JOB/'sealed-manifest.json',
+  'original-driver-error.json':ROOT.parent/'operator-driver-error.json','original-driver-result.json':ROOT.parent/'operator-driver-result.json',
+  'original-driver-process.log':ROOT.parent/'operator-driver-process.log','original-request.json':JOB/'request.json',
+  'original-command.json':JOB/'command.json','original-selection.json':JOB/'operator-selection.json',
+  'original-root-go.json':JOB/'operator-root-go.json','original-operator-plan.json':JOB/'operator-case-plan.json'}
+ for name,source in originals.items():shutil.copy2(source,env/name);(env/name).chmod(0o444)
+ write(REC/'root-go.json',go);write(REC/'pid-before.json',first);write(REC/'checks-before.json',checks())
+ shutil.copy2(__file__,REC/'observer.py');(REC/'observer.py').chmod(0o444)
+ write(env/'envelope.json',dict(schema='oran.observer-failure-envelope.v1',case_id=ID,
+  captured_utc=stamp(),files={x.name:dict(sha256=sha(x),bytes=x.stat().st_size)for x in env.iterdir()if x.is_file()},
+  original_worker_phase='failed',original_failed_seal_is_not_valid_final_seal=True,
+  original_simulation_still_running=True,initial_pid=first,new_simulations=0))
+ print(json.dumps(dict(envelope_sha256=sha(env/'envelope.json'),pid=first,locks_reserved=True)),flush=True)
+ while True:
+  actual=pid_state();producer=read(JOB/'run/run_status.json')
+  write(REC/'observer-status.json',dict(observed_utc=stamp(),pid=actual,producer_completed=producer.get('completed'),
+   producer_last_completed_slot=producer.get('last_completed_slot'),lane_lock_reserved=True,legacy_shared_guard_reserved=True,
+   memory_available_bytes=int(next(x.split()[1]for x in Path('/proc/meminfo').read_text().splitlines()if x.startswith('MemAvailable:')))*1024),replace=True)
+  if actual is None or actual['state']=='Z':
+   write(REC/'producer-ended.json',dict(observed_utc=stamp(),pid=PID,start_ticks=START,exit_code=None,
+    exit_code_status='unavailable_non_child',producer_completed=producer.get('completed'),
+    last_completed_slot=producer.get('last_completed_slot'),new_simulations=0,no_restart=True))
+   write(REC/'checks-after.json',checks());break
+  if datetime.now(timezone.utc)>=datetime.fromisoformat('2026-11-23T11:40:00+00:00'):
+   write(REC/'deadline-reached.json',dict(observed_utc=stamp(),same_native_process_still_running=True,no_signal_sent=True));break
+  time.sleep(3)
+
+if __name__=='__main__':main()

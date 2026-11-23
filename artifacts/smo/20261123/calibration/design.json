@@ -1,0 +1,2414 @@
+{
+  "schema": "oran.current-environment-pk-design.v1",
+  "environment_id": "validated_common_v1",
+  "recipe_sha256": "a0fa6e34835e8a070022306c6ac76e7b4c6f65eb6effbc97d7f02b1a52498479",
+  "source_pins": {
+    "sha256": "99e9532e898d76386d41860dd342150e62d8e582169aaa5f0a8374ccf82d5876",
+    "members": 318
+  },
+  "source_archive_sha256": "ae0bc342e5a308d85dc240ea2e596fb778bceb196607a826df75c2d04f9f98ff",
+  "profiles": {
+    "traffic_profile": {
+      "path": "/dev/shm/oran_smo_selected_20261123/v1/environment/traffic.json",
+      "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+    },
+    "ue_services_config": {
+      "path": "/dev/shm/oran_smo_selected_20261123/v1/environment/ue-services.json",
+      "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+    },
+    "ap_services_profile": {
+      "path": "/dev/shm/oran_smo_selected_20261123/v1/environment/ap-services.json",
+      "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+    },
+    "base_config": {
+      "path": "/dev/shm/oran_smo_selected_20261123/v1/environment/base.json",
+      "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+    }
+  },
+  "frozen_models": {
+    "artifacts/xapps/chongyu/20261123/models/x01.json": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "artifacts/xapps/chongyu/20261123/models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+    "artifacts/xapps/chongyu/20261123/models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "artifacts/xapps/chongyu/20261123/models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "artifacts/xapps/chongyu/20261123/models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+    "artifacts/xapps/chongyu/20261123/models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f"
+  },
+  "seeds": [
+    20261214,
+    20261215,
+    20261216
+  ],
+  "switch_slot": 2040,
+  "scoring_start_slot": 2440,
+  "scoring_end_slot": 4440,
+  "total_slots": 4840,
+  "traffic_load": 1.5,
+  "driver_sha256": "44ecd11621affe9f2e7003a6d4a5210de5a202b832e9436e6a50752a4015bc03",
+  "arms": [
+    {
+      "id": "native",
+      "worker": "agx2",
+      "parameter": null,
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "round_robin",
+      "kind": "reference"
+    },
+    {
+      "id": "latency",
+      "worker": "agx2",
+      "parameter": "scheduler_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "latency_aware",
+      "kind": "reference"
+    },
+    {
+      "id": "qos",
+      "worker": "agx2",
+      "parameter": "scheduler_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "qos_deadline",
+          "cell_1": "qos_deadline",
+          "cell_2": "qos_deadline"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "qos_deadline",
+      "kind": "reference"
+    },
+    {
+      "id": "native",
+      "worker": "agx1",
+      "parameter": null,
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "round_robin",
+      "kind": "reference"
+    },
+    {
+      "id": "latency",
+      "worker": "agx1",
+      "parameter": "scheduler_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "latency_aware",
+      "kind": "reference"
+    },
+    {
+      "id": "qos",
+      "worker": "agx1",
+      "parameter": "scheduler_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "qos_deadline",
+          "cell_1": "qos_deadline",
+          "cell_2": "qos_deadline"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "to": "qos_deadline",
+      "kind": "reference"
+    },
+    {
+      "id": "offload_0",
+      "worker": "agx2",
+      "parameter": "ue_offload_fraction",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0,
+          "ue_4": 0
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0,
+      "kind": "grid",
+      "component": "mec_workload",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "offload_0p25",
+      "worker": "agx2",
+      "parameter": "ue_offload_fraction",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.25,
+          "ue_4": 0.25
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.25,
+      "kind": "grid",
+      "component": "mec_workload",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "offload_0p5",
+      "worker": "agx2",
+      "parameter": "ue_offload_fraction",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.5
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.5,
+      "kind": "grid",
+      "component": "mec_workload",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "offload_0p75",
+      "worker": "agx2",
+      "parameter": "ue_offload_fraction",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.75,
+          "ue_4": 0.75
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.75,
+      "kind": "grid",
+      "component": "mec_workload",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "offload_1",
+      "worker": "agx2",
+      "parameter": "ue_offload_fraction",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 1,
+          "ue_4": 1
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 1,
+      "kind": "grid",
+      "component": "mec_workload",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "drx_cycle_20",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 20,
+      "profile": {
+        "cycle_ms": 20
+      },
+      "scalar_component": "cycle_ms",
+      "kind": "grid",
+      "component": "drx_enabled_population",
+      "members": [
+        "ue_0",
+        "ue_1",
+        "ue_4",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "drx_cycle_80",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 80,
+      "profile": {
+        "cycle_ms": 80
+      },
+      "scalar_component": "cycle_ms",
+      "kind": "grid",
+      "component": "drx_enabled_population",
+      "members": [
+        "ue_0",
+        "ue_1",
+        "ue_4",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "drx_idle_1",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 1,
+      "profile": {
+        "inactivity_ms": 1
+      },
+      "scalar_component": "inactivity_ms",
+      "kind": "grid",
+      "component": "drx_enabled_population",
+      "members": [
+        "ue_0",
+        "ue_1",
+        "ue_4",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "drx_idle_16",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 16,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 16,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 16,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 16,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 16,
+      "profile": {
+        "inactivity_ms": 16
+      },
+      "scalar_component": "inactivity_ms",
+      "kind": "grid",
+      "component": "drx_enabled_population",
+      "members": [
+        "ue_0",
+        "ue_1",
+        "ue_4",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "drx_mec_20",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 20,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "profile": {
+        "cycle_ms": 20,
+        "inactivity_ms": 1
+      },
+      "kind": "profile",
+      "component": "mec_drx_population",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "drx_mec_80",
+      "worker": "agx2",
+      "parameter": "ue_drx_configs",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 80,
+            "on_duration_ms": 4,
+            "inactivity_ms": 1,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "profile": {
+        "cycle_ms": 80,
+        "inactivity_ms": 1
+      },
+      "kind": "profile",
+      "component": "mec_drx_population",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "mec_weight_0p5",
+      "worker": "agx2",
+      "parameter": "ue_scheduler_weights",
+      "reference": "latency",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 0.5,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 0.5,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.5,
+      "kind": "grid",
+      "component": "mec_priority",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "mec_weight_2",
+      "worker": "agx2",
+      "parameter": "ue_scheduler_weights",
+      "reference": "latency",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 2,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 2,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 2,
+      "kind": "grid",
+      "component": "mec_priority",
+      "members": [
+        "ue_0",
+        "ue_4"
+      ]
+    },
+    {
+      "id": "urllc_weight_0p5",
+      "worker": "agx1",
+      "parameter": "ue_scheduler_weights",
+      "reference": "qos",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "qos_deadline",
+          "cell_1": "qos_deadline",
+          "cell_2": "qos_deadline"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 0.5,
+          "ue_4": 1.0,
+          "ue_6": 0.5,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.5,
+      "kind": "grid",
+      "component": "urllc_priority",
+      "members": [
+        "ue_2",
+        "ue_6"
+      ]
+    },
+    {
+      "id": "urllc_weight_2",
+      "worker": "agx1",
+      "parameter": "ue_scheduler_weights",
+      "reference": "qos",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "qos_deadline",
+          "cell_1": "qos_deadline",
+          "cell_2": "qos_deadline"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 2,
+          "ue_4": 1.0,
+          "ue_6": 2,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 2,
+      "kind": "grid",
+      "component": "urllc_priority",
+      "members": [
+        "ue_2",
+        "ue_6"
+      ]
+    },
+    {
+      "id": "urllc_weight_4",
+      "worker": "agx1",
+      "parameter": "ue_scheduler_weights",
+      "reference": "qos",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "qos_deadline",
+          "cell_1": "qos_deadline",
+          "cell_2": "qos_deadline"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 4,
+          "ue_4": 1.0,
+          "ue_6": 4,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 4,
+      "kind": "grid",
+      "component": "urllc_priority",
+      "members": [
+        "ue_2",
+        "ue_6"
+      ]
+    },
+    {
+      "id": "eff_weight_0p5",
+      "worker": "agx1",
+      "parameter": "ue_scheduler_weights",
+      "reference": "latency",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 0.5,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 0.5
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 0.5,
+      "kind": "grid",
+      "component": "efficiency_priority",
+      "members": [
+        "ue_2",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "eff_weight_2",
+      "worker": "agx1",
+      "parameter": "ue_scheduler_weights",
+      "reference": "latency",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "latency_aware",
+          "cell_1": "latency_aware",
+          "cell_2": "latency_aware"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 2,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 2
+        },
+        "cell_sleep_mode": {
+          "cell_0": "active",
+          "cell_1": "active",
+          "cell_2": "active"
+        }
+      },
+      "level": 2,
+      "kind": "grid",
+      "component": "efficiency_priority",
+      "members": [
+        "ue_2",
+        "ue_8"
+      ]
+    },
+    {
+      "id": "sleep_micro_sleep",
+      "worker": "agx1",
+      "parameter": "cell_sleep_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "micro_sleep",
+          "cell_1": "micro_sleep",
+          "cell_2": "micro_sleep"
+        }
+      },
+      "to": "micro_sleep",
+      "kind": "category",
+      "component": "all_cells",
+      "members": [
+        "cell_0",
+        "cell_1",
+        "cell_2"
+      ]
+    },
+    {
+      "id": "sleep_light_sleep",
+      "worker": "agx1",
+      "parameter": "cell_sleep_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "light_sleep",
+          "cell_1": "light_sleep",
+          "cell_2": "light_sleep"
+        }
+      },
+      "to": "light_sleep",
+      "kind": "category",
+      "component": "all_cells",
+      "members": [
+        "cell_0",
+        "cell_1",
+        "cell_2"
+      ]
+    },
+    {
+      "id": "sleep_deep_sleep",
+      "worker": "agx1",
+      "parameter": "cell_sleep_mode",
+      "reference": "native",
+      "vector": {
+        "ue_offload_fraction": {
+          "ue_0": 0.5,
+          "ue_4": 0.8
+        },
+        "ue_drx_configs": {
+          "ue_0": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_1": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_2": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_4": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_6": {
+            "enabled": false,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "ue_8": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          }
+        },
+        "scheduler_mode": {
+          "cell_0": "round_robin",
+          "cell_1": "round_robin",
+          "cell_2": "round_robin"
+        },
+        "ue_scheduler_weights": {
+          "ue_0": 1.0,
+          "ue_1": 1.0,
+          "ue_2": 1.0,
+          "ue_4": 1.0,
+          "ue_6": 1.0,
+          "ue_8": 1.0
+        },
+        "cell_sleep_mode": {
+          "cell_0": "deep_sleep",
+          "cell_1": "deep_sleep",
+          "cell_2": "deep_sleep"
+        }
+      },
+      "to": "deep_sleep",
+      "kind": "category",
+      "component": "all_cells",
+      "members": [
+        "cell_0",
+        "cell_1",
+        "cell_2"
+      ]
+    }
+  ],
+  "independent_unit": "paired_seed_not_slot_or_UE",
+  "combination_evaluation_data_used": false,
+  "learned_xapps_enabled": false,
+  "estimator": "paired controlled first-order references; scalar multi-level affine fits; named categorical and structured contrasts",
+  "url_error_scale": "ratio / full_probability_span; display percent",
+  "mec_tasks": "matched mature birth cohorts with 200ms follow-up",
+  "notes": [
+    "Physical source and four network profiles exactly match current UI recipe.",
+    "Three independent seeds; each intervention/reference pair remains on one host.",
+    "URLLC observation contains a complete 1s traffic cycle.",
+    "Profile-specific finite contrasts preferred to additive timer fits for X01 legacy9.",
+    "Parameter perturbation only. No trained xApp actions, combination outcomes, or intent Metric enter fitting."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "oran.xapp-improvement-protocol.v1",
+  "started_utc": "2026-11-23T01:40:00Z",
+  "deadline_utc": "2026-11-23T11:40:00Z",
+  "time_budget_hours": 10,
+  "source_baseline_archive_sha256": "7220125503fc86a32d6b0afada7a24af3fb559cb5965b34776179604f690d1c6",
+  "live_ui_retained": true,
+  "training_seeds": [
+    341701,
+    341702
+  ],
+  "development_seeds": [
+    341710
+  ],
+  "final_holdout_seeds": [
+    341721,
+    341722
+  ],
+  "holdout_rule": "Freeze candidate source and model SHA before first held-out run; no holdout labels used for fit or model selection",
+  "environment_release": "/Users/kilobao/Desktop/ORAN/SMO/environment-validation-20261122/common-validation-indexed/release-v1/environment.json",
+  "power_target": {
+    "kpi": "ue_power_w",
+    "population": "all six UEs",
+    "minimum_paired_relative_reduction_percent": 10,
+    "base": "same-seed same-environment all-xApps-OFF in matched AFTER window"
+  },
+  "throughput_target": {
+    "kpi": "network_goodput_mbps",
+    "minimum_paired_relative_increase_percent": 10,
+    "input_limitation_identified": true,
+    "load_change_question_pending": true,
+    "load_change_authorized": false
+  },
+  "final_window": {
+    "baseline_slot": 2040,
+    "before_slots": 2000,
+    "after_slots": 20000,
+    "tail_slots": 400
+  },
+  "unchanged": [
+    "physical capacity",
+    "geometry",
+    "HARQ and DRX mandatory-awake semantics",
+    "power coefficients",
+    "metric definitions",
+    "released six artifacts",
+    "existing run data"
+  ],
+  "storage_policy": {
+    "local_output": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123",
+    "remote_data": "owned /dev/shm scope only",
+    "mirror_required_before_remote_output_removal": true,
+    "historical_data_delete": false,
+    "immutable_fit_checkpoints": true
+  },
+  "final_acceptance": "Report every heldout paired gain and mean, target met or not, task/packet delivery and KPI tradeoffs; no hiding failed runs"
+}

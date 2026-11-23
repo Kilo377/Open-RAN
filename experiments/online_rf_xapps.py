@@ -54,6 +54,11 @@ def configure(configs, manifest, args, output, root, *, live_test_enabled=False)
             log_path=str(output / (name + '_rf_events.jsonl')),
             window_ms=getattr(args, name + '_xapp_window_ms', 100),
             explore_windows=getattr(args, name + '_xapp_explore_windows', 8 if name == 'latency' else 9), seed=args.seed)
+        if name == 'energy':
+            parameters['deploy_drx'] = getattr(args, 'energy_xapp_deploy_drx', True)
+            action_set = getattr(args, 'energy_xapp_action_set_version', 'legacy9')
+            if action_set not in ('legacy9', 'extended24', 'balanced42'):raise ValueError('Unknown energy action set')
+            if action_set != 'legacy9':parameters['action_set_version'] = action_set
         if name == 'latency' and mode == 'fixed':
             parameters['fixed_action'] = getattr(args, 'latency_xapp_fixed_action', 3)
         if name == 'budget':
@@ -83,6 +88,7 @@ def configure(configs, manifest, args, output, root, *, live_test_enabled=False)
         apps.append(dict(type='pool_xapp', pool='chongyu', implementation_id=ident,
             instance_id=ident, cell_ids=cells, slot_duration_ms=manifest['slot_duration_ms'],
             parameters=parameters, initial_bindings=bindings))
+        if name == 'energy' and action_set != 'legacy9':apps[-1]['implementation_variant']=action_set
     configs['ric'].update(xapp_pool='chongyu', rapps=[], run_rapps_on_start=False, freeze_learning=True,
         xapp_interval_slots=max(1, round(20 / manifest['slot_duration_ms'])), xapps=apps)
     return '_'.join(name + '_xapp_' + mode for name, mode in active.items())

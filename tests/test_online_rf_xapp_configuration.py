@@ -142,7 +142,7 @@ def test_live_policy_updates_only_the_actual_throughput_app(tmp_path, monkeypatc
         args.throughput_xapp_policy = policy
     assert configure_live(configs, manifest, args)
     energy, throughput = configs['ric']['xapps']
-    assert energy == original[0]
+    assert energy == {**original[0], 'parameters': {**original[0]['parameters'], 'deploy_drx': True}}
     assert throughput['parameters'] == {'mode':'frozen', 'policy':policy or 'throughput'}
 
 
@@ -248,3 +248,21 @@ def test_ap_cli_is_off_by_default_and_profile_is_explicit(monkeypatch):
     monkeypatch.setattr('sys.argv',['run_rt_sys.py','--ap-services-profile','configs/rt_sys/ap_services_reference.json',
         '--ap-xapp-mode','fixed','--ap-xapp-fixed-action','1'])
     args=parse_args();assert args.ap_xapp_fixed_action==1 and args.ap_services_profile.name=='ap_services_reference.json'
+
+
+@pytest.mark.parametrize('enabled',[True,False])
+def test_energy_drx_switch_reaches_only_energy_controller(tmp_path,enabled):
+    configs,manifest,args,output,root=setup(tmp_path,energy_xapp_deploy_drx=enabled)
+    args.energy_xapp_mode=args.latency_xapp_mode='frozen'
+    configure(configs,manifest,args,output,root)
+    energy,latency=configs['ric']['xapps']
+    assert energy['parameters']['deploy_drx'] is enabled
+    assert 'deploy_drx' not in latency['parameters']
+
+
+def test_energy_drx_cli_defaults_to_unlocked_and_supports_native_ablation(monkeypatch):
+    from experiments.run_rt_sys import parse_args
+    monkeypatch.setattr('sys.argv',['run_rt_sys.py'])
+    assert parse_args().energy_xapp_deploy_drx is True
+    monkeypatch.setattr('sys.argv',['run_rt_sys.py','--no-energy-xapp-deploy-drx'])
+    assert parse_args().energy_xapp_deploy_drx is False

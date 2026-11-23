@@ -1,0 +1,619 @@
+#!/usr/bin/env python3
+"""Create-only reports from an operator's sealed dev OR holdout comparison plan.
+
+Plan schema: oran.xapp-comparison-plan.v1. Paths are absolute or relative to
+the plan file. Each seeds[] entry has seed, off_case and on_cases[]. Each ON
+has actor=power|throughput, label, case, prefix_certificate={path,sha256}.
+Dev labels: legacy/rawRF/scaledRF/newMLP. Holdout labels must be selected and
+selection={path,sha256} must lock both actors before any final case began.
+Optional synthetic_fixture=true watermarks ALL report/figure outputs.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+from datetime import datetime, timezone
+import gzip
+import html
+import importlib.util
+import json
+import math
+from pathlib import Path
+import re
+import statistics
+
+from export_x01_scaled_candidates import digest, file_sha, write_new
+
+
+TASK = Path(__file__).resolve().parents[1]
+START, END, TOTAL, SLOT_MS = 2040, 22040, 22440, .5
+V4_SOURCE_ARCHIVE_SHA = 'ff29827e59ff9aeba5a998f307789160dc5e85c8c681dabec5ff76b9ea8cc46f'
+LEGACY_MODEL_SELECTION_STOP_UTC = '2026-11-23T08:40:00+00:00'
+RETAINED_THROUGHPUT_MODEL_SHA = 'cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe'
+# Validation-only registration supplied after local source/driver/protocol seal.
+# This authorizes reading complete cases, never launching a validation job.
+V5_VALIDATION_REGISTRATION = {
+    'path': TASK/'workers/v5/protocol-v5-validation.json',
+    'protocol_sha256': '6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2',
+    'source_archive_path': TASK/'workers/v5/source.tgz',
+    'source_archive_sha256': 'c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5',
+    'driver_path': TASK/'workers/v5/operator-driver.py',
+    'driver_sha256': '8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd',
+    'probe_certificates': {
+        'agx1': {'path': TASK/'workers/v5/probe-certificates/agx1.json',
+                 'sha256': '6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811'},
+        'agx2': {'path': TASK/'workers/v5/probe-certificates/agx2.json',
+                 'sha256': 'caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13'}}}
+USERS = ('ue_0', 'ue_1', 'ue_2', 'ue_4', 'ue_6', 'ue_8')
+ACTORS = {'power': ('ue_energy_rf', 'ue_power_w', 'W', 'energy_rf_model.json'),
+          'throughput': ('throughput_scheduler_mlp', 'network_goodput_mbps', 'Mbit/s', 'throughput_mlp_model.json')}
+PROFILE_PINS = {
+    'traffic_profile': '92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8',
+    'ue_services_config': 'd3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769',
+    'ap_services_profile': '8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035',
+    'base_config': '60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7'}
+METRICS = {'ue_power_w': 'W', 'network_goodput_mbps': 'Mbit/s', 'urllc_failure_fraction': 'ratio',
+           'task_success_ratio': 'ratio', 'mec_offloaded_latency_ms': 'ms'}
+DEV_LABELS = {'legacy': {'power', 'throughput'}, 'rawRF': {'power'},
+              'scaledRF': {'power'}, 'independent4RF': {'power'}, 'newMLP': {'throughput'}}
+DISPLAY = {'legacy': 'Legacy', 'rawRF': 'Raw RF', 'scaledRF': 'Scaled RF',
+           'independent4RF': '4-head RF', 'newMLP': 'New MLP', 'selected': 'Selected'}
+
+
+def read(path): return json.loads(Path(path).read_text())
+def finite(value): return type(value) in (int, float) and math.isfinite(value)
+def resolve(path, base): return (Path(path) if Path(path).is_absolute() else base/Path(path)).resolve()
+def close(a, b): return finite(a) and finite(b) and math.isclose(a, b, rel_tol=1e-10, abs_tol=1e-10)
+def utc(value): return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp()
+
+
+def trace_rows(run):
+    choices = [path for path in (run/'rt_sys_trace.jsonl.gz', run/'rt_sys_trace.jsonl') if path.is_file()]
+    if len(choices) != 1: raise ValueError('Exactly one raw scalar trace is required')
+    path = choices[0]
+    with (gzip.open(path, 'rt') if path.suffix == '.gz' else path.open()) as stream:
+        for line in stream:
+            if line.strip(): yield json.loads(line)
+
+
+def raw_reading(run, actor, *, start=START, end=END):
+    endpoints = {}; previous_slot = 0; previous_energy = previous_bytes = None
+    allowed = set() if actor is None else {ACTORS[actor][0]}
+    for row in trace_rows(run):
+        slot = row['slot_id']
+        if type(slot) is not int or slot != previous_slot+1: raise ValueError('Raw trace is not an exact contiguous prefix/window')
+        previous_slot = slot
+        selected = {ident for groups in (row.get('xapp_bindings') or {}).values()
+                    for group in groups.values() for ident in (group if isinstance(group, list) else [group])}
+        if slot <= start and selected: raise ValueError('A controller was active before the native baseline')
+        if selected-allowed: raise ValueError('Unexpected controller in raw execution trace')
+        users = {user['ue_id']: user for user in row['ues']}
+        services = row.get('ue_services', {})
+        if len(row['ues']) != 6 or set(users) != set(USERS) or not set(USERS).issubset(services):
+            raise ValueError('Raw counter population is not exactly six UEs')
+        energy = {uid: services[uid].get('ue_energy_total_j') for uid in USERS}
+        delivered = {uid: users[uid].get('packet_delivered_bytes') for uid in USERS}
+        if (any(not finite(v) or v < 0 for v in energy.values())
+                or any(not finite(v) or v < 0 or int(v) != v for v in delivered.values())):
+            raise ValueError('Missing/nonfinite/nonintegral raw counters')
+        if previous_energy is not None and (any(energy[uid] < previous_energy[uid] for uid in USERS)
+                or any(delivered[uid] < previous_bytes[uid] for uid in USERS)):
+            raise ValueError('A raw cumulative counter reset')
+        previous_energy, previous_bytes = energy, delivered
+        if slot in (start, end): endpoints[slot] = {'energy_j': energy, 'delivered_bytes': delivered}
+        if slot == end: break
+    if set(endpoints) != {start, end}: raise ValueError('Exact comparison endpoints are unavailable')
+    seconds = (end-start)*SLOT_MS/1000
+    power = sum(endpoints[end]['energy_j'][uid]-endpoints[start]['energy_j'][uid] for uid in USERS)/seconds
+    goodput = sum(endpoints[end]['delivered_bytes'][uid]-endpoints[start]['delivered_bytes'][uid] for uid in USERS)*8/1e6/seconds
+    return {'ue_power_w': power, 'network_goodput_mbps': goodput, 'endpoints': endpoints,
+            'contiguous_slots_verified': previous_slot, 'window_seconds': seconds}
+
+
+def selected_power_semantics(selection):
+    keys = ('power_action_set_version', 'power_action_catalogue_sha256')
+    if not selection or not any(key in selection for key in keys):
+        if selection and (selection.get('source_archive_sha256') == V4_SOURCE_ARCHIVE_SHA
+                          or selection.get('validation_version') == 'v5'):
+            raise ValueError('The v4 runtime requires both explicit power action semantics pins')
+        return None
+    version = selection.get(keys[0])
+    profiles = [(40., 4., 8.), (20., 4., 1.), (80., 4., 1.)]
+    if version in ('extended24', 'balanced42'):
+        profiles += [(40., 4., 0.), (80., 4., 0.), (160., 4., 0.), (80., 1., 0.), (160., 1., 0.)]
+    if version == 'balanced42':
+        profiles += [(10., 8., 0.), (10., 6., 0.), (20., 10., 0.), (20., 8., 0.), (40., 20., 0.), (40., 10., 0.)]
+    if version not in ('legacy9', 'extended24', 'balanced42'):
+        raise ValueError('Unknown explicitly selected power action set')
+    catalogue = [{'drx': {'enabled': True, 'cycle_ms': c, 'on_duration_ms': o,
+        'inactivity_ms': i, 'wakeup_ms': .5, 'offset_ms': 0.}, 'offload_fraction': f}
+        for c, o, i in profiles for f in (0., .5, 1.)]
+    pin = digest(catalogue)
+    if selection.get(keys[1]) != pin: raise ValueError('Selected power catalogue SHA does not match its exact action set')
+    return {'version': version, 'catalogue': catalogue, 'sha256': pin, 'count': len(catalogue)}
+
+
+def verify_power_semantics(case, request, config, files, selected):
+    """Read the sealed frozen execution fields, independently of external certs."""
+    run = case/'run'; apps = config['configs']['ric']['xapps']
+    version, pin, catalogue = selected['version'], selected['sha256'], selected['catalogue']
+    if (apps[0].get('parameters', {}).get('action_set_version') != version
+            or request.get('action_set_version', 'legacy9') != version):
+        raise ValueError('Actual frozen power config/request action set differs from joint selection')
+    paths = [path for path in (run/'energy_rf_events.jsonl', run/'energy_rf_events.jsonl.gz') if path.is_file()]
+    if len(paths) != 1 or str(paths[0].relative_to(case)) not in files:
+        raise ValueError('The exact consumed power startup event log must belong to the seal')
+    path = paths[0]
+    with (gzip.open(path, 'rt') if path.suffix == '.gz' else path.open()) as stream:
+        events = [json.loads(line) for line in stream if line.strip()]
+    first = events[0] if events else None
+    startup_count = sum(isinstance(event, dict) and event.get('kind') == 'action_catalogue' for event in events)
+    if (startup_count != 1 or not isinstance(first, dict) or first.get('kind') != 'action_catalogue' or first.get('mode') != 'frozen'
+            or first.get('action_set_version') != version or first.get('action_count') != selected['count']
+            or first.get('action_catalogue') != catalogue or first.get('action_catalogue_sha256') != pin
+            or digest(first['action_catalogue']) != pin):
+        raise ValueError('Actual first power startup catalogue differs from the selected action semantics')
+    learning = read(run/'final_summary.json').get('ue_energy_xapp') or {}
+    if (learning.get('mode') != 'frozen' or learning.get('action_set_version') != version
+            or learning.get('action_count') != selected['count'] or learning.get('action_catalogue_sha256') != pin
+            or learning.get('action_catalogue') != catalogue or digest(learning['action_catalogue']) != pin):
+        raise ValueError('Actual final power summary differs from the selected action semantics')
+    return {'passed': True, 'power_action_set_version': version, 'power_action_catalogue_sha256': pin,
+        'actual_config_action_set_version': version, 'startup_catalogue_sha256': digest(first['action_catalogue']),
+        'summary_catalogue_sha256': digest(learning['action_catalogue']),
+        'action_count': selected['count'], 'startup_log': str(path), 'startup_log_sha256': file_sha(path),
+        'startup_catalogue_events': startup_count,
+        'config_sha256': file_sha(run/'config_snapshot.json'), 'final_summary_sha256': file_sha(run/'final_summary.json'),
+        'external_semantics_certificate_used_as_substitute': False}
+
+
+def verify_case(path, *, role, seed, actor, power_selection=None, expected_source_sha256=None, validation_context=None):
+    case = Path(path).resolve(); run = case/'run'
+    request = read(case/'request.json')
+    if request.get('stage') != role or request.get('seed') != seed or request.get('mode') != ('off' if actor is None else 'frozen'):
+        raise ValueError('Evaluation role/seed/mode mismatch; training cases cannot enter this report')
+    if expected_source_sha256 is not None and request.get('source_archive_sha256') != expected_source_sha256:
+        raise ValueError('Case source differs from the explicitly registered validation profile')
+    registered = V5_VALIDATION_REGISTRATION
+    if registered and request.get('source_archive_sha256') == registered['source_archive_sha256']:
+        if validation_context is None:
+            raise ValueError('Registered v5 cases require the actual isolated lane audit context, including development cases')
+    elif validation_context is not None:
+        raise ValueError('Case source differs from the explicitly registered validation profile')
+    if request.get('train_stop_utc') not in (None, LEGACY_MODEL_SELECTION_STOP_UTC):
+        if (not registered or request.get('source_archive_sha256') != registered['source_archive_sha256']
+                or validation_context is None or request['train_stop_utc'] != '2026-11-23T09:20:00+00:00'):
+            raise ValueError('A later admission cutoff requires the exact registered v5 source and lane context')
+    if request.get('slots') != TOTAL or request.get('balanced_start_windows') != 0:
+        raise ValueError('Only the registered full frozen evaluation window is accepted')
+    schema = request.get('schema')
+    expected_seal = {'oran.power-improvement-job.v1': 'oran.power-study-sealed-job.v1',
+                     'oran.throughput-improvement-job.v1': 'oran.throughput-study-sealed-job.v1'}.get(schema)
+    if expected_seal is None: raise ValueError('Unknown evaluation worker schema')
+    seal, status, mirror = read(case/'sealed-manifest.json'), read(case/'status.json'), read(case/'mirror-verification.json')
+    original = dict(request); pin = original.pop('request_sha256', None)
+    if (pin != digest(original) or seal.get('request_sha256') != pin or seal.get('id') != request.get('id')
+            or seal.get('schema') != expected_seal or seal.get('failed') or status.get('phase') != 'complete'
+            or status.get('sealed') is not True): raise ValueError('Successful complete request/seal identity is required')
+    required = {'request.json', 'audit.json', 'run/config_snapshot.json', 'run/final_summary.json', 'run/run_status.json'}
+    files = seal.get('files')
+    if not isinstance(files, dict) or not required.issubset(files): raise ValueError('Seal lacks evaluation metadata')
+    traces = [file for file in (run/'rt_sys_trace.jsonl.gz', run/'rt_sys_trace.jsonl') if file.is_file()]
+    if len(traces) != 1 or str(traces[0].relative_to(case)) not in files:
+        raise ValueError('The exact consumed raw trace must belong to the seal')
+    if actor is not None and str((run/ACTORS[actor][3]).relative_to(case)) not in files:
+        raise ValueError('The exact frozen model must belong to the seal')
+    for relative, item in files.items():
+        rel = Path(relative); file = (case/rel).resolve()
+        if (rel.is_absolute() or '..' in rel.parts or not file.is_relative_to(case) or not file.is_file()
+                or file.stat().st_size != item.get('bytes') or file_sha(file) != item.get('sha256')):
+            raise ValueError('Sealed evaluation file missing/changed: '+relative)
+    seal_pin = file_sha(case/'sealed-manifest.json')
+    if mirror.get('manifest_sha256') != seal_pin or mirror.get('files_verified') != len(files): raise ValueError('Mirror receipt does not match full seal')
+    lane = verify_validation_lane(case, validation_context) if validation_context else None
+    profile_pins = {name: value.get('sha256') for name, value in request.get('profiles', {}).items()}
+    if profile_pins != PROFILE_PINS: raise ValueError('The four original environment profiles changed')
+    config, audit = read(run/'config_snapshot.json'), read(case/'audit.json')
+    run_status = read(run/'run_status.json')
+    if run_status.get('completed') is not True or run_status.get('last_completed_slot') != TOTAL:
+        raise ValueError('The actual run did not complete all22440slots')
+    manifest = config['manifest']
+    if manifest.get('rng_seed') != seed or manifest.get('total_slots') != TOTAL or manifest.get('slot_duration_ms') != SLOT_MS:
+        raise ValueError('Actual seed, total duration or slot duration differs')
+    if audit.get('source_sha256') != config.get('source_sha256') or not config.get('source_sha256'):
+        raise ValueError('Recorded source identity differs')
+    if not re.fullmatch('[a-f0-9]{64}', request.get('source_archive_sha256') or ''):
+        raise ValueError('A complete recorded source archive pin is required')
+    effective = {'traffic_profile': manifest.get('traffic_profile', {}).get('sha256'),
+                 'ue_services_config': config.get('ue_services_profile', {}).get('sha256'),
+                 'ap_services_profile': config.get('ap_services_profile', {}).get('sha256')}
+    if any(effective[key] != PROFILE_PINS[key] for key in effective): raise ValueError('Effective recorded service/traffic profile differs')
+    if audit.get('all_other_xapps_off') is not True or audit.get('profiles_verified') is not True:
+        raise ValueError('Worker did not verify controller isolation/original profiles')
+    window = audit.get('metrics') or {}
+    if window.get('window_start_slot') != START or window.get('slot') != END or window.get('window_slots') != END-START:
+        raise ValueError('Canonical metrics are not the exact registered AFTER window')
+    if not close(audit.get('observation_window_seconds'), 10.): raise ValueError('Worker interval differs from ten seconds')
+    apps = config.get('configs', {}).get('ric', {}).get('xapps', [])
+    expected = [] if actor is None else [ACTORS[actor][0]]
+    if [app.get('implementation_id') for app in apps] != expected: raise ValueError('Actual actor differs from operator plan')
+    model_pin = None
+    if actor:
+        model = run/ACTORS[actor][3]; model_pin = file_sha(model)
+        if (request.get('initial_model_sha256') != model_pin or audit.get('model_sha256') != model_pin
+                or apps[0].get('parameters', {}).get('mode') != 'frozen'):
+            raise ValueError('Frozen candidate identity changed')
+    elif request.get('initial_model_sha256') is not None: raise ValueError('OFF must not inherit a candidate')
+    selected = selected_power_semantics(power_selection) if role == 'holdout' and actor == 'power' else None
+    if role == 'holdout' and actor == 'power' and selected is None:
+        parameters = apps[0].get('parameters', {})
+        if (request.get('source_archive_sha256') == V4_SOURCE_ARCHIVE_SHA
+                or registered and request.get('source_archive_sha256') == registered['source_archive_sha256']
+                or request.get('action_set_version', 'legacy9') != 'legacy9'
+                or parameters.get('action_set_version', 'legacy9') != 'legacy9'):
+            raise ValueError('Actual nonlegacy/v4 frozen power needs an explicit joint action semantics lock')
+    semantics = verify_power_semantics(case, request, config, files, selected) if selected else None
+    values = {key: window.get('states', {}).get('kpi:'+key, {}).get('value') for key in METRICS}
+    if any(value is not None and not finite(value) for value in values.values()): raise ValueError('Nonfinite canonical metric')
+    raw = raw_reading(run, actor)
+    if not close(values['ue_power_w'], raw['ue_power_w']) or not close(values['network_goodput_mbps'], raw['network_goodput_mbps']):
+        raise ValueError('Canonical KPI differs from independent six-UE raw endpoint deltas')
+    return {'case': str(case), 'run': str(run), 'request': request, 'status': status,
+        'seed': seed, 'actor': actor, 'profiles_sha256': profile_pins, 'values': values,
+        'raw_endpoint_verification': raw, 'model_sha256': model_pin, 'seal_sha256': seal_pin,
+        'source_archive_sha256': request['source_archive_sha256'], 'recorded_source_sha256': config['source_sha256'],
+        'audit_sha256': file_sha(case/'audit.json'), 'files_verified': len(files),
+        **({'power_action_semantics': semantics} if semantics is not None else {}),
+        **({'validation_lane': lane} if lane is not None else {})}
+
+
+def certificate(reference, *, base, off, on, role, seed, selection_sha):
+    path = resolve(reference['path'], base); pin = file_sha(path)
+    if pin != reference['sha256']: raise ValueError('Prefix certificate file SHA differs')
+    proof = read(path); schema = proof.get('schema')
+    if schema == 'oran.study-prefix-compatibility.v1':
+        body = dict(proof); identifier = body.pop('certificate_id', None)
+        if identifier != digest(body) or proof.get('stage') != role: raise ValueError('Prefix certificate role/ID differs')
+        expected = {'first_slot': 1, 'last_slot': START, 'baseline_slot': START,
+                    'before_window_start_slot': 40, 'origin_observe_slots': 2000}
+        if proof.get('prefix_window') != expected: raise ValueError('Prefix certificate window differs')
+        if (proof.get('off_source_archive_sha256') != off['source_archive_sha256']
+                or proof.get('candidate_source_archive_sha256') != on['source_archive_sha256']
+                or proof.get('off_recorded_source_sha256') != off['recorded_source_sha256']
+                or proof.get('candidate_recorded_source_sha256') != on['recorded_source_sha256']):
+            raise ValueError('Certificate does not bind these actual source archives/recorded sources')
+        companion = read(path.with_name(path.name+'.sha256.json'))
+        if companion.get('certificate_sha256') != pin: raise ValueError('Certificate creation receipt differs')
+        if role == 'holdout' and proof.get('selection_sha256') != selection_sha: raise ValueError('Certificate is not bound to the common model lock')
+    elif schema != 'oran.dev-prefix-cross-harness-compatibility.v1' or role != 'dev' or seed != 341710:
+        raise ValueError('A registered prefix certificate is required for this report role')
+    if (proof.get('passed') is not True or proof.get('seed') != seed or proof.get('raw_prefix_slots') != START
+            or resolve(proof.get('off_run', ''), TASK) != Path(off['run'])
+            or resolve(proof.get('candidate_run', ''), TASK) != Path(on['run'])
+            or proof.get('geometry', {}).get('geometry_equal') is not True
+            or proof.get('actual_counters_exogenous_services_radio_equal') is not True
+            or proof.get('actual_meaningful_control_outcomes_equal') is not True):
+        raise ValueError('Certificate does not prove these actual matched native prefixes')
+    source = proof.get('source') or {}
+    if (source.get('old_archive_sha256') != off['source_archive_sha256']
+            or source.get('new_archive_sha256') != on['source_archive_sha256']
+            or source.get('physics_and_metric_members_byte_equal') is not True
+            or source.get('throughput_policy_numerical_logic_unchanged') is not True):
+        raise ValueError('Cross-version physical/metric compatibility has not been demonstrated')
+    return {'path': str(path), 'sha256': pin, 'schema': schema, 'passed': True,
+            'off_archive': off['source_archive_sha256'], 'on_archive': on['source_archive_sha256']}
+
+
+def validation_profile(selection, protocol):
+    keys = ('validation_version', 'validation_protocol_sha256')
+    registered = V5_VALIDATION_REGISTRATION
+    if not any(key in selection for key in keys):
+        if registered and selection.get('source_archive_sha256') == registered['source_archive_sha256']:
+            raise ValueError('Registered v5 source requires explicit validation protocol binding')
+        return None
+    if selection.get('validation_version') != 'v5' or registered is None:
+        raise ValueError('Unknown or unsealed validation admission profile')
+    if (selection.get('validation_protocol_sha256') != registered['protocol_sha256']
+            or selection.get('source_archive_sha256') != registered['source_archive_sha256']):
+        raise ValueError('Validation profile protocol/source pins differ')
+    profile = registered_validation_profile(protocol)
+    if selection.get('models', {}).get('throughput') != profile['retained_throughput_model_sha256']:
+        raise ValueError('Validation-only v5 requires the registered retained throughput model')
+    return profile
+
+
+def registered_validation_profile(protocol):
+    """Check immutable admission files; no run/label data is opened here."""
+    registered = V5_VALIDATION_REGISTRATION
+    if registered is None: raise ValueError('Unknown or unsealed validation admission profile')
+    path = Path(registered['path']).resolve()
+    if file_sha(path) != registered['protocol_sha256']: raise ValueError('Registered validation protocol bytes changed')
+    archive, driver = Path(registered['source_archive_path']).resolve(), Path(registered['driver_path']).resolve()
+    if file_sha(archive) != registered['source_archive_sha256']: raise ValueError('Registered validation archive bytes changed')
+    if file_sha(driver) != registered['driver_sha256']: raise ValueError('Registered validation lane reader bytes changed')
+    value = read(path)
+    expected = {'schema':'oran.validation-only-protocol.v5','version':'v5',
+        'source_archive_sha256':registered['source_archive_sha256'],
+        'power_training_source_archive_sha256':V4_SOURCE_ARCHIVE_SHA,
+        'development_stop_utc':'2026-11-23T09:20:00+00:00',
+        'model_selection_stop_utc':'2026-11-23T09:20:00+00:00',
+        'total_deadline_utc':'2026-11-23T11:40:00+00:00',
+        'allowed_stages':['dev','holdout'],'allowed_modes':['off','frozen'],
+        'development_seeds':protocol['development_seeds'],'holdout_seeds':protocol['final_holdout_seeds'],
+        'slots':TOTAL,'baseline_slot':START,'observation_slots':END-START,'observation_seconds':10,'tail_slots':TOTAL-END,
+        'new_training_authorized':False,'holdout_start_requires_root_go':True}
+    if (not re.fullmatch('[0-9a-f]{64}', registered['source_archive_sha256'])
+            or value.get('status') != 'sealed_isolated_lanes'
+            or any(value.get(key) != item for key,item in expected.items())
+            or value.get('policy_learner_PHY_core_metrics_and_profiles_byte_unchanged') is not True
+            or value.get('power_policy_sha256') != '2406c5912b10f312d8f1c403d39c7fa78d1b00814e53b036cb0ff78a3b10263b'
+            or value.get('balanced42_catalogue_sha256') != '2dcb2568cd66fc9b0640c871a47a8da916b5562c33320c96c88c2d4769c9bd20'
+            or utc(protocol['deadline_utc']) != utc(value['total_deadline_utc'])
+            or not re.fullmatch('[0-9a-f]{64}', value.get('retained_throughput_model_sha256') or '')):
+        raise ValueError('Validation-only v5 protocol does not match the fixed registered scope/window')
+    execution = value.get('execution')
+    expected_execution = {'mode':'isolated_validation_lanes', 'max_validation_lanes_per_host':2,
+        'lane_ids':['lane-0','lane-1'], 'driver_sha256':registered['driver_sha256'],
+        'minimum_memavailable_before_launch_bytes':28*1024**3, 'minimum_shm_free_bytes':8*1024**3,
+        'passed_2000_probe_certificates':{worker:reference['sha256'] for worker,reference in registered['probe_certificates'].items()},
+        'old_v4_worker_must_be_inactive':True, 'final_per_host_order':['off',['power','throughput']]}
+    if (value.get('execution_mode') != 'isolated_validation_lanes' or execution != expected_execution
+            or set(registered['probe_certificates']) != {'agx1','agx2'}):
+        raise ValueError('Registered v5 requires the exact sealed max2 isolated execution and probe scope')
+    probes = []
+    for worker, reference in registered['probe_certificates'].items():
+        probe_path = Path(reference['path']).resolve()
+        if file_sha(probe_path) != reference['sha256']: raise ValueError('Registered parallel probe bytes changed')
+        probe = read(probe_path)
+        if (probe.get('schema') != 'oran.parallel-probe-final-report.v2' or probe.get('worker') != worker
+                or probe.get('slots') != 2000 or probe.get('seed') != 341701
+                or probe.get('source_archive_sha256') != V4_SOURCE_ARCHIVE_SHA
+                or probe.get('all_actual_integer_float_geometry_control_source_checks_passed') is not True
+                or probe.get('actual_holdout_read') is not False):
+            raise ValueError('The registered 2000-slot parallel probe did not pass its exact numerical scope')
+        probes.append({'worker':worker,'path':str(probe_path),'sha256':reference['sha256']})
+    return {'validation_version':'v5','path':str(path),'sha256':registered['protocol_sha256'],
+        'source_archive_sha256':registered['source_archive_sha256'],
+        'source_archive_path':str(archive), 'driver_path':str(driver), 'driver_sha256':registered['driver_sha256'],
+        'execution':execution, 'probe_certificates':probes,
+        'retained_throughput_model_sha256':value['retained_throughput_model_sha256'],
+        'model_selection_stop_utc':value['model_selection_stop_utc'],
+        'development_stop_utc':value['development_stop_utc'],'total_deadline_utc':value['total_deadline_utc']}
+
+
+def verify_validation_lane(case, profile):
+    """Use only the hash-pinned frozen reader, never a mutable helper/cert."""
+    registered = V5_VALIDATION_REGISTRATION
+    if (not registered or profile.get('sha256') != registered['protocol_sha256']
+            or profile.get('source_archive_sha256') != registered['source_archive_sha256']
+            or Path(profile['path']).resolve() != Path(registered['path']).resolve()
+            or Path(profile['driver_path']).resolve() != Path(registered['driver_path']).resolve()
+            or profile.get('driver_sha256') != registered['driver_sha256']):
+        raise ValueError('Actual lane evidence requires the registered immutable reader/protocol')
+    protocol_path, driver_path = Path(profile['path']), Path(profile['driver_path'])
+    if (file_sha(protocol_path) != profile['sha256'] or file_sha(driver_path) != profile['driver_sha256']):
+        raise ValueError('The registered validation protocol/reader changed before its actual lane audit')
+    spec = importlib.util.spec_from_file_location('report_v5_lane_'+profile['driver_sha256'], driver_path)
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    evidence = module.audit_original_seal(Path(case), read(protocol_path), profile['sha256'])
+    if (not isinstance(evidence, dict) or evidence.get('passed') is not True
+            or evidence.get('driver_sha256') != profile['driver_sha256']
+            or evidence.get('validation_protocol_sha256') != profile['sha256']
+            or evidence.get('lane_id') not in ('lane-0','lane-1')
+            or not evidence.get('project_root') or set(evidence.get('profiles', {})) != set(PROFILE_PINS)):
+        raise ValueError('Original worker seal did not prove the registered isolated lane')
+    return {**evidence, 'original_worker_seal_audited':True,
+            'reader_path':str(driver_path), 'reader_sha256':profile['driver_sha256']}
+
+
+def model_lock(reference, base, protocol):
+    path = resolve(reference['path'], base); pin = file_sha(path)
+    if pin != reference['sha256']: raise ValueError('Common selection SHA differs')
+    lock = read(path); models = lock.get('models')
+    profile = validation_profile(lock, protocol)
+    cutoff = (utc(profile['model_selection_stop_utc']) if profile else
+              min(utc(LEGACY_MODEL_SELECTION_STOP_UTC), utc(protocol['deadline_utc'])-3*3600))
+    if (not isinstance(models, dict) or set(models) != set(ACTORS) or lock.get('both_models_locked') is not True
+            or not all(isinstance(value, str) and re.fullmatch('[a-f0-9]{64}', value) for value in models.values())
+            or lock.get('holdout_results_used') is not False or lock.get('development_seeds') != protocol['development_seeds']
+            or utc(lock['locked_utc']) > cutoff):
+        raise ValueError('Both models must be frozen before the registered training/dev cutoff')
+    selected_power_semantics(lock)
+    return lock, pin
+
+
+def compare_plan(plan_path, protocol_path):
+    plan_path, protocol_path = Path(plan_path).resolve(), Path(protocol_path).resolve()
+    plan, protocol = read(plan_path), read(protocol_path); base = plan_path.parent
+    role = plan.get('role')
+    if plan.get('schema') != 'oran.xapp-comparison-plan.v1' or role not in ('dev', 'holdout'):
+        raise ValueError('One explicit dev OR holdout comparison role is required')
+    registered = protocol['development_seeds' if role == 'dev' else 'final_holdout_seeds']
+    entries = plan.get('seeds', [])
+    if (len(entries) != len(registered) or any(type(entry['seed']) is not int for entry in entries)
+            or {entry['seed'] for entry in entries} != set(registered)):
+        raise ValueError('Use every distinct preregistered seed for this role, without mixing roles')
+    lock, lock_pin = model_lock(plan['selection'], base, protocol) if role == 'holdout' else (None, None)
+    profile = validation_profile(lock, protocol) if lock else None
+    if role == 'dev' and V5_VALIDATION_REGISTRATION:
+        paths = [entry['off_case'] for entry in entries]
+        paths += [item['case'] for entry in entries for item in entry.get('on_cases', [])]
+        # Development has no joint selection. Its actual request archive must
+        # still activate the registered original-seal lane audit.
+        if any(read(resolve(path, base)/'request.json').get('source_archive_sha256') ==
+               V5_VALIDATION_REGISTRATION['source_archive_sha256'] for path in paths):
+            profile = registered_validation_profile(protocol)
+    cache, comparisons = {}, []
+    def case(path, seed, actor):
+        resolved = resolve(path, base); key = (resolved, seed, actor)
+        if key not in cache:
+            cache[key] = verify_case(resolved, role=role, seed=seed, actor=actor, power_selection=lock,
+                expected_source_sha256=profile['source_archive_sha256'] if profile else None,
+                validation_context=profile)
+            if profile and cache[key]['source_archive_sha256'] != profile['source_archive_sha256']:
+                raise ValueError('Every final OFF/ON must use the explicitly registered validation source')
+        return cache[key]
+    for entry in entries:
+        seed = entry['seed']; off = case(entry['off_case'], seed, None)
+        ons = entry.get('on_cases', [])
+        if not ons or len({(item['actor'], item['label']) for item in ons}) != len(ons): raise ValueError('Unique labeled frozen cases are required')
+        if role == 'holdout' and (len(ons) != 2 or {item['actor'] for item in ons} != set(ACTORS)
+                or any(item['label'] != 'selected' for item in ons)):
+            raise ValueError('Holdout allows exactly the two locked selected actors and one shared OFF per seed')
+        for item in ons:
+            actor, label = item['actor'], item['label']
+            if actor not in ACTORS or role == 'dev' and actor not in DEV_LABELS.get(label, set()): raise ValueError('Invalid dev actor/label')
+            on = case(item['case'], seed, actor)
+            if on['profiles_sha256'] != off['profiles_sha256']: raise ValueError('Matched OFF/ON profiles differ')
+            if role == 'holdout':
+                if (on['model_sha256'] != lock['models'][actor] or on['source_archive_sha256'] != lock['source_archive_sha256']
+                        or on['request'].get('selection_sha256') != lock_pin or off['request'].get('selection_sha256') != lock_pin
+                        or utc(lock['locked_utc']) > min(utc(on['status']['started_utc']), utc(off['status']['started_utc']))):
+                    raise ValueError('Actual holdout cases do not match the previously locked common selection')
+            cert = certificate(item['prefix_certificate'], base=base, off=off, on=on, role=role, seed=seed, selection_sha=lock_pin)
+            metric, unit = ACTORS[actor][1:3]; before, after = off['values'][metric], on['values'][metric]
+            if before <= 0: raise ValueError('A positive OFF denominator is required for relative gains')
+            gain = 100*(before-after)/before if actor == 'power' else 100*(after-before)/before
+            comparisons.append({'role': role, 'seed': seed, 'actor': actor, 'label': label, 'metric': metric,
+                'unit': unit, 'off': before, 'on': after, 'gain_percent': gain, 'target_percent': 10.,
+                'target_met': gain >= 10.-1e-10, 'normalized_improvement_factor': 1+gain/100,
+                'off_case': off['case'], 'on_case': on['case'], 'model_sha256': on['model_sha256'],
+                'weight_origin': ('retained_legacy' if actor == 'throughput' and
+                                  on['model_sha256'] == RETAINED_THROUGHPUT_MODEL_SHA else 'frozen_artifact'),
+                'prefix_certificate': cert, 'side_effects_off': off['values'], 'side_effects_on': on['values']})
+    grouped = {}
+    for row in comparisons: grouped.setdefault((row['actor'], row['label']), []).append(row)
+    means = []
+    for (actor, label), values in grouped.items():
+        if len(values) != len(registered): raise ValueError('A candidate is missing a preregistered role seed')
+        gains = [row['gain_percent'] for row in values]; average = statistics.fmean(gains)
+        means.append({'role': role, 'actor': actor, 'label': label, 'seeds': sorted(row['seed'] for row in values),
+            'n_seeds': len(values), 'mean_off': statistics.fmean(row['off'] for row in values),
+            'mean_on': statistics.fmean(row['on'] for row in values), 'unit': values[0]['unit'],
+            'mean_gain_percent': average, 'minimum_gain_percent': min(gains), 'maximum_gain_percent': max(gains),
+            'mean_target_met': average >= 10.-1e-10, 'all_seed_targets_met': all(row['target_met'] for row in values),
+            'normalized_improvement_factor': 1+average/100})
+    if profile:
+        roots = [case['validation_lane']['project_root'] for case in cache.values()]
+        if len(set(roots)) != len(roots): raise ValueError('Every v5 case must own a distinct nested project root')
+    return {'schema': 'oran.actual-xapp-comparison-report.v1', 'role': role,
+        'synthetic_fixture': plan.get('synthetic_fixture') is True,
+        'plan_path': str(plan_path), 'plan_sha256': file_sha(plan_path), 'protocol_sha256': file_sha(protocol_path),
+        'selection_sha256': lock_pin, 'registered_seeds': registered, 'comparisons': comparisons, 'means': means,
+        **({'validation_protocol':profile} if profile else {}),
+        'mean_10pct_met_for_every_reported_actor_candidate': all(row['mean_target_met'] for row in means),
+        'every_seed_10pct_met_for_every_reported_actor_candidate': all(row['all_seed_targets_met'] for row in means),
+        'case_evidence': [{key: value for key, value in case.items() if key not in ('request', 'status')} for case in cache.values()],
+        'window': {'total_slots': TOTAL, 'start_slot_exclusive': START, 'end_slot_inclusive': END, 'duration_s': 10.},
+        'methods': {'power_gain': '100*(OFF-ON)/OFF', 'throughput_gain': '100*(ON-OFF)/OFF',
+            'mean': 'Arithmetic mean of same-role per-seed paired relative gains; no pooling across roles or actors.',
+            'normalization': '1 + relative target improvement/100. OFF=1; registered target=1.10.',
+            'range': 'Minimum to maximum across registered seeds, not a confidence interval.'},
+        'limitations': ['Five worker-window KPIs retained; no extra task_latency_ms or mec_expected_gflops rescore is performed.',
+            'Missing side-effect observations remain null, not zero.',
+            'Training losses, predictions and model selection scores are not used as actual performance.',
+            'Development and holdout results are never combined into one mean.'],
+        'new_simulations': 0, 'model_fitting_performed': False}
+
+
+def figures(report, output):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    actors = [actor for actor in ACTORS if any(row['actor'] == actor for row in report['means'])]
+    fig, axes = plt.subplots(1, len(actors), figsize=(3.8*len(actors), 3.8), squeeze=False)
+    colors = {'power': '#26725f', 'throughput': '#486885'}
+    all_points = [row['normalized_improvement_factor'] for row in report['comparisons']]
+    lo, hi = min([1., *all_points]), max([1.10, *all_points])
+    margin = max(.035, (hi-lo)*.24)
+    for ax, actor in zip(axes[0], actors):
+        rows = [row for row in report['means'] if row['actor'] == actor]
+        for x, row in enumerate(rows):
+            value = row['normalized_improvement_factor']; gain = row['mean_gain_percent']
+            ax.bar(x, value-1, bottom=1, width=.56, color=colors[actor], alpha=.8, zorder=2)
+            values = [entry for entry in report['comparisons'] if entry['actor'] == actor and entry['label'] == row['label']]
+            points = [entry['normalized_improvement_factor'] for entry in values]
+            ax.vlines(x, min(points), max(points), color='#263d37', linewidth=1.1, zorder=3)
+            offsets = [0.] if len(points) == 1 else [(.12*(i/(len(points)-1)-.5)) for i in range(len(points))]
+            for offset, entry, point in zip(offsets, values, points):
+                marker = ('o', 's')[sorted(report['registered_seeds']).index(entry['seed'])]
+                ax.scatter(x+offset, point, s=19, marker=marker, color='#19332d', edgecolor='#fcfdfc',
+                    linewidth=.45, zorder=4, label=str(entry['seed']) if x == 0 else None)
+            annotation = f'{gain:+.2f}%' if len(points) == 1 else f'Mean {gain:+.2f}%'
+            ax.annotate(annotation, (x, max(points)), xytext=(0, 8), textcoords='offset points', ha='center', fontsize=8)
+        ax.axhline(1, color='#5c6c66', linewidth=.8)
+        ax.axhline(1.10, color='#9b453c', linestyle='--', linewidth=1, label='10% target')
+        ax.set_ylim(lo-margin, hi+margin*1.6)
+        ax.set_xticks(range(len(rows)), [DISPLAY[row['label']] for row in rows])
+        ax.set_ylabel('1 + target improvement (OFF = 1)', fontsize=8)
+        ax.set_title('Total UE power saving' if actor == 'power' else 'Network goodput gain', fontsize=10)
+        ax.tick_params(labelsize=8); ax.spines[['top', 'right']].set_visible(False)
+        ax.grid(axis='y', alpha=.17, zorder=0); ax.legend(frameon=False, fontsize=8, loc='upper left')
+    phase = 'DEVELOPMENT' if report['role'] == 'dev' else 'FINAL HOLDOUT'
+    title = phase+'\nSame-seed · matched 10 s AFTER windows' if len(actors) == 1 else phase+' · matched 10 s AFTER windows'
+    fig.suptitle(title, fontsize=9, y=.99)
+    caption = 'Points: registered seeds. Range: min–max, not CI.\nMean: paired per-seed relative gains.'
+    if report['synthetic_fixture']:
+        caption = 'SYNTHETIC FIXTURE — NOT REAL RESULTS.\n'+caption
+        fig.text(.5, .53, 'SYNTHETIC', ha='center', va='center', fontsize=25, alpha=.16, rotation=17)
+    fig.text(.5, .012, caption, ha='center', va='bottom', fontsize=6.5)
+    fig.tight_layout(rect=(0, .14 if report['synthetic_fixture'] else .12, 1, .88 if len(actors) == 1 else .94))
+    for extension in ('png', 'svg'):
+        with (output/('comparison.'+extension)).open('xb') as stream:
+            fig.savefig(stream, format=extension, dpi=300, metadata={'Description': caption})
+    plt.close(fig)
+
+
+def html_report(report, image):
+    esc = lambda value: html.escape(str(value))
+    fmt = lambda value: '—' if value is None else f'{value:.5g}'
+    phase = 'Development comparison' if report['role'] == 'dev' else 'Final holdout comparison'
+    warning = '<p class="warning">SYNTHETIC FIXTURE — NOT REAL RESULTS.</p>' if report['synthetic_fixture'] else ''
+    if any(row.get('weight_origin') == 'retained_legacy' for row in report['comparisons']):
+        warning += '<p>Throughput weights: retained legacy. SHA-256: <code>'+RETAINED_THROUGHPUT_MODEL_SHA+'</code>.</p>'
+    rows = []
+    for entry in report['comparisons']:
+        values = [entry['seed'], entry['actor'], DISPLAY[entry['label']], fmt(entry['off']), fmt(entry['on']),
+                  entry['unit'], f"{entry['gain_percent']:+.3f}%", str(entry['target_met']).lower()]
+        rows.append('<tr>'+''.join('<td>'+esc(value)+'</td>' for value in values)+'</tr>')
+    mean_rows = []
+    for entry in report['means']:
+        values = [entry['actor'], DISPLAY[entry['label']], fmt(entry['mean_off']), fmt(entry['mean_on']), entry['unit'], f"{entry['mean_gain_percent']:+.3f}%",
+                  str(entry['mean_target_met']).lower(), str(entry['all_seed_targets_met']).lower()]
+        mean_rows.append('<tr>'+''.join('<td>'+esc(value)+'</td>' for value in values)+'</tr>')
+    effects = []
+    for entry in report['comparisons']:
+        effects.append('<h3>'+esc(f"Seed {entry['seed']} · {entry['actor']} / {entry['label']}")+'</h3><table><tr><th>KPI</th><th>OFF</th><th>ON</th><th>Unit</th></tr>')
+        for key, unit in METRICS.items():
+            effects.append('<tr><td>'+esc(key)+'</td><td>'+fmt(entry['side_effects_off'][key])+'</td><td>'+fmt(entry['side_effects_on'][key])+'</td><td>'+unit+'</td></tr>')
+        effects.append('</table>')
+    encoded = base64.b64encode(image).decode()
+    provenance = {'plan_sha256': report['plan_sha256'], 'selection_sha256': report['selection_sha256'],
+        'cases': [{**{key: case[key] for key in ('case', 'seed', 'model_sha256', 'source_archive_sha256', 'seal_sha256')},
+                   **({'power_action_semantics': case['power_action_semantics']} if 'power_action_semantics' in case else {}),
+                   **({'validation_lane': case['validation_lane']} if 'validation_lane' in case else {})}
+                  for case in report['case_evidence']],
+        'prefix_certificates': [entry['prefix_certificate'] for entry in report['comparisons']]}
+    if 'validation_protocol' in report: provenance['validation_protocol'] = report['validation_protocol']
+    return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+phase+'</title><style>body{margin:28px auto;padding:0 22px;max-width:1100px;color:#19332d;background:#fcfdfc;font:14px/1.55 system-ui}h1{font-size:25px}h2{font-size:18px;margin-top:28px}h3{font-size:14px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:8px;border-bottom:1px solid #d3ddd6;text-align:right}th{text-align:right;background:#edf2ee}img{max-width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}.warning{color:#963c33;font-weight:700}.table-scroll{overflow:auto}details{margin:18px 0}</style><h1>'+phase+'</h1>'+warning+'<p>Frozen policies versus the same-seed all-xApps-OFF baseline. All six UEs are included. The AFTER window is slots 2041–22040: 10 seconds at 0.5 ms per slot, within 22,440-slot runs. Actual raw counter deltas and sealed prefix certificates were checked.</p><p>Power saving = 100 × (OFF − ON) / OFF. Goodput gain = 100 × (ON − OFF) / OFF. Each mean is the arithmetic mean of per-seed paired relative gains. Development and holdout are not pooled. The registered target is 10%; mean and every-seed attainment are reported separately.</p><img alt="Paired target improvements, OFF normalized to one, with 10 percent target" src="data:image/png;base64,'+encoded+'"><div class="table-scroll"><table><tr><th>Seed</th><th>Actor</th><th>Label</th><th>OFF</th><th>ON</th><th>Unit</th><th>Relative gain</th><th>≥10%</th></tr>'+''.join(rows)+'</table></div><h2>Same-role means</h2><table><tr><th>Actor</th><th>Label</th><th>Mean OFF</th><th>Mean ON</th><th>Unit</th><th>Mean gain</th><th>Mean ≥10%</th><th>Every seed ≥10%</th></tr>'+''.join(mean_rows)+'</table><p>Figure values are 1 + relative target improvement / 100. Points are individual registered seeds; ranges are min–max, not confidence intervals. No training loss or prediction is presented as measured performance.</p><details><summary>Recorded side effects</summary>'+''.join(effects)+'</details><p>'+esc(' '.join(report['limitations']))+'</p><details><summary>Input identities and actual prefix certificates</summary><pre>'+esc(json.dumps(provenance, indent=2))+'</pre></details></html>'
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--plan', type=Path, required=True)
+    parser.add_argument('--protocol', type=Path, default=TASK/'protocol-v1.json')
+    parser.add_argument('--output', type=Path, required=True, help='New directory under T/analysis; never an input case')
+    args = parser.parse_args(argv); output = args.output.resolve()
+    if output.exists() or not output.is_relative_to((TASK/'analysis').resolve()):
+        parser.error('Report output must be a new directory under the isolated analysis scope')
+    report = compare_plan(args.plan, args.protocol)
+    if any(output.is_relative_to(Path(case['case'])) for case in report['case_evidence']): parser.error('Do not write derived reports into an input case')
+    output.mkdir(parents=True, exist_ok=False)
+    figures(report, output)
+    write_new(output/'report.json', report)
+    with (output/'report.html').open('x') as stream: stream.write(html_report(report, (output/'comparison.png').read_bytes()))
+    print(json.dumps({'role': report['role'], 'synthetic_fixture': report['synthetic_fixture'], 'report': str(output/'report.html')}))
+    return 0
+
+
+if __name__ == '__main__': raise SystemExit(main())

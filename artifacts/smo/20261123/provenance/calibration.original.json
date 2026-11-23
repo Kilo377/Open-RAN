@@ -1,0 +1,47 @@
+{
+  "schema": "oran.smo.current-environment-calibration.v1",
+  "environment_id": "validated_common_v1",
+  "dynamics_sha256": "99e9532e898d76386d41860dd342150e62d8e582169aaa5f0a8374ccf82d5876",
+  "source_archive_sha256": "ae0bc342e5a308d85dc240ea2e596fb778bceb196607a826df75c2d04f9f98ff",
+  "profile_sha256s": {
+    "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+    "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+    "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+    "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+  },
+  "frozen_models": {
+    "artifacts/xapps/chongyu/20261123/models/x01.json": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "artifacts/xapps/chongyu/20261123/models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+    "artifacts/xapps/chongyu/20261123/models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "artifacts/xapps/chongyu/20261123/models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "artifacts/xapps/chongyu/20261123/models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+    "artifacts/xapps/chongyu/20261123/models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f"
+  },
+  "combination_evaluation_data_used": false,
+  "learned_xapps_invoked": false,
+  "audited_run_count": 81,
+  "seeds": [
+    20261214,
+    20261215,
+    20261216
+  ],
+  "confidence_level": 0.95,
+  "files": {
+    "influences": {
+      "path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/influences.json",
+      "sha256": "430be93ca30badd16451bc197c5e261b70f0f97afd335e17685b0f0dd491e57a"
+    },
+    "measurements": {
+      "path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/measurement-dataset.json",
+      "sha256": "d23bdf551d4abd6a0e7bf2654be83db29eec323ef3d23bc2ff0926a7742ef278"
+    },
+    "design": {
+      "path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/design.json",
+      "sha256": "f51cc1c12989a6fc22e58e6657695721006eac8ff96975c5abba3072b16c6182"
+    },
+    "origin_equivalence": {
+      "path": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/analysis-v2/origin-equivalence.json",
+      "sha256": "0f7ec571bb8520aa3c1eac145458be9fd12abcbfdb16f16902140748ee9da1fb"
+    }
+  }
+}

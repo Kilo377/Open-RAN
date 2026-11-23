@@ -232,6 +232,7 @@ def main():
                    '--duration-s', str(seconds), '--seed', str(seed),
                    '--ue-services', 'drx-mec', '--record-compression', 'gzip',
                    '--energy-xapp-mode', mode, '--energy-xapp-window-ms', str(args.window_ms),
+        '--no-energy-xapp-deploy-drx',  # Historical study keeps its original action constraint.
                    '--energy-xapp-explore-windows', str(args.explore_windows),
                    '--channel-cache-root', str(ROOT / 'channel_cache' / output.name / f'seed_{seed}'),
                    '--output', str(folder), *extra]
