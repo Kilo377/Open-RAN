@@ -63,11 +63,14 @@ def build_pool_xapp(item, pool):
     parameters = deepcopy(item.get('parameters') or {})
     factory = spec['factory']
     if variant != 'legacy9':
-        if (pool, ident) != ('chongyu', 'ue_energy_rf') or variant not in ('extended24','balanced42'):
+        if (pool,ident,variant)==('chongyu','latency_scheduler_rf','adaptive_v2'):
+            factory='ric.near_rt.pools.chongyu.latency_scheduler_adaptive:LatencySchedulerAdaptive'
+        elif (pool, ident) != ('chongyu', 'ue_energy_rf') or variant not in ('extended24','balanced42'):
             raise ValueError('Unknown reviewed implementation variant')
-        if parameters.get('action_set_version') != variant:
+        elif parameters.get('action_set_version') != variant:
             raise ValueError('The extended factory requires its explicit action set')
-        factory = 'ric.near_rt.pools.chongyu.ue_energy_rf_action_sets:UeEnergyRF'
+        else:
+            factory = 'ric.near_rt.pools.chongyu.ue_energy_rf_action_sets:UeEnergyRF'
     elif ident == 'ue_energy_rf':
         if parameters.pop('action_set_version', 'legacy9') != 'legacy9':
             raise ValueError('Extended actions cannot run through the legacy factory')

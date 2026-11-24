@@ -1,0 +1,17 @@
+{
+  "schema": "oran.selected-release-runtime-requirements.v1",
+  "hot_runtime_arguments": [
+    "--live-xapps",
+    "--xapp-model-dir",
+    "outputs/trained_xapps/20261123",
+    "--energy-xapp-action-set-version",
+    "legacy9",
+    "--xapps-start",
+    ""
+  ],
+  "action_set_version": "legacy9",
+  "action_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+  "requires_reviewed_variant_dispatch": false,
+  "legacy_installer_per_app_arguments_sufficient": true,
+  "deploy_only_after_new_real_cold_preview_and_prefix_proof": true
+}

@@ -8,9 +8,12 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 RELEASE = "20261117"
 MODELS = ("x01", "x02", "x08", "x12_mec", "x12_urllc", "x13")
 FOUR_MODELS = MODELS[:4]
@@ -57,6 +60,20 @@ def load_release(bundle):
                 or files.get(relative) != entry.get("sha256")):
             raise ValueError("Model path/checksum differs from the release: " + name)
         model = json.loads(confined(bundle, relative).read_text())
+        if name == 'x12_mec' and model.get('schema') == 'oran.x12-adaptive-policy.v1':
+            from ric.near_rt.pools.chongyu.latency_scheduler_adaptive import load_policy
+            policy=load_policy(confined(bundle,relative))
+            if (entry.get('implementation_variant')!='adaptive_v2'
+                    or policy.get('kind') not in ('rf','joint_rf','ppo')
+                    or policy.get('training',False) is not False):
+                raise ValueError('Release requires a frozen trained adaptive X12, not a training or ablation policy')
+            fitted=(policy.get('training_steps',0) if policy['kind']=='ppo'
+                    else policy.get('training_metadata',{}).get('training_rows',0))
+            if (type(fitted)is not int or fitted<=0 or entry.get('measured_rows')!=fitted
+                    or entry.get('fitted_rows')!=fitted
+                    or (policy['kind']=='ppo' and policy.get('training_updates',0)<=0)):
+                raise ValueError('Adaptive X12 training provenance differs from release')
+            continue
         rows, fitted = model.get("x"), model.get("trained_samples")
         if (model.get("format") != FORMATS[name] or not isinstance(rows, list)
                 or not isinstance(model.get("y"), list) or len(rows) != len(model["y"])
@@ -90,6 +107,8 @@ def install(bundle, output, project_root=ROOT):
             values += ["--energy-xapp-deploy-drx" if entry.get("runtime_parameters",{}).get("deploy_drx",False) else "--no-energy-xapp-deploy-drx"]
         if name == "x12_urllc":
             values += ["--urllc-xapp-policy-version", "qos_v2"]
+        if name == 'x12_mec' and entry.get('implementation_variant')=='adaptive_v2':
+            values += ['--latency-xapp-policy',model]
         if name == "x08":
             values += ["--throughput-xapp-policy", "throughput"]
         if name == "x13":

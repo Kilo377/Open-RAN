@@ -1,0 +1,555 @@
+{
+  "reference_snapshot_sha256": "7e5870aeef4e074927bff96cbbe7346280287426ad60b24f0f721cfbdec424fd",
+  "network_settings_sha256": "71a88127610c997aeefd24a99414d0183b8d50848da3e0fb5c0662891f1e5a7a",
+  "excluded_network_fields": [
+    "configs.ric",
+    "configs.sim.rng_seed",
+    "configs.sim.total_slots",
+    "configs.phy.rt_sys.rng_seed"
+  ],
+  "profiles": {
+    "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+    "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+    "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+    "base_config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+  },
+  "settings": {
+    "sim": {
+      "slot_duration_ms": 0.5,
+      "scheduler_type": "rt_sys_scheduler",
+      "scheduler_total_prbs_per_slot": 96,
+      "scheduler_total_symbols_per_slot": 14,
+      "scheduler_max_ues_per_slot": 8,
+      "scheduler_min_prbs_per_grant": 4,
+      "scheduler_min_symbols_per_grant": 4,
+      "scheduler_retx_weight_bonus": 1000.0,
+      "scheduler_packing_strategy": "frequency_first",
+      "scheduler_enable_spatial_multiplexing": true,
+      "scheduler_max_mu_users_per_group": 2,
+      "scheduler_min_mu_beam_separation_deg": 0,
+      "scheduler_max_total_spatial_layers": 2,
+      "obs_delay_slots": 2,
+      "config_actuation_delay_slots": 1,
+      "command_actuation_delay_slots": 0,
+      "control_reject_prob": 0.0,
+      "measurement_queue_delay_slots": 2,
+      "measurement_sinr_window_slots": 8,
+      "measurement_sinr_noise_std_db": 2,
+      "measurement_bler_window_tbs": 20,
+      "measurement_throughput_granularity_slots": 10
+    },
+    "cell": {
+      "cell_id": "cell_0",
+      "tx_power_dbm": 30.0,
+      "current_codebook_id": 0,
+      "current_beam_profile_id": 0,
+      "managed_cell_ids": [
+        "cell_0",
+        "cell_1",
+        "cell_2"
+      ],
+      "neighbor_cell_positions": {
+        "cell_0": {
+          "x_m": 8.5,
+          "y_m": 21,
+          "z_m": 50
+        },
+        "cell_1": {
+          "x_m": 45,
+          "y_m": 90,
+          "z_m": 50
+        },
+        "cell_2": {
+          "x_m": -20,
+          "y_m": 60,
+          "z_m": 50
+        }
+      },
+      "cell_radio_profiles": {
+        "cell_0": {
+          "carrier_frequency_hz": 3500000000,
+          "bandwidth_hz": 10000000,
+          "subcarrier_spacing_hz": 30000,
+          "slot_duration_ms": 0.5,
+          "tx_rows": 2,
+          "tx_cols": 2,
+          "num_rx_ant": 2,
+          "tx_power_dbm": 30,
+          "gnb_num_tx_ant": 4
+        },
+        "cell_1": {
+          "carrier_frequency_hz": 3500000000,
+          "bandwidth_hz": 10000000,
+          "subcarrier_spacing_hz": 30000,
+          "slot_duration_ms": 0.5,
+          "tx_rows": 2,
+          "tx_cols": 2,
+          "num_rx_ant": 2,
+          "tx_power_dbm": 30,
+          "gnb_num_tx_ant": 4
+        },
+        "cell_2": {
+          "carrier_frequency_hz": 3500000000,
+          "bandwidth_hz": 10000000,
+          "subcarrier_spacing_hz": 30000,
+          "slot_duration_ms": 0.5,
+          "tx_rows": 2,
+          "tx_cols": 2,
+          "num_rx_ant": 2,
+          "tx_power_dbm": 30,
+          "gnb_num_tx_ant": 4
+        }
+      }
+    },
+    "ue": {
+      "ues": [
+        {
+          "ue_id": "ue_0",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 11.0,
+          "radio_quality_db": 10.5,
+          "bler": 0.1,
+          "slice_id": "embb",
+          "traffic_type": "video",
+          "latency_budget_ms": 100.0,
+          "priority": 1,
+          "arrival_model": "on_off",
+          "arrival_rate_bps": 10500000.0,
+          "burst_size_bytes": 1650,
+          "on_duration_slots": 40,
+          "off_duration_slots": 16,
+          "start_offset_slots": 0,
+          "max_queue_bytes": 240000,
+          "radius_fraction": 0.35,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "x_m": -11.399999999999999,
+          "y_m": -30.0,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_0",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5,
+          "packet_size_bytes": 200
+        },
+        {
+          "ue_id": "ue_1",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 10.5,
+          "radio_quality_db": 10.0,
+          "bler": 0.08,
+          "slice_id": "voice",
+          "traffic_type": "phone",
+          "latency_budget_ms": 50.0,
+          "priority": 2,
+          "arrival_model": "cbr",
+          "arrival_rate_bps": 420000.0,
+          "max_queue_bytes": 80000,
+          "x_m": 25.4,
+          "y_m": 20.0,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_1",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5
+        },
+        {
+          "ue_id": "ue_2",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 12.0,
+          "radio_quality_db": 12.0,
+          "bler": 0.08,
+          "slice_id": "urllc",
+          "traffic_type": "control",
+          "latency_budget_ms": 10.0,
+          "priority": 3,
+          "arrival_model": "phased",
+          "arrival_rate_bps": 2100000.0,
+          "max_queue_bytes": 100000,
+          "radius_fraction": 0.34,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "x_m": 13.400000000000002,
+          "y_m": 40.0,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_2",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5,
+          "packet_size_bytes": 131,
+          "burst_size_bytes": 0,
+          "arrival_phases": [
+            {
+              "duration_slots": 40,
+              "arrival_model": "cbr",
+              "arrival_rate_bps": 12576000
+            },
+            {
+              "duration_slots": 1960,
+              "arrival_model": "on_off",
+              "arrival_rate_bps": 2096000,
+              "on_duration_slots": 44,
+              "off_duration_slots": 5,
+              "burst_size_bytes": 0,
+              "start_offset_slots": 0
+            }
+          ]
+        },
+        {
+          "ue_id": "ue_4",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 11.0,
+          "radio_quality_db": 10.5,
+          "bler": 0.1,
+          "slice_id": "embb",
+          "traffic_type": "video",
+          "latency_budget_ms": 100.0,
+          "priority": 1,
+          "arrival_model": "on_off",
+          "arrival_rate_bps": 36000000.0,
+          "burst_size_bytes": 6600,
+          "on_duration_slots": 40,
+          "off_duration_slots": 16,
+          "start_offset_slots": 0,
+          "max_queue_bytes": 240000,
+          "radius_fraction": 0.36,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "x_m": 9.800000000000004,
+          "y_m": 90.0,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_1",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5,
+          "packet_size_bytes": 200
+        },
+        {
+          "ue_id": "ue_6",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 12.0,
+          "radio_quality_db": 12.0,
+          "bler": 0.08,
+          "slice_id": "urllc",
+          "traffic_type": "control",
+          "latency_budget_ms": 10.0,
+          "priority": 3,
+          "arrival_model": "phased",
+          "arrival_rate_bps": 1650000.0,
+          "max_queue_bytes": 100000,
+          "radius_fraction": 0.22,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "x_m": -12.599999999999998,
+          "y_m": -30.0,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_0",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5,
+          "packet_size_bytes": 103,
+          "burst_size_bytes": 0,
+          "arrival_phases": [
+            {
+              "duration_slots": 40,
+              "arrival_model": "cbr",
+              "arrival_rate_bps": 9888000
+            },
+            {
+              "duration_slots": 1960,
+              "arrival_model": "on_off",
+              "arrival_rate_bps": 1648000,
+              "on_duration_slots": 44,
+              "off_duration_slots": 5,
+              "burst_size_bytes": 0,
+              "start_offset_slots": 0
+            }
+          ]
+        },
+        {
+          "ue_id": "ue_8",
+          "queue_bytes": 0,
+          "throughput_mbps": 0.0,
+          "sinr_db": 11.0,
+          "radio_quality_db": 10.5,
+          "bler": 0.1,
+          "slice_id": "embb",
+          "traffic_type": "broadband",
+          "latency_budget_ms": 100.0,
+          "priority": 1,
+          "arrival_model": "on_off",
+          "arrival_rate_bps": 12750000.0,
+          "burst_size_bytes": 2805,
+          "on_duration_slots": 40,
+          "off_duration_slots": 16,
+          "start_offset_slots": 0,
+          "max_queue_bytes": 240000,
+          "radius_fraction": 0.37,
+          "velocity_mps": 0,
+          "heading_deg": 0.0,
+          "is_indoor": false,
+          "x_m": 58.20000000000002,
+          "y_m": 40.0,
+          "serving_beam_id": 0,
+          "serving_cell_id": "cell_2",
+          "num_rx_ant": 2,
+          "shadowing_db": 0,
+          "pathloss_db": 100,
+          "rank": 1,
+          "ri": 1,
+          "z_m": 1.5,
+          "packet_size_bytes": 200
+        }
+      ]
+    },
+    "beamforming": {
+      "antenna": {
+        "gnb_num_tx_ant": 4,
+        "default_ue_num_rx_ant": 2,
+        "carrier_frequency_hz": 3500000000,
+        "bandwidth_hz": 10000000,
+        "subcarrier_spacing_hz": 30000,
+        "cyclic_prefix_type": "normal",
+        "gnb_panel_layout": "2x2",
+        "default_ue_panel_layout": "1x2",
+        "polarization": "single",
+        "slot_duration_ms": 0.5,
+        "tx_rows": 2,
+        "tx_cols": 2,
+        "num_rx_ant": 2
+      },
+      "codebooks": {
+        "0": {
+          "name": "baseline_codebook",
+          "base_gain_db": 0.0,
+          "beams": {
+            "0": 0.0,
+            "1": 0.2,
+            "2": 0.4
+          }
+        },
+        "1": {
+          "name": "directional_codebook",
+          "base_gain_db": 1.5,
+          "beams": {
+            "0": 0.8,
+            "1": 1.2,
+            "2": 1.6
+          }
+        },
+        "2": {
+          "name": "high_gain_codebook",
+          "base_gain_db": 2.5,
+          "beams": {
+            "0": 1.0,
+            "1": 1.8,
+            "2": 2.2
+          }
+        }
+      },
+      "beam_profiles": {
+        "0": {
+          "name": "wide_beam",
+          "profile_gain_db": 0.0
+        },
+        "1": {
+          "name": "narrow_beam",
+          "profile_gain_db": 1.0
+        }
+      }
+    },
+    "scenario": {
+      "scenario_name": "baseline_light_load_static",
+      "template_overrides": {},
+      "overrides": {}
+    },
+    "phy": {
+      "phy_type": "sionna_rt_sys",
+      "rt_sys": {
+        "device": "cuda",
+        "feedback_mode": "fast",
+        "reference": {
+          "selection_samples": 64,
+          "selection_criterion": "wilson_upper",
+          "bler_samples": 64,
+          "decoder_cache_size": 128
+        },
+        "bler_target": 0.1,
+        "noise_figure_db": 7,
+        "rzf_relative_regularization": 0.01,
+        "mobility": {
+          "measurement_filter_ms": 20,
+          "load_filter_ms": 50,
+          "time_to_trigger_ms": 40,
+          "min_dwell_ms": 100
+        },
+        "paper_interfaces": {
+          "enabled": true,
+          "rule_observations": true,
+          "connection_events": false,
+          "beam_reports": false
+        },
+        "rt_cpu_threads": 1,
+        "torch_num_threads": 1,
+        "torch_num_interop_threads": 1,
+        "reuse_reference_within_slot": true,
+        "ideal_csi_fast_path": true,
+        "packed_phy_diagnostics": false,
+        "retain_channel_on_gpu": false,
+        "nr_execution": "batched",
+        "nr_parallel_workers": 6,
+        "nr_worker_threads": 2,
+        "nr_pin_workers": false,
+        "rt_prefetch": true,
+        "ue_services": {
+          "enabled": true,
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 40,
+            "on_duration_ms": 4,
+            "inactivity_ms": 8,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0
+          },
+          "drx_by_ue": {
+            "ue_2": {
+              "enabled": false
+            },
+            "ue_6": {
+              "enabled": false
+            }
+          },
+          "power": {
+            "sleep_w": 0.04,
+            "monitor_w": 0.25,
+            "receive_w": 0.9,
+            "transmit_w": 1.4,
+            "waking_w": 0.9,
+            "wakeup_j": 0.0002,
+            "cpu_idle_w": 0.05,
+            "cpu_compute_w": 0.8
+          },
+          "mec": {
+            "enabled": true,
+            "local_gflops": 2,
+            "server_gflops": 40,
+            "uplink_bps_per_cell": 5000000,
+            "backhaul_one_way_ms": 2,
+            "max_queued_tasks": 32,
+            "tasks_by_ue": {
+              "ue_0": {
+                "interval_ms": 50,
+                "input_bytes": 1000,
+                "result_bytes": 200,
+                "compute_gflop": 0.05,
+                "deadline_ms": 100,
+                "offload_fraction": 0.5
+              },
+              "ue_4": {
+                "interval_ms": 50,
+                "input_bytes": 1000,
+                "result_bytes": 200,
+                "compute_gflop": 0.05,
+                "deadline_ms": 100,
+                "offload_fraction": 0.8
+              }
+            }
+          },
+          "task_cohort_ms": 100
+        },
+        "initial_association": "strongest_rt_reference",
+        "carrier_frequency_hz": 3500000000,
+        "bandwidth_hz": 10000000,
+        "subcarrier_spacing_hz": 30000,
+        "slot_duration_ms": 0.5,
+        "tx_rows": 2,
+        "tx_cols": 2,
+        "num_rx_ant": 2,
+        "ap_services": {
+          "enabled": true,
+          "power": {
+            "static_w": 20.0,
+            "load_w": 6.0,
+            "pa_efficiency": 0.25,
+            "waking_w": 30.0,
+            "sleep_w": {
+              "micro_sleep": 5.892857142857143,
+              "light_sleep": 2.6785714285714284,
+              "deep_sleep": 0.10714285714285714
+            },
+            "wake_transition_j": {
+              "micro_sleep": 0.0,
+              "light_sleep": 0.009642857142857142,
+              "deep_sleep": 0.10714285714285714
+            }
+          },
+          "profiles": {
+            "micro_sleep": {
+              "period_ms": 20,
+              "sleep_ms": 1,
+              "wakeup_ms": 0
+            },
+            "light_sleep": {
+              "period_ms": 100,
+              "sleep_ms": 10,
+              "wakeup_ms": 6
+            },
+            "deep_sleep": {
+              "wakeup_ms": 50
+            }
+          }
+        },
+        "rt_device": "cpu",
+        "algebra_backend": "torch",
+        "channel_array_backend": "numpy",
+        "model": "fast",
+        "system_phy_enabled": true,
+        "system_gain_update_ms": 2.0,
+        "reference_gain_update_ms": 2.0,
+        "fast_reports": true,
+        "compact_snapshots": true,
+        "fast_channel_mode": "sampled",
+        "compact_sinr": true,
+        "compiled_report_copy": false,
+        "cached_static_phy": true,
+        "fast_profile": "system",
+        "spatial_samples_per_prb": 4,
+        "channel_time_sampling": "one_per_gain_update_per_stream_pattern",
+        "fast_feedback_execution": "cpu_batched",
+        "algebra_device": "cpu",
+        "rt_prefetch_workers": 2,
+        "csi_error_nmse_db": null,
+        "harq_combining": "none",
+        "recording_mode": "experiment"
+      }
+    }
+  },
+  "note": "RIC algorithms are the intervention; only the registered seed and run duration vary in the physical network configuration"
+}

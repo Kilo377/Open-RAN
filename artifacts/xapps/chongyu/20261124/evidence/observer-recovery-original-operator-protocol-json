@@ -1,0 +1,64 @@
+{
+  "schema": "oran.validation-only-protocol.v5",
+  "version": "v5",
+  "status": "sealed_isolated_lanes",
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "power_training_source_archive_sha256": "ff29827e59ff9aeba5a998f307789160dc5e85c8c681dabec5ff76b9ea8cc46f",
+  "development_stop_utc": "2026-11-23T09:20:00+00:00",
+  "model_selection_stop_utc": "2026-11-23T09:20:00+00:00",
+  "total_deadline_utc": "2026-11-23T11:40:00+00:00",
+  "allowed_stages": [
+    "dev",
+    "holdout"
+  ],
+  "allowed_modes": [
+    "off",
+    "frozen"
+  ],
+  "development_seeds": [
+    341710
+  ],
+  "holdout_seeds": [
+    341721,
+    341722
+  ],
+  "slots": 22440,
+  "baseline_slot": 2040,
+  "observation_slots": 20000,
+  "observation_seconds": 10,
+  "tail_slots": 400,
+  "execution_mode": "isolated_validation_lanes",
+  "power_policy_sha256": "2406c5912b10f312d8f1c403d39c7fa78d1b00814e53b036cb0ff78a3b10263b",
+  "balanced42_catalogue_sha256": "2dcb2568cd66fc9b0640c871a47a8da916b5562c33320c96c88c2d4769c9bd20",
+  "retained_throughput_model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+  "source_change": "Only the two worker admission TRAIN_STOP constants: 08:40 -> 09:20",
+  "budget_reallocation_basis": "Measured computation time and both real 2000-slot parallel probes; total user budget unchanged",
+  "registration_timing": "Before any balanced42 candidate deployment evaluation and any final heldout result; earlier legacy9 development results were already known",
+  "registered_before_balanced42_deployment_evaluation_and_final_heldout": true,
+  "policy_learner_PHY_core_metrics_and_profiles_byte_unchanged": true,
+  "new_training_authorized": false,
+  "holdout_start_requires_root_go": true,
+  "execution": {
+    "mode": "isolated_validation_lanes",
+    "max_validation_lanes_per_host": 2,
+    "lane_ids": [
+      "lane-0",
+      "lane-1"
+    ],
+    "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+    "minimum_memavailable_before_launch_bytes": 30064771072,
+    "minimum_shm_free_bytes": 8589934592,
+    "passed_2000_probe_certificates": {
+      "agx1": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811",
+      "agx2": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13"
+    },
+    "old_v4_worker_must_be_inactive": true,
+    "final_per_host_order": [
+      "off",
+      [
+        "power",
+        "throughput"
+      ]
+    ]
+  }
+}

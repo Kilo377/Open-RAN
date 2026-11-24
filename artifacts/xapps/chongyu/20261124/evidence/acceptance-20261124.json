@@ -1,0 +1,38 @@
+{
+  "pre_registered_before_heldout": true,
+  "short_window_slots": 500,
+  "long_window_slots": 20000,
+  "target": "mec_offloaded_latency_ms",
+  "desired_mean_paired_reduction_percent": 5,
+  "desired_nonregressing_seed_fraction": 0.75,
+  "independent_heldout_seeds": [
+    2026112421,
+    2026112422,
+    2026112423,
+    2026112424,
+    2026112425,
+    2026112426
+  ],
+  "same_task_births_and_offload_routes_required": true,
+  "failures_and_censoring_never_zero_imputed": true,
+  "side_effects_reported_but_not_optimized": [
+    "network_goodput_mbps",
+    "ue_power_w",
+    "urllc_failure_fraction"
+  ],
+  "current_ui_seed_reported_separately": true,
+  "not_a_universal_per_activation_guarantee": true,
+  "anti_survivorship_guard": {
+    "registered_before_heldout": true,
+    "horizon_ms": 100,
+    "statistic": "restricted mean time to successful offloaded completion; deadline100ms; unsuccessful by deadline costs100ms; completed latency is capped100ms",
+    "condition": "Mean paired restricted completion cost reduction must reach the same registered5% target in both startup and full windows",
+    "failure_counts_reported_per_seed": true,
+    "individual_failure_count_increases_not_automatically_vetoed": true,
+    "actual_intent_evaluation_unchanged": true,
+    "registered_utc": "2026-11-24T02:40:23.828747+00:00"
+  },
+  "primary_latency_measurement": "Same fixed mature birth cohort, actual observed terminal outcomes through a1000ms followup with traffic and controllers still active. Strict online window means and their missingness are reported separately, without changing UI Evaluation.",
+  "final_total_slots": 24040,
+  "followup_slots": 2000
+}

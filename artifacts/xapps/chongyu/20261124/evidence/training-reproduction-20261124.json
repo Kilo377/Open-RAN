@@ -1,0 +1,19 @@
+{
+  "components": [
+    {
+      "component": "startup",
+      "forest_exact": true,
+      "action_catalogue_exact": true,
+      "dataset_exact": true
+    },
+    {
+      "component": "onesecond",
+      "forest_exact": true,
+      "action_catalogue_exact": true,
+      "dataset_exact": true
+    }
+  ],
+  "equal_weight_ensemble_exact": true,
+  "actual_fitter": "scripts/xapps/train-mec-latency.py",
+  "development_or_heldout_data_used": false
+}

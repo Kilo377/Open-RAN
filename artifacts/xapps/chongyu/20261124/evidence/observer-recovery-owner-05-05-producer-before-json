@@ -1,0 +1,41 @@
+{
+  "observed_utc": "2026-11-23T10:15:40.030107+00:00",
+  "pid": 25336,
+  "start_ticks": 15559801,
+  "run_status": {
+    "completed": false,
+    "spark_verified": false,
+    "stage": "simulating",
+    "model": "fast",
+    "fast_profile": "system",
+    "source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+    "xapp_pool": "chongyu",
+    "platform_profile": {
+      "requested": "custom",
+      "preflight": "not_requested",
+      "fallback_reason": null
+    },
+    "execution_devices": {
+      "rt": "cpu",
+      "phy_sys": "cpu",
+      "nr_fallback": "cuda",
+      "linear_algebra": "cpu",
+      "channel_reconstruction": "cpu"
+    },
+    "thread_budgets": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    },
+    "torch_execution_threads": {
+      "intra_op": 1,
+      "inter_op": 1
+    },
+    "rt_cpu_threads": 1,
+    "cache_key": "4195951fa844c8a20c390c4bf36fd46793b15399f7978a0cbde7abdefcf1ae49",
+    "record_compression": "gzip",
+    "last_completed_slot": 18000,
+    "simulated_seconds": 9.0,
+    "simulation_wall_s_so_far": 1829.3379495160189
+  }
+}

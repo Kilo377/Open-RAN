@@ -1,0 +1,21 @@
+{
+  "model_id": "x01",
+  "model_sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+  "training": {
+    "parent_rows": 24,
+    "new_online_observation_rows": 197,
+    "parent_model_sha256": "9baf497d3d84e01c0aaa609ec050f75fcbd24af33a39f8bd5fedf5e16ac15e2b",
+    "network_data_seed": 55
+  },
+  "evaluation": {
+    "duration_s_per_arm": 10,
+    "seed": 20261108,
+    "scenario": "native",
+    "metric": "target_ue_energy_j",
+    "base": 16.575794999994823,
+    "on": 14.181194999995796,
+    "relative_target_improvement": 0.1444636592090922,
+    "target_kpi_effect_verified": true
+  },
+  "scope": "Single matched seed evidence; no independent replicated confidence interval or claimed learned superiority. Other KPI costs remain part of the recorded experiment."
+}

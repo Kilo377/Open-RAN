@@ -1,0 +1,160 @@
+{
+  "schema": "oran.x12-selection-and-validation.v1",
+  "registered_utc": "2026-11-24T01:24:52.342174+00:00",
+  "development_seeds": [
+    2026112411,
+    2026112412
+  ],
+  "development_observe_slots": 6000,
+  "primary_origin_slot": 2040,
+  "short_observe_slots": 500,
+  "maturity_guard_ms": 100,
+  "ranking": {
+    "short_weight": 0.6,
+    "full_weight": 0.4,
+    "short_regression_penalty": 2.0,
+    "full_regression_penalty": 1.0,
+    "formula": "0.6*mean(short_gain_percent)+0.4*mean(full_gain_percent)-2*mean(max(0,-short_gain_percent))-mean(max(0,-full_gain_percent))",
+    "seed_weights_equal": true,
+    "ties_within_half_percent": "prefer smaller deterministic tree policy"
+  },
+  "final_heldout": {
+    "seeds": [
+      2026112421,
+      2026112422,
+      2026112423,
+      2026112424,
+      2026112425,
+      2026112426
+    ],
+    "observe_slots": 20000,
+    "arms": [
+      "OFF",
+      "legacy_X12",
+      "selected_candidate"
+    ],
+    "weights_locked_before_runs": true,
+    "used_for_fitting_or_choice": false,
+    "total_slots": 24040,
+    "followup_slots": 2000,
+    "worker_assignment": {
+      "2026112421": "agx2",
+      "2026112422": "agx1",
+      "2026112423": "agx2",
+      "2026112424": "agx2",
+      "2026112425": "agx2",
+      "2026112426": "agx1"
+    },
+    "assignment_registered_utc": "2026-11-24T04:31:56.490352+00:00",
+    "assignment_reason": "Before opening any heldout seed, assign4 paired seed blocks to the faster AGX2 and2 to AGX1 using measured physical throughput; every OFF/ON/legacy/PPO arm of a seed stays on the same host. Equal statistical weight per seed is unchanged.",
+    "additional_PPO_comparison": {
+      "optional": true,
+      "default": false,
+      "reason": "PPO receives the same full cold/warm development confirmation as every finalist. Reserve independent blind budget for the selected model, old model and native reference, plus unseen warm activation and actual production admission.",
+      "registered_utc": "2026-11-24T04:55:47.091363+00:00",
+      "heldout_unopened": true
+    }
+  },
+  "supplementary_hot_start": {
+    "seeds": [
+      2026112425,
+      2026112426
+    ],
+    "origin_slot": 8040,
+    "observe_slots": 6000,
+    "arms": [
+      "OFF",
+      "selected_candidate"
+    ],
+    "included_in_main_six_seed_score": false
+  },
+  "report": [
+    "causal paired OFF/ON latency gain",
+    "fixed pre-intent anchor/ON change and intent attainment",
+    "mature task sample counts and unavailable cohorts",
+    "completion/failure counts on identical generated/offloaded task identities",
+    "throughput,UE power andURLLC failure tradeoffs",
+    "initial request and actual delayed application evidence"
+  ],
+  "current_ui_seed": {
+    "seed": 20261214,
+    "already_training_seed": true,
+    "independent_heldout": false,
+    "startup_gate": "Do not worsen the observed native first500-slot latency at the known UI point; report any zero causal gain honestly. The independent multi-seed mean-gain targets remain5%.",
+    "uses_independent_holdout": false,
+    "gate_revision": {
+      "utc": "2026-11-24T03:35:03.384170+00:00",
+      "heldout_unopened": true,
+      "reason": "At the known UI point native latency is8.8ms and the best measured adjustment8.6ms. A model may correctly decline a marginal action near the latency floor; this should not disqualify strong independent effects in pressured states. Native performance also avoids the prior X12 short-window regression. No mean-latency, cohort or Evaluation value is altered."
+    }
+  },
+  "invalid_measurements": "Retain missing/rejected/failed records explicitly; never zero-impute or count them as success",
+  "development_confirmation": {
+    "registered_utc": "2026-11-24T02:32:37.634083+00:00",
+    "heldout_unopened": true,
+    "reason": "Four independent processes per AGX passed native parity and nearly doubled batch throughput; spend the recovered budget matching the final10s horizon",
+    "seeds": [
+      2026112411,
+      2026112412
+    ],
+    "observe_slots": 20000,
+    "arms": [
+      "OFF",
+      "best measured tree candidate from3s development",
+      "best frozen PPO candidate from3s development"
+    ],
+    "ranking": {
+      "short_weight": 0.6,
+      "full_weight": 0.4,
+      "short_regression_penalty": 2.0,
+      "full_regression_penalty": 1.0,
+      "formula": "0.6*mean(short_gain_percent)+0.4*mean(full_gain_percent)-2*mean(max(0,-short_gain_percent))-mean(max(0,-full_gain_percent))",
+      "seed_weights_equal": true,
+      "ties_within_half_percent": "prefer smaller deterministic tree policy"
+    },
+    "full_gain_uses_slots": 20000,
+    "locks_model_before_final_heldout": true
+  },
+  "validation_cohort_followup": {
+    "registered_utc": "2026-11-24T02:54:33.920979+00:00",
+    "heldout_unopened": true,
+    "birth_exposures_unchanged": true,
+    "deadline_guard_ms": 100,
+    "final_followup_slots": 2000,
+    "final_total_slots": 24040,
+    "reason": "At the250ms endpoint development seed12 still has2/5 mature tasks pending in BOTH OFF and ON; retained real outcomes resolve at240msON versus400msOFF task latency. Follow the same birth cohort to actual terminal outcomes, rather than fabricate zero or exclude the slow tasks.",
+    "controls_and_traffic_continue_during_followup": true,
+    "no_synthetic_outcomes": true,
+    "actual_UI_window_mean_and_Evaluation_formula_unchanged": true,
+    "report_raw_window_missingness_separately": true
+  },
+  "membership_refresh_execution_amendment": {
+    "registered_utc": "2026-11-24T04:10:04.406874+00:00",
+    "heldout_unopened": true,
+    "observed_reason": "At slot3080 a real UE membership change invalidates both cell priority maps. Holding the old decision until its100/260ms timer expires leaves a native-restoration gap. New adaptive source refreshes on public served-UE membership changes; this is an xApp execution change, not a network or metric change.",
+    "source": "source-v7",
+    "source_archive_sha256": "141799c2bc66cf1d6293d3852228c2aafc86f58cdefbc70f8071926f8388929f",
+    "source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0",
+    "development_splits": [
+      "development_refresh",
+      "development_refresh_confirmation"
+    ],
+    "independent_fixed_parameter_reproductions_required": 6
+  },
+  "pressure_state_development": {
+    "registered_utc": "2026-11-24T04:23:32.842641+00:00",
+    "heldout_unopened": true,
+    "seeds": [
+      2026112411,
+      2026112412
+    ],
+    "warm_origin_slot": 8040,
+    "warm_observe_slots": 6000,
+    "warm_case_slots": 16040,
+    "native_reference": "Actual retained all-OFF development traces; same native4.02s state, no additional native simulation",
+    "shortlist": "All up to4 completed current-execution3s frozen candidates; all receive10s cold confirmation and3s warm confirmation",
+    "ranking": "0.75*cold_score+0.25*warm_score; each stratum score is the existing0.6*short+0.4*full gain minus the registered regression penalties",
+    "eligibility": "Cold mean latency and deadline-restricted gains>=5%; warm mean short and3s latency gains>=0%; knownUI nonregression. All final unseen acceptance goals are unchanged.",
+    "reason": "Training seed01 warm activation raises early latency despite small3s benefit; state-aware behavior must be checked explicitly before choosing the final model. No development warm outcome or final heldout outcome was used for this amendment."
+  }
+}

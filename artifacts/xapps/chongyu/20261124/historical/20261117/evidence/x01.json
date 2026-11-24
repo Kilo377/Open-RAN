@@ -1,0 +1,198 @@
+{
+  "model_id": "x01",
+  "model_sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+  "runtime_parameters": {
+    "deploy_drx": true
+  },
+  "model_retrained": false,
+  "evaluation": {
+    "duration_s_per_arm": 3,
+    "seeds": [
+      20261119,
+      20261120
+    ],
+    "scenario": "native six-UE, three-cell network",
+    "matched_inputs_verified": true,
+    "metrics": [
+      {
+        "key": "network_energy_j",
+        "label": "Total UE energy",
+        "unit": "J",
+        "base": 16.521159999999462,
+        "native_drx": 15.766329999999336,
+        "unlocked_drx": 15.6600349999994
+      },
+      {
+        "key": "target_energy_j",
+        "label": "X-01 target UE energy",
+        "unit": "J",
+        "base": 5.76668750000001,
+        "native_drx": 5.011369999999886,
+        "unlocked_drx": 4.918759999999944
+      },
+      {
+        "key": "network_goodput_mbps",
+        "label": "Network DL goodput",
+        "unit": "Mbit/s",
+        "base": 29.028292,
+        "native_drx": 28.936332,
+        "unlocked_drx": 28.60142533333333
+      },
+      {
+        "key": "packet_mean_ms",
+        "label": "Mean DL packet latency",
+        "unit": "ms",
+        "base": 23.49191022089256,
+        "native_drx": 23.1080873846485,
+        "unlocked_drx": 25.949803343500147
+      },
+      {
+        "key": "packet_p95_ms",
+        "label": "DL packet P95",
+        "unit": "ms",
+        "base": 184.0,
+        "native_drx": 181.75,
+        "unlocked_drx": 189.75
+      },
+      {
+        "key": "task_mean_ms",
+        "label": "MEC workload task latency",
+        "unit": "ms",
+        "base": 45.85267857142856,
+        "native_drx": 41.171874999999986,
+        "unlocked_drx": 43.17194570135746
+      },
+      {
+        "key": "task_on_time_pct",
+        "label": "MEC on-time completion",
+        "unit": "%",
+        "base": 90.17857142857143,
+        "native_drx": 89.73214285714286,
+        "unlocked_drx": 87.94642857142857
+      }
+    ],
+    "relative_changes_pct_vs_base": {
+      "native_drx": {
+        "network_energy_j": 4.56886804558609,
+        "target_energy_j": 13.09794401032002,
+        "network_goodput_mbps": -0.31679438804046844,
+        "packet_mean_ms": 1.6338511114464742,
+        "packet_p95_ms": 1.2228260869565217,
+        "task_mean_ms": 10.20835361697986,
+        "task_on_time_pct": -0.49504950495049277
+      },
+      "unlocked_drx": {
+        "network_energy_j": 5.212255071678318,
+        "target_energy_j": 14.703891965709346,
+        "network_goodput_mbps": -1.4705194045404701,
+        "packet_mean_ms": -10.462721419825861,
+        "packet_p95_ms": -3.125,
+        "task_mean_ms": 5.84640407843372,
+        "task_on_time_pct": -2.4752475247524797
+      }
+    },
+    "relative_changes_pct_vs_native_drx": {
+      "network_energy_j": -0.6741898717072425,
+      "target_energy_j": -1.8479976533351983,
+      "network_goodput_mbps": -1.1573915680351932,
+      "packet_mean_ms": 12.297495294826932,
+      "packet_p95_ms": 4.4016506189821225,
+      "task_mean_ms": 4.85785673194985,
+      "task_on_time_pct": -1.9900497512437831
+    },
+    "per_seed": [
+      {
+        "seed": 20261119,
+        "device": "agx1",
+        "metrics": {
+          "base": {
+            "network_energy_j": 16.18662999999947,
+            "target_energy_j": 5.565745000000019,
+            "network_goodput_mbps": 30.22866666666667,
+            "packet_mean_ms": 5.512191161570237,
+            "packet_p95_ms": 24.5,
+            "task_mean_ms": 17.906249999999996,
+            "task_on_time_pct": 100.0
+          },
+          "native_drx": {
+            "network_energy_j": 15.34300499999933,
+            "target_energy_j": 4.724069999999873,
+            "network_goodput_mbps": 30.17053333333333,
+            "packet_mean_ms": 4.16061694183157,
+            "packet_p95_ms": 19.5,
+            "task_mean_ms": 11.535714285714269,
+            "task_on_time_pct": 100.0
+          },
+          "unlocked_drx": {
+            "network_energy_j": 15.217874999999424,
+            "target_energy_j": 4.601539999999966,
+            "network_goodput_mbps": 29.61476533333333,
+            "packet_mean_ms": 7.7039178118393234,
+            "packet_p95_ms": 33.5,
+            "task_mean_ms": 16.804545454545448,
+            "task_on_time_pct": 96.42857142857143
+          }
+        },
+        "executed_non_native_drx_samples": 1160
+      },
+      {
+        "seed": 20261120,
+        "device": "agx2",
+        "metrics": {
+          "base": {
+            "network_energy_j": 16.85568999999945,
+            "target_energy_j": 5.9676300000000015,
+            "network_goodput_mbps": 27.827917333333332,
+            "packet_mean_ms": 42.69039461821208,
+            "packet_p95_ms": 343.5,
+            "task_mean_ms": 73.79910714285712,
+            "task_on_time_pct": 80.35714285714286
+          },
+          "native_drx": {
+            "network_energy_j": 16.18965499999934,
+            "target_energy_j": 5.298669999999898,
+            "network_goodput_mbps": 27.70213066666667,
+            "packet_mean_ms": 43.387972929692395,
+            "packet_p95_ms": 344.0,
+            "task_mean_ms": 70.8080357142857,
+            "task_on_time_pct": 79.46428571428571
+          },
+          "unlocked_drx": {
+            "network_energy_j": 16.102194999999377,
+            "target_energy_j": 5.235979999999922,
+            "network_goodput_mbps": 27.588085333333332,
+            "packet_mean_ms": 45.25400176147404,
+            "packet_p95_ms": 346.0,
+            "task_mean_ms": 69.30180180180179,
+            "task_on_time_pct": 79.46428571428571
+          }
+        },
+        "executed_non_native_drx_samples": 1200
+      }
+    ],
+    "target_kpi_effect_verified": true,
+    "all_actual_drx_verified": true
+  },
+  "simulation_source_sha256": "e2516726fb11105c8a939794f5de412365a134c5ecc795ef541e6ca5a8248d01",
+  "raw_retention": {
+    "raw_archive": "/Users/kilobao/Documents/Codex/2026-10-17/b/outputs/drx_unlock_20261117/drx-unlock-raw-records.tgz",
+    "sha256": "53cb417015e2fcf0cd1a65779f736cd2738e51229b863e9398d0e77e905b188c",
+    "bytes": 286492156,
+    "all_remote_files_verified": true,
+    "remote_persistent_results": "/home/lboroldn/Desktop/oran_drx_unlock_20261117/results",
+    "simulation_source_sha256": "e2516726fb11105c8a939794f5de412365a134c5ecc795ef541e6ca5a8248d01",
+    "model_sha256": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+    "runs": 6,
+    "total_simulated_seconds": 18
+  },
+  "legacy_locked_evaluation": "evidence/x01-legacy-locked.json",
+  "interpretation": {
+    "energy": "Whole run, including startup; all-six population and UE0+UE4 target reported separately",
+    "goodput": "All delivered payload; all six UEs",
+    "packet_latency": "Completed DL packets; P95 is mean of per-seed P95",
+    "task_latency": "Completion-weighted mean of mature matched MEC creation cohorts; start >=100 ms",
+    "task_rate": "On-time completed / generated, including failed and pending demand",
+    "evidence": "Two paired evaluation seeds; no population confidence interval or broad generalization claim",
+    "attribution": "Effect of enabling joint DRX control; do not present it as a scalar inactivity-timer derivative"
+  }
+}

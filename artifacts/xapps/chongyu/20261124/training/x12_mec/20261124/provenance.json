@@ -1,0 +1,102 @@
+{
+  "components": [
+    {
+      "path": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-startup/policy.json",
+      "sha256": "59d9b12a93b664fec6a203dffd90117a85d85d710f6eac8378e390c89e10ad37",
+      "weight": 0.5,
+      "label_slots": 500,
+      "metadata": {
+        "training_rows": 78,
+        "independent_contexts": 16,
+        "training_seeds": [
+          20261214,
+          20261215,
+          20261216,
+          2026112401,
+          2026112402,
+          2026112403,
+          2026112404
+        ],
+        "estimator": "ExtraTreesRegressor",
+        "fit_parameters": {
+          "n_estimators": 128,
+          "max_depth": 7,
+          "min_samples_leaf": 1,
+          "max_features": 0.85,
+          "random_state": 20261124,
+          "n_jobs": 2
+        },
+        "objective": "network mean completed offloaded MEC latency; failures cost100ms; pending tasks retain observed-age lower bounds (at least100ms)",
+        "label": "relative controlled native contrast over first500 slots; actual terminal followup of the same eligible birth cohort",
+        "selection": "leave-one-training-seed-out regret with regression penalty",
+        "label_slots": 500,
+        "training_diagnostic_records_included": true,
+        "created_utc": "2026-11-24T04:21:40.153644+00:00",
+        "no_heldout_or_development_rows": true,
+        "latency_only": true,
+        "action_only": false,
+        "balanced_training_seeds_and_contexts": true,
+        "actual_terminal_followup_labels": true,
+        "empirical_action_filter": true,
+        "minimum_predicted_gain": 0.0,
+        "action_filter_rule": "Native and joint relative-priority action retained; alternatives require>2% native benefit and>1% benefit over the joint action on at least2 matched training seeds",
+        "cross_validation_seed_weights_equal": true,
+        "raw_record_order": "sorted retained worker/case paths",
+        "dataset_sha256": "4bb0f54dc4248bdef98642bf8829bed3d9707f6571c7105536adf0e67769f7b8",
+        "fitter_sha256": "9a082033cdb781c5dc040bf1ba442f82cb43a58e828d6525ca016765d667cb8c",
+        "exporter_sha256": "4ee8bc848f852e0b81c10452e38e72bba556c39b1cb0a88f7514778a5779d212",
+        "observation_helper_sha256": "51e05940a71a1e697216f37013992761c9afa4a999991d32189b43f94241a25d",
+        "numpy_version": "2.5.5",
+        "sklearn_version": "1.9.1"
+      }
+    },
+    {
+      "path": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-onesecond/policy.json",
+      "sha256": "1c89d083c536af53a3e36390cbe77ca23287cef3991d561a4b1908e41ebffc75",
+      "weight": 0.5,
+      "label_slots": 2000,
+      "metadata": {
+        "training_rows": 14,
+        "independent_contexts": 7,
+        "training_seeds": [
+          20261214,
+          2026112401,
+          2026112402,
+          2026112404
+        ],
+        "estimator": "RandomForestRegressor",
+        "fit_parameters": {
+          "n_estimators": 128,
+          "max_depth": 5,
+          "min_samples_leaf": 1,
+          "max_features": 0.85,
+          "random_state": 20261124,
+          "n_jobs": 2
+        },
+        "objective": "network mean completed offloaded MEC latency; failures cost100ms; pending tasks retain observed-age lower bounds (at least100ms)",
+        "label": "relative controlled native contrast over first2000 slots; actual terminal followup of the same eligible birth cohort",
+        "selection": "leave-one-training-seed-out regret with regression penalty",
+        "label_slots": 2000,
+        "training_diagnostic_records_included": true,
+        "created_utc": "2026-11-24T04:21:44.399358+00:00",
+        "no_heldout_or_development_rows": true,
+        "latency_only": true,
+        "action_only": false,
+        "balanced_training_seeds_and_contexts": true,
+        "actual_terminal_followup_labels": true,
+        "empirical_action_filter": true,
+        "minimum_predicted_gain": 0.0,
+        "action_filter_rule": "Native and joint relative-priority action retained; alternatives require>2% native benefit and>1% benefit over the joint action on at least2 matched training seeds",
+        "cross_validation_seed_weights_equal": true,
+        "raw_record_order": "sorted retained worker/case paths",
+        "dataset_sha256": "1dfbb56525f4e24a949ac2c1af53047ce9b30d834785c198d0bdcdc6e8c0ff91",
+        "fitter_sha256": "9a082033cdb781c5dc040bf1ba442f82cb43a58e828d6525ca016765d667cb8c",
+        "exporter_sha256": "4ee8bc848f852e0b81c10452e38e72bba556c39b1cb0a88f7514778a5779d212",
+        "observation_helper_sha256": "51e05940a71a1e697216f37013992761c9afa4a999991d32189b43f94241a25d",
+        "numpy_version": "2.5.5",
+        "sklearn_version": "1.9.1"
+      }
+    }
+  ],
+  "catalogue_rule": "intersection of two empirically supported training-only catalogues"
+}

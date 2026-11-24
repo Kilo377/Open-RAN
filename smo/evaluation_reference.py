@@ -71,7 +71,14 @@ def origin_configuration(config):
         result.pop(key,None)
     for app in result.get('configs',{}).get('ric',{}).get('xapps',[]):
         params=app.get('parameters',{})
-        if params.get('model_path'):params['model_path']=Path(params['model_path']).name
+        model=params.get('model_path')
+        if model:
+            # Released adaptive inference uses the very same pinned model
+            # file. Its project root may move between isolated workers.
+            # Keep distinct research overrides strict; do not normalize them.
+            if params.get('adaptive_policy_path')==model:
+                params['adaptive_policy_path']=Path(model).name
+            params['model_path']=Path(model).name
     ric=result.get('configs',{}).get('ric',{})
     if ric.get('persistent_memory_enabled')is False:ric.pop('memory_store_path',None)
     bank=result.get('configs',{}).get('phy',{}).get('rt_sys',{}).get('reference',{}).get('probability_bank',{})

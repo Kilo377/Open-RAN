@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/operator-driver.py", line 360, in <module>
+    try:print(json.dumps(run(plan)))
+  File "/dev/shm/oran_xapp_improvement_20261123/validation-v5/inputs/6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2/operator-driver.py", line 345, in run
+    if not passed:raise RuntimeError('Original worker or post-run source/profile verification failed')
+RuntimeError: Original worker or post-run source/profile verification failed

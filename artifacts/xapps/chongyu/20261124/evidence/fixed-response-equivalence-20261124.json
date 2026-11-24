@@ -1,0 +1,81 @@
+{
+  "schema": "oran.fixed-response-equivalence.v1",
+  "learned_xapps_enabled": false,
+  "cases": [
+    {
+      "parameter": "native",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx2/jobs/s20261214_native",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/response_equiv_v7_native",
+      "reference_network_sha256": "41bad0d5d80e5c24cb9c08ec3d92fc80c5b49782d93a9c45797192fc51e6e2d3",
+      "current_network_sha256": "41bad0d5d80e5c24cb9c08ec3d92fc80c5b49782d93a9c45797192fc51e6e2d3",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    },
+    {
+      "parameter": "ue_offload_fraction",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx2/jobs/s20261214_offload_0p25",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/response_equiv_v7_ue_offload_fraction",
+      "reference_network_sha256": "1eb5db5504212d13e1b6f3f8a4648739f4e4db714b31a9fe8f4f74eafd4431f0",
+      "current_network_sha256": "1eb5db5504212d13e1b6f3f8a4648739f4e4db714b31a9fe8f4f74eafd4431f0",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    },
+    {
+      "parameter": "ue_drx_configs",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx2/jobs/s20261214_drx_cycle_80",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/response_equiv_v7_ue_drx_configs",
+      "reference_network_sha256": "e724e4a4abef0cbd6d4aff25349f9ddca95b35cb50e0d7f6e6f731a949e1bf05",
+      "current_network_sha256": "e724e4a4abef0cbd6d4aff25349f9ddca95b35cb50e0d7f6e6f731a949e1bf05",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    },
+    {
+      "parameter": "scheduler_mode",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx2/jobs/s20261214_latency",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/response_equiv_v7_scheduler_mode",
+      "reference_network_sha256": "37fe93878e3433bfa0ceabb5ca68962823664995f147128499ad00130c853c25",
+      "current_network_sha256": "37fe93878e3433bfa0ceabb5ca68962823664995f147128499ad00130c853c25",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    },
+    {
+      "parameter": "ue_scheduler_weights",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx2/jobs/s20261214_mec_weight_2",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/response_equiv_v7_ue_scheduler_weights",
+      "reference_network_sha256": "2609633ce52cca77f86b091281c037467f8f94287a7b7b880a8d645e046bf48d",
+      "current_network_sha256": "2609633ce52cca77f86b091281c037467f8f94287a7b7b880a8d645e046bf48d",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    },
+    {
+      "parameter": "cell_sleep_mode",
+      "complete": true,
+      "model_algorithms_enabled": false,
+      "reference_folder": "/Users/kilobao/Desktop/ORAN/SMO/current-environment-calibration-20261123/v2/workers/agx1/jobs/s20261214_sleep_micro_sleep",
+      "current_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx1/response_equiv_v7_cell_sleep_mode",
+      "reference_network_sha256": "decd2b0676e01c18dea8b1e2b2e7044e15452846ab8e112001c9701b6f616664",
+      "current_network_sha256": "decd2b0676e01c18dea8b1e2b2e7044e15452846ab8e112001c9701b6f616664",
+      "contiguous_slots_verified": 4840,
+      "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+      "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+    }
+  ],
+  "complete": true,
+  "reference_executed_source_sha256": "0966e4d2b2649816932ee333a4399dae63707de65378e883cba8e72542017bd8",
+  "current_executed_source_sha256": "035524b69caf38c90ebe561437158e1c559d11d9b011b9d2bb25d79eaa7cc3a0"
+}

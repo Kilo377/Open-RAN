@@ -18,6 +18,9 @@ def _digest(value):
 
 def verify_current_calibration(entry, recipe):
     """No deployment outcome or intent score is an admissible fitting input."""
+    if entry.get('calibration_reuse'):
+        from smo.calibration_reuse import verify
+        return verify(entry,recipe,verify_current_calibration)
     matrix = _read(entry['influences'])
     if not entry.get('current_calibration'):
         if matrix.get('estimates'):

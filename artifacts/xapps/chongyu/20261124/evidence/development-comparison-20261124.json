@@ -1,0 +1,428 @@
+{
+  "split": "two_state_development",
+  "heldout_used": false,
+  "candidates": [
+    {
+      "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-twohorizon/policy.json",
+      "model_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+      "kind": "joint_rf",
+      "algorithm": "Two-horizon fitted tree ensemble (equal-weight startup and1s contrasts)",
+      "development_seeds": [
+        2026112411,
+        2026112412
+      ],
+      "complete": true,
+      "score": 39.255283821412874,
+      "short_gains": [
+        52.92153589315527,
+        37.46277546158428
+      ],
+      "full_gains": [
+        63.06561085972856,
+        51.25111079930791
+      ],
+      "mean_short_gain_percent": 45.192155677369776,
+      "mean_full_gain_percent": 57.15836082951823,
+      "mean_short_restricted_completion_reduction_percent": 26.460767946577636,
+      "mean_full_restricted_completion_reduction_percent": 42.21672744174957,
+      "known_ui_startup": {
+        "status": "passed",
+        "vector": [
+          1,
+          1
+        ],
+        "observed_gain_percent": 2.272727272727548,
+        "zero_means_native_performance_not_a_claimed_improvement": true,
+        "training_seed": true,
+        "independent_holdout": false
+      },
+      "forest_nodes": 10066,
+      "ppo_updates": 0,
+      "cases": [
+        "confirm_refresh_s2026112411_twohorizon",
+        "confirm_refresh_s2026112412_twohorizon"
+      ],
+      "cold_score": 49.97863773822916,
+      "warm_development": {
+        "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-twohorizon/policy.json",
+        "model_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+        "kind": "joint_rf",
+        "algorithm": "Two-horizon fitted tree ensemble (equal-weight startup and1s contrasts)",
+        "development_seeds": [
+          2026112411,
+          2026112412
+        ],
+        "complete": true,
+        "score": 7.085222070964017,
+        "short_gains": [
+          0.0,
+          0.0
+        ],
+        "full_gains": [
+          11.63398692810458,
+          23.792123426715506
+        ],
+        "mean_short_gain_percent": 0.0,
+        "mean_full_gain_percent": 17.71305517741004,
+        "mean_short_restricted_completion_reduction_percent": 0.0,
+        "mean_full_restricted_completion_reduction_percent": 17.542115813155128,
+        "known_ui_startup": {
+          "status": "passed",
+          "vector": [
+            1,
+            1
+          ],
+          "observed_gain_percent": 2.272727272727548,
+          "zero_means_native_performance_not_a_claimed_improvement": true,
+          "training_seed": true,
+          "independent_holdout": false
+        },
+        "forest_nodes": 10066,
+        "ppo_updates": 0,
+        "cases": [
+          "warm_dev_s2026112411_twohorizon",
+          "warm_dev_s2026112412_twohorizon"
+        ]
+      },
+      "eligible_both_states": true
+    },
+    {
+      "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-rf-c04-r022/policy-guard-0.json",
+      "model_sha256": "0984a8a799d440ffcd352da369b5ec351e368a6bc9a4f047aedcedbd8702892f",
+      "kind": "joint_rf",
+      "algorithm": "ExtraTreesRegressor",
+      "development_seeds": [
+        2026112411,
+        2026112412
+      ],
+      "complete": true,
+      "score": 4.830890638015035,
+      "short_gains": [
+        52.92153589315527,
+        37.46277546158428
+      ],
+      "full_gains": [
+        62.43401206636502,
+        51.36705946217002
+      ],
+      "mean_short_gain_percent": 45.192155677369776,
+      "mean_full_gain_percent": 56.90053576426752,
+      "mean_short_restricted_completion_reduction_percent": 26.460767946577636,
+      "mean_full_restricted_completion_reduction_percent": 44.08783554295322,
+      "known_ui_startup": {
+        "status": "passed",
+        "vector": [
+          1,
+          1
+        ],
+        "observed_gain_percent": 2.272727272727548,
+        "zero_means_native_performance_not_a_claimed_improvement": true,
+        "training_seed": true,
+        "independent_holdout": false
+      },
+      "forest_nodes": 4276,
+      "ppo_updates": 0,
+      "cases": [
+        "confirm_refresh_s2026112411_prelim",
+        "confirm_refresh_s2026112412_prelim"
+      ],
+      "cold_score": 49.87550771212888,
+      "warm_development": {
+        "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-rf-c04-r022/policy-guard-0.json",
+        "model_sha256": "0984a8a799d440ffcd352da369b5ec351e368a6bc9a4f047aedcedbd8702892f",
+        "kind": "joint_rf",
+        "algorithm": "ExtraTreesRegressor",
+        "development_seeds": [
+          2026112411,
+          2026112412
+        ],
+        "complete": true,
+        "score": -130.3029605843265,
+        "short_gains": [
+          -39.999999999998764,
+          -65.15151515151777
+        ],
+        "full_gains": [
+          10.370370370370468,
+          21.599675192854416
+        ],
+        "mean_short_gain_percent": -52.57575757575827,
+        "mean_full_gain_percent": 15.985022781612443,
+        "mean_short_restricted_completion_reduction_percent": -52.57575757575827,
+        "mean_full_restricted_completion_reduction_percent": 15.809165609328883,
+        "known_ui_startup": {
+          "status": "passed",
+          "vector": [
+            1,
+            1
+          ],
+          "observed_gain_percent": 2.272727272727548,
+          "zero_means_native_performance_not_a_claimed_improvement": true,
+          "training_seed": true,
+          "independent_holdout": false
+        },
+        "forest_nodes": 4276,
+        "ppo_updates": 0,
+        "cases": [
+          "warm_dev_s2026112411_prelim",
+          "warm_dev_s2026112412_prelim"
+        ]
+      },
+      "eligible_both_states": false
+    },
+    {
+      "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/ppo-s20261215-episode2/policy.json",
+      "model_sha256": "50dae9bf28c318a20f4be6da3db581e53f874f49f68cf0fdc6d9228a6802bb10",
+      "kind": "ppo",
+      "algorithm": "PPO",
+      "development_seeds": [
+        2026112411,
+        2026112412
+      ],
+      "complete": true,
+      "score": 4.830890638015035,
+      "short_gains": [
+        52.92153589315527,
+        37.46277546158428
+      ],
+      "full_gains": [
+        62.43401206636502,
+        51.36705946217002
+      ],
+      "mean_short_gain_percent": 45.192155677369776,
+      "mean_full_gain_percent": 56.90053576426752,
+      "mean_short_restricted_completion_reduction_percent": 26.460767946577636,
+      "mean_full_restricted_completion_reduction_percent": 44.08783554295322,
+      "known_ui_startup": {
+        "status": "passed",
+        "vector": [
+          1,
+          1
+        ],
+        "observed_gain_percent": 2.272727272727548,
+        "zero_means_native_performance_not_a_claimed_improvement": true,
+        "training_seed": true,
+        "independent_holdout": false
+      },
+      "forest_nodes": 0,
+      "ppo_updates": 12,
+      "cases": [
+        "confirm_refresh_s2026112411_ppo",
+        "confirm_refresh_s2026112412_ppo"
+      ],
+      "cold_score": 49.87550771212888,
+      "warm_development": {
+        "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/ppo-s20261215-episode2/policy.json",
+        "model_sha256": "50dae9bf28c318a20f4be6da3db581e53f874f49f68cf0fdc6d9228a6802bb10",
+        "kind": "ppo",
+        "algorithm": "PPO",
+        "development_seeds": [
+          2026112411,
+          2026112412
+        ],
+        "complete": true,
+        "score": -130.3029605843265,
+        "short_gains": [
+          -39.999999999998764,
+          -65.15151515151777
+        ],
+        "full_gains": [
+          10.370370370370468,
+          21.599675192854416
+        ],
+        "mean_short_gain_percent": -52.57575757575827,
+        "mean_full_gain_percent": 15.985022781612443,
+        "mean_short_restricted_completion_reduction_percent": -52.57575757575827,
+        "mean_full_restricted_completion_reduction_percent": 15.809165609328883,
+        "known_ui_startup": {
+          "status": "passed",
+          "vector": [
+            1,
+            1
+          ],
+          "observed_gain_percent": 2.272727272727548,
+          "zero_means_native_performance_not_a_claimed_improvement": true,
+          "training_seed": true,
+          "independent_holdout": false
+        },
+        "forest_nodes": 0,
+        "ppo_updates": 12,
+        "cases": [
+          "warm_dev_s2026112411_ppo",
+          "warm_dev_s2026112412_ppo"
+        ]
+      },
+      "eligible_both_states": false
+    },
+    {
+      "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-startup/policy-guard-0.json",
+      "model_sha256": "59d9b12a93b664fec6a203dffd90117a85d85d710f6eac8378e390c89e10ad37",
+      "kind": "joint_rf",
+      "algorithm": "ExtraTreesRegressor",
+      "development_seeds": [
+        2026112411,
+        2026112412
+      ],
+      "complete": true,
+      "score": 35.084039453042536,
+      "short_gains": [
+        52.92153589315527,
+        37.46277546158428
+      ],
+      "full_gains": [
+        50.74636293672579,
+        39.97006688181104
+      ],
+      "mean_short_gain_percent": 45.192155677369776,
+      "mean_full_gain_percent": 45.35821490926841,
+      "mean_short_restricted_completion_reduction_percent": 26.460767946577636,
+      "mean_full_restricted_completion_reduction_percent": 30.49885449809918,
+      "known_ui_startup": {
+        "status": "passed",
+        "vector": [
+          1,
+          1
+        ],
+        "observed_gain_percent": 2.272727272727548,
+        "zero_means_native_performance_not_a_claimed_improvement": true,
+        "training_seed": true,
+        "independent_holdout": false
+      },
+      "forest_nodes": 8616,
+      "ppo_updates": 0,
+      "cases": [
+        "confirm_refresh_s2026112411_startup",
+        "confirm_refresh_s2026112412_startup"
+      ],
+      "cold_score": 45.25857937012923,
+      "warm_development": {
+        "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-startup/policy-guard-0.json",
+        "model_sha256": "59d9b12a93b664fec6a203dffd90117a85d85d710f6eac8378e390c89e10ad37",
+        "kind": "joint_rf",
+        "algorithm": "ExtraTreesRegressor",
+        "development_seeds": [
+          2026112411,
+          2026112412
+        ],
+        "complete": true,
+        "score": 4.560419701782452,
+        "short_gains": [
+          0.0,
+          0.0
+        ],
+        "full_gains": [
+          8.104575163398636,
+          14.697523345513622
+        ],
+        "mean_short_gain_percent": 0.0,
+        "mean_full_gain_percent": 11.40104925445613,
+        "mean_short_restricted_completion_reduction_percent": 0.0,
+        "mean_full_restricted_completion_reduction_percent": 11.209710093934245,
+        "known_ui_startup": {
+          "status": "passed",
+          "vector": [
+            1,
+            1
+          ],
+          "observed_gain_percent": 2.272727272727548,
+          "zero_means_native_performance_not_a_claimed_improvement": true,
+          "training_seed": true,
+          "independent_holdout": false
+        },
+        "forest_nodes": 8616,
+        "ppo_updates": 0,
+        "cases": [
+          "warm_dev_s2026112411_startup",
+          "warm_dev_s2026112412_startup"
+        ]
+      },
+      "eligible_both_states": true
+    }
+  ],
+  "recommended": {
+    "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-twohorizon/policy.json",
+    "model_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+    "kind": "joint_rf",
+    "algorithm": "Two-horizon fitted tree ensemble (equal-weight startup and1s contrasts)",
+    "development_seeds": [
+      2026112411,
+      2026112412
+    ],
+    "complete": true,
+    "score": 39.255283821412874,
+    "short_gains": [
+      52.92153589315527,
+      37.46277546158428
+    ],
+    "full_gains": [
+      63.06561085972856,
+      51.25111079930791
+    ],
+    "mean_short_gain_percent": 45.192155677369776,
+    "mean_full_gain_percent": 57.15836082951823,
+    "mean_short_restricted_completion_reduction_percent": 26.460767946577636,
+    "mean_full_restricted_completion_reduction_percent": 42.21672744174957,
+    "known_ui_startup": {
+      "status": "passed",
+      "vector": [
+        1,
+        1
+      ],
+      "observed_gain_percent": 2.272727272727548,
+      "zero_means_native_performance_not_a_claimed_improvement": true,
+      "training_seed": true,
+      "independent_holdout": false
+    },
+    "forest_nodes": 10066,
+    "ppo_updates": 0,
+    "cases": [
+      "confirm_refresh_s2026112411_twohorizon",
+      "confirm_refresh_s2026112412_twohorizon"
+    ],
+    "cold_score": 49.97863773822916,
+    "warm_development": {
+      "checkpoint": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/checkpoints/joint-filtered-v3-twohorizon/policy.json",
+      "model_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+      "kind": "joint_rf",
+      "algorithm": "Two-horizon fitted tree ensemble (equal-weight startup and1s contrasts)",
+      "development_seeds": [
+        2026112411,
+        2026112412
+      ],
+      "complete": true,
+      "score": 7.085222070964017,
+      "short_gains": [
+        0.0,
+        0.0
+      ],
+      "full_gains": [
+        11.63398692810458,
+        23.792123426715506
+      ],
+      "mean_short_gain_percent": 0.0,
+      "mean_full_gain_percent": 17.71305517741004,
+      "mean_short_restricted_completion_reduction_percent": 0.0,
+      "mean_full_restricted_completion_reduction_percent": 17.542115813155128,
+      "known_ui_startup": {
+        "status": "passed",
+        "vector": [
+          1,
+          1
+        ],
+        "observed_gain_percent": 2.272727272727548,
+        "zero_means_native_performance_not_a_claimed_improvement": true,
+        "training_seed": true,
+        "independent_holdout": false
+      },
+      "forest_nodes": 10066,
+      "ppo_updates": 0,
+      "cases": [
+        "warm_dev_s2026112411_twohorizon",
+        "warm_dev_s2026112412_twohorizon"
+      ]
+    },
+    "eligible_both_states": true
+  },
+  "formula": "0.75*cold_score+0.25*warm_score; both strata use the same registered short/full regret score",
+  "warm_native_records_reused_without_additional_simulations": true
+}

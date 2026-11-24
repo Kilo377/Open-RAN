@@ -52,6 +52,9 @@ class PreviewRecorder:
             item=dict(implementation_id=entry['implementation_id'],
                 cell_ids=[c['cell_id'] for c in manifest['cells']],
                 slot_duration_ms=manifest['slot_duration_ms'], parameters=params)
+            if name=='x12_mec' and configured.get(entry['implementation_id'],{}).get('implementation_variant')=='adaptive_v2':
+                item['implementation_variant']='adaptive_v2'
+                params['adaptive_policy_path']=configured[entry['implementation_id']]['parameters']['adaptive_policy_path']
             if name=='x01':
                 item['implementation_variant']=entry.get('implementation_variant','legacy9')
             self.apps.append(build_pool_xapp(item, 'chongyu'))

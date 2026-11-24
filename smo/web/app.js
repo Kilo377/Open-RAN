@@ -1973,13 +1973,14 @@ if(typeof document!=='undefined') (() => {
     const pairedValidation=validated?.window_verified===true&&validated.paired_controllers_verified===true&&
       validated.window_basis==='actual_final_paired_report'&&validated.observe_slots===20000&&validated.before_observe_slots===2000&&
       /^[0-9a-f]{64}$/.test(validated.paired_report_sha256||'')&&
-      Array.isArray(validated.paired_evaluated_actors)&&validated.paired_evaluated_actors.length===2&&
-      validated.paired_evaluated_actors.includes('power')&&validated.paired_evaluated_actors.includes('throughput');
+      Array.isArray(validated.paired_evaluated_models)&&validated.paired_evaluated_models.length>0&&
+      validated.paired_evaluated_models.length<=6&&new Set(validated.paired_evaluated_models).size===validated.paired_evaluated_models.length&&
+      validated.paired_evaluated_models.every(id=>['x01','x02','x08','x12_mec','x12_urllc','x13'].includes(id));
     const validatedSlots=(validated?.six_apps_verified===true||pairedValidation)&&Number.isInteger(validated.observe_slots)&&validated.observe_slots>0&&validated.observe_slots<=20000?validated.observe_slots:null;
     $('comparison-validated-window').hidden=validatedSlots==null;
     if(validatedSlots!=null){
       $('comparison-validated-window').dataset.slots=String(validatedSlots);
-      $('comparison-validated-window').textContent=windowDuration(validatedSlots).replace(' s','秒')+'已验证窗口';
+      $('comparison-validated-window').textContent=windowDuration(validatedSlots).replace(' s','秒')+(validated.cohort_followup_verified?'主窗口':'已验证窗口');
     }
     if(!environment)return;
     $('runtime-environment-label').textContent=environment.label||environment.id;
@@ -1999,7 +2000,7 @@ if(typeof document!=='undefined') (() => {
     if(c.urllc_profile)notes.push('URLLC '+c.urllc_profile);
     if(c.mec_offload_fractions)notes.push('MEC offload '+Object.entries(c.mec_offload_fractions).map(([id,fraction])=>id+' '+fmt(fraction*100,0)+'%').join(' / '));
     if(pairedValidation)notes.push('部署前窗口 '+validated.before_observe_slots+' slots（'+windowDuration(validated.before_observe_slots)+'）');
-    if(validatedSlots!=null)notes.push((pairedValidation?'所选控制器成对验证（2 actor）':'6 个 xApp 已验证')+' · '+validatedSlots+' slots（'+windowDuration(validatedSlots)+'）'+(validated.seeds?.length?' · seeds '+validated.seeds.join(' / '):''));
+    if(validatedSlots!=null)notes.push((pairedValidation?'所选 xApp 成对验证（'+validated.paired_evaluated_models.length+' 个'+(validated.cohort_followup_verified?'，同出生队列':'')+'）':'6 个 xApp 已验证')+' · '+validatedSlots+' slots（'+windowDuration(validatedSlots)+'）'+(validated.seeds?.length?' · seeds '+validated.seeds.join(' / '):''));
     $('runtime-environment-details').innerHTML=notes.filter(Boolean).map(note=>'<p>'+esc(note)+'</p>').join('')+
       (validated?.report_url?.startsWith('/')&&!validated.report_url.startsWith('//')?`<p><a href="${esc(validated.report_url)}">${pairedValidation?'查看所选控制器验证报告':'查看环境验证报告'}</a></p>`:'');
   }

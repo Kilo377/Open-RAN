@@ -1,0 +1,21 @@
+{
+  "goal": {
+    "kpi": "mec_offloaded_latency_ms",
+    "direction": "minimize",
+    "population": "offloaded MEC tasks"
+  },
+  "controls": [
+    "scheduler_mode",
+    "ue_scheduler_weights"
+  ],
+  "possible_side_effects": [
+    "network_goodput_mbps",
+    "ue_power_w",
+    "ap_power_w",
+    "urllc_failure_fraction"
+  ],
+  "algorithm": "Two-horizon fitted tree ensemble (equal-weight startup and1s contrasts)",
+  "inference": "frozen",
+  "policy": "models/x12_mec.json",
+  "policy_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9"
+}

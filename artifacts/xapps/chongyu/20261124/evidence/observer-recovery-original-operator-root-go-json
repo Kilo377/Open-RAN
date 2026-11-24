@@ -1,0 +1,26 @@
+{
+  "schema": "oran.validation-lane-root-go.v1",
+  "production_validation_lanes_authorized": true,
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+  "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+  "max_validation_lanes_per_host": 2,
+  "allowed_requests": {
+    "8591f846e6454f64bfb75c0d98b50167": "0f5ccfea3caa38a5520dd997d079c5de84e41226e98cba74ccc5817770104e5a",
+    "54df72513c5a4e1e89da4c4782706de2": "8d672718b26de43137e4839f7c0a3f8975d6656f214d4aa8df2bb49b4f0850a1",
+    "9ca87f904d75424aad23c0821cf8b1c7": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+    "0d5947a31a784472a7a828cf921f722f": "31ae130f07cae202b1a035e0187caeb4d7eb56bef162921b8270e4ad80338e5b",
+    "4d3306c60f3346e2a5af5aeaa4c27320": "e91c3e7874b526b6ff18f4a9e96366a157a4e06bf94864423abb972e709fe3a0",
+    "b7f511e077794bed9f1f7af189026b9a": "4234b485e0c338cd882f52135c0cdc3bd1a394d05aa726841dfc36a12924f064"
+  },
+  "models": {
+    "power": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "throughput": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+  },
+  "approved_joint_plan_sha256": "336087882b4738a7e382e1ba08ae7866bd8ec20a2c622f1b306e222a44e56515",
+  "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+  "holdout_authorized": true,
+  "other_cases_authorized": false,
+  "issued_utc": "2026-11-23T09:17:43.080793+00:00",
+  "authority": "Root explicit FINAL GO exactly six registered requests; locked models/action/source/protocol fixed before any heldout start; OFF complete and Mac sealed before power plus throughput parallel; no updates from outcomes."
+}

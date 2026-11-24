@@ -94,6 +94,20 @@ The algorithm controls UE0/UE4; it never changes UE2/UE6 DRX. Current run launch
 
 ## X-12 online RF
 
+The versioned `20261124` release can bind `latency_scheduler_rf` to the
+`adaptive_v2` implementation. Its exact RF or PPO algorithm and frozen weights
+are declared in the release manifest; the implementation ID stays compatible
+with the existing UI. The ordinary hot-xApp loader reads that binding without
+a manual policy override. Only scheduling policy and complete UE priority maps
+are controlled. Offloading, DRX, task demand and MEC compute capacity remain
+network configuration. Throughput, UE/BS power and URLLC reliability are possible
+side effects. Frozen inference never trains on deployment evaluations.
+
+The release's own paired validation distinguishes the early-arrival task cohort,
+actual terminal followup and strict online-window Metric. A task that is still
+pending at the window boundary is not assigned zero latency. The five other
+model files retain their parent bytes and historical evidence.
+
 `--latency-xapp-mode online|frozen --latency-xapp-model outputs/.../model.json`
 selects X-12. Combine it with the X-01 flags to activate both disjoint control
 categories. Paper `w5G` maps to `ue_scheduler_weights`, a priority multiplier

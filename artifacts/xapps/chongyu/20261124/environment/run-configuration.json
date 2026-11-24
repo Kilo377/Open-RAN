@@ -1,0 +1,40 @@
+{
+  "schema": "oran.x12-validated-run-configuration.v1",
+  "model_release": "20261124",
+  "policy_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+  "traffic_load": 1.5,
+  "model": "fast",
+  "fast_profile": "system",
+  "slot_duration_ms": 0.5,
+  "total_slots": 24040,
+  "activation_slot": 2040,
+  "main_observation_slots": 20000,
+  "actual_terminal_followup_slots": 2000,
+  "profiles": {
+    "traffic_profile": {
+      "path": "traffic.json",
+      "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+    },
+    "ue_services_config": {
+      "path": "ue-services.json",
+      "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+    },
+    "ap_services_profile": {
+      "path": "ap-services.json",
+      "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+    },
+    "base_config": {
+      "path": "base.json",
+      "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+    }
+  },
+  "independent_validation_seeds": [
+    2026112421,
+    2026112422,
+    2026112423,
+    2026112424,
+    2026112425,
+    2026112426
+  ],
+  "note": "Profiles are unchanged original bytes; baseline, traffic and service capacities were not tuned for this xApp"
+}

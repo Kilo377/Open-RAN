@@ -1,0 +1,130 @@
+{
+  "role": "known_training_seed_supplement_not_independent",
+  "independent_holdout": false,
+  "used_for_fitting_or_choice": false,
+  "seed": 20261214,
+  "selected_model_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+  "prefix_equal": true,
+  "short": {
+    "off_ms": 8.799999999999919,
+    "on_ms": 8.599999999999897,
+    "gain_percent": 2.272727272727548,
+    "off_sample_count": 5,
+    "on_sample_count": 5,
+    "off_failed": 0,
+    "on_failed": 0,
+    "off_pending": 0,
+    "on_pending": 0,
+    "task_identities_equal": true,
+    "unavailable_reason": null,
+    "measurement_basis": "fixed_birth_cohort_actual_terminal_followup",
+    "off_followup_until_slot": 24040,
+    "on_followup_until_slot": 24040,
+    "off_window_ms": 8.799999999999919,
+    "on_window_ms": 8.599999999999897,
+    "off_window_pending": 0,
+    "on_window_pending": 0,
+    "off_window_sample_count": 5,
+    "on_window_sample_count": 5,
+    "restricted_completion_horizon_ms": 100.0,
+    "off_restricted_completion_ms": 8.799999999999919,
+    "on_restricted_completion_ms": 8.599999999999897,
+    "common_success_diagnostic": {
+      "role": "diagnostic_only_original_means_and_acceptance_unchanged",
+      "common_successes": 5,
+      "common_off_ms": 8.799999999999919,
+      "common_on_ms": 8.599999999999897,
+      "common_gain_percent": 2.272727272727548,
+      "additional_on_completions": 0,
+      "additional_on_mean_latency_ms": null,
+      "lost_off_completions": 0,
+      "lost_off_mean_latency_ms": null
+    },
+    "restricted_completion_reduction_percent": 2.272727272727548
+  },
+  "full": {
+    "off_ms": 38.149193548387075,
+    "on_ms": 18.34999999999997,
+    "gain_percent": 51.899376387274124,
+    "off_sample_count": 248,
+    "on_sample_count": 250,
+    "off_failed": 7,
+    "on_failed": 5,
+    "off_pending": 0,
+    "on_pending": 0,
+    "task_identities_equal": true,
+    "unavailable_reason": null,
+    "measurement_basis": "fixed_birth_cohort_actual_terminal_followup",
+    "off_followup_until_slot": 24040,
+    "on_followup_until_slot": 24040,
+    "off_window_ms": 38.149193548387075,
+    "on_window_ms": 18.34999999999997,
+    "off_window_pending": 0,
+    "on_window_pending": 0,
+    "off_window_sample_count": 248,
+    "on_window_sample_count": 250,
+    "restricted_completion_horizon_ms": 100.0,
+    "off_restricted_completion_ms": 26.537254901960775,
+    "on_restricted_completion_ms": 17.066666666666638,
+    "common_success_diagnostic": {
+      "role": "diagnostic_only_original_means_and_acceptance_unchanged",
+      "common_successes": 248,
+      "common_off_ms": 38.149193548387075,
+      "common_on_ms": 15.717741935483842,
+      "common_gain_percent": 58.799281259909144,
+      "additional_on_completions": 2,
+      "additional_on_mean_latency_ms": 344.7500000000001,
+      "lost_off_completions": 0,
+      "lost_off_mean_latency_ms": null
+    },
+    "restricted_completion_reduction_percent": 35.687897147923834
+  },
+  "known_operating_point_gate_passed": true,
+  "actual_intent_evaluation": {
+    "short": {
+      "method": "baseline_relative_intent_v3",
+      "score": 10.331753554503456,
+      "all_satisfied": true,
+      "unchanged_is_zero": true,
+      "before_ms": 9.590909090909092,
+      "after_ms": 8.599999999999897,
+      "target_interval": {
+        "kpi": "mec_offloaded_latency_ms",
+        "unit": "ms",
+        "domain": [
+          0,
+          null
+        ],
+        "lower": 0.0,
+        "upper": 9.590909090909092,
+        "lower_inclusive": true,
+        "upper_inclusive": false
+      }
+    },
+    "full": {
+      "method": "baseline_relative_intent_v3",
+      "score": -91.32701421800914,
+      "all_satisfied": false,
+      "unchanged_is_zero": true,
+      "before_ms": 9.590909090909092,
+      "after_ms": 18.34999999999997,
+      "target_interval": {
+        "kpi": "mec_offloaded_latency_ms",
+        "unit": "ms",
+        "domain": [
+          0,
+          null
+        ],
+        "lower": 0.0,
+        "upper": 9.590909090909092,
+        "lower_inclusive": true,
+        "upper_inclusive": false
+      }
+    }
+  },
+  "raw_folders": {
+    "OFF": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx1/known_ui10_s20261214_OFF",
+    "selected": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx1/known_ui10_s20261214_selected"
+  },
+  "generated_utc": "2026-11-24T08:13:41.824251+00:00"
+}

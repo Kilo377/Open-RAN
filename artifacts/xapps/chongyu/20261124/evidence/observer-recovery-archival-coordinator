@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+"""Read-only local final-report coordinator for the six jointly locked cases.
+
+Only registered request/status metadata is inspected while any case is partial.
+All six complete seals plus four prefix and two power-semantic certificates
+must pass before the unchanged canonical report tool reads final KPI windows.
+"""
+from __future__ import annotations
+import argparse
+from datetime import datetime,timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import time
+
+TASK=Path(__file__).resolve().parents[1]
+BASE=Path(__file__).with_name('report_xapp_comparisons.py')
+BASE_SHA='93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6'
+JOINT_SHA='336087882b4738a7e382e1ba08ae7866bd8ec20a2c622f1b306e222a44e56515'
+SELECTION_SHA='b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf'
+SOURCE_SHA='c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5'
+MODELS={'power':'77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554',
+    'throughput':'cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe'}
+IDS={(341721,'off'):('agx1','8591f846e6454f64bfb75c0d98b50167'),
+    (341721,'power'):('agx1','54df72513c5a4e1e89da4c4782706de2'),
+    (341721,'throughput'):('agx1','9ca87f904d75424aad23c0821cf8b1c7'),
+    (341722,'off'):('agx2','0d5947a31a784472a7a828cf921f722f'),
+    (341722,'power'):('agx2','4d3306c60f3346e2a5af5aeaa4c27320'),
+    (341722,'throughput'):('agx2','b7f511e077794bed9f1f7af189026b9a')}
+STOP='2026-11-23T11:40:00+00:00'
+
+
+def read(path):return json.loads(Path(path).read_text())
+def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+def write_new(path,value):
+    with Path(path).open('x')as stream:json.dump(value,stream,indent=2,allow_nan=False);stream.write('\n')
+
+
+def canonical_reader():
+    if sha(BASE)!=BASE_SHA:raise ValueError('The fitted/selected artifacts\' canonical report source changed')
+    spec=importlib.util.spec_from_file_location('_canonical_locked_final_report',BASE)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);return module
+
+
+def verify_registration(path,expected_sha):
+    if sha(path)!=expected_sha:raise ValueError('Final report registration changed')
+    value=read(path)
+    if (value.get('schema')!='oran.locked-final-report-registration.v1'or value.get('role')!='holdout'
+            or value.get('joint_plan',{}).get('sha256')!=JOINT_SHA
+            or value.get('selection',{}).get('sha256')!=SELECTION_SHA
+            or value.get('source_archive_sha256')!=SOURCE_SHA or value.get('models')!=MODELS
+            or value.get('canonical_report_sha256')!=BASE_SHA or value.get('coordinator_sha256')!=sha(__file__)
+            or value.get('total_deadline_utc')!=STOP):raise ValueError('Unknown final model/source/plan/coordinator registration')
+    for key in ('joint_plan','selection','protocol'):
+        if sha(value[key]['path'])!=value[key]['sha256']:raise ValueError('A locked final input document changed')
+    joint=read(value['joint_plan']['path']);selection=read(value['selection']['path']);module=canonical_reader()
+    module.model_lock(value['selection'],TASK,read(value['protocol']['path']))
+    if (joint.get('source_archive_sha256')!=SOURCE_SHA or joint.get('selection_sha256')!=SELECTION_SHA
+            or joint.get('models')!=MODELS or selection.get('models')!=MODELS
+            or joint.get('power_action_set_version')!='legacy9'
+            or selection.get('power_action_set_version')!='legacy9'):
+        raise ValueError('Final registration differs from the exact previously joint-locked actors')
+    cases=joint.get('cases',[])
+    if len(cases)!=6 or {(case['request']['seed'],case['label'])for case in cases}!=set(IDS):
+        raise ValueError('Exactly the preregistered two seeds and three cases per seed are required')
+    for item in cases:
+        request=item['request'];worker,ident=IDS[request['seed'],item['label']]
+        body=dict(request);request_pin=body.pop('request_sha256',None)
+        if (request.get('worker_id')!=worker or request.get('id')!=ident or request.get('stage')!='holdout'
+                or request.get('mode')!=('off'if item['label']=='off'else'frozen')or request.get('slots')!=22440
+                or request.get('balanced_start_windows')!=0 or request.get('selection_sha256')!=SELECTION_SHA
+                or request.get('source_archive_sha256')!=SOURCE_SHA or request_pin!=digest(body)
+                or request.get('initial_model_sha256')!=(None if item['label']=='off'else MODELS[item['label']])):
+            raise ValueError('The exact registered final request/actor identity differs')
+    for key in ('plan_path','output'):
+        if not Path(value[key]).resolve().is_relative_to(TASK/'analysis'):raise ValueError('Final derived artifacts must stay under isolated analysis')
+    if (set(value.get('prefix_certificates',{}))!={'341721','341722'}
+            or set(value.get('power_semantic_certificates',{}))!={'341721','341722'}):
+        raise ValueError('Exactly four registered prefix and two power-semantic certificate paths are required')
+    for seed in (341721,341722):
+        if set(value['prefix_certificates'][str(seed)])!={'power','throughput'}:raise ValueError('Each held-out seed needs both actor prefixes')
+        for actor in ('power','throughput'):
+            if Path(value['prefix_certificates'][str(seed)][actor]).resolve()!=TASK/'audit/prefix'/f'{seed}-{actor}-holdout-v5.json':
+                raise ValueError('A final prefix path differs from its registered actor/seed')
+        if Path(value['power_semantic_certificates'][str(seed)]).resolve()!=TASK/'audit/semantics'/f'{seed}-power-holdout-v5.json':
+            raise ValueError('A final power semantic path differs from its registered seed')
+    return value,joint,module
+
+
+def case_root(seed,label):
+    worker,ident=IDS[seed,label];return TASK/'runs'/worker/ident
+
+
+def certificate(path,schema):
+    companion=path.with_name(path.name+'.sha256.json')
+    if not path.is_file()or not companion.is_file():return None
+    value=read(path);receipt=read(companion);body=dict(value);identifier=body.pop('certificate_id',None)
+    if (value.get('schema')!=schema or value.get('passed')is not True or identifier!=digest(body)
+            or receipt.get('certificate_sha256')!=sha(path)):
+        raise ValueError('A final immutable certificate/creation receipt differs')
+    return value
+
+
+def readiness(value,joint):
+    # First pass: every status must be complete before parsing any final audit,
+    # summary, numeric trace or semantic certificate derived from its AFTER.
+    for item in joint['cases']:
+        expected=item['request'];root=case_root(expected['seed'],item['label'])
+        if not(root/'request.json').is_file()or not(root/'status.json').is_file():return False,'awaiting_registered_case:'+expected['id']
+        request,status=read(root/'request.json'),read(root/'status.json')
+        if request!=expected:raise ValueError('An actual final request differs from the joint-locked plan')
+        if status.get('phase')=='failed':raise ValueError('A preregistered final case failed: '+expected['id'])
+        if status.get('phase')!='complete'or status.get('sealed')is not True or status.get('slot')!=22440:
+            return False,'awaiting_all_six_complete_metadata:'+expected['id']
+        if not(root/'sealed-manifest.json').is_file()or not(root/'mirror-verification.json').is_file():
+            return False,'awaiting_original_full_seal_mirror:'+expected['id']
+    for seed in (341721,341722):
+        for actor in ('power','throughput'):
+            path=Path(value['prefix_certificates'][str(seed)][actor]);proof=certificate(path,'oran.study-prefix-compatibility.v1')
+            if proof is None:return False,'awaiting_registered_prefix:'+str(seed)+'-'+actor
+            if (proof.get('stage')!='holdout'or proof.get('seed')!=seed or proof.get('selection_sha256')!=SELECTION_SHA
+                    or proof.get('off_run')!=str(case_root(seed,'off')/'run')
+                    or proof.get('candidate_run')!=str(case_root(seed,actor)/'run')
+                    or proof.get('off_source_archive_sha256')!=SOURCE_SHA or proof.get('candidate_source_archive_sha256')!=SOURCE_SHA):
+                raise ValueError('Final prefix certificate does not bind these exact locked runs')
+        path=Path(value['power_semantic_certificates'][str(seed)]);proof=certificate(path,'oran.holdout-power-action-semantics.v1')
+        if proof is None:return False,'awaiting_power_semantics:'+str(seed)
+        root=case_root(seed,'power');catalogue='84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5'
+        if (proof.get('seed')!=seed or proof.get('run')!=str(root/'run')or proof.get('case_root')!=str(root)
+                or proof.get('selection_sha256')!=SELECTION_SHA or proof.get('source_archive_sha256')!=SOURCE_SHA
+                or proof.get('model_sha256')!=MODELS['power']or proof.get('mode')!='frozen'
+                or proof.get('power_action_set_version')!='legacy9'
+                or any(proof.get(key)!=catalogue for key in ('power_action_catalogue_sha256','resolver_catalogue_sha256',
+                    'startup_catalogue_sha256','summary_catalogue_sha256'))
+                or proof.get('actual_config_action_set_version')!='legacy9'
+                or proof.get('resolver_policy_sha256')!='2406c5912b10f312d8f1c403d39c7fa78d1b00814e53b036cb0ff78a3b10263b'
+                or proof.get('baseline_guard_parameters_unchanged')is not True
+                or proof.get('validation_version')!='v5'
+                or proof.get('validation_protocol_sha256')!='6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2'
+                or proof.get('sealed_manifest_sha256')!=sha(root/'sealed-manifest.json')):
+            raise ValueError('Power semantic certificate differs from the actual locked model/action/source/seal')
+    return True,'all_six_complete_and_four_prefix_two_semantic_certificates_present'
+
+
+def full_preflight(value,joint,module):
+    """No KPI extraction: exact original seal members and actual lane/GO audits."""
+    context=module.validation_profile(read(value['selection']['path']),read(value['protocol']['path']))
+    evidence=[]
+    for item in joint['cases']:
+        root=case_root(item['request']['seed'],item['label']);seal=read(root/'sealed-manifest.json');mirror=read(root/'mirror-verification.json')
+        files=seal.get('files')
+        if (seal.get('failed')or seal.get('request_sha256')!=item['request']['request_sha256']
+                or not isinstance(files,dict)or not files or mirror.get('manifest_sha256')!=sha(root/'sealed-manifest.json')
+                or mirror.get('files_verified')!=len(files)):raise ValueError('A final original full seal/mirror is inconsistent')
+        for relative,entry in files.items():
+            rel=Path(relative);path=root/rel
+            if (rel.is_absolute()or'..'in rel.parts or path.is_symlink()or not path.resolve().is_relative_to(root)
+                    or not path.is_file()or path.stat().st_size!=entry.get('bytes')or sha(path)!=entry.get('sha256')):
+                raise ValueError('A final sealed member is changed or unconfined')
+        lane=module.verify_validation_lane(root,context)
+        evidence.append({'case':str(root),'seal_sha256':sha(root/'sealed-manifest.json'),'files_verified':len(files),'validation_lane':lane})
+    if len({row['validation_lane']['project_root']for row in evidence})!=6:raise ValueError('Final cases do not own six independent nested roots')
+    return evidence
+
+
+def canonical_plan(value):
+    return {'schema':'oran.xapp-comparison-plan.v1','role':'holdout','synthetic_fixture':False,
+        'selection':value['selection'],'seeds':[{'seed':seed,'off_case':str(case_root(seed,'off')),
+            'on_cases':[{'actor':actor,'label':'selected','case':str(case_root(seed,actor)),
+                'prefix_certificate':{'path':value['prefix_certificates'][str(seed)][actor],
+                    'sha256':sha(value['prefix_certificates'][str(seed)][actor])}}for actor in ('power','throughput')]}
+            for seed in (341721,341722)],
+        'power_semantic_certificates':[{'seed':seed,'path':value['power_semantic_certificates'][str(seed)],
+            'sha256':sha(value['power_semantic_certificates'][str(seed)])}for seed in (341721,341722)],
+        'joint_plan_sha256':JOINT_SHA,'weights_origin':{'power':'new_target_scaled_rf_144_train_rows','throughput':'retained_legacy'},
+        'release_weight_composition':{'new':['x01'],'unchanged':['x02','x08','x12_mec','x12_urllc','x13']}}
+
+
+def run(path,registration_sha):
+    value,joint,module=verify_registration(path,registration_sha);directory=Path(path).parent;result_path=directory/'result.json'
+    if result_path.exists():raise FileExistsError('A final report result already exists; never overwrite it')
+    last=None
+    try:
+        while time.time()<datetime.fromisoformat(STOP).timestamp():
+            ready,reason=readiness(value,joint)
+            if reason!=last:print(json.dumps({'state':reason}),flush=True);last=reason
+            if not ready:time.sleep(15);continue
+            gate=full_preflight(value,joint,module);write_new(directory/'full-original-seal-lane-gates.json',gate)
+            plan=Path(value['plan_path']);write_new(plan,canonical_plan(value))
+            command=[shutil.which('uv')or'uv','run','--offline','--with','numpy','--with','scikit-learn','--with','matplotlib',
+                'python','-B',str(BASE),'--plan',str(plan),'--protocol',value['protocol']['path'],'--output',value['output']]
+            with (directory/'report.stdout.log').open('x')as stdout,(directory/'report.stderr.log').open('x')as stderr:
+                process=subprocess.run(command,cwd=TASK,stdout=stdout,stderr=stderr,timeout=1200)
+            if process.returncode:raise RuntimeError('Canonical final report rejected an actual input; inspect report.stderr.log; nothing is overwritten')
+            report=Path(value['output'])/'report.json';data=read(report)
+            if (data['role']!='holdout'or len(data['comparisons'])!=4 or len(data['case_evidence'])!=6
+                    or data['selection_sha256']!=SELECTION_SHA):raise ValueError('Canonical output differs from the exact final protocol')
+            result={'state':'complete_canonical_final_holdout_report','report':str(report),'report_sha256':sha(report),
+                'registration_sha256':registration_sha,'finished_utc':datetime.now(timezone.utc).isoformat(),
+                'all_six_complete_before_kpi_read':True,'four_prefix_and_two_semantic_certificates_verified':True,
+                'throughput_weights_origin':'retained_legacy','new_weight_models':['x01'],
+                'unchanged_weight_models':['x02','x08','x12_mec','x12_urllc','x13'],
+                'model_selection_performed':False,'new_simulations':0,'model_fitting_performed':False}
+            write_new(result_path,result);print(json.dumps(result),flush=True);return result
+        result={'state':'incomplete_at_registered_total_deadline','total_deadline_utc':STOP,'model_selection_performed':False}
+        write_new(result_path,result);print(json.dumps(result),flush=True);return result
+    except Exception as error:
+        result={'state':'failed_without_overwrite','error':type(error).__name__+': '+str(error),
+            'model_selection_performed':False,'new_simulations':0,'model_fitting_performed':False}
+        if not result_path.exists():write_new(result_path,result)
+        print(json.dumps(result),flush=True);raise
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--registration',type=Path,required=True)
+    p.add_argument('--registration-sha256',required=True);args=p.parse_args();run(args.registration,args.registration_sha256)
+
+
+if __name__=='__main__':main()

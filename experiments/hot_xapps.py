@@ -25,6 +25,7 @@ def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def add_arguments(parser):
+    parser.add_argument('--latency-xapp-policy',type=Path,help='Versioned adaptive X12 policy under outputs; original model retained')
     parser.add_argument('--live-xapps',action='store_true',help='Warm-load trained Chongyu models and independently toggle multiple xApps during simulation')
     parser.add_argument('--xapps-start',default='',help='Comma-separated initially enabled IDs, e.g. x01,x13; default all OFF; all enables all six')
     parser.add_argument('--xapp-model-dir',type=Path,help='Versioned six-model installation under outputs/; default installs the bundled release')
@@ -137,7 +138,10 @@ def configure(configs,manifest,args,output,root=ROOT):
             if action_set!='legacy9':params['action_set_version']=action_set
         if key=='x08':params.update(log_path=str(output/'throughput_mlp_events.jsonl'),policy=getattr(args,'throughput_xapp_policy','throughput'))
         if key=='x12_urllc':params.update(policy_version='qos_v2',balanced_start_windows=0)
-        if key=='x12_mec':params['complete_scheduler_bundle']=True
+        if key=='x12_mec':
+            params['complete_scheduler_bundle']=True
+            if getattr(args,'latency_xapp_policy',None) or entry.get('implementation_variant')=='adaptive_v2':
+                params['adaptive_policy_path']=str(Path(args.latency_xapp_policy).resolve() if getattr(args,'latency_xapp_policy',None) else model)
         if key=='x13':
             params.update(log_path=str(output/'budget_qgbdt_events.jsonl'),budget_gflops=getattr(args,'budget_xapp_gflops',.75),
                 task_profile={k:services.get('mec',{}).get('tasks_by_ue',{}).get('ue_4',{}).get(k,v)
@@ -147,12 +151,20 @@ def configure(configs,manifest,args,output,root=ROOT):
             cell_ids=cells,slot_duration_ms=manifest['slot_duration_ms'],parameters=params,
             selection_mode='conflict_experiment',initial_active_sets={}))
         if key=='x01' and action_set!='legacy9':apps[-1]['implementation_variant']=action_set
+        if key=='x12_mec' and params.get('adaptive_policy_path'):
+            apps[-1]['implementation_variant']='adaptive_v2'
         pins[ident]=dict(path=str(model),sha256=entry['sha256'],release=release['release'],mode='frozen',label=entry['id'])
         if key=='x01':
             pins[ident].update(action_set_version=action_set,implementation_variant=action_set)
+        if key=='x12_mec' and params.get('adaptive_policy_path'):
+            adaptive=Path(params['adaptive_policy_path'])
+            data=json.loads(adaptive.read_text())
+            pins[ident]['adaptive_policy']=dict(path=str(adaptive),sha256=digest(adaptive),kind=data['kind'],training=data.get('training',False))
     configs['ric'].update(xapp_pool='chongyu',rapps=[],run_rapps_on_start=False,freeze_learning=True,
         xapp_interval_slots=max(1,round(20/manifest['slot_duration_ms'])),xapps=apps,
         direct_conflict_mitigation=mitigation,mitigation_seed=seed,mitigation_window_ms=window)
+    if any(v.get('adaptive_policy',{}).get('training') for v in pins.values()):
+        configs['ric']['freeze_learning']=False
     configs['phy']['rt_sys'].setdefault('paper_interfaces',{}).update(enabled=True,rule_observations=True)
     timeline_path=getattr(args,'xapp_toggle_timeline',None)
     args._hot_xapp_spec=dict(initial=initial,aliases=lookup,models=pins,timeline=timeline,
@@ -171,6 +183,11 @@ class HotXAppSession(LiveXAppSession):
             if digest(entry['path'])!=entry['sha256']:raise ValueError('Released model changed before warm start')
             target=checkpoint_dir/(ident+'.json');shutil.copy2(entry['path'],target)
             entry['checkpoint']=str(target.relative_to(self.output))
+            if entry.get('adaptive_policy'):
+                adaptive=entry['adaptive_policy']
+                if digest(adaptive['path'])!=adaptive['sha256']:raise ValueError('Adaptive policy changed before hot start')
+                extra=checkpoint_dir/(ident+'.adaptive.json');shutil.copy2(adaptive['path'],extra)
+                adaptive['checkpoint']=str(extra.relative_to(self.output))
         source=self.hot_spec.get('timeline_source')
         if source:
             if digest(source['path'])!=source['sha256']:raise ValueError('Activation timeline changed after configuration')
@@ -210,9 +227,8 @@ class HotXAppSession(LiveXAppSession):
             if not groups:new.pop(cid,None)
         if new==(selection.bindings or {})and self.segments:return 'unchanged'
         # Validate the complete new set before admission: atomic all-or-nothing.
-        for ident in ('throughput_scheduler_mlp','latency_urllc_rf'):
-            app=self.apps.get(ident)
-            if app is None:continue
+        for ident,app in self.apps.items():
+            if ident not in ('throughput_scheduler_mlp','latency_urllc_rf') and not getattr(app,'requires_whole_network',False):continue
             chosen={cid for cid,groups in new.items()if ident in groups.get(app.category_id,[])}
             if chosen and chosen!=set(app.allowed_cells):
                 raise ValueError(ident+' requires the whole network; choose All cells')
@@ -290,6 +306,10 @@ class HotXAppSession(LiveXAppSession):
         for entry in self.hot_spec['models'].values():
             if digest(entry['path'])!=entry['sha256']:raise RuntimeError('Frozen xApp model artifact changed during live run')
             if digest(self.output/entry['checkpoint'])!=entry['sha256']:raise RuntimeError('Run-local model checkpoint changed')
+            if entry.get('adaptive_policy'):
+                item=entry['adaptive_policy']
+                if digest(item['path'])!=item['sha256'] or digest(self.output/item['checkpoint'])!=item['sha256']:
+                    raise RuntimeError('Adaptive policy or its run-local checkpoint changed')
 
 
 def submit_many(state_path,data,operation,apps=(),cell='*'):

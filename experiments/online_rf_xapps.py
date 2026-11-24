@@ -1,6 +1,7 @@
 """Explicit run-local activation of Chongyu measured-outcome xApps."""
 from pathlib import Path
 import math
+import json
 
 
 def configure(configs, manifest, args, output, root, *, live_test_enabled=False):
@@ -59,6 +60,11 @@ def configure(configs, manifest, args, output, root, *, live_test_enabled=False)
             action_set = getattr(args, 'energy_xapp_action_set_version', 'legacy9')
             if action_set not in ('legacy9', 'extended24', 'balanced42'):raise ValueError('Unknown energy action set')
             if action_set != 'legacy9':parameters['action_set_version'] = action_set
+        if name=='latency' and getattr(args,'latency_xapp_policy',None):
+            if mode!='frozen':raise ValueError('An adaptive policy requires explicit frozen mode; training is controlled by its versioned artifact')
+            parameters.pop('explore_windows',None)
+            parameters['adaptive_policy_path']=str(Path(args.latency_xapp_policy).resolve())
+            parameters['complete_scheduler_bundle']=True
         if name == 'latency' and mode == 'fixed':
             parameters['fixed_action'] = getattr(args, 'latency_xapp_fixed_action', 3)
         if name == 'budget':
@@ -89,6 +95,10 @@ def configure(configs, manifest, args, output, root, *, live_test_enabled=False)
             instance_id=ident, cell_ids=cells, slot_duration_ms=manifest['slot_duration_ms'],
             parameters=parameters, initial_bindings=bindings))
         if name == 'energy' and action_set != 'legacy9':apps[-1]['implementation_variant']=action_set
+        if name=='latency' and parameters.get('adaptive_policy_path'):
+            apps[-1]['implementation_variant']='adaptive_v2'
     configs['ric'].update(xapp_pool='chongyu', rapps=[], run_rapps_on_start=False, freeze_learning=True,
         xapp_interval_slots=max(1, round(20 / manifest['slot_duration_ms'])), xapps=apps)
+    if 'latency' in active and getattr(args,'latency_xapp_policy',None):
+        configs['ric']['freeze_learning']=not json.loads(Path(args.latency_xapp_policy).read_text()).get('training',False)
     return '_'.join(name + '_xapp_' + mode for name, mode in active.items())

@@ -1,0 +1,33 @@
+{
+  "utc": "2026-11-24T06:23:17.819345+00:00",
+  "source": "recorded_final_summary_and_actual_decision_events",
+  "simulator_wall_time_is_not_real_network_time": true,
+  "rows": [
+    {
+      "worker": "agx2",
+      "seed": 2026112411,
+      "kind": "completed_development_actual_controller_timing",
+      "raw_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx2/confirm_refresh_s2026112411_twohorizon",
+      "policy_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+      "training_updates": 0,
+      "model_decision_wall_s": 0.08928587075206451,
+      "joint_update_count": 45,
+      "mean_wall_ms_per_joint_update": 1.9841304611569892,
+      "whole_simulation_wall_s": 2054.7641985089867,
+      "decision_share_percent": 0.004345309832478766
+    },
+    {
+      "worker": "agx1",
+      "seed": 2026112412,
+      "kind": "completed_development_actual_controller_timing",
+      "raw_folder": "/Users/kilobao/Desktop/ORAN/X12-Improvement-20261124/workers/agx1/confirm_refresh_s2026112412_twohorizon",
+      "policy_sha256": "7755c365283e6a77d25e266b30fcb7aa3b9c4cacae589e4ce3e8655743b3f2c9",
+      "training_updates": 0,
+      "model_decision_wall_s": 0.1186470500251744,
+      "joint_update_count": 44,
+      "mean_wall_ms_per_joint_update": 2.6965238642085088,
+      "whole_simulation_wall_s": 2814.5244353650196,
+      "decision_share_percent": 0.004215527445217824
+    }
+  ]
+}

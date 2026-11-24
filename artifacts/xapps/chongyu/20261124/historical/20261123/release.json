@@ -1,0 +1,971 @@
+{
+  "schema": "oran.chongyu-trained-model-release.v1",
+  "release": "20261123",
+  "parent_release": "20261117",
+  "complete": true,
+  "pool": "chongyu",
+  "publication_authorized": false,
+  "status": "unpublished_final_evaluation_review_bundle",
+  "models": {
+    "x01": {
+      "id": "X-01",
+      "implementation_id": "ue_energy_rf",
+      "algorithm": "Multioutput RandomForestRegressor (32 trees; per-target standardized split criterion; raw-unit inference)",
+      "target_kpi": "ue_power_w",
+      "rcp": [
+        "ue_offload_fraction",
+        "ue_drx_configs"
+      ],
+      "cli_mode": "energy",
+      "runtime_parameters": {
+        "deploy_drx": true,
+        "action_set_version": "legacy9"
+      },
+      "loader_max_rows_required": 144,
+      "status": "trained_and_verified",
+      "path": "models/x01.json",
+      "sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+      "format": "chongyu.online-energy-rf",
+      "format_version": 2,
+      "measured_rows": 144,
+      "fitted_rows": 144,
+      "learner_seed": 341701,
+      "fit_parameters": {
+        "max_features": 1.0
+      },
+      "evaluation_status": "final_holdout_complete_target_not_met",
+      "evidence": "evidence/x01.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": true,
+      "weights_origin": "selected_train_candidate",
+      "training_provenance_source": "evidence/x01-training.sidecar.json",
+      "target_unit": "W",
+      "target_population": "all six UEs",
+      "target_ue_ids": [
+        "ue_0",
+        "ue_1",
+        "ue_2",
+        "ue_4",
+        "ue_6",
+        "ue_8"
+      ],
+      "evaluation_scope": "Same-seed all-xApps-OFF versus one selected frozen actor; fixed 10s AFTER window, including actuation latency",
+      "training_label_scope": "Per controlled MEC UE0/UE4 measured power and mature task QoS; evaluation target is all-six total power",
+      "controlled_ues": [
+        "ue_0",
+        "ue_4"
+      ],
+      "implementation_variant": "legacy9",
+      "action_catalogue": [
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 40.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 8.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.0
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 40.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 8.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.5
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 40.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 8.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 1.0
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 20.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.0
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 20.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.5
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 20.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 1.0
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 80.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.0
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 80.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 0.5
+        },
+        {
+          "drx": {
+            "enabled": true,
+            "cycle_ms": 80.0,
+            "on_duration_ms": 4.0,
+            "inactivity_ms": 1.0,
+            "wakeup_ms": 0.5,
+            "offset_ms": 0.0
+          },
+          "offload_fraction": 1.0
+        }
+      ],
+      "action_catalogue_sha256": "84033c2a8b31a33bd8760d62977ec46d81a698df20717831396cc1a8690b0dd5",
+      "frozen_only": true,
+      "online_resume_allowed": false,
+      "training_run_parameters": {},
+      "candidate_kind": "target_scaled_rf",
+      "training_case_count": 2,
+      "training_source_archive_sha256s": [
+        "1e009c97cb75896af5d990fc66da999e1d468b9c3544fb6f4ed4fc509e971794"
+      ],
+      "selected_training_source_archive_sha256": "1e009c97cb75896af5d990fc66da999e1d468b9c3544fb6f4ed4fc509e971794"
+    },
+    "x02": {
+      "id": "X-02",
+      "implementation_id": "ap_energy_rf",
+      "algorithm": "RandomForestRegressor",
+      "target_kpi": "Whole-network modeled AP energy, minimize",
+      "rcp": [
+        "cell_sleep_mode"
+      ],
+      "cli_mode": "ap",
+      "runtime_parameters": {},
+      "training_provenance": {
+        "parent_rows": 34,
+        "new_online_observation_rows": 216,
+        "network_data_seed": 55
+      },
+      "loader_max_rows_required": 250,
+      "status": "trained_and_verified",
+      "path": "models/x02.json",
+      "sha256": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+      "format": "chongyu.online-ap-rf",
+      "format_version": 1,
+      "measured_rows": 250,
+      "fitted_rows": 250,
+      "learner_seed": 181,
+      "fit_parameters": {
+        "n_estimators": 32,
+        "max_depth": 6,
+        "min_samples_leaf": 2,
+        "max_features": 1.0,
+        "n_jobs": 1,
+        "bootstrap": true
+      },
+      "evaluation_status": "unchanged_artifact_historical_validation_inherited",
+      "evidence": "historical/20261117/evidence/x02.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": false,
+      "weights_origin": "unchanged_parent_bytes",
+      "newly_retested": false
+    },
+    "x08": {
+      "id": "X-08",
+      "implementation_id": "throughput_scheduler_mlp",
+      "algorithm": "MLPRegressor (8 tanh hidden units; corrected mean-output MSE gradient)",
+      "target_kpi": "network_goodput_mbps",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "throughput",
+      "runtime_parameters": {
+        "policy": "throughput"
+      },
+      "loader_max_rows_required": 254,
+      "status": "trained_and_verified",
+      "path": "models/x08.json",
+      "sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "format": "chongyu.online-throughput-mlp",
+      "format_version": 2,
+      "measured_rows": 254,
+      "fitted_rows": 254,
+      "learner_seed": 173,
+      "fit_parameters": {
+        "hidden_layer_sizes": [
+          8
+        ],
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "alpha": 1.0,
+        "max_iter": 300,
+        "max_fun": 5000,
+        "tol": 1e-05,
+        "random_state": 173
+      },
+      "evaluation_status": "final_holdout_complete_target_not_met",
+      "evidence": "evidence/x08.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": false,
+      "weights_origin": "unchanged_parent_bytes",
+      "training_provenance_source": "historical/20261117/release.json",
+      "target_unit": "Mbit/s",
+      "target_population": "all six UEs",
+      "target_ue_ids": [
+        "ue_0",
+        "ue_1",
+        "ue_2",
+        "ue_4",
+        "ue_6",
+        "ue_8"
+      ],
+      "evaluation_scope": "Same-seed all-xApps-OFF versus one selected frozen actor; fixed 10s AFTER window, including actuation latency"
+    },
+    "x12_mec": {
+      "id": "X-12-MEC",
+      "implementation_id": "latency_scheduler_rf",
+      "algorithm": "RandomForestRegressor",
+      "target_kpi": "Mean E2E latency of completed offloaded tasks on UE0+UE4, minimize",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "latency",
+      "runtime_parameters": {},
+      "status": "trained_and_verified",
+      "path": "models/x12_mec.json",
+      "sha256": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+      "evaluation_status": "unchanged_artifact_historical_validation_inherited",
+      "format": "chongyu.online-energy-rf",
+      "format_version": 2,
+      "measured_rows": 212,
+      "fitted_rows": 212,
+      "learner_seed": 99,
+      "fit_parameters": {
+        "max_features": 0.5
+      },
+      "loader_max_rows_required": 212,
+      "evidence": "historical/20261117/evidence/x12_mec.json",
+      "training_provenance": {
+        "retained_parent_rows": 28,
+        "new_online_observation_rows": 184,
+        "network_data_seed": 55,
+        "online_observation_horizon_s": 30,
+        "input_manifest_sha256": "132c1e913e4a7867fbb3e8c49ad809ba90ea8d05856be4083c28b6a323a6800d",
+        "dataset_sha256": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+        "actual_fit_xy_sha256": "84fd153f627fe4fa9ff3ea8a06adc56934c0126f1e1c75f962186e07639d8f84",
+        "source_fingerprint": "e2eb420f2fd8ce14cfb73559f3e24bc43a804b4fbb018d8efd8da15819653cdf",
+        "independent_refit_exact": true,
+        "independent_prediction_probes": 848,
+        "frozen_controller_load_passed": true
+      },
+      "training_dataset": "training/x12_mec/dataset.json",
+      "training_report": "training/x12_mec/training-report.json",
+      "independent_verification": "training/x12_mec/independent-verification.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": false,
+      "weights_origin": "unchanged_parent_bytes",
+      "newly_retested": false
+    },
+    "x12_urllc": {
+      "id": "X-12-URLLC",
+      "implementation_id": "latency_urllc_rf",
+      "algorithm": "RandomForestRegressor (QoS/PDB action family)",
+      "target_kpi": "UE2+UE6 original10ms deadline/overflow failures and completed-packet latency, minimize",
+      "rcp": [
+        "scheduler_mode",
+        "ue_scheduler_weights"
+      ],
+      "cli_mode": "urllc",
+      "runtime_parameters": {
+        "policy_version": "qos_v2"
+      },
+      "training_provenance": {
+        "network_training_seeds": [
+          179,
+          180,
+          181,
+          182,
+          183,
+          184
+        ],
+        "online_simulated_seconds": 30,
+        "native_seconds": 10,
+        "equal_mean_burst_seconds": 20,
+        "training_partitions_sha256": "412eb683daa3aa9dcfb13910540964d08c108c1557eb099dbb9c0529c1235dac",
+        "independent_raw_packet_window_and_applied_ACK_audit_passed": true
+      },
+      "loader_max_rows_required": 207,
+      "status": "trained_and_verified",
+      "path": "models/x12_urllc.json",
+      "sha256": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+      "format": "chongyu.online-urllc-qos-rf",
+      "format_version": 1,
+      "measured_rows": 207,
+      "fitted_rows": 200,
+      "learner_seed": 179,
+      "fit_parameters": {
+        "n_estimators": 64,
+        "max_depth": 6,
+        "min_samples_leaf": 5,
+        "max_features": 1.0,
+        "n_jobs": 1,
+        "bootstrap": true
+      },
+      "evaluation_status": "unchanged_artifact_historical_validation_inherited",
+      "evidence": "historical/20261117/evidence/x12_urllc.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": false,
+      "weights_origin": "unchanged_parent_bytes",
+      "newly_retested": false
+    },
+    "x13": {
+      "id": "X-13",
+      "implementation_id": "mec_offload_budget_qgbdt",
+      "algorithm": "GradientBoostingRegressor(loss=quantile,alpha=0.2) + analytic workload filter",
+      "target_kpi": "UE4 expected offloaded compute demand <=0.75GFLOP/s",
+      "rcp": [
+        "ue_offload_fraction"
+      ],
+      "cli_mode": "budget",
+      "runtime_parameters": {
+        "budget_gflops": 0.75,
+        "task_profile": {
+          "interval_ms": 50.0,
+          "compute_gflop": 0.05,
+          "deadline_ms": 100.0
+        }
+      },
+      "training_provenance": {
+        "network_training_seed": 137,
+        "online_simulated_seconds": 4,
+        "measured_rows": 13,
+        "fitted_prefix_rows": 12
+      },
+      "loader_max_rows_required": 13,
+      "status": "trained_and_verified",
+      "path": "models/x13.json",
+      "sha256": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+      "format": "chongyu.online-qgbdt",
+      "format_version": 1,
+      "measured_rows": 13,
+      "fitted_rows": 12,
+      "learner_seed": 137,
+      "fit_parameters": {
+        "loss": "quantile",
+        "alpha": 0.2,
+        "n_estimators": 32,
+        "learning_rate": 0.05,
+        "max_depth": 2,
+        "min_samples_leaf": 3,
+        "random_state": 137
+      },
+      "evaluation_status": "unchanged_artifact_historical_validation_inherited",
+      "evidence": "historical/20261117/evidence/x13.json",
+      "historical_reference": "historical/20261117/release.json",
+      "newly_trained": false,
+      "weights_origin": "unchanged_parent_bytes",
+      "newly_retested": false
+    }
+  },
+  "files_sha256": {
+    "README.md": "432c6f3b8dcb2b2079c6abe4a5440b3e042b6cbfbd049f6fa3604725300a2cd4",
+    "evidence/final-comparison-plan.json": "ecdc8bfa0fd5477987a851bc577ad6f63a6ed61893ca66c452af5799d6383158",
+    "evidence/final-holdout-report.json": "9ce0af8ded69d8648161dcac03dba6f4de33aebe83a659074b66adf0c767bb8c",
+    "evidence/joint-selection.json": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+    "evidence/observer-recovery-archival-coordinator": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70",
+    "evidence/observer-recovery-archival-coordinator-registration": "e4340b2d461a50747334e7635ae44ac50fb0f2079c2c0f48639a46362d347a74",
+    "evidence/observer-recovery-canonical-base-reader": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6",
+    "evidence/observer-recovery-canonical-recovery-adapter": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec",
+    "evidence/observer-recovery-original-failed-seal": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+    "evidence/observer-recovery-original-failed-status": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+    "evidence/observer-recovery-original-operator-case-plan-json": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c",
+    "evidence/observer-recovery-original-operator-driver-json": "c69ca6b5d4c40e0e64dfc41961633b8bafcdecea6f1925c7ff06b1b628192b9b",
+    "evidence/observer-recovery-original-operator-driver-py": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+    "evidence/observer-recovery-original-operator-protocol-json": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+    "evidence/observer-recovery-original-operator-root-go-json": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74",
+    "evidence/observer-recovery-original-operator-selection-json": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+    "evidence/observer-recovery-original-operator-source-members-json": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4",
+    "evidence/observer-recovery-original-profile-ap-services-profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+    "evidence/observer-recovery-original-profile-base-config": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+    "evidence/observer-recovery-original-profile-traffic-profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+    "evidence/observer-recovery-original-profile-ue-services-config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+    "evidence/observer-recovery-original-recovery-reader": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726",
+    "evidence/observer-recovery-owner-00-00-root-go-json": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c",
+    "evidence/observer-recovery-owner-01-01-observer-py": "015f3799f9f38e5963b9dc260572857d852784ca70ec28b98fd58d9fbe4e8320",
+    "evidence/observer-recovery-owner-02-02-pid-before-json": "ed46947be2128e706e7202f1359aa065480f1cca29ce43693d9fb9be930ff0e9",
+    "evidence/observer-recovery-owner-03-03-checks-before-json": "058157c1943600a4412b9618bcf2626c9be1d54bbe33aac50784ea4958214418",
+    "evidence/observer-recovery-owner-04-04-checks-after-json": "99117f6bb0556e0477f0e90ac9aa098c7fe32e6e58a5826d83fb5a5713e0de8c",
+    "evidence/observer-recovery-owner-05-05-producer-before-json": "762ae026f571e730e1b750a7dbe02505d228daac73b463154621e74d64a0cf13",
+    "evidence/observer-recovery-owner-06-06-producer-ended-json": "c37b04024ff0fbc0f70d72d79d7b80a156ae95464164839a3b26e3756e55533e",
+    "evidence/observer-recovery-owner-07-07-approved-registration-json": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f",
+    "evidence/observer-recovery-owner-08-08-complete-status-json": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2",
+    "evidence/observer-recovery-owner-09-09-audit-json": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977",
+    "evidence/observer-recovery-owner-10-10-supplemental-seal-json": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+    "evidence/observer-recovery-owner-11-11-recovery-certificate-json": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69",
+    "evidence/observer-recovery-owner-12-12-recovery-certificate-json-sha256-json": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da",
+    "evidence/observer-recovery-owner-13-13-mirror-verification-json": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223",
+    "evidence/observer-recovery-owner-14-14-envelope-json": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040",
+    "evidence/observer-recovery-owner-15-15-status-json": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+    "evidence/observer-recovery-owner-16-16-sealed-manifest-json": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+    "evidence/observer-recovery-owner-17-17-request-json": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568",
+    "evidence/observer-recovery-owner-18-18-command-json": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db",
+    "evidence/observer-recovery-owner-19-19-observer-recovery-reader-v2-py": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783",
+    "evidence/observer-recovery-owner-20-20-observer-recovery-reader-amendment-v2-json": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3",
+    "evidence/observer-recovery-owner-21-21-original-operator-plan-json": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c",
+    "evidence/observer-recovery-owner-22-22-original-root-go-json": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74",
+    "evidence/observer-recovery-owner-23-23-original-selection-json": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+    "evidence/observer-recovery-owner-24-24-original-command-json": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db",
+    "evidence/observer-recovery-owner-25-25-original-request-json": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568",
+    "evidence/observer-recovery-owner-26-26-original-driver-process-log": "d96c921fcaa1f77d415156ae99c7b6928e14c63522026b8a19a0d84bb2d07063",
+    "evidence/observer-recovery-owner-27-27-original-driver-result-json": "a57112a8581eec2872362851b6bfd61843614fba0cc8f20494cfdf4071b02bec",
+    "evidence/observer-recovery-owner-28-28-original-driver-error-json": "2a39364e8a47f5d7bee13369fa95112ec8ebb289b77a9110c0628eeb27041510",
+    "evidence/observer-recovery-owner-29-29-original-failed-seal-json": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+    "evidence/observer-recovery-owner-30-30-original-status-json": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+    "evidence/observer-recovery-recovery-audit": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977",
+    "evidence/observer-recovery-recovery-certificate": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69",
+    "evidence/observer-recovery-recovery-certificate-receipt": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da",
+    "evidence/observer-recovery-recovery-complete-status": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2",
+    "evidence/observer-recovery-recovery-mirror": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223",
+    "evidence/observer-recovery-recovery-reader": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783",
+    "evidence/observer-recovery-recovery-reader-amendment": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3",
+    "evidence/observer-recovery-recovery-registration": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f",
+    "evidence/observer-recovery-report-reader.py": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec",
+    "evidence/observer-recovery-root-go": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c",
+    "evidence/observer-recovery-superseded-recovery-adapter": "56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423",
+    "evidence/observer-recovery-superseded-recovery-coordinator": "e60b2a499093dc60c4dcc547f2383d571685f7aeb1b4eeec35a21d6b66eb5846",
+    "evidence/observer-recovery-superseded-recovery-registration": "8497695c5534c978ab75b15adda58187059823eb06642e300384e2e40de9eb79",
+    "evidence/observer-recovery-supplemental-seal": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+    "evidence/protocol.json": "3595959b9ef48daa17faa89a6267df371c67bf0c3b94b3faf3fc2f71a6f8e4ed",
+    "evidence/validation-v5-operator-driver.py": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+    "evidence/validation-v5-probe-agx1.json": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811",
+    "evidence/validation-v5-probe-agx2.json": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13",
+    "evidence/validation-v5-protocol.json": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+    "evidence/validation-v5-source-members.json": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4",
+    "evidence/x01-training.sidecar.json": "173faa24a72fd8c86bef5ab81297663032f1d3e3568150837a0295b3e7a13ae9",
+    "evidence/x01.json": "72281b209500e3161ef9318959a8819962a72fcc4b91c486a402c295af700cf1",
+    "evidence/x08.json": "e4dc55a71eaded8831774b29cee3ee7c450d47dc135d213869a904f4f4b8708b",
+    "historical/20261117/README.md": "96eb4ccf2e4232e066131a313a8279d431972f8a0acd678f7dd6f20bb0d09778",
+    "historical/20261117/data-retention.json": "0820d28e484ba2ec28d8af9135d82eb57ce3d8b4a5655386c4fd311146d515dc",
+    "historical/20261117/evidence/x01-legacy-locked.json": "a96fd27407a07d2aab0311b5a3ed29e37672f5baacb2bde70c0f827d81a3f9f8",
+    "historical/20261117/evidence/x01.json": "e295d95473f409ed8108d1d7fc3bda2dffaecefbdd43aed6db889e8ce61bbd03",
+    "historical/20261117/evidence/x02.json": "8087e32811746491b21d3443721296d12556625eaabc89a740f25910839f9f06",
+    "historical/20261117/evidence/x08.json": "5fc95c04e3b4d6f82cbeb48765dd3e2f182e9b4f80705cb8a0be0908f90bce2e",
+    "historical/20261117/evidence/x12_mec.json": "a636a731c96a6c3910f0622d7d6c12750bcb67a3c4f8788361a6e63e6996266a",
+    "historical/20261117/evidence/x12_urllc.json": "494ca4c03bbc5695e8b545869a7f140f45105242b315521f8d9909219d8700c0",
+    "historical/20261117/evidence/x13.json": "baf18e311ec12fd53f0050c20dc9f488e167a4ec1b1efff1bc3bfd8e11c14c1e",
+    "historical/20261117/models/x01.json": "61841e47d05127b59dafb42d6dce8f33bde103b10fdb7426c075b24f899a0eee",
+    "historical/20261117/models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+    "historical/20261117/models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "historical/20261117/models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "historical/20261117/models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+    "historical/20261117/models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+    "historical/20261117/models.json": "3842bdbcf4b40b749f2f2386958f15520b94bc4965ee960d02f0376c3b336036",
+    "historical/20261117/release.json": "d12e25f7010ca03e1094269fbfa31f07742d746cc05e788ef9fbc56ff7ec74bc",
+    "historical/20261117/training/x12_mec/dataset.json": "0b64943ea3d3babdfdefff97bdc327372b82b656869c62e820f0d22e9b79357d",
+    "historical/20261117/training/x12_mec/independent-verification.json": "e53f2cc47c13c453babf44ad81b947fee281f2829d7e0c169d8146bb6bbfb824",
+    "historical/20261117/training/x12_mec/training-report.json": "e2db24113d7ed27a9cbba09eed8adbadbe5feaf863f10670b0fceffa3c4d4cee",
+    "models/x01.json": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+    "models/x02.json": "686c00d6995f363211ec556623052c9ef807f004908c150aebd9e7e5a9e17935",
+    "models/x08.json": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "models/x12_mec.json": "0c59aea40060d43046fdf7980c42af5c0e2c6302e4e99fbb28851f3a5213ffc1",
+    "models/x12_urllc.json": "26a6c6c071e3b362fa0c81f59af7316cd74ea6f1508e9d42784b91db27b42218",
+    "models/x13.json": "005bff7a80541cddf133aac13b684d021583e34357e9f4befe1c0db01728463f",
+    "models.json": "ec37c12ef4f2a8e852e1c151017746466c58e6774a33bd40af14924fca760359",
+    "required-runtime-arguments.json": "42d4133b2a8575a651aa5afe2d12640af3652d9065a0fab734ec4fbbdbcdea17"
+  },
+  "models_json_scope": "legacy_four_modelset_compatibility_only",
+  "authoritative_six_model_manifest": "release.json",
+  "acceptance": {
+    "evaluation_complete": true,
+    "required_improvement_percent_each_seed": 10.0,
+    "actor_results": {
+      "power": {
+        "per_seed": [
+          {
+            "seed": 341721,
+            "off": 5.244869999999355,
+            "on": 4.965384499999544,
+            "gain_percent": 5.32874027382652,
+            "target_met": false
+          },
+          {
+            "seed": 341722,
+            "off": 5.320316499999538,
+            "on": 5.055205999999606,
+            "gain_percent": 4.982983625127473,
+            "target_met": false
+          }
+        ],
+        "mean_gain_percent": 5.155861949476996,
+        "every_seed_target_met": false,
+        "mean_target_met": false
+      },
+      "throughput": {
+        "per_seed": [
+          {
+            "seed": 341721,
+            "off": 48.7515408,
+            "on": 49.4536784,
+            "gain_percent": 1.4402367360664021,
+            "target_met": false
+          },
+          {
+            "seed": 341722,
+            "off": 47.9235328,
+            "on": 49.5751272,
+            "gain_percent": 3.4463118712316647,
+            "target_met": false
+          }
+        ],
+        "mean_gain_percent": 2.4432743036490336,
+        "every_seed_target_met": false,
+        "mean_target_met": false
+      }
+    },
+    "every_actor_every_seed_target_met": false,
+    "publication_authorized": false,
+    "publication_decision": "Reserved for the operator after reviewing complete gains and side effects"
+  },
+  "newly_evaluated_models": [
+    "x01",
+    "x08"
+  ],
+  "other_four_newly_retested": false,
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+  "final_report_sha256": "9ce0af8ded69d8648161dcac03dba6f4de33aebe83a659074b66adf0c767bb8c",
+  "actual_changed_weight_models": [
+    "x01"
+  ],
+  "unchanged_weight_models": [
+    "x02",
+    "x08",
+    "x12_mec",
+    "x12_urllc",
+    "x13"
+  ],
+  "raw_data_policy": "Complete raw TRAIN/final cases and immutable seals remain under the retained study; their SHA/path provenance is copied, not replaced by a report.",
+  "new_calibration_performed": false,
+  "builder_sha256": "f8d96569667abf66396cb2cb416b95a7d10b42ef76dfab6d6c7516d6c960b128",
+  "validation_protocol": {
+    "validation_version": "v5",
+    "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/protocol-v5-validation.json",
+    "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+    "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+    "source_archive_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/source.tgz",
+    "driver_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/operator-driver.py",
+    "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+    "execution": {
+      "mode": "isolated_validation_lanes",
+      "max_validation_lanes_per_host": 2,
+      "lane_ids": [
+        "lane-0",
+        "lane-1"
+      ],
+      "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+      "minimum_memavailable_before_launch_bytes": 30064771072,
+      "minimum_shm_free_bytes": 8589934592,
+      "passed_2000_probe_certificates": {
+        "agx1": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811",
+        "agx2": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13"
+      },
+      "old_v4_worker_must_be_inactive": true,
+      "final_per_host_order": [
+        "off",
+        [
+          "power",
+          "throughput"
+        ]
+      ]
+    },
+    "probe_certificates": [
+      {
+        "worker": "agx1",
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/probe-certificates/agx1.json",
+        "sha256": "6a98be60270a50fb4a5c59e7f21da928f8819bbd1720b3b93a29a3f80ce1e811"
+      },
+      {
+        "worker": "agx2",
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/probe-certificates/agx2.json",
+        "sha256": "caa1d19d46c9e0d9f20b28e1f99a065e0f49bd383f311bf3de3440ec6470da13"
+      }
+    ],
+    "retained_throughput_model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "model_selection_stop_utc": "2026-11-23T09:20:00+00:00",
+    "development_stop_utc": "2026-11-23T09:20:00+00:00",
+    "total_deadline_utc": "2026-11-23T11:40:00+00:00"
+  },
+  "validation_source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "referenced_balanced42_training_source_archive_sha256": "ff29827e59ff9aeba5a998f307789160dc5e85c8c681dabec5ff76b9ea8cc46f",
+  "validation_source_change": "Only the two validation admission cutoff constants; independent case roots/caches and at most two validation lanes per host. No new training.",
+  "selected_power_training_source_archive_sha256s": [
+    "1e009c97cb75896af5d990fc66da999e1d468b9c3544fb6f4ed4fc509e971794"
+  ],
+  "selected_power_training_source_archive_sha256": "1e009c97cb75896af5d990fc66da999e1d468b9c3544fb6f4ed4fc509e971794",
+  "observer_recovery": {
+    "case": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7",
+    "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+    "original_worker_phase": "failed",
+    "same_native_simulation_completed": true,
+    "no_restart": true,
+    "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+    "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+    "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+    "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "original_failed_status_sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+    "original_failed_seal_sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+    "failure_envelope_sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040",
+    "root_go_sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c",
+    "supplemental_seal_sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44",
+    "supplemental_files_verified": 78,
+    "recovery_certificate_sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69",
+    "pid_continuity": {
+      "pid": 25336,
+      "start_ticks": 15559801,
+      "cmdline_sha256": "38273a9b7ce8070f943a9d8b7e8a60813d3defe7d34558eb6b65338ef425c6cc",
+      "before_observed_utc": "2026-11-23T10:05:06.404339+00:00",
+      "before_producer_slot": 18000,
+      "process_end_observed_utc": "2026-11-23T10:26:26.581604+00:00",
+      "exit_code": null,
+      "exit_code_status": "unavailable_non_child"
+    },
+    "audit_function": "audit_run",
+    "audit_worker_sha256": "3620462901153dffa7e67c1c68b0b847ff689d70cbbf97ba6dd32e24eb9ecdf6",
+    "reader_amendment": {
+      "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+      "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3",
+      "original_reader_sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726",
+      "actual_reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783",
+      "original_registration_sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f",
+      "original_case_files_changed": false
+    },
+    "exit_code": null,
+    "exit_code_status": "unavailable_non_child",
+    "validation_lane": {
+      "passed": true,
+      "lane_id": "lane-1",
+      "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+      "profiles": {
+        "traffic_profile": {
+          "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+          "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+          "sealed_copy": "operator-profiles/traffic.json"
+        },
+        "ue_services_config": {
+          "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+          "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+          "sealed_copy": "operator-profiles/ue-services.json"
+        },
+        "ap_services_profile": {
+          "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+          "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+          "sealed_copy": "operator-profiles/ap-services.json"
+        },
+        "base_config": {
+          "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+          "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+          "sealed_copy": "operator-profiles/base.json"
+        }
+      },
+      "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+      "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+      "original_worker_seal_audited": false,
+      "supplementary_seal_audited": true,
+      "original_worker_lane_inputs_audited": true,
+      "reader_path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+      "reader_sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+    },
+    "evidence_files": {
+      "owner-00-00-root-go-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+        "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+      },
+      "owner-01-01-observer-py": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/observer.py",
+        "sha256": "015f3799f9f38e5963b9dc260572857d852784ca70ec28b98fd58d9fbe4e8320"
+      },
+      "owner-02-02-pid-before-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/pid-before.json",
+        "sha256": "ed46947be2128e706e7202f1359aa065480f1cca29ce43693d9fb9be930ff0e9"
+      },
+      "owner-03-03-checks-before-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-before.json",
+        "sha256": "058157c1943600a4412b9618bcf2626c9be1d54bbe33aac50784ea4958214418"
+      },
+      "owner-04-04-checks-after-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/checks-after.json",
+        "sha256": "99117f6bb0556e0477f0e90ac9aa098c7fe32e6e58a5826d83fb5a5713e0de8c"
+      },
+      "owner-05-05-producer-before-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-before.json",
+        "sha256": "762ae026f571e730e1b750a7dbe02505d228daac73b463154621e74d64a0cf13"
+      },
+      "owner-06-06-producer-ended-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/producer-ended.json",
+        "sha256": "c37b04024ff0fbc0f70d72d79d7b80a156ae95464164839a3b26e3756e55533e"
+      },
+      "owner-07-07-approved-registration-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/approved-registration.json",
+        "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+      },
+      "owner-08-08-complete-status-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+        "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+      },
+      "owner-09-09-audit-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+        "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+      },
+      "owner-10-10-supplemental-seal-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+        "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+      },
+      "owner-11-11-recovery-certificate-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+        "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+      },
+      "owner-12-12-recovery-certificate-json-sha256-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+        "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+      },
+      "owner-13-13-mirror-verification-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+        "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+      },
+      "owner-14-14-envelope-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/envelope.json",
+        "sha256": "074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040"
+      },
+      "owner-15-15-status-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+        "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+      },
+      "owner-16-16-sealed-manifest-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+        "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+      },
+      "owner-17-17-request-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/request.json",
+        "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+      },
+      "owner-18-18-command-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/command.json",
+        "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+      },
+      "owner-19-19-observer-recovery-reader-v2-py": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+        "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+      },
+      "owner-20-20-observer-recovery-reader-amendment-v2-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+        "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+      },
+      "owner-21-21-original-operator-plan-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-operator-plan.json",
+        "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+      },
+      "owner-22-22-original-root-go-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-root-go.json",
+        "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+      },
+      "owner-23-23-original-selection-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-selection.json",
+        "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+      },
+      "owner-24-24-original-command-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-command.json",
+        "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db"
+      },
+      "owner-25-25-original-request-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-request.json",
+        "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568"
+      },
+      "owner-26-26-original-driver-process-log": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-process.log",
+        "sha256": "d96c921fcaa1f77d415156ae99c7b6928e14c63522026b8a19a0d84bb2d07063"
+      },
+      "owner-27-27-original-driver-result-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-result.json",
+        "sha256": "a57112a8581eec2872362851b6bfd61843614fba0cc8f20494cfdf4071b02bec"
+      },
+      "owner-28-28-original-driver-error-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-driver-error.json",
+        "sha256": "2a39364e8a47f5d7bee13369fa95112ec8ebb289b77a9110c0628eeb27041510"
+      },
+      "owner-29-29-original-failed-seal-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-failed-seal.json",
+        "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+      },
+      "owner-30-30-original-status-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/failure-envelope/original-status.json",
+        "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+      },
+      "original-failed-status": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/status.json",
+        "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644"
+      },
+      "original-failed-seal": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/sealed-manifest.json",
+        "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013"
+      },
+      "root-go": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/root-go.json",
+        "sha256": "2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c"
+      },
+      "supplemental-seal": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/supplemental-seal.json",
+        "sha256": "7a487d0e4ba3f309d460d143898516e8caef0830527732b1aa9bc2d50d6abc44"
+      },
+      "recovery-certificate": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json",
+        "sha256": "b0a728fc978d4561ba514793c8e600aed4e97844c219e64c8110ff776e020b69"
+      },
+      "recovery-certificate-receipt": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/recovery-certificate.json.sha256.json",
+        "sha256": "b6560bfc4dc7eb9b82e3376206470dec0bc5c700ba240cfc269fcd1c25f094da"
+      },
+      "recovery-mirror": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/mirror-verification.json",
+        "sha256": "036d21691d08fdb71cb3e49f0131eadc8d0bc741abd17be1f7f41b5116d50223"
+      },
+      "recovery-complete-status": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/complete-status.json",
+        "sha256": "ae4e6d38993e7efcc021a776272d49f6dc576f1d50a0f50b3e21ee31735192f2"
+      },
+      "recovery-audit": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/observer-recovery-v1/audit.json",
+        "sha256": "dc9667cc9a619723a0789ffac2fc6daacf8129cc438dec95ff2fb2e7e5c8c977"
+      },
+      "recovery-reader": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v2.py",
+        "sha256": "2c926fb87ad3b791e78ec23b0008e4af1d07eef154eef3a359c18e467ce3e783"
+      },
+      "recovery-registration": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-registration-v1.json",
+        "sha256": "80c455da6c27ec6e0bf0f0ca71b567ceb9bfb1633a2fec6a9eb2cdf079216e3f"
+      },
+      "canonical-base-reader": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons.py",
+        "sha256": "93ca5b396f72f7a7c0dc1617774262925ba842a5271882a62eba69d1a81132d6"
+      },
+      "recovery-reader-amendment": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-amendment-v2.json",
+        "sha256": "df1b1987c69a815e91233ffe9f57592e8a7f020c164371c4f4cc7785aa9ceac3"
+      },
+      "original-recovery-reader": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/workers/v5/observer-recovery-reader-v1.py",
+        "sha256": "46baef20fc933ff789521e74919146e27aac2aa3ea141906cc563a5fcb70c726"
+      },
+      "superseded-recovery-adapter": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v1.py",
+        "sha256": "56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423"
+      },
+      "superseded-recovery-coordinator": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_observer_recovery_v1.py",
+        "sha256": "e60b2a499093dc60c4dcc547f2383d571685f7aeb1b4eeec35a21d6b66eb5846"
+      },
+      "superseded-recovery-registration": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-observer-recovery-coordinator-v1/registration.json",
+        "sha256": "8497695c5534c978ab75b15adda58187059823eb06642e300384e2e40de9eb79"
+      },
+      "canonical-recovery-adapter": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/report_xapp_comparisons_observer_recovery_v2.py",
+        "sha256": "216cca7a3e0e6aecf248dfd74ea6689d44b7ac923921d1c97733537898a0d0ec"
+      },
+      "archival-coordinator": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/watch_final_report_v5_v1.py",
+        "sha256": "89871ee4c51325532fc9eca232305eccd31cc19a1cd8f8c784074419d5140d70"
+      },
+      "archival-coordinator-registration": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/analysis/final-report-coordinator-v5-v1/registration.json",
+        "sha256": "e4340b2d461a50747334e7635ae44ac50fb0f2079c2c0f48639a46362d347a74"
+      },
+      "original-operator-driver-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.json",
+        "sha256": "c69ca6b5d4c40e0e64dfc41961633b8bafcdecea6f1925c7ff06b1b628192b9b"
+      },
+      "original-operator-driver-py": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-driver.py",
+        "sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd"
+      },
+      "original-operator-protocol-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-protocol.json",
+        "sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2"
+      },
+      "original-operator-case-plan-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-case-plan.json",
+        "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c"
+      },
+      "original-operator-root-go-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-root-go.json",
+        "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74"
+      },
+      "original-operator-source-members-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-source-members.json",
+        "sha256": "628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4"
+      },
+      "original-operator-selection-json": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-selection.json",
+        "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf"
+      },
+      "original-profile-traffic-profile": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/traffic.json",
+        "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8"
+      },
+      "original-profile-ue-services-config": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ue-services.json",
+        "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769"
+      },
+      "original-profile-ap-services-profile": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/ap-services.json",
+        "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+      },
+      "original-profile-base-config": {
+        "path": "/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123/runs/agx1/9ca87f904d75424aad23c0821cf8b1c7/operator-profiles/base.json",
+        "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7"
+      }
+    }
+  },
+  "evaluation_completion_basis": "five_original_worker_complete_and_one_observer_recovered_same_simulation",
+  "all_original_workers_completed_successfully": false,
+  "all_six_native_simulations_completed": true
+}

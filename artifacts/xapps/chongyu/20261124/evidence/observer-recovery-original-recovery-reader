@@ -1,0 +1,239 @@
+"""Read-only admission of one approved same-process observer recovery.
+
+No SSH, subprocesses, fitting, simulation, writes or KPI extraction. The original
+failed status and seal are never treated as successful completion evidence.
+"""
+from datetime import datetime,timezone
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import tarfile
+from types import ModuleType
+
+TASK=Path('/Users/kilobao/Desktop/ORAN/XApp-Improvement-20261123')
+ID='9ca87f904d75424aad23c0821cf8b1c7'
+SOURCE='c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5'
+MEMBERS='628c0b3298cfee9a650d1d6d4763bd2bb9f300dbb1f3c0fe3e39834e848bcbf4'
+REQUEST='94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b'
+MODEL='cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe'
+SELECTION='b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf'
+DRIVER='8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd'
+PROTOCOL='6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2'
+FAILED_STATUS='866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644'
+FAILED_SEAL='ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013'
+ENVELOPE='074c63724d77f5c2b864453807849f44958e0346f562e9248a87439f2ae29040'
+ROOT_GO='2ce1718d1750c88f383c1502601bcf80a401d9f3bcbb797c1cc8278b921b914c'
+OBSERVER='015f3799f9f38e5963b9dc260572857d852784ca70ec28b98fd58d9fbe4e8320'
+CMDLINE='38273a9b7ce8070f943a9d8b7e8a60813d3defe7d34558eb6b65338ef425c6cc'
+PID=25336
+START_TICKS=15559801
+REMOTE=Path('/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1')/ID/'source-v5'
+PROFILES={'traffic_profile':'92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8',
+ 'ue_services_config':'d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769',
+ 'ap_services_profile':'8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035',
+ 'base_config':'60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7'}
+
+
+def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+def read(path):return json.loads(Path(path).read_text())
+def expect(test,message):
+    if not test:raise ValueError(message)
+def utc(value):
+    value=datetime.fromisoformat(value.replace('Z','+00:00'))
+    expect(value.tzinfo is not None and value.utcoffset().total_seconds()==0,'UTC evidence required');return value
+
+
+def confined(root,name):
+    name=Path(name);path=root/name
+    expect(not name.is_absolute()and '..'not in name.parts and path.resolve().is_relative_to(root.resolve()),'Recovery path escaped case')
+    expect(not path.is_symlink()and not any(p.is_symlink()for p in path.parents if p.is_relative_to(root)),'Recovery symlinks rejected')
+    return path
+
+
+def verify_members(root,files):
+    expect(isinstance(files,dict)and bool(files),'Recovery seal members missing')
+    for name,item in files.items():
+        path=confined(root,name)
+        expect(path.is_file()and path.stat().st_size==item.get('bytes')and sha(path)==item.get('sha256'),'Recovery sealed bytes differ: '+name)
+
+
+def verify_archive(archive,members):
+    expect(sha(archive)==SOURCE,'Registered c424 archive changed');seen=set()
+    with tarfile.open(archive,'r:*')as stream:
+        for item in stream:
+            expect(item.isfile()and item.name not in seen and item.name in members,'Source archive member mismatch')
+            data=stream.extractfile(item).read();pin=members[item.name]
+            expect(len(data)==pin['bytes']and hashlib.sha256(data).hexdigest()==pin['sha256']and item.mode==pin['mode'],'Source archive bytes differ')
+            seen.add(item.name)
+    expect(seen==set(members)and len(seen)==1432,'All original1432 source members required')
+
+
+def verify_original_lane(case,request):
+    """Original8ccb gates, with no substitution of original failed status/seal."""
+    driver_path=case/'operator-driver.py';protocol_path=case/'operator-protocol.json'
+    expect(sha(driver_path)==DRIVER and sha(protocol_path)==PROTOCOL,'Original sealed lane driver/protocol bytes changed')
+    driver=ModuleType('_observer_recovery_original_lane_driver');driver.__file__=str(driver_path)
+    exec(compile(driver_path.read_bytes(),str(driver_path),'exec'),driver.__dict__)
+    plan=read(case/'operator-case-plan.json');protocol=read(protocol_path);receipt=read(case/'operator-driver.json')
+    driver.validate_plan(plan);driver.check_root_go(plan,read(case/'operator-root-go.json'))
+    driver.check_joint_selection(read(case/'operator-selection.json'),request,protocol,PROTOCOL)
+    expect(plan['request']==request and sha(case/'operator-root-go.json')==plan['root_go']['sha256']
+        and sha(case/'operator-source-members.json')==plan['source_members']['sha256'],'Original lane plan/GO/member bytes differ')
+    wanted=dict(schema='oran.validation-lane-driver-receipt.v1',validation_version='v5',physical_worker_id='agx1',lane_id='lane-1',case_id=ID,
+        request_sha256=REQUEST,source_archive_sha256=SOURCE,validation_protocol_sha256=PROTOCOL,driver_sha256=DRIVER,
+        project_root=str(REMOTE),max_validation_lanes_per_host=2,original_worker_validate_passed=True,
+        lane_lock_inherited_by_worker=True,old_v4_exclusive_lock_inactive=True,legacy_shared_guard_inherited_by_worker=True)
+    expect(all(receipt.get(k)==v for k,v in wanted.items()),'Original actual lane receipt changed')
+    names={'traffic_profile':'traffic.json','ue_services_config':'ue-services.json','ap_services_profile':'ap-services.json','base_config':'base.json'}
+    profiles={}
+    for key,pin in PROFILES.items():
+        expected=dict(path=str(REMOTE.parent/'profiles'/names[key]),sha256=pin,sealed_copy='operator-profiles/'+names[key])
+        expect(receipt.get('profiles',{}).get(key)==expected and request['profiles'][key]=={'path':expected['path'],'sha256':pin}
+            and sha(case/expected['sealed_copy'])==pin,'Actual original lane profile byte copy/path differs')
+        profiles[key]=expected
+    command=read(case/'command.json');argv=command['argv']
+    expect(str(REMOTE/'scripts/orin/activate-gpu.sh')in argv,'Original command activated another source')
+    for flag in('--output','--live-state','--channel-cache-root'):
+        expect(argv.count(flag)==1 and Path(argv[argv.index(flag)+1]).resolve().is_relative_to(REMOTE),'Original writable case path escaped')
+    expect(all(Path(value).resolve().is_relative_to(REMOTE)for value in command['cache_environment'].values()),'Original cache escaped owned case')
+    return dict(passed=True,lane_id='lane-1',project_root=str(REMOTE),profiles=profiles,driver_sha256=DRIVER,
+        validation_protocol_sha256=PROTOCOL,original_worker_seal_audited=False,supplementary_seal_audited=True,
+        reader_path=str(Path(__file__).resolve()),reader_sha256=sha(__file__))
+
+
+def verify_recovered_case(case,approved_registration):
+    case=Path(case).resolve();reg=read(approved_registration)if isinstance(approved_registration,(str,Path))else approved_registration
+    expect(case==TASK/'runs/agx1'/ID,'Only the exact approved local 9ca87 case may recover')
+    wanted=dict(schema='oran.observer-recovery-registration.v1',case_id=ID,worker_id='agx1',request_sha256=REQUEST,
+        pid=PID,pid_start_ticks=START_TICKS,cmdline_sha256=CMDLINE,seed=341721,source_archive_sha256=SOURCE,
+        model_sha256=MODEL,selection_sha256=SELECTION,validation_protocol_sha256=PROTOCOL,driver_sha256=DRIVER,
+        failed_status_sha256=FAILED_STATUS,failed_seal_sha256=FAILED_SEAL,failure_envelope_sha256=ENVELOPE,
+        root_go_sha256=ROOT_GO,observer_script_sha256=OBSERVER,reader_sha256=sha(__file__))
+    expect(isinstance(reg,dict)and all(reg.get(k)==v for k,v in wanted.items()),'Unknown recovery registration or reader')
+    archive=Path(reg['source_archive_path']).resolve()
+    expect(archive==TASK/'workers/v5/source.tgz','Use the actual registered local c424 archive')
+    rec=case/'observer-recovery-v1';env=rec/'failure-envelope';run=case/'run'
+    expect(read(rec/'approved-registration.json')==reg,'Actual sealed recovery registration differs')
+    expect(sha(case/'status.json')==FAILED_STATUS and sha(case/'sealed-manifest.json')==FAILED_SEAL,'Original failed metadata must remain immutable')
+    status=read(case/'status.json');failed=read(case/'sealed-manifest.json')
+    error="[Errno 2] No such file or directory: '"+str(REMOTE/'outputs/throughput_improvement'/ID/'run/live.tmp')+"'"
+    expect(status.get('phase')=='failed'and status.get('pid')==PID and status.get('slot')==8865
+        and status.get('error')==error and status.get('new_simulations')==1 and failed.get('failed')is True,'Only the approved live.tmp observer failure is recoverable')
+    expect(sha(env/'envelope.json')==ENVELOPE,'Failure envelope changed')
+    envelope=read(env/'envelope.json');verify_members(env,envelope['files'])
+    expect(envelope.get('schema')=='oran.observer-failure-envelope.v1'and envelope.get('case_id')==ID
+        and envelope.get('original_worker_phase')=='failed'and envelope.get('original_failed_seal_is_not_valid_final_seal')is True
+        and envelope.get('original_simulation_still_running')is True and envelope.get('new_simulations')==0,'Invalid original failure envelope')
+    for original,current in [('original-status.json','status.json'),('original-failed-seal.json','sealed-manifest.json'),
+            ('original-request.json','request.json'),('original-command.json','command.json'),('original-selection.json','operator-selection.json'),
+            ('original-root-go.json','operator-root-go.json'),('original-operator-plan.json','operator-case-plan.json')]:
+        expect(sha(env/original)==sha(case/current),'Original input changed after failure: '+current)
+    expect(sha(rec/'root-go.json')==ROOT_GO and sha(rec/'observer.py')==OBSERVER,'Recovery root GO or observer changed')
+    go=read(rec/'root-go.json')
+    expect(go.get('schema')=='oran.observer-recovery-root-go.v1'and go.get('approved')is True
+        and go.get('case_id')==ID and go.get('pid')==PID and go.get('pid_start_ticks')==START_TICKS
+        and go.get('request_sha256')==REQUEST and go.get('source_archive_sha256')==SOURCE
+        and go.get('selection_sha256')==SELECTION and go.get('model_sha256')==MODEL
+        and go.get('observer_script_sha256')==OBSERVER and go.get('simulation_restart_authorized')is False
+        and go.get('only_metadata_recovery_authorized')is True,'Exact metadata-only root GO required')
+    request=read(case/'request.json');body=dict(request);request_pin=body.pop('request_sha256',None)
+    expect(request_pin==REQUEST==digest(body)and request.get('id')==ID and request.get('worker_id')=='agx1'
+        and request.get('seed')==341721 and request.get('slots')==22440 and request.get('stage')=='holdout'
+        and request.get('mode')=='frozen'and request.get('balanced_start_windows')==0
+        and request.get('source_archive_sha256')==SOURCE and request.get('initial_model_sha256')==MODEL
+        and request.get('selection_sha256')==SELECTION,'The original frozen final request changed')
+    expect({k:v['sha256']for k,v in request['profiles'].items()}==PROFILES,'Original four profile pins changed')
+    members_path=case/'operator-source-members.json';expect(sha(members_path)==MEMBERS,'Original source member inventory changed')
+    members=read(members_path);verify_archive(archive,members)
+    before,after=read(rec/'checks-before.json'),read(rec/'checks-after.json')
+    checks=dict(source_members_verified=1432,source_archive_sha256=SOURCE,selection_sha256=SELECTION,model_sha256=MODEL,
+        profiles_sha256=PROFILES,original_failed_status_sha256=FAILED_STATUS,original_failed_seal_sha256=FAILED_SEAL)
+    expect(all(v.get(k)==pin for v in(before,after)for k,pin in checks.items()),'Pre/post source, model, profile or immutable failure checks differ')
+    pid=read(rec/'pid-before.json')
+    expect(pid.get('pid')==PID and pid.get('start_ticks')==START_TICKS and pid.get('cmdline_sha256')==CMDLINE
+        and pid.get('state')not in('Z','X')and envelope['initial_pid']==pid,'Original live PID/starttime continuity differs')
+    cert_path=rec/'recovery-certificate.json';cert=read(cert_path);certificate=dict(cert);identifier=certificate.pop('certificate_id',None)
+    expect(identifier==digest(certificate)and read(cert_path.with_name(cert_path.name+'.sha256.json')).get('certificate_sha256')==sha(cert_path),'Recovery certificate identity differs')
+    required=dict(schema='oran.validation-observer-recovery.v1',id=ID,passed=True,request_sha256=REQUEST,
+        source_archive_sha256=SOURCE,validation_protocol_sha256=PROTOCOL,driver_sha256=DRIVER,
+        selection_sha256=SELECTION,model_sha256=MODEL,original_worker_phase='failed',
+        observer_failure='FileNotFoundError:run/live.tmp',same_native_simulation_completed=True,no_restart=True,
+        failure_envelope_sha256=ENVELOPE,root_go_sha256=ROOT_GO,original_failed_status_sha256=FAILED_STATUS,original_failed_seal_sha256=FAILED_SEAL)
+    expect(all(cert.get(k)==v for k,v in required.items()),'Supplemental certificate changed scope or failure basis')
+    continuity=cert.get('pid_continuity',{})
+    expect(continuity.get('pid')==PID and continuity.get('start_ticks')==START_TICKS and continuity.get('cmdline_sha256')==CMDLINE
+        and continuity.get('exit_code')is None and continuity.get('exit_code_status')=='unavailable_non_child','Unknown simulator exit status must remain explicitly unknown')
+    expect(utc(go['issued_utc'])<=utc(pid['observed_utc'])==utc(continuity['before_observed_utc'])
+        <=utc(before['observed_utc'])<utc(continuity['process_end_observed_utc'])<=utc(after['observed_utc'])
+        <=datetime(2026,11,23,11,40,tzinfo=timezone.utc),'Recovery chronology or total deadline differs')
+    expect(type(continuity.get('before_producer_slot'))is int and 8865<=continuity['before_producer_slot']<22440,'Recovery must have observed the same simulation before completion')
+    producer_before=read(rec/'producer-before.json');ended=read(rec/'producer-ended.json')
+    expect(producer_before.get('pid')==PID and producer_before.get('start_ticks')==START_TICKS
+        and producer_before.get('run_status',{}).get('completed')is False
+        and producer_before['run_status'].get('last_completed_slot')==continuity['before_producer_slot']
+        and utc(pid['observed_utc'])<=utc(producer_before['observed_utc'])<utc(continuity['process_end_observed_utc']),
+        'Original native producer must have been recorded still incomplete under the same PID')
+    expect(all(ended.get(k)==v for k,v in dict(pid=PID,start_ticks=START_TICKS,exit_code=None,
+        exit_code_status='unavailable_non_child',producer_completed=True,last_completed_slot=22440,new_simulations=0,no_restart=True).items())
+        and utc(ended['observed_utc'])==utc(continuity['process_end_observed_utc']),'Actual original process-end evidence differs')
+    seal_path=rec/'supplemental-seal.json';seal=read(seal_path);files=seal.get('files')
+    expect(seal.get('schema')=='oran.validation-observer-recovery-sealed.v1'and seal.get('id')==ID
+        and seal.get('request_sha256')==REQUEST and cert.get('supplemental_seal_sha256')==sha(seal_path),'Supplemental final seal identity differs')
+    required_members={'request.json','status.json','sealed-manifest.json','command.json','operator-selection.json','operator-case-plan.json','operator-root-go.json',
+        'operator-source-members.json','operator-driver.json','operator-driver.py','operator-protocol.json',
+        'run/config_snapshot.json','run/run_status.json','run/final_summary.json','run/throughput_mlp_model.json',
+        'observer-recovery-v1/root-go.json','observer-recovery-v1/observer.py','observer-recovery-v1/pid-before.json',
+        'observer-recovery-v1/checks-before.json','observer-recovery-v1/checks-after.json','observer-recovery-v1/audit.json',
+        'observer-recovery-v1/complete-status.json','observer-recovery-v1/failure-envelope/envelope.json',
+        'observer-recovery-v1/producer-before.json','observer-recovery-v1/producer-ended.json','observer-recovery-v1/approved-registration.json'}
+    required_members.update('operator-profiles/'+name for name in('traffic.json','ue-services.json','ap-services.json','base.json'))
+    expect(isinstance(files,dict)and required_members.issubset(files),'Supplemental seal omits consumed actual evidence')
+    expect(all('observer-recovery-v1/failure-envelope/'+name in files for name in envelope['files']),'Failure envelope members must belong to supplemental seal')
+    verify_members(case,files);mirror=read(rec/'mirror-verification.json')
+    expect(mirror.get('supplemental_manifest_sha256')==sha(seal_path)and mirror.get('files_verified')==len(files),'Full supplemental Mac mirror required')
+    complete=read(rec/'complete-status.json')
+    expect(all(complete.get(k)==v for k,v in dict(schema='oran.observer-recovered-status.v1',phase='complete',slot=22440,sealed=True,
+        original_worker_phase='failed',completion_basis='same_native_process_after_observer_failure').items()),'Recovered completeness is not original-worker success')
+    run_status=read(run/'run_status.json');config=read(run/'config_snapshot.json');audit=read(rec/'audit.json');manifest=config.get('manifest',{})
+    expect(run_status.get('completed')is True and run_status.get('last_completed_slot')==22440
+        and manifest.get('rng_seed')==341721 and manifest.get('total_slots')==22440 and manifest.get('slot_duration_ms')==.5,'Actual native run must complete original full22440 slots')
+    expect(config.get('source_sha256')and audit.get('source_sha256')==config['source_sha256']and audit.get('model_sha256')==MODEL
+        and audit.get('all_other_xapps_off')is True and audit.get('profiles_verified')is True
+        and audit.get('all_native_prefix_rows_verified')==2040,'Original sealed audit_run isolation/source/native-prefix checks required')
+    expect(producer_before['run_status'].get('source_sha256')==config['source_sha256'],'Original in-flight and completed producer source differ')
+    expect(cert.get('audit_function')=='audit_run'and cert.get('audit_worker_sha256')==members['experiments/throughput_improvement_worker.py']['sha256'],'Actual original audit function provenance required')
+    expect(sha(run/'throughput_mlp_model.json')==MODEL,'Original frozen throughput weights changed')
+    apps=config.get('configs',{}).get('ric',{}).get('xapps',[])
+    expect(len(apps)==1 and apps[0].get('implementation_id')=='throughput_scheduler_mlp'
+        and all(apps[0].get('parameters',{}).get(k)==v for k,v in dict(mode='frozen',window_ms=100,policy='throughput').items()),'Original frozen actor/timing changed')
+    traces=[p for p in(run/'rt_sys_trace.jsonl',run/'rt_sys_trace.jsonl.gz')if p.is_file()]
+    expect(len(traces)==1 and str(traces[0].relative_to(case))in files,'Exactly one sealed actual full native trace required')
+    last=0
+    with(gzip.open(traces[0],'rt')if traces[0].suffix=='.gz'else traces[0].open())as stream:
+        for line in stream:
+            if not line.strip():continue
+            row=json.loads(line);last+=1
+            expect(row.get('slot_id')==last and last<=22440,'Actual native slots must be contiguous1..22440')
+            if last<=2040:expect(not row.get('xapp_bindings'),'Native prefix was not all-OFF')
+    expect(last==22440,'All22440 actual slots required')
+    plan=read(case/'operator-case-plan.json')
+    expect(plan.get('request')==request and plan.get('physical_worker_id')=='agx1'and plan.get('lane_id')=='lane-1'
+        and plan.get('max_validation_lanes_per_host')==2 and plan.get('project_root')==str(REMOTE)
+        and plan.get('driver_sha256')==DRIVER and plan.get('validation_protocol_sha256')==PROTOCOL,'Original isolated lane/GO identity differs')
+    lane=verify_original_lane(case,request)
+    evidence_files={}
+    paths=[rec/'root-go.json',rec/'observer.py',rec/'pid-before.json',rec/'checks-before.json',rec/'checks-after.json',
+        rec/'producer-before.json',rec/'producer-ended.json',rec/'approved-registration.json',
+        rec/'complete-status.json',rec/'audit.json',seal_path,cert_path,cert_path.with_name(cert_path.name+'.sha256.json'),rec/'mirror-verification.json',
+        env/'envelope.json',case/'status.json',case/'sealed-manifest.json',case/'request.json',case/'command.json',Path(__file__).resolve()]
+    paths.extend(env/name for name in envelope['files'])
+    for i,path in enumerate(paths):evidence_files[f'{i:02d}-'+path.name]=dict(path=str(path),sha256=sha(path))
+    proof=dict(case=str(case),case_id=ID,original_worker_phase='failed',same_native_simulation_completed=True,no_restart=True,
+        actual_exit_code=None,exit_code_status='unavailable_non_child',original_failed_status_sha256=FAILED_STATUS,
+        original_failed_seal_sha256=FAILED_SEAL,failure_envelope_sha256=ENVELOPE,root_go_sha256=ROOT_GO,
+        supplemental_seal_sha256=sha(seal_path),recovery_certificate_sha256=sha(cert_path),pid_continuity=continuity,
+        source_archive_sha256=SOURCE,model_sha256=MODEL,selection_sha256=SELECTION,validation_lane=lane,evidence_files=evidence_files,
+        contiguous_native_slots_verified=last,KPI_extracted=False)
+    return dict(status_path=str(rec/'complete-status.json'),seal_path=str(seal_path),audit_path=str(rec/'audit.json'),evidence=proof)

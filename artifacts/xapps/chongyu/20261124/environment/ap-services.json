@@ -1,0 +1,39 @@
+{
+  "profile_id": "smallcell-30w-cat1-duty-v1",
+  "ap_services": {
+    "enabled": true,
+    "power": {
+      "static_w": 20.0,
+      "load_w": 6.0,
+      "pa_efficiency": 0.25,
+      "waking_w": 30.0,
+      "sleep_w": {
+        "micro_sleep": 5.892857142857143,
+        "light_sleep": 2.6785714285714284,
+        "deep_sleep": 0.10714285714285714
+      },
+      "wake_transition_j": {
+        "micro_sleep": 0.0,
+        "light_sleep": 0.009642857142857143,
+        "deep_sleep": 0.10714285714285714
+      }
+    },
+    "profiles": {
+      "micro_sleep": {"period_ms": 20, "sleep_ms": 1, "wakeup_ms": 0},
+      "light_sleep": {"period_ms": 100, "sleep_ms": 10, "wakeup_ms": 6},
+      "deep_sleep": {"wakeup_ms": 50}
+    }
+  },
+  "provenance": {
+    "scope": "Configurable system-level BS electronics model, not Jetson power measurements or a calibrated commercial AP. No site cooling, transport, edge-server or standalone UL-receiver power is included.",
+    "active_formula": "P_active = 20 W + 6 W * unique occupied active-grid RE fraction + emitted RF power / 0.25. Empty but awake cell consumes 20 W. Full 1 W RF reference consumes 30 W.",
+    "active_coefficients": "20 W static, 6 W processing increment, effective RF conversion 0.25 and the 30 W reference are explicit project engineering assumptions; they are not absolute watt values specified by 3GPP.",
+    "sleep_scaling": "Apply TR 38.864 category-1 set-1 relative ratios 55/280, 25/280 and 1/280 to the chosen 30 W active reference. This is an adaptation, not the standard's reference deployment or complete scaling formula.",
+    "transitions": "TR 38.864 category-1 total ramp-down/ramp-up times are 0/6/50 ms and additional energies 0/90/1000 relative-power*ms. We scale energies by 30/280 W per relative unit and charge them once per wake. Total transition time is conservatively represented as no-service wake time; waking power is chosen at the 30 W active reference, not the TR sleep-state transition power.",
+    "duty_policy": "20 ms / 1 ms micro sleep and 100 ms / 10 ms light sleep are project experimental duty policies. They are not an implementation of NR SSB/SIB/RACH procedures or a standardized O-RAN E2 service model.",
+    "sources": [
+      {"title": "3GPP TR 38.864 v18.1.0, clause 5.1, tables 5.1-2 to 5.1-5", "url": "https://www.3gpp.org/ftp/Specs/archive/38_series/38.864/38864-i10.zip"},
+      {"title": "ITU-T L.1390 (08/2022), clauses 6.2 and 7.2-7.3", "url": "https://www.itu.int/rec/T-REC-L.1390-202208-I/en"}
+    ]
+  }
+}

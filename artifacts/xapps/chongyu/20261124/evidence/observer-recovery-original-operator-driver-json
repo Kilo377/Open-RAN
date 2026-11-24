@@ -1,0 +1,40 @@
+{
+  "schema": "oran.validation-lane-driver-receipt.v1",
+  "validation_version": "v5",
+  "physical_worker_id": "agx1",
+  "lane_id": "lane-1",
+  "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "request_sha256": "94df2c5bdde674ded0e79c64c1f3d437bb87ea49a125ce9bdb9917261108f94b",
+  "source_archive_sha256": "c424de265a368e9c14d4c37b09d44b62f93991c91d019ea051aaa2ff876117e5",
+  "validation_protocol_sha256": "6ac948119da228b83facbed26d3624559994557d29bd03b972fe727c89893fc2",
+  "driver_sha256": "8ccb1e4797a016a5468f4965a8b4a525eac280a1414fda8565c907d783935bdd",
+  "project_root": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5",
+  "max_validation_lanes_per_host": 2,
+  "driver_pid": 25306,
+  "original_worker_validate_passed": true,
+  "profiles": {
+    "traffic_profile": {
+      "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+      "sha256": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+      "sealed_copy": "operator-profiles/traffic.json"
+    },
+    "ue_services_config": {
+      "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+      "sha256": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+      "sealed_copy": "operator-profiles/ue-services.json"
+    },
+    "ap_services_profile": {
+      "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+      "sha256": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035",
+      "sealed_copy": "operator-profiles/ap-services.json"
+    },
+    "base_config": {
+      "path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+      "sha256": "60e34598785b9d8e4300214430d388b0905817b27ed018712588e5b56fbe78a7",
+      "sealed_copy": "operator-profiles/base.json"
+    }
+  },
+  "lane_lock_inherited_by_worker": true,
+  "old_v4_exclusive_lock_inactive": true,
+  "legacy_shared_guard_inherited_by_worker": true
+}

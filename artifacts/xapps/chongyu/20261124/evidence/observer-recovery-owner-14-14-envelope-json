@@ -1,0 +1,137 @@
+{
+  "schema": "oran.observer-failure-envelope.v1",
+  "case_id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "captured_utc": "2026-11-23T10:05:06.528442+00:00",
+  "files": {
+    "original-operator-plan.json": {
+      "sha256": "4d289d79a8ac355d76e777e452a2f9b1a336e234779382761e4bdbe15104f53c",
+      "bytes": 5158
+    },
+    "original-root-go.json": {
+      "sha256": "fcc19a717c5988d10bc0f531275f77a322f96dd6e97bbae91b723bcd7c339b74",
+      "bytes": 1823
+    },
+    "original-selection.json": {
+      "sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+      "bytes": 3394
+    },
+    "original-command.json": {
+      "sha256": "c5f300b3526d7b17aa3f61e891ccb7f528962fa0a03979910af3d26ef24a04db",
+      "bytes": 6418
+    },
+    "original-request.json": {
+      "sha256": "36bb8d64a0d5b0c7d82f8b7df2a17c56d3f3af2ce6053a0a15e6fa5bbcabd568",
+      "bytes": 2545
+    },
+    "original-driver-process.log": {
+      "sha256": "d96c921fcaa1f77d415156ae99c7b6928e14c63522026b8a19a0d84bb2d07063",
+      "bytes": 601
+    },
+    "original-driver-result.json": {
+      "sha256": "a57112a8581eec2872362851b6bfd61843614fba0cc8f20494cfdf4071b02bec",
+      "bytes": 708
+    },
+    "original-driver-error.json": {
+      "sha256": "2a39364e8a47f5d7bee13369fa95112ec8ebb289b77a9110c0628eeb27041510",
+      "bytes": 155
+    },
+    "original-failed-seal.json": {
+      "sha256": "ceb8f5bed288e6340997e85fa9754c921f1aebe4ade02d626142b04bfa777013",
+      "bytes": 6013
+    },
+    "original-status.json": {
+      "sha256": "866fa7c9653d1db5945e3a977c5a886ee8e455d0ba1bdeb4844df90ecd20a644",
+      "bytes": 516
+    }
+  },
+  "original_worker_phase": "failed",
+  "original_failed_seal_is_not_valid_final_seal": true,
+  "original_simulation_still_running": true,
+  "initial_pid": {
+    "pid": 25336,
+    "start_ticks": 15559801,
+    "state": "R",
+    "ppid": 1,
+    "argv": [
+      "python",
+      "experiments/run_rt_sys.py",
+      "--device",
+      "cuda",
+      "--rt-device",
+      "cpu",
+      "--scene",
+      "munich",
+      "--cells",
+      "3",
+      "--ues",
+      "6",
+      "--config",
+      "configs/rt_sys/agx_munich_6ue_depth2_fast.json",
+      "--algebra-backend",
+      "torch",
+      "--nr-execution",
+      "batched",
+      "--recording-mode",
+      "experiment",
+      "--diagnostic-window-slots",
+      "40",
+      "--model",
+      "fast",
+      "--fast-profile",
+      "system",
+      "--slots",
+      "22440",
+      "--seed",
+      "341721",
+      "--traffic-load",
+      "1.5",
+      "--ue-services",
+      "drx-mec",
+      "--ue-services-config",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ue-services.json",
+      "--traffic-profile",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/traffic.json",
+      "--ap-services-profile",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/ap-services.json",
+      "--config",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/profiles/base.json",
+      "--xapp-pool",
+      "chongyu",
+      "--record-compression",
+      "gzip",
+      "--replay-max-frames",
+      "80",
+      "--throughput-xapp-mode",
+      "frozen",
+      "--throughput-xapp-window-ms",
+      "100",
+      "--throughput-xapp-policy",
+      "throughput",
+      "--throughput-xapp-balanced-start-windows",
+      "0",
+      "--learning-xapp-start-slot",
+      "2040",
+      "--energy-xapp-mode",
+      "off",
+      "--latency-xapp-mode",
+      "off",
+      "--urllc-xapp-mode",
+      "off",
+      "--ap-xapp-mode",
+      "off",
+      "--budget-xapp-mode",
+      "off",
+      "--channel-cache-root",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/channel_cache/throughput/341721",
+      "--live-state",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run/live.json",
+      "--output",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run",
+      "--throughput-xapp-model",
+      "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run/throughput_mlp_model.json"
+    ],
+    "cmdline_sha256": "38273a9b7ce8070f943a9d8b7e8a60813d3defe7d34558eb6b65338ef425c6cc",
+    "observed_utc": "2026-11-23T10:05:06.404339+00:00"
+  },
+  "new_simulations": 0
+}

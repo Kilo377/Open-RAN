@@ -1,0 +1,37 @@
+{
+  "schema": "oran.selected-model-final-evidence.v1",
+  "actor": "power",
+  "model_sha256": "77f8bc04d93717e6487473a2a3c4c00712b14cd7012f586defa9ca73b8ea3554",
+  "selection_sha256": "b7066ab622897cc0394eb5b9f5a96789e9f4baedff0a3450a24f8f6bd7c556cf",
+  "report_sha256": "9ce0af8ded69d8648161dcac03dba6f4de33aebe83a659074b66adf0c767bb8c",
+  "final_window": {
+    "total_slots": 22440,
+    "start_slot_exclusive": 2040,
+    "end_slot_inclusive": 22040,
+    "duration_s": 10.0
+  },
+  "full_report": "evidence/final-holdout-report.json",
+  "actual_result": {
+    "per_seed": [
+      {
+        "seed": 341721,
+        "off": 5.244869999999355,
+        "on": 4.965384499999544,
+        "gain_percent": 5.32874027382652,
+        "target_met": false
+      },
+      {
+        "seed": 341722,
+        "off": 5.320316499999538,
+        "on": 5.055205999999606,
+        "gain_percent": 4.982983625127473,
+        "target_met": false
+      }
+    ],
+    "mean_gain_percent": 5.155861949476996,
+    "every_seed_target_met": false,
+    "mean_target_met": false
+  },
+  "publication_authorized": false,
+  "causal_parameter_gains_estimated": false
+}

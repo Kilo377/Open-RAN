@@ -1,0 +1,236 @@
+{
+  "schema": "oran.observer-recovered-status.v1",
+  "id": "9ca87f904d75424aad23c0821cf8b1c7",
+  "phase": "complete",
+  "slot": 22440,
+  "sealed": true,
+  "original_worker_phase": "failed",
+  "completion_basis": "same_native_process_after_observer_failure",
+  "new_simulations": 0,
+  "recovered_original_simulation": true,
+  "audit": {
+    "source_sha256": "7da11a6cb35a6875644f1ebe8fdda636a1bfe5d881a6a4a135ef820a6c194302",
+    "metrics": {
+      "slot": 22040,
+      "time_ms": 11020.0,
+      "window_start_slot": 2040,
+      "window_slots": 20000,
+      "states": {
+        "kpi:ue_power_w": {
+          "value": 5.333897499999469,
+          "reason": null,
+          "window": "matched_window",
+          "window_start_slot": 2040,
+          "sampled_at_slot": 22040,
+          "window_slots": 20000,
+          "source": "recorded_scalar_counters_and_task_events",
+          "aggregation": "counter_delta_over_equal_window"
+        },
+        "kpi:network_goodput_mbps": {
+          "value": 49.4536784,
+          "reason": null,
+          "window": "matched_window",
+          "window_start_slot": 2040,
+          "sampled_at_slot": 22040,
+          "window_slots": 20000,
+          "source": "recorded_scalar_counters_and_task_events",
+          "aggregation": "counter_delta_over_equal_window",
+          "resolution": 8e-07
+        },
+        "kpi:urllc_failure_fraction": {
+          "value": 0.0855,
+          "reason": null,
+          "window": "matched_window",
+          "window_start_slot": 2040,
+          "sampled_at_slot": 22040,
+          "window_slots": 20000,
+          "source": "recorded_scalar_counters_and_task_events",
+          "sample_count": 40000.0,
+          "resolution": 2.5e-05,
+          "failure_events": 3420.0,
+          "offered_packets": 40000.0,
+          "canonical_unit": "ratio",
+          "display_unit": "%",
+          "display_multiplier": 100.0,
+          "includes_carryover": true,
+          "mature_cohort_probability": false,
+          "aggregation": "interval_event_ratio_including_carryover_not_cohort_probability"
+        },
+        "kpi:task_success_ratio": {
+          "value": 0.9696969696969697,
+          "reason": null,
+          "window": "matched_window",
+          "window_start_slot": 2040,
+          "sampled_at_slot": 22040,
+          "window_slots": 20000,
+          "source": "recorded_scalar_counters_and_task_events",
+          "sample_count": 389,
+          "generated": 396,
+          "failed": 7,
+          "pending": 0,
+          "cohort_exposure_ms": 9900.0,
+          "deadline_guard_ms": 100,
+          "cohort_start_ms": 1020.0,
+          "cohort_end_ms": 10920.0,
+          "aggregation": "matched_mature_birth_cohort",
+          "all_generated": 400,
+          "resolution": 0.0025252525252525255
+        },
+        "kpi:mec_offloaded_latency_ms": {
+          "value": 20.63779527559052,
+          "reason": null,
+          "window": "matched_window",
+          "window_start_slot": 2040,
+          "sampled_at_slot": 22040,
+          "window_slots": 20000,
+          "source": "recorded_scalar_counters_and_task_events",
+          "sample_count": 254,
+          "generated": 261,
+          "failed": 7,
+          "pending": 0,
+          "cohort_exposure_ms": 9900.0,
+          "deadline_guard_ms": 100,
+          "cohort_start_ms": 1020.0,
+          "cohort_end_ms": 10920.0,
+          "aggregation": "matched_mature_birth_cohort",
+          "all_generated": 400
+        }
+      }
+    },
+    "canonical_goodput_mbps": 49.4536784,
+    "raw_six_ue_counter_goodput_mbps": 49.4536784,
+    "metric_semantics": "sum_of_six_UE_delivered_payload_byte_deltas_times8_over_elapsed_seconds_and1e6",
+    "learning": {
+      "mode": "frozen",
+      "policy": "throughput",
+      "constraints_active": false,
+      "status": "mlp",
+      "status_reason": "predicted_goodput_single_objective_QoS_unconstrained",
+      "algorithm": "MLPRegressor",
+      "scheduler_mapping": "latency_aware_base_scores_plus_UID_weights_and_existing_NR_packing",
+      "samples": 254,
+      "trained_samples": 254,
+      "fit_count": 1,
+      "action_samples": {
+        "0": 121,
+        "1": 22,
+        "2": 103,
+        "3": 8
+      },
+      "fitted_action_samples": {
+        "0": 121,
+        "1": 22,
+        "2": 103,
+        "3": 8
+      },
+      "minimum_measured_rows": 24,
+      "maximum_measured_rows": 1024,
+      "minimum_rows_per_action": 6,
+      "balanced_start_windows": 0,
+      "run_start_samples": 254,
+      "run_start_model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+      "run_new_measured_samples": 0,
+      "run_balanced_action_samples": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "run_balanced_start_complete": true,
+      "prediction_batches": 76,
+      "mlp_selected_actions": 75,
+      "rules_only_actions": 0,
+      "fixed_actions": 0,
+      "invalidated_samples": 4,
+      "last_measured_action": 3,
+      "bootstrap_cooldown_pending": false,
+      "fit_parameters": {
+        "hidden_layer_sizes": [
+          8
+        ],
+        "activation": "tanh",
+        "solver": "lbfgs",
+        "alpha": 1.0,
+        "max_iter": 300,
+        "max_fun": 5000,
+        "tol": 1e-05,
+        "random_state": 173
+      },
+      "fit_diagnostics": {
+        "n_iter": 193,
+        "loss": 0.24130754414096542,
+        "converged": true
+      },
+      "optimizer_metadata": {
+        "objective": "half_mean_standardized_squared_error_plus_L2",
+        "gradient_convention": "project_corrected_mean_output",
+        "sklearn_version": "1.7.2",
+        "source_sha256": "93ff3b23ef661a2f8579c91d0afdfebf55a9ea8c1bf7fd6a27e5ca6df057a3bc",
+        "relative_tolerance": 1e-05,
+        "consistency_max_relative_error": 1.7136784876372903e-10,
+        "checks": [
+          {
+            "outputs": 1,
+            "alpha": 0.0,
+            "native_relative_error": 5.4280244442764034e-11,
+            "corrected_relative_error": 5.4280244442764034e-11
+          },
+          {
+            "outputs": 1,
+            "alpha": 1.0,
+            "native_relative_error": 6.439273101320389e-11,
+            "corrected_relative_error": 6.439273287195764e-11
+          },
+          {
+            "outputs": 9,
+            "alpha": 0.0,
+            "native_relative_error": 8.000000000227256,
+            "corrected_relative_error": 1.7136784876372903e-10
+          },
+          {
+            "outputs": 9,
+            "alpha": 1.0,
+            "native_relative_error": 1.3624529684107975,
+            "corrected_relative_error": 1.6113669954064394e-10
+          }
+        ]
+      },
+      "optimizer_verified": true,
+      "guard_numeric_tolerance_events_per_window": 0.001,
+      "guard_numeric_tolerance_event_rate_per_s": 0.01,
+      "experimental_horizon": "Cumulative failure input grows with run length; deployment beyond observed training horizons can be out of distribution.",
+      "guard_reference": [
+        37.716413884297545,
+        7.438956694214874,
+        0.5624284297520671,
+        2.800794710743807,
+        18.082517685950407,
+        0.5370254545454545,
+        8.294690909090907,
+        0.0,
+        1608.6776859504132
+      ],
+      "guard_scope": "throughput_only_research_QoS_recorded_not_constrained",
+      "fit_s": 0.13294802399468608,
+      "predict_s": 0.02343607199145481,
+      "decision_s": 0.2128767621179577,
+      "model_path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run/throughput_mlp_model.json",
+      "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe"
+    },
+    "immutable_fit_checkpoints": 0,
+    "model_sha256": "cad8b33db9a2d2f0fb622cb116456d29fc6f1545afa95b759477b07d73eb21fe",
+    "model_path": "/dev/shm/oran_xapp_improvement_20261123/validation-v5/agx1/lane-1/9ca87f904d75424aad23c0821cf8b1c7/source-v5/outputs/throughput_improvement/9ca87f904d75424aad23c0821cf8b1c7/run/throughput_mlp_model.json",
+    "all_other_xapps_off": true,
+    "profiles_verified": true,
+    "all_native_prefix_rows_verified": 2040,
+    "first_throughput_apply_slot": 2081,
+    "real_E2_applied_outcomes": 60988,
+    "confirmed_public_counter_windows": 70,
+    "observation_window_seconds": 10.0,
+    "training_coverage_complete": null,
+    "target_gain_claimed": false,
+    "supply_ceiling_limitation": "Current unchanged offered load may cap relative goodput gain below10%; report actual matched OFF/ON gain.",
+    "total_duration_seconds": 11.22,
+    "post_baseline_duration_seconds": 10.2
+  }
+}

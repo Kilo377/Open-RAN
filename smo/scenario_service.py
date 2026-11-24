@@ -27,6 +27,9 @@ from smo.presets import PresetStore
 
 def selected_controller_validation(active_release,recipe,environment,root):
     """Expose the selected actors' actual final window, separately from BEFORE."""
+    if active_release.get('models',{}).get('x12_mec',{}).get('implementation_variant')=='adaptive_v2':
+        from smo.x12_release_validation import validate
+        return validate(active_release,recipe,environment,root)
     pin=active_release.get('final_report_sha256')
     path=Path(root)/'artifacts/xapps/chongyu'/recipe['model_release']['id']/'evidence/final-holdout-report.json'
     if (not isinstance(pin,str)or not re.fullmatch('[0-9a-f]{64}',pin)
@@ -112,11 +115,12 @@ def attach_environment(service,entry):
             if node.get('kind')!='xapp':continue
             key=node['key'];model=active_release['models'][key]
             node['historical_contract_reference']={k:deepcopy(node.get(k))for k in
-                ('model_sha256','evaluation_status','policy_evaluation','drx_profiles','runtime_parameters')}
+                ('model_sha256','evaluation_status','policy_evaluation','drx_profiles','runtime_parameters','algorithm')}
             if node.get('model_sha256')!=model['sha256']:changed.append(key)
             node.update(model_sha256=model['sha256'],runtime_parameters=deepcopy(model['runtime_parameters']),
                 evaluation_status=model.get('evaluation_status','frozen_candidate_evaluation_retained'),
-                runtime_model_release=active_release['release'])
+                runtime_model_release=active_release['release'],algorithm=model['algorithm'],
+                runtime_implementation_variant=model.get('implementation_variant','legacy9'))
             node.pop('policy_evaluation',None)
             if key=='x01':
                 version=recipe['model_release']['action_set_version']
@@ -126,8 +130,8 @@ def attach_environment(service,entry):
         service.runtime_environment['model_release']=deepcopy(recipe['model_release'])
         service.runtime_environment['validation']=dict(
             **selected_controller_validation(active_release,recipe,release,Path(__file__).resolve().parents[1]),
-            retrained_or_replaced_models=sorted(changed),
-            unchanged_inherited_models=sorted(set(MODEL_IDS)-set(changed)),
+            retrained_or_replaced_models=sorted(active_release.get('updated_model_ids',changed)),
+            unchanged_inherited_models=sorted(set(MODEL_IDS)-set(active_release.get('updated_model_ids',changed))),
             )
         service.runtime_environment['statistics']['current_calibration']=False
     from smo.current_calibration import verify_current_calibration

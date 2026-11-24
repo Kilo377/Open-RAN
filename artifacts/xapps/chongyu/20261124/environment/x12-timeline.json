@@ -1,0 +1,9 @@
+[
+  {
+    "at_ms": 1020,
+    "operation": "enable",
+    "apps": [
+      "x12_mec"
+    ]
+  }
+]

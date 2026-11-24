@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Metadata-only wait for the original six finals and one approved observer recovery.
+
+No simulation, fit, selection, certificate generation or old-file rewrite occurs.
+The original report reader/coordinator/registration remain archival byte for byte.
+"""
+from __future__ import annotations
+import argparse
+from datetime import datetime, timezone
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import time
+
+TASK = Path(__file__).resolve().parents[1]
+ADAPTER_PATH = Path(__file__).with_name('report_xapp_comparisons_observer_recovery_v1.py')
+ADAPTER_SHA = '56c48e71e059438784fb210b408440a4a56264a4d7746882f2e72ac599105423'
+
+
+def sha(path):
+    import hashlib
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def read(path): return json.loads(Path(path).read_text())
+
+
+def write_new(path, value):
+    with Path(path).open('x') as stream:
+        json.dump(value, stream, indent=2, allow_nan=False)
+        stream.write('\n')
+
+
+def adapter_reader():
+    if ADAPTER_SHA is None or sha(ADAPTER_PATH) != ADAPTER_SHA:
+        raise ValueError('The explicit recovery report adapter has not been frozen/registered')
+    spec = importlib.util.spec_from_file_location('_registered_observer_recovery_report', ADAPTER_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_registration(path, pin):
+    if sha(path) != pin:
+        raise ValueError('Recovery-report coordination registration changed')
+    value = read(path)
+    module = adapter_reader()
+    old = module.OLD
+    old_ref = {'path': str(module.OLD_REGISTRATION_PATH), 'sha256': module.OLD_REGISTRATION_SHA}
+    if (value.get('schema') != 'oran.locked-final-report-observer-recovery-registration.v1'
+            or value.get('role') != 'holdout' or value.get('archival_registration') != old_ref
+            or value.get('archival_reader_sha256') != module.BASE_SHA
+            or value.get('archival_coordinator_sha256') != module.OLD_WATCHER_SHA
+            or value.get('canonical_adapter') != {'path': str(ADAPTER_PATH), 'sha256': ADAPTER_SHA}
+            or value.get('coordinator_sha256') != sha(__file__)
+            or value.get('total_deadline_utc') != old.STOP
+            or value.get('observer_recovery_registration') != {key: module.RECOVERY_REGISTRATION[key] for key in ('path', 'sha256')}
+            or value.get('approved_case_id') != module.RECOVERED_ID):
+        raise ValueError('The new coordinator must retain the original exact six-case/model/seed scope')
+    old_value, joint, _ = old.verify_registration(module.OLD_REGISTRATION_PATH, module.OLD_REGISTRATION_SHA)
+    module.approved_reader()  # Code and approval bytes only; no case/KPI data.
+    for key in ('plan_path', 'output'):
+        target = Path(value[key]).resolve()
+        if not target.is_relative_to(TASK/'analysis') or target == Path(old_value[key]).resolve():
+            raise ValueError('New derived outputs must be create-only and distinct from the archival attempt')
+    return value, old_value, joint, module
+
+
+def canonical_plan(value, old_value, module):
+    plan = module.OLD.canonical_plan(old_value)
+    plan['observer_recovery_registration'] = value['observer_recovery_registration']
+    plan['canonical_report_adapter'] = value['canonical_adapter']
+    plan['original_worker_failure_preserved'] = True
+    return plan
+
+
+def run(path, pin):
+    value, old_value, joint, module = verify_registration(path, pin)
+    directory = Path(path).parent
+    terminal = directory/'result.json'
+    if terminal.exists():
+        raise FileExistsError('A recovery coordinator terminal result already exists; never overwrite')
+    last = None
+    try:
+        while time.time() < datetime.fromisoformat(module.OLD.STOP).timestamp():
+            ready, reason = module.metadata_readiness(old_value, joint)
+            if reason != last:
+                print(json.dumps({'state': reason}), flush=True)
+                last = reason
+            if not ready:
+                time.sleep(15)
+                continue
+            plan = Path(value['plan_path'])
+            write_new(plan, canonical_plan(value, old_value, module))
+            command = [shutil.which('uv') or 'uv', 'run', '--offline', '--with', 'numpy', '--with', 'scikit-learn',
+                '--with', 'matplotlib', 'python', '-B', str(ADAPTER_PATH), '--plan', str(plan),
+                '--protocol', old_value['protocol']['path'], '--output', value['output']]
+            with (directory/'report.stdout.log').open('x') as stdout, (directory/'report.stderr.log').open('x') as stderr:
+                process = subprocess.run(command, cwd=TASK, stdout=stdout, stderr=stderr, timeout=1200)
+            if process.returncode:
+                raise RuntimeError('Explicit recovery report refused an actual input; inspect report.stderr.log; no input/output is overwritten')
+            report_path = Path(value['output'])/'report.json'
+            report = read(report_path)
+            proof = module.validate_report_recovery(report)
+            if (report.get('role') != 'holdout' or len(report.get('comparisons', [])) != 4
+                    or len(report.get('case_evidence', [])) != 6 or report.get('selection_sha256') != module.OLD.SELECTION_SHA):
+                raise ValueError('Recovered report differs from the unchanged final scope')
+            result = {'state': 'complete_canonical_final_report_with_explicit_observer_recovery',
+                'report': str(report_path), 'report_sha256': sha(report_path), 'registration_sha256': pin,
+                'finished_utc': datetime.now(timezone.utc).isoformat(), 'all_six_actually_complete_before_kpi_read': True,
+                'original_complete_worker_runs': 5, 'observer_recovered_same_native_runs': 1,
+                'original_failed_worker_status_preserved': True, 'observer_recovery_case_id': proof['case_id'],
+                'recovery_certificate_sha256': proof['recovery_certificate_sha256'],
+                'throughput_weights_origin': 'retained_legacy', 'new_weight_models': ['x01'],
+                'unchanged_weight_models': ['x02', 'x08', 'x12_mec', 'x12_urllc', 'x13'],
+                'model_selection_performed': False, 'new_simulations': 0, 'model_fitting_performed': False}
+            write_new(terminal, result)
+            print(json.dumps(result), flush=True)
+            return result
+        result = {'state': 'incomplete_at_registered_total_deadline', 'total_deadline_utc': module.OLD.STOP,
+            'model_selection_performed': False, 'original_failed_worker_status_preserved': True}
+        write_new(terminal, result)
+        return result
+    except Exception as error:
+        result = {'state': 'failed_without_overwrite', 'error': type(error).__name__+': '+str(error),
+            'model_selection_performed': False, 'new_simulations': 0, 'model_fitting_performed': False,
+            'original_failed_worker_status_preserved': True}
+        if not terminal.exists(): write_new(terminal, result)
+        print(json.dumps(result), flush=True)
+        raise
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--registration', type=Path, required=True)
+    parser.add_argument('--registration-sha256', required=True)
+    args = parser.parse_args()
+    run(args.registration, args.registration_sha256)
+
+
+if __name__ == '__main__': main()
