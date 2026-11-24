@@ -343,9 +343,30 @@ var SmoConflictRisk = (() => {
       if(steps.some(v=>v<0))notes.add('common_reference_contrast');
       if(observedZero(row))notes.add('observed_zero_reference_weight');else if(!resolved(row))notes.add('uncertain_gain_direction');
     }
-    const rangeRows=rows.filter(r=>r.kind!=='finite_contrast');
+    const rangeRows=rows.filter(r=>r.kind!=='finite_contrast').sort((a,b)=>
+      Number(a.projection_role==='residual_population_reference')-Number(b.projection_role==='residual_population_reference'));
     for(const row of rangeRows){
-      const ids=members(row,frame),component=parameter==='ue_drx_configs'?(row.scalar_component||'inactivity_ms'):null;
+      const measuredIds=members(row,frame),component=parameter==='ue_drx_configs'?(row.scalar_component||'inactivity_ms'):null;
+      // A separately measured group contrast can fill a missing member without
+      // adding a second copy of already covered effects. Subtract the known
+      // contained-group derivative before projecting the remaining direction.
+      // Thus a common step of the whole group reproduces its measured gain.
+      const residualReference=row.projection_role==='residual_population_reference';
+      let ids=measuredIds,gain=row.estimate;const subtracted=[];
+      if(residualReference){
+        const basis=rangeRows.filter(r=>r.projection_role!=='residual_population_reference').map(r=>({row:r,ids:members(r,frame)}))
+          .filter(r=>r.ids.length&&r.ids.every(u=>measuredIds.includes(u)));
+        const represented=new Set();let overlap=false;
+        for(const r of basis){
+          for(const u of r.ids){if(represented.has(u))overlap=true;represented.add(u);}
+          gain-=r.row.estimate;
+          subtracted.push({calibration_id:r.row.contrast_id,members:r.ids,gain:r.row.estimate,confidence_interval:r.row.confidence_interval});
+        }
+        // Overlapping reference groups need an identified joint basis; do not
+        // manufacture a residual by subtracting the same coordinate twice.
+        if(overlap){notes.add('ambiguous_residual_population_basis');continue;}
+        ids=measuredIds.filter(u=>!represented.has(u));
+      }
       if(!ids.length||!ids.some(u=>changed.includes(u)))continue;
       const old=ids.map(u=>component?base[u]?.[component]:base[u]);
       const next=ids.map((u,i)=>component&&coveredFields.get(u)?.has(component)?old[i]:component?target[u]?.[component]:target[u]);
@@ -359,9 +380,15 @@ var SmoConflictRisk = (() => {
       const steps=next.map((v,i)=>v-old[i]),step=mean(steps);
       const residual=Math.hypot(...steps.map(d=>d-step));
       if(residual>1e-9)notes.add('population_direction_projection');
+      if(residualReference)notes.add('residual_population_reference');
+      const residualEnvelope=residualReference&&row.confidence_interval&&subtracted.every(r=>r.confidence_interval)?[
+        row.confidence_interval[0]-subtracted.reduce((s,r)=>s+r.confidence_interval[1],0),
+        row.confidence_interval[1]-subtracted.reduce((s,r)=>s+r.confidence_interval[0],0)]:null;
+      if(residualEnvelope&&residualEnvelope[0]<=0&&residualEnvelope[1]>=0)notes.add('uncertain_gain_direction');
       if(observedZero(row))notes.add('observed_zero_reference_weight');else if(!resolved(row))notes.add('uncertain_gain_direction');
       if(row.fit_diagnostics?.assessment==='limited_first_order_approximation')notes.add('limited_reference_fit');
-      pieces.push(row.estimate*step);used.push(row.contrast_id);components.push({kind:'gain_times_step',gain:row.estimate,parameter_step:step,reference_drive:row.estimate*step,calibration_id:row.contrast_id});ids.forEach(u=>{covered.add(u);if(component){if(!coveredFields.has(u))coveredFields.set(u,new Set());coveredFields.get(u).add(component);}});
+      pieces.push(gain*step);used.push(row.contrast_id,...subtracted.map(r=>r.calibration_id));components.push({kind:'gain_times_step',gain,parameter_step:step,reference_drive:gain*step,calibration_id:row.contrast_id,
+        ...(residualReference?{projection:'residual_common_population_direction',measured_gain:row.estimate,measured_members:[...measuredIds],subtracted_measured_groups:subtracted,residual_members:ids.filter((u,i)=>steps[i]!==0),residual_interval_envelope:residualEnvelope,interval_semantics:'interval_arithmetic_not_joint_confidence_interval',per_ue_causal_derivatives_identified:false}:{})});ids.forEach(u=>{covered.add(u);if(component){if(!coveredFields.has(u))coveredFields.set(u,new Set());coveredFields.get(u).add(component);}});
     }
     // Compose measured category differences while retaining their uncertainty.
     const categorical=all.filter(r=>r.kind==='finite_contrast'&&typeof r.from==='string'&&typeof r.to==='string');
@@ -952,6 +979,7 @@ if(typeof document!=='undefined') (() => {
     const counts=q.structural_counts||SmoConflictRisk.conflictCounts(group.conflict_summaries||[]);
     const reasons={proposal_unavailable:'缺少有效拟动作',incomplete_scheduler_bundle:'下行调度策略与 UE 优先级的原子动作包不完整',unsupported_arbitration_resource:'此共享参数尚未定义受支持的仲裁方式',arbitration_outcome_limit:'仲裁分支超过计算上限',reference_space_limit:'完整策略子集超过计算上限',reference_projection_incomplete:'增益或单位不足'};
     const missing=q.projection_coverage?.unknown_links||[],screened=(q.projection_coverage?.excluded_links||[]).filter(r=>r.action_context);
+    const residualReference=(q.actual_outcomes||[]).some(o=>o.goals.some(g=>g.chains.some(c=>c.notes?.includes('residual_population_reference'))));
     const link=r=>`${find('rcp:'+r.parameter)?.label||r.parameter} → ${chineseKpis[r.kpi]||r.kpi}`;
     const num=n=>n==null?'—':n!==0&&Math.abs(n)<.0001?n.toExponential(2):fmt(n,4);
     const scale=k=>{const c=currentQuantification()?.intent_contexts.find(c=>c.kpi===k);return `${num(c?.scale)} ${find('kpi:'+k)?.unit||''}`;};
@@ -961,6 +989,7 @@ if(typeof document!=='undefined') (() => {
         screened.length?`<p class="quant-caption">${screened.length} 项动作关系已筛除</p>`:'')+
       '<details><summary>量化详情</summary>'+
       `<p>${q.no_active_push?'当前保留关系中未量化到主动推动目标的作用。':''}${strengthMethod?'目标受阻强度':'目标增益损失比例'}${q.score_status==='reference_approximation'?' · 参考近似':''}</p>`+
+      (residualReference?'<p>竞争业务的群体扰动增益只补齐未覆盖成员；不作逐 UE 因果解释。</p>':'')+
       (graph().statistical_filter?.enabled?'<p>仅在显著 P–K 关系范围内量化；被排除关系不代表物理影响为零。</p>':'')+
       (q.projection_coverage?.kpis||[]).filter(r=>r.excluded&&!r.supported).map(r=>`<p class="quant-warning">${esc(chineseKpis[r.kpi]||r.kpi)}：当前动作没有保留的有效增益。该分数仅反映其余已知关系，不代表完整零风险。</p>`).join('')+
       screened.map(r=>`<p class="quant-caption">已筛除：${esc(link(r))} · 当前动作有测量记录，但未通过显著性筛选；该估计不计分。</p>`).join('')+

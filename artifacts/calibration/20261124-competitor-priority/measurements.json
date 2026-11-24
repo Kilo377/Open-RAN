@@ -1,0 +1,496 @@
+{
+  "schema": "oran.fixed-rcp-paired-measurements.v1",
+  "observations": [
+    {
+      "worker": "agx2",
+      "seed": 20261214,
+      "origin_slot": 2040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 11.59999999999992,
+        "ue_power_w": 5.630499999999731
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 8.599999999999897,
+        "ue_power_w": 5.317839999999787
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s20261214_o2040_fixed-02_v3",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "d9280c600b86833a7a03233a7c329d12e36eba06ce292f5fda9e3e6a159ae5a0",
+          "raw_sha256": {
+            "config_snapshot.json": "36f1cf8bd401396f586d42158ea025bc6542e2e05ba9ce754c77ad658c78b498",
+            "rt_sys_trace.jsonl.gz": "7f410323ab926f8011e203e667b3fb3dec9c8c6a3cbff63f84b0842de413acdf",
+            "control_receipts.jsonl.gz": "dd58bc2e8864061e03a42c56b6e22fabc20d9ab036735a40e2dac5ec1cc24536",
+            "xapp_hot_start.json": "b131e2e704ec3dc21b3c2b1ea8f04e2bc0a4d620788eead71d0d42431eb6849e",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        },
+        "after": {
+          "case": "s20261214_o2040_fixed-01_v3",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "b939763dab39b2be17857cbd7a1bc37ffccfe2b97bb5c96e3ebac99249e31512",
+          "raw_sha256": {
+            "config_snapshot.json": "4f0c71cfce7cfc462fdfb8980858f74bb2253410b9eb7774688e5065287bce63",
+            "rt_sys_trace.jsonl.gz": "e9417432d50630e5a24d084ea3f923ab9744d0e2789a1fc3d140d462ca271c64",
+            "control_receipts.jsonl.gz": "c666de6ac98b4385ca326cb503da6eaf43d94cbfedf3f9fc95c0c25fccd5f8fb",
+            "xapp_hot_start.json": "4641e62954cbb899b61cbc70c16385b34ccb8e78bb32fa1773726b1a440519bc",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        }
+      },
+      "learned_policy_controls_used": false
+    },
+    {
+      "worker": "agx2",
+      "seed": 20261216,
+      "origin_slot": 2040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 13.099999999999977,
+        "ue_power_w": 5.441459999999754
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 11.599999999999966,
+        "ue_power_w": 5.2181599999997985
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s20261216_o2040_fixed-02_v3",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "9f00d06537060b9790223c583585b15a1bb4a8c49b98eb3ae6ce025ddcb35f8b",
+          "raw_sha256": {
+            "config_snapshot.json": "e0f959fbea8da6005a51c3f91ebd13f056aebac6d58c0fd509b09d3265c63b97",
+            "rt_sys_trace.jsonl.gz": "4851f968f33a2157896cef7a9cc584528646570edd36867e582d500fddcd4242",
+            "control_receipts.jsonl.gz": "e2015b614f2b41dc7ad7335f5b8f8b6ce8e76e44a1f76b5649697b27dfd13e6c",
+            "xapp_hot_start.json": "5939c9f69ea1e26e2f47547ba7a84e528d257b975b4057e6f29f277d268c446c",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        },
+        "after": {
+          "case": "s20261216_o2040_fixed-01_v3",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "ca903dc86cec3c0ba2ddd6d6dc72a579655ca5d280e6525763a7b5bae1aca9c1",
+          "raw_sha256": {
+            "config_snapshot.json": "0ca5626791c3763f2541754d02d7de5c4273d172c059f18f09e378bcefe12e14",
+            "rt_sys_trace.jsonl.gz": "b9e90449239818a5682f3da82c120504fe32675dc417b6d77f78cf41f70cd975",
+            "control_receipts.jsonl.gz": "cac9261a0458d3e46681d484f7cd50e413d96c00c17e52aecc1d20f7815f6203",
+            "xapp_hot_start.json": "9f7f6ef621ceb5a3b15d39705fca60b3768ba4260fd9d31e3060d0ecf9fe87f1",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        }
+      },
+      "learned_policy_controls_used": false
+    },
+    {
+      "worker": "agx2",
+      "seed": 2026112401,
+      "origin_slot": 2040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 12.299999999999889,
+        "ue_power_w": 5.525999999999748
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 8.399999999999919,
+        "ue_power_w": 5.293019999999796
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s2026112401_fixed-02_cold",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "b7b95b616eaba3ead5e98b9b0ad2b891e81126976e2fa5de904af00e4eabc913",
+          "raw_sha256": {
+            "config_snapshot.json": "22a00ec491ef687428c0e58fab00bb57f6d72b1269900e558d9c0beb1570baf9",
+            "rt_sys_trace.jsonl.gz": "f8d0d4306de8ffa7710a1d6f049bfa5645f49da885fcbcff6ed6afc264fc69c4",
+            "control_receipts.jsonl.gz": "8deff761576ec2525b926a12ec93268ce58ab65b0d9eb5e5431682071a5ff941",
+            "xapp_hot_start.json": "1ad79e60e9a640ab6269d85a86e04139baba19ba65a33eddb6eaf13090d81e7b",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        },
+        "after": {
+          "case": "s2026112401_fixed-01_cold_public-v3",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "5b361a05b2b145d54f78b9c2f05daf92f489cac41d78dfe8768dd5e04fb285f6",
+          "raw_sha256": {
+            "config_snapshot.json": "d4e4d2c7d0c807c2c3819bdcbfd1a0f4e814a6ac85909c9f7999734987649a51",
+            "rt_sys_trace.jsonl.gz": "143ec27754f65910214178bf5733aa52aaa611edc70e3414b46ab0fd13616fa4",
+            "control_receipts.jsonl.gz": "e3bd029c4d53ed272bd741034370e09cf08d6f523848f50ba838dbc83075f395",
+            "xapp_hot_start.json": "8c680059b1b2eb060c318881fc736738e27c53996f2db06e26e8486b910b8017",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 5
+        }
+      },
+      "learned_policy_controls_used": false
+    },
+    {
+      "worker": "agx2",
+      "seed": 2026112401,
+      "origin_slot": 4040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 17.125000000000167,
+        "ue_power_w": 5.600280000000453
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 16.37500000000014,
+        "ue_power_w": 5.43658000000039
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s2026112401_o4040_fixed-02",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "5f0844c3e0309dbdf7a13ace5f55d4125f1d90affba289fb0f2651162076b6ec",
+          "raw_sha256": {
+            "config_snapshot.json": "38e142ab97c886a3e4b7e00c98e06c962341473e8f95ce067b03862274937c96",
+            "rt_sys_trace.jsonl.gz": "9f26e711cb4494875afdba7bc302aec426861564a3b1e85bd22b8329e3d78eb7",
+            "control_receipts.jsonl.gz": "6cd55247855de7af0c161bca77357aac8d646e99eacf040fad71812d884740e5",
+            "xapp_hot_start.json": "a441545bfbd190148823e8ed3cb0ffc6cbd06261cbd117752e2ffb3aa12b2340",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 4940,
+          "sample_count": 4
+        },
+        "after": {
+          "case": "s2026112401_o4040_fixed-01",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "0eebb63aaaa5c25ae2c954f9c23234d8652e921b233280ab8b237ca5c0f852fd",
+          "raw_sha256": {
+            "config_snapshot.json": "238ac5244cbbe0a92c3db551d3e2896c0097083dbd341cb12a07d4b0bfaf9efd",
+            "rt_sys_trace.jsonl.gz": "207b74b365709671bfc09b25e596b8ca90d1f2903d7790c7c66bc6d09eb3beb2",
+            "control_receipts.jsonl.gz": "dd2b9b00d3fe996936a6de4b58f4089bb57e1204e1e7ed743cad6e7b92359ceb",
+            "xapp_hot_start.json": "f22ea354111f6f9af64ae3fd77b9b99b0bb54d1741fbc6fa6a42fd2a6dee4b2e",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 4940,
+          "sample_count": 4
+        }
+      },
+      "learned_policy_controls_used": false
+    },
+    {
+      "worker": "agx2",
+      "seed": 2026112401,
+      "origin_slot": 8040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 20.500000000000185,
+        "ue_power_w": 5.565579999998519
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 14.833333333333401,
+        "ue_power_w": 5.477499999998585
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s2026112401_o8040_fixed-02",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "4863d4048a34aa2eb53d9b921a6c16105652648f8fa046c8ab8cf4f3988d7ed2",
+          "raw_sha256": {
+            "config_snapshot.json": "f6b52eddf0cb952de5a094e8f0e274b28fec740230058b4015717eaded1f238a",
+            "rt_sys_trace.jsonl.gz": "f3d73b5580220d6b58eaeb3299d04db0dc677d8d533e52438d67a14d50f0cada",
+            "control_receipts.jsonl.gz": "063c92b9a8f01f540a4067b2037d782fc178fb313586cabc7f8dd81b6291e755",
+            "xapp_hot_start.json": "72c1a1004d277e3214f15e31abac1b978ad247c3ef11cbd00424e4f0bfecdf3e",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 8940,
+          "sample_count": 3
+        },
+        "after": {
+          "case": "warm_train_s2026112401_fixed01_3s",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "3d9718a72c4a6e7857386c1884450adf646f699580095dc93d7017bdc1f6e3ce",
+          "raw_sha256": {
+            "config_snapshot.json": "b973047af08ed1cc5f58bc99344e534e7921cb3f04d005bd3351480a8b8665b4",
+            "rt_sys_trace.jsonl.gz": "2ebc8b34f84b3c9defe1df7ea28d17e884ccf1d0acf51dc669c8fdde407427aa",
+            "control_receipts.jsonl.gz": "32bfc34e8b60fd35a19782ea2520fa54bb0c704ed4b7c431f709b77a866d080f",
+            "xapp_hot_start.json": "f6a2e86708aedc406f7cb4034c6a4cd798e73e479cf7daf7a1deea935f8fb7e6",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 16040,
+          "sample_count": 3
+        }
+      },
+      "learned_policy_controls_used": false
+    },
+    {
+      "worker": "agx2",
+      "seed": 2026112403,
+      "origin_slot": 2040,
+      "input_role": "fixed_parameter_probe",
+      "arm": "FIXED",
+      "split": "training",
+      "combination_evaluation_data_used": false,
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "from_weight": 1.0,
+      "to_weight": 0.5,
+      "mec_weight": 2.0,
+      "scheduler_mode": "latency_aware",
+      "prefix_equal": true,
+      "task_identities_equal": true,
+      "normal_controls_verified": true,
+      "only_competitor_weights_changed": true,
+      "network_configuration_verified": true,
+      "before": {
+        "mec_offloaded_latency_ms": 10.374999999999911,
+        "ue_power_w": 5.563839999999729
+      },
+      "after": {
+        "mec_offloaded_latency_ms": 8.874999999999911,
+        "ue_power_w": 5.2981599999997755
+      },
+      "raw_evidence": {
+        "before": {
+          "case": "s2026112403_o2040_fixed-02",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "f2224582898ea0b3e01dd9c54b113ce3c4d188d25fd49ce8b2cfce114383c770",
+          "raw_sha256": {
+            "config_snapshot.json": "f1377d309b2e241ccc9cf7242add7bf911a2f52e1445b4d0a3a80d88d91c47f3",
+            "rt_sys_trace.jsonl.gz": "bd19a9d3a807377807102ba39d9297ecffe9e584a016ec79cb4fa6a3f2274a8f",
+            "control_receipts.jsonl.gz": "1d01117848134d94b79c40fbef5aef7d0664ea3aca47d97cedec0708f1c76ad6",
+            "xapp_hot_start.json": "0f198b1b0f3eec7fceb7101a6483bf35887d6cceaf2d5004950a57ff967e3258",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "59c1819dc6c7db4adca710523b7de062decbfaa5959d0a0feb96916c59d17927"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 4
+        },
+        "after": {
+          "case": "s2026112403_o2040_fixed-01",
+          "source": "source-v3",
+          "source_sha256": "db4bfe5a79918e7e449353d2992682a06e3aecbeed795c740714b31812c29743",
+          "archive_sha256": "02f19cdb9f5f518196febb44dbb6634c28770f9bf90a6392ec3af65ef3ce48fe",
+          "raw_sha256": {
+            "config_snapshot.json": "fed32697604def44085f905ac3921e33375db01d559dc2abeccf2504b3e1e983",
+            "rt_sys_trace.jsonl.gz": "917dc24927f844e0254f46773c44ce9510c6749e932e4fddb293e9c512e5fec2",
+            "control_receipts.jsonl.gz": "3b9055f5b3838f3f6f3c0e1626cd08b0fd238372b569faa5bbc107051b44d060",
+            "xapp_hot_start.json": "b86a5729c64cc7f8f414b7973c4307c846d8f886d908c28bd986cf831d070b98",
+            "xapp_model_checkpoints/latency_scheduler_rf.adaptive.json": "66938168c1858bdf2ab649d3dbb79c60ef935b9fb334a340eeeb1e7dd5140ac7"
+          },
+          "profile_sha256": {
+            "traffic_profile": "92b672a5e61d0e8da9e8631ef415141a94aaa69b959309a3f6484522dc8024d8",
+            "ue_services_config": "d3c760e525b1df7793a660921109a2bf5878b10acb84ebe16ce3a755b74d8769",
+            "ap_services_profile": "8c43ca64099220d5de74d447424d38ec25482ea01890aba57b270d889f791035"
+          },
+          "contiguous_slots": 2940,
+          "sample_count": 4
+        }
+      },
+      "learned_policy_controls_used": false
+    }
+  ],
+  "excluded_contexts": [
+    {
+      "context": [
+        "agx1",
+        20261215,
+        2040
+      ],
+      "reason": "different_competitor_population",
+      "actual_members": [
+        "ue_1",
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ]
+    },
+    {
+      "context": [
+        "agx1",
+        2026112402,
+        2040
+      ],
+      "reason": "different_competitor_population",
+      "actual_members": [
+        "ue_1",
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ]
+    },
+    {
+      "context": [
+        "agx2",
+        2026112403,
+        4040
+      ],
+      "reason": "different_competitor_population",
+      "actual_members": [
+        "ue_2",
+        "ue_6"
+      ]
+    }
+  ],
+  "combination_evaluation_data_used": false,
+  "window_slots": 500,
+  "birth_guard_ms": 100,
+  "terminal_followup_for_KPI": false,
+  "aggregation": "unchanged_online_matched_mature_birth_cohort"
+}

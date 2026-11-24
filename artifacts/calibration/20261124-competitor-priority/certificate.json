@@ -1,0 +1,102 @@
+{
+  "schema": "oran.action-gain-supplement.v1",
+  "environment_id": "validated_common_v1",
+  "combination_evaluation_data_used": false,
+  "base_matrix_sha256": "430be93ca30badd16451bc197c5e261b70f0f97afd335e17685b0f0dd491e57a",
+  "runtime_recipe_sha256": "696285f8860a5d7f01253d5c484b2b28ac25918bd02971dc57f91cfb3dbfa7c0",
+  "measurements": {
+    "path": "measurements.json",
+    "sha256": "3a9393712092e4d85a0d4318c05bb547eb20f120fb96dd879bf4b77cf81c93c1"
+  },
+  "estimates": [
+    {
+      "parameter": "ue_scheduler_weights",
+      "kpi": "mec_offloaded_latency_ms",
+      "kind": "local_derivative",
+      "label": "MEC-competing traffic priority · Latency-aware",
+      "contrast_id": "supplement:competitor_priority:mec_offloaded_latency_ms",
+      "parameter_component": "mec_competitor_priority",
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "estimate": 4.7194444444444805,
+      "confidence_interval": [
+        3.000000000000016,
+        6.219444444444498
+      ],
+      "confidence_level": 0.9,
+      "unit": "ms / weight",
+      "x_unit": "weight",
+      "fit_domain": [
+        0.5,
+        1.0
+      ],
+      "conditioning": {
+        "scheduler_mode": "latency_aware"
+      },
+      "reference_scheduler_mode": "latency_aware",
+      "reference_mec_weight": 2.0,
+      "projection_role": "residual_population_reference",
+      "population_control_eligible": true,
+      "aggregation": "equal_seed_mean_of_paired_group_contrasts",
+      "independent_seeds": [
+        20261214,
+        20261216,
+        2026112401,
+        2026112403
+      ],
+      "paired_contexts": 6,
+      "interval_method": "exact_seed_block_bootstrap",
+      "per_ue_causal_derivatives_identified": false,
+      "combination_evaluation_data_used": false
+    },
+    {
+      "parameter": "ue_scheduler_weights",
+      "kpi": "ue_power_w",
+      "kind": "local_derivative",
+      "label": "MEC-competing traffic priority · Latency-aware",
+      "contrast_id": "supplement:competitor_priority:ue_power_w",
+      "parameter_component": "mec_competitor_priority",
+      "members": [
+        "ue_2",
+        "ue_6",
+        "ue_8"
+      ],
+      "estimate": 0.48161333333325135,
+      "confidence_interval": [
+        0.384886666666605,
+        0.5783399999998977
+      ],
+      "confidence_level": 0.9,
+      "unit": "W / weight",
+      "x_unit": "weight",
+      "fit_domain": [
+        0.5,
+        1.0
+      ],
+      "conditioning": {
+        "scheduler_mode": "latency_aware"
+      },
+      "reference_scheduler_mode": "latency_aware",
+      "reference_mec_weight": 2.0,
+      "projection_role": "residual_population_reference",
+      "population_control_eligible": true,
+      "aggregation": "equal_seed_mean_of_paired_group_contrasts",
+      "independent_seeds": [
+        20261214,
+        20261216,
+        2026112401,
+        2026112403
+      ],
+      "paired_contexts": 6,
+      "interval_method": "exact_seed_block_bootstrap",
+      "per_ue_causal_derivatives_identified": false,
+      "combination_evaluation_data_used": false
+    }
+  ],
+  "only_existing_parameter_kpi_edges": true,
+  "source": "archived_fixed_parameter_probes; no deployed-combination outcomes",
+  "coordinate": "joint competitor-population weight; per-UE residual projection is a first-order reference approximation"
+}

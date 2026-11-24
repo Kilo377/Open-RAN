@@ -138,6 +138,13 @@ def attach_environment(service,entry):
     current_calibration=verify_current_calibration(entry,recipe)
     if current_calibration is not None:
         service.runtime_environment['statistics']=current_calibration
+    if entry.get('action_gain_supplement'):
+        from smo.action_gain_supplement import apply
+        from smo.gain_audit import audit_gains
+        service.graph, supplement = apply(service.graph, entry, recipe)
+        service.gain_audit = audit_gains(service.graph, all_kpis=True)
+        service.primary_gain_audit = audit_gains(service.graph)
+        service.runtime_environment['statistics']['action_gain_supplement'] = supplement
     service.environment_report_path=release_path.parent.parent/'report-v1/xapp-target-comparison.html'
     service.intent_migration=dict(from_source_name=entry.get('intent_migration',{}).get('source_name','共同评估起点'),
         record_ids=list(service.intent_ledger.records),token=entry['id']+':preserved-ledger-v1')

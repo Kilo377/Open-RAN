@@ -21,8 +21,8 @@ process.stdout.write(JSON.stringify(result));"""
 
 
 def slope(parameter,**changes):
-    return dict(kind='range_linear_fit',parameter=parameter,contrast_id='known',members=['u'],
-        estimate=2,confidence_interval=[1,3],fit_domain=[0,40],**changes)
+    return {**dict(kind='range_linear_fit',parameter=parameter,contrast_id='known',members=['u'],
+        estimate=2,confidence_interval=[1,3],fit_domain=[0,40]),**changes}
 
 
 def test_unchanged_action_needs_no_calibration_and_has_complete_empty_coverage():
@@ -42,6 +42,46 @@ def test_only_unmeasured_numeric_member_is_not_a_zero_gain():
     result=project('ue_scheduler_weights',[slope('ue_scheduler_weights')],{'u':1,'v':1},{'u':1,'v':2})
     assert result['drive']is None and not result['action_coverage']['complete']
     assert result['action_coverage']['uncovered_entities']==['v']
+
+
+def test_measured_competitor_group_fills_only_the_uncovered_member():
+    exact=slope('ue_scheduler_weights',members=['u'],estimate=2,confidence_interval=[1,3])
+    group=slope('ue_scheduler_weights',members=['u','v'],estimate=6,confidence_interval=[5,7],
+        contrast_id='competitors',projection_role='residual_population_reference')
+    # Measured dK/d(u,v)=6 and dK/du=2 imply residual dK/dv=4 under
+    # the first-order reference. It must reproduce both measured directions.
+    for rows in ([exact,group],[group,exact]):
+        result=project('ue_scheduler_weights',rows,{'u':1,'v':1},{'u':2,'v':.5})
+        assert result['drive']==pytest.approx(0.)
+        assert result['action_coverage']['complete']
+        component=next(c for c in result['components']if c['calibration_id']=='competitors')
+        assert component['residual_members']==['v']
+        assert not component['per_ue_causal_derivatives_identified']
+        whole=project('ue_scheduler_weights',rows,{'u':1,'v':1},{'u':2,'v':2})
+        assert whole['drive']==pytest.approx(6.)
+        only_v=project('ue_scheduler_weights',rows,{'u':1,'v':1},{'u':1,'v':.5})
+        assert only_v['drive']==pytest.approx(-2.)
+
+
+def test_group_supplement_does_not_cover_an_unmeasured_population():
+    group=slope('ue_scheduler_weights',members=['u','v'],estimate=6,confidence_interval=[5,7],
+        projection_role='residual_population_reference')
+    result=project('ue_scheduler_weights',[group],{'u':1,'v':1,'new':1},{'u':1,'v':.5,'new':.5})
+    assert result['drive']==pytest.approx(-1.5)
+    assert result['action_coverage']['uncovered_entities']==['new']
+    assert not result['action_coverage']['complete']
+
+
+def test_overlapping_reference_groups_do_not_invent_a_residual_gain():
+    u=slope('ue_scheduler_weights',contrast_id='u')
+    uv=slope('ue_scheduler_weights',contrast_id='uv',members=['u','v'],estimate=5)
+    whole=slope('ue_scheduler_weights',contrast_id='uvw',members=['u','v','w'],estimate=9,
+        projection_role='residual_population_reference')
+    result=project('ue_scheduler_weights',[u,uv,whole],
+        {'u':1,'v':1,'w':1},{'u':2,'v':2,'w':2})
+    assert not result['action_coverage']['complete']
+    assert result['action_coverage']['uncovered_entities']==['w']
+    assert 'ambiguous_residual_population_basis' in result['notes']
 
 
 def test_drx_unknown_changed_field_is_not_hidden_by_a_known_scalar_gain():
